@@ -7,8 +7,8 @@ struct PendingRequestCard: View {
 
     var body: some View {
         switch request.kind {
-        case .approval(let requestKind, let prompt, let appName, let options):
-            ApprovalCard(request: request, requestKind: requestKind, prompt: prompt, appName: appName,
+        case .approval(let requestKind, let prompt, let detail, let appName, let options):
+            ApprovalCard(request: request, requestKind: requestKind, prompt: prompt, detail: detail, appName: appName,
                          options: options, session: session)
         case .questions(let questions, let dismissible):
             QuestionsCard(request: request, questions: questions, dismissible: dismissible, session: session)
@@ -41,6 +41,7 @@ private struct ApprovalCard: View {
     let request: PendingRequest
     let requestKind: String
     let prompt: String?
+    let detail: String?
     let appName: String?
     let options: [ApprovalOption]
     let session: ThreadSession
@@ -52,18 +53,24 @@ private struct ApprovalCard: View {
             Text(title)
                 .font(Typography.headline)
                 .foregroundStyle(Palette.text)
-            if let prompt, !prompt.isEmpty {
+            if let prompt, !prompt.isEmpty, prompt != detail {
+                Text(prompt)
+                    .font(Typography.subheadline)
+                    .foregroundStyle(Palette.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let detail, !detail.isEmpty {
                 ScrollView {
-                    Text(prompt)
-                        .font(requestKind == "command" ? Typography.mono(13) : Typography.subheadline)
-                        .foregroundStyle(requestKind == "command" ? Palette.codeText : Palette.text)
+                    Text(detail)
+                        .font(Typography.mono(13))
+                        .foregroundStyle(Palette.codeText)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(requestKind == "command" ? 12 : 0)
+                        .padding(12)
                 }
                 .frame(maxHeight: 160)
                 .fixedSize(horizontal: false, vertical: true)
-                .background(requestKind == "command" ? Palette.code : .clear, in: .rect(cornerRadius: 12))
+                .background(Palette.code, in: .rect(cornerRadius: 12))
             }
             if let warning = options.compactMap(\.warning).first {
                 Label(warning, systemImage: "exclamationmark.triangle")
@@ -103,6 +110,7 @@ private struct ApprovalCard: View {
                 Button { respond(primary) } label: {
                     buttonLabel(primary).font(Typography.headline).frame(maxWidth: .infinity)
                 }
+                .accessibilityIdentifier("requestPrimary")
                 .buttonStyle(.glassProminent)
                 .tint(Palette.accent)
                 .foregroundStyle(Palette.accentForeground)
@@ -253,6 +261,7 @@ private struct QuestionsCard: View {
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(selected ? Palette.accent : .clear, lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("questionOption")
     }
 
     @ViewBuilder
@@ -279,6 +288,7 @@ private struct QuestionsCard: View {
                 .tint(Palette.accent)
                 .foregroundStyle(Palette.accentForeground)
                 .disabled(!request.canRespond || sending)
+                .accessibilityIdentifier(isLast ? "requestPrimary" : "requestNext")
             }
             if dismissible {
                 Button("Dismiss without answering") {

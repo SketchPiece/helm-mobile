@@ -50,6 +50,14 @@ enum Timeline {
         for item in items {
             // Nested work (a subagent's own steps) is summarised by its parent row.
             if item.parentItemId != nil { continue }
+            // Workspace preparation is plumbing; only a failure is worth showing.
+            if item.id.contains("workspace-preparation") {
+                if item.status == "failed" {
+                    flushWork()
+                    blocks.append(.error(item))
+                }
+                continue
+            }
             switch item.type {
             case "user_message":
                 flushWork()

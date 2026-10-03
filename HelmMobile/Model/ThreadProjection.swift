@@ -214,7 +214,8 @@ struct Checkpoint: Identifiable, Hashable, Sendable {
 /// A pending approval or question the user has to answer.
 struct PendingRequest: Identifiable, Hashable, Sendable {
     enum Kind: Hashable, Sendable {
-        case approval(requestKind: String, prompt: String?, appName: String?, options: [ApprovalOption])
+        /// `detail` is the command or file the request is about, when the tool call is known.
+        case approval(requestKind: String, prompt: String?, detail: String?, appName: String?, options: [ApprovalOption])
         case questions([UserQuestion], dismissible: Bool)
     }
 
@@ -474,11 +475,16 @@ struct ThreadProjection: Sendable {
                         ApprovalOption(decision: "decline", label: String(localized: "Decline")),
                     ]
                 }
+                let tool = toolItem(forRequest: request.id)
+                let detail = tool?.raw["input"]?.string
+                    ?? (tool?.raw["changes"]?.array?.compactMap { $0["path"]?.string }.joined(separator: "\n"))
+                    ?? tool?.raw["fileName"]?.string
                 return PendingRequest(
                     id: request.id,
                     kind: .approval(
                         requestKind: item?.raw["requestKind"]?.string ?? request.kind,
                         prompt: item?.raw["prompt"]?.string,
+                        detail: detail,
                         appName: item?.raw["appName"]?.string,
                         options: options
                     ),
@@ -486,6 +492,17 @@ struct ThreadProjection: Sendable {
                     createdAt: request.createdAt
                 )
             }
+    }
+
+    /// The tool call a runtime request is about. Provider request ids embed the native tool id
+    /// (`…native-request:<toolId>:…`), the same id the tool's turn item carries.
+    func toolItem(forRequest requestId: String) -> TurnItem? {
+        guard let range = requestId.range(of: "native-request:") else { return nil }
+        let toolId = requestId[range.upperBound...].split(separator: ":").first.map(String.init) ?? ""
+        guard !toolId.isEmpty else { return nil }
+        return items.values.first {
+            $0.type != "approval_request" && $0.id.hasSuffix("native-item:\(toolId)")
+        }
     }
 
     /// The checkpoint (with changed files) captured at the end of a run, for "review changes".

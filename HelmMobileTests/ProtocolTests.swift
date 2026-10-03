@@ -250,7 +250,7 @@ final class ThreadProjectionTests: XCTestCase {
         XCTAssertEqual(projection.activeRun?.id, "r1")
         let pending = try XCTUnwrap(projection.pendingRequests.first)
         XCTAssertTrue(pending.canRespond)
-        guard case .approval(let kind, let prompt, _, let options) = pending.kind else { return XCTFail("not an approval") }
+        guard case .approval(let kind, let prompt, _, _, let options) = pending.kind else { return XCTFail("not an approval") }
         XCTAssertEqual(kind, "command")
         XCTAssertEqual(prompt, "rm -rf build")
         XCTAssertEqual(options.map(\.decision), ["accept", "acceptForSession", "decline"])
@@ -330,5 +330,33 @@ final class HomeSectionsTests: XCTestCase {
         XCTAssertEqual(sections.active.map(\.ref.threadId), ["pinned", "new", "old"])
         XCTAssertEqual(sections.snoozed.map(\.ref.threadId), ["sleep"])
         XCTAssertEqual(sections.settled.map(\.ref.threadId), ["done"])
+    }
+}
+
+final class ApprovalDetailTests: XCTestCase {
+    func testApprovalShowsTheCommandFromTheMatchingToolCall() throws {
+        let requestId = "runtime-request:provider:claudeAgent:provider-turn:x:native-request:toolu_ABC:7f01"
+        let projection = try XCTUnwrap(ThreadProjection(json: Fixtures.projection(
+            items: [
+                Fixtures.item("turn-item:provider:claudeAgent:native-item:toolu_ABC", type: "command_execution", ordinal: 1,
+                              extra: ["input": "echo hi > /tmp/x", "status": "pending"]),
+                Fixtures.item("ap", type: "approval_request", ordinal: 2,
+                              extra: ["requestId": .string(requestId), "requestKind": "command", "prompt": "Write hi"]),
+            ],
+            requests: [["id": .string(requestId), "kind": "command", "status": "pending",
+                        "responseCapability": ["type": "live"], "createdAt": "2026-10-01T10:00:00.000Z"]]
+        )))
+        guard case .approval(_, let prompt, let detail, _, _) = projection.pendingRequests.first?.kind else {
+            return XCTFail("no approval")
+        }
+        XCTAssertEqual(prompt, "Write hi")
+        XCTAssertEqual(detail, "echo hi > /tmp/x")
+    }
+
+    func testWorkspacePreparationIsHiddenUnlessItFails() {
+        let ok = TurnItem(json: Fixtures.item("x:workspace-preparation:1", type: "command_execution", ordinal: 1, extra: ["input": "Preparing workspace"]))!
+        XCTAssertTrue(Timeline.blocks(from: [ok], liveRunId: nil).isEmpty)
+        let failed = TurnItem(json: Fixtures.item("x:workspace-preparation:1", type: "command_execution", ordinal: 1, extra: ["status": "failed"]))!
+        XCTAssertEqual(Timeline.blocks(from: [failed], liveRunId: nil).count, 1)
     }
 }

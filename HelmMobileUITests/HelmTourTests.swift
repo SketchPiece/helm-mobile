@@ -100,4 +100,29 @@ final class HelmTourTests: XCTestCase {
         XCTAssertTrue(composer.waitForExistence(timeout: 10))
         shot("12-live-done")
     }
+
+    /// Opens the first thread that needs attention and answers it. Opt in with HELM_ANSWER=1.
+    func testAnswerPendingRequest() throws {
+        guard ProcessInfo.processInfo.environment["HELM_ANSWER"] != nil else {
+            throw XCTSkip("Set HELM_ANSWER=1 with a thread waiting for approval or input")
+        }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        shot("20-home-needs-you")
+        app.buttons["threadRow"].firstMatch.tap()
+        sleep(3)
+        shot("21-request-card")
+        let allow = app.buttons["requestPrimary"]
+        XCTAssertTrue(allow.waitForExistence(timeout: 30), "no approval/answer button")
+        if app.buttons["questionOption"].firstMatch.exists {
+            app.buttons["questionOption"].firstMatch.tap()
+            sleep(1)
+            shot("22-question-picked")
+        }
+        allow.tap()
+        sleep(12)
+        shot("23-after-answer")
+        sleep(15)
+        shot("24-after-answer-later")
+    }
 }
