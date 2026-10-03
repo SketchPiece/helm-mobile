@@ -249,7 +249,7 @@ private struct QuestionsCard: View {
                     .foregroundStyle(selected ? Palette.accent : Palette.placeholder)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(option.label).font(Typography.subheadline.weight(.medium)).foregroundStyle(Palette.text)
-                    if let description = option.description {
+                    if let description = option.description, description != option.label {
                         Text(description).font(Typography.footnote).foregroundStyle(Palette.textMuted)
                     }
                 }

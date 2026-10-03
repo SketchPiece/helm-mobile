@@ -149,9 +149,12 @@ enum Timeline {
     /// "Ran 3 commands, edited 2 files" for a collapsed work block.
     static func groupSummary(_ items: [TurnItem]) -> String {
         var commands = 0, edits = 0, searches = 0, tools = 0, agents = 0
-        var thoughts = 0
+        var thoughts = 0, questions = 0, approvals = 0
         for item in items {
             switch item.type {
+            case "user_input_request": questions += 1
+            case "approval_request": approvals += 1
+            case "dynamic_tool" where item.raw["toolName"]?.string == "AskUserQuestion": continue
             case "command_execution": commands += 1
             case "file_change": edits += 1
             case "file_search", "web_search": searches += 1
@@ -166,6 +169,8 @@ enum Timeline {
         if searches > 0 { parts.append(String(localized: "\(searches) searches")) }
         if agents > 0 { parts.append(String(localized: "\(agents) agents")) }
         if tools > 0 { parts.append(String(localized: "\(tools) tools")) }
+        if questions > 0 { parts.append(String(localized: "\(questions) questions")) }
+        if approvals > 0 { parts.append(String(localized: "\(approvals) approvals")) }
         if parts.isEmpty, thoughts > 0 { return String(localized: "Thought") }
         return parts.joined(separator: " · ")
     }

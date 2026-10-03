@@ -1,8 +1,34 @@
 {
-  "%lld agents": {"one": "%lld agent", "other": "%lld agents"},
-  "%lld commands": {"one": "%lld command", "other": "%lld commands"},
-  "%lld edits": {"one": "%lld edit", "other": "%lld edits"},
-  "%lld files changed": {"one": "%lld file changed", "other": "%lld files changed"},
-  "%lld searches": {"one": "%lld search", "other": "%lld searches"},
-  "%lld tools": {"one": "%lld tool", "other": "%lld tools"}
+  "%lld agents": {
+    "one": "%lld agent",
+    "other": "%lld agents"
+  },
+  "%lld commands": {
+    "one": "%lld command",
+    "other": "%lld commands"
+  },
+  "%lld edits": {
+    "one": "%lld edit",
+    "other": "%lld edits"
+  },
+  "%lld files changed": {
+    "one": "%lld file changed",
+    "other": "%lld files changed"
+  },
+  "%lld searches": {
+    "one": "%lld search",
+    "other": "%lld searches"
+  },
+  "%lld tools": {
+    "one": "%lld tool",
+    "other": "%lld tools"
+  },
+  "%lld questions": {
+    "one": "%lld question",
+    "other": "%lld questions"
+  },
+  "%lld approvals": {
+    "one": "%lld approval",
+    "other": "%lld approvals"
+  }
 }

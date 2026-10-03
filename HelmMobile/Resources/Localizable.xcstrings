@@ -79,6 +79,58 @@
         }
       }
     },
+    "%lld approvals": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld approval"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld approvals"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld разрешения"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld разрешений"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld разрешение"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld разрешения"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld commands": {
       "localizations": {
         "en": {
@@ -262,6 +314,58 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "нашлось %lld"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld questions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld question"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld questions"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld вопроса"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld вопросов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld вопрос"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld вопроса"
                 }
               }
             }
@@ -950,6 +1054,16 @@
         }
       }
     },
+    "Couldn't transcribe the recording.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось распознать запись."
+          }
+        }
+      }
+    },
     "Current checkout": {
       "localizations": {
         "ru": {
@@ -996,6 +1110,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалить тред?"
+          }
+        }
+      }
+    },
+    "Dictate": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Диктовать"
           }
         }
       }
@@ -1110,6 +1234,16 @@
         }
       }
     },
+    "Hold to talk, release to send": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживай и говори, отпусти — отправлю"
+          }
+        }
+      }
+    },
     "Implement plan": {
       "localizations": {
         "ru": {
@@ -1196,6 +1330,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пометить непрочитанным"
+          }
+        }
+      }
+    },
+    "Microphone access is off. Turn it on in Settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к микрофону выключен. Включи его в Настройках."
           }
         }
       }
@@ -1566,6 +1710,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сгенерировать название заново"
+          }
+        }
+      }
+    },
+    "Release to cancel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отпусти — отменю"
+          }
+        }
+      }
+    },
+    "Release to send · slide left to cancel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отпусти — отправлю · влево — отмена"
           }
         }
       }
@@ -2176,6 +2340,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Инструмент"
+          }
+        }
+      }
+    },
+    "Transcribing…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознаю…"
           }
         }
       }

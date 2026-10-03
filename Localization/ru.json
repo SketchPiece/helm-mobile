@@ -1,13 +1,48 @@
 {
   " · ": " · ",
   "%@ wants to continue": "%@ просит разрешения",
-  "%lld agents": {"one": "%lld агент", "few": "%lld агента", "many": "%lld агентов", "other": "%lld агента"},
-  "%lld commands": {"one": "%lld команда", "few": "%lld команды", "many": "%lld команд", "other": "%lld команды"},
-  "%lld edits": {"one": "%lld правка", "few": "%lld правки", "many": "%lld правок", "other": "%lld правки"},
-  "%lld files changed": {"one": "Изменён %lld файл", "few": "Изменено %lld файла", "many": "Изменено %lld файлов", "other": "Изменено %lld файла"},
-  "%lld found": {"one": "нашёлся %lld", "few": "нашлось %lld", "many": "нашлось %lld", "other": "нашлось %lld"},
-  "%lld searches": {"one": "%lld поиск", "few": "%lld поиска", "many": "%lld поисков", "other": "%lld поиска"},
-  "%lld tools": {"one": "%lld инструмент", "few": "%lld инструмента", "many": "%lld инструментов", "other": "%lld инструмента"},
+  "%lld agents": {
+    "one": "%lld агент",
+    "few": "%lld агента",
+    "many": "%lld агентов",
+    "other": "%lld агента"
+  },
+  "%lld commands": {
+    "one": "%lld команда",
+    "few": "%lld команды",
+    "many": "%lld команд",
+    "other": "%lld команды"
+  },
+  "%lld edits": {
+    "one": "%lld правка",
+    "few": "%lld правки",
+    "many": "%lld правок",
+    "other": "%lld правки"
+  },
+  "%lld files changed": {
+    "one": "Изменён %lld файл",
+    "few": "Изменено %lld файла",
+    "many": "Изменено %lld файлов",
+    "other": "Изменено %lld файла"
+  },
+  "%lld found": {
+    "one": "нашёлся %lld",
+    "few": "нашлось %lld",
+    "many": "нашлось %lld",
+    "other": "нашлось %lld"
+  },
+  "%lld searches": {
+    "one": "%lld поиск",
+    "few": "%lld поиска",
+    "many": "%lld поисков",
+    "other": "%lld поиска"
+  },
+  "%lld tools": {
+    "one": "%lld инструмент",
+    "few": "%lld инструмента",
+    "many": "%lld инструментов",
+    "other": "%lld инструмента"
+  },
   "%lldd": "%lld д",
   "%lldh": "%lld ч",
   "%lldm": "%lld мин",
@@ -211,5 +246,17 @@
   "Couldn't transcribe the recording.": "Не удалось распознать запись.",
   "Microphone access is off. Turn it on in Settings.": "Доступ к микрофону выключен. Включи его в Настройках.",
   "Dictate": "Диктовать",
-  "Recording": "Запись"
+  "Recording": "Запись",
+  "%lld questions": {
+    "one": "%lld вопрос",
+    "few": "%lld вопроса",
+    "many": "%lld вопросов",
+    "other": "%lld вопроса"
+  },
+  "%lld approvals": {
+    "one": "%lld разрешение",
+    "few": "%lld разрешения",
+    "many": "%lld разрешений",
+    "other": "%lld разрешения"
+  }
 }
