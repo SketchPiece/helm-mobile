@@ -6,3 +6,4 @@ xcuserdata/
 *.xcodeproj/
 release/
 .env
+Local.xcconfig

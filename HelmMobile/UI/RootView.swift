@@ -20,7 +20,7 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if model.hasEnvironments {
+            if model.hasEnvironments && !UserDefaults.standard.bool(forKey: "showWelcome") {
                 NavigationStack(path: $router.path) {
                     HomeView()
                         .navigationDestination(for: ThreadRef.self) { ref in
@@ -97,6 +97,7 @@ struct WelcomeView: View {
             .buttonStyle(.glassProminent)
             .tint(Palette.accent)
             .foregroundStyle(Palette.accentForeground)
+            .accessibilityIdentifier("connectToHelm")
             .padding(.horizontal, 20)
             .padding(.top, 20)
             .padding(.bottom, 12)

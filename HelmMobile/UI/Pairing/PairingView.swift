@@ -14,6 +14,13 @@ struct PairingView: View {
     @State private var code = ""
     @State private var phase = Phase.idle
     @State private var showScanner = false
+    @State private var found: [FoundHelm] = []
+
+    struct FoundHelm: Identifiable, Hashable {
+        var host: String
+        var label: String
+        var id: String { host }
+    }
     @FocusState private var focused: Field?
 
     enum Field { case address, code }
@@ -27,6 +34,51 @@ struct PairingView: View {
 
     var body: some View {
         Form {
+            if !found.isEmpty {
+                Section {
+                    ForEach(found) { helm in
+                        Button {
+                            address = helm.host
+                            code = ""
+                            connect()
+                        } label: {
+                            HStack(spacing: 12) {
+                                HelmMark(size: 34)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(helm.label).font(Typography.bodyMedium).foregroundStyle(Palette.text)
+                                    Text(helm.host).font(Typography.mono(12)).foregroundStyle(Palette.textMuted)
+                                }
+                                Spacer()
+                                Text("Connect")
+                                    .font(Typography.subheadline.weight(.semibold))
+                                    .foregroundStyle(Palette.accentText)
+                            }
+                        }
+                        .disabled(isBusy)
+                        .accessibilityIdentifier("foundHelm")
+                    }
+                } header: {
+                    Text("Found on your tailnet").sectionLabelStyle()
+                } footer: {
+                    Text("Helm on the Mac asks you to allow this phone. No code needed.")
+                        .font(Typography.footnote)
+                }
+            }
+
+            if DataScannerViewController.isSupported {
+                Section {
+                    Button {
+                        showScanner = true
+                    } label: {
+                        Label("Scan QR code", systemImage: "qrcode.viewfinder")
+                            .font(Typography.bodyMedium)
+                    }
+                } footer: {
+                    Text("On the Mac: Helm → Settings → Connections → Pair a device.")
+                        .font(Typography.footnote)
+                }
+            }
+
             Section {
                 TextField("100.64.0.1 or my-mac.tailnet.ts.net", text: $address)
                     .font(Typography.mono(16))
@@ -78,19 +130,6 @@ struct PairingView: View {
                 }
             }
 
-            if DataScannerViewController.isSupported {
-                Section {
-                    Button {
-                        showScanner = true
-                    } label: {
-                        Label("Scan QR code", systemImage: "qrcode.viewfinder")
-                    }
-                } footer: {
-                    Text("On the Mac: Helm → Settings → Connections → Pair a device.")
-                        .font(Typography.footnote)
-                }
-            }
-
             Section {
                 Button {
                     if let text = UIPasteboard.general.string { address = text }
@@ -115,7 +154,29 @@ struct PairingView: View {
             }
             .ignoresSafeArea()
         }
-        .onAppear { focused = .address }
+        .task { await discover() }
+    }
+
+    /// Probes the hosts baked into this build (the owner's Macs on the tailnet) for Helm.
+    private func discover() async {
+        let hosts = (Bundle.main.object(forInfoDictionaryKey: "HelmSuggestedHosts") as? String ?? "")
+            .split(separator: " ").map(String.init).filter { !$0.isEmpty }
+        let paired = Set(model.environments.map(\.id))
+        var results: [FoundHelm] = []
+        await withTaskGroup(of: FoundHelm?.self) { group in
+            for host in hosts {
+                group.addTask {
+                    guard let base = PairingTarget.normalizeHost(host, defaultScheme: nil) else { return nil }
+                    var http = HelmHTTP(baseURL: base, token: nil)
+                    http.token = nil
+                    guard let descriptor = try? await http.descriptor(), !paired.contains(descriptor.environmentId) else { return nil }
+                    return FoundHelm(host: host, label: descriptor.label)
+                }
+            }
+            for await result in group { if let result { results.append(result) } }
+        }
+        withAnimation { found = results }
+        if results.isEmpty { focused = .address }
     }
 
     private var isBusy: Bool {

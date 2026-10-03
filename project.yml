@@ -16,6 +16,9 @@ targets:
   HelmMobile:
     type: application
     platform: iOS
+    configFiles:
+      Debug: Base.xcconfig
+      Release: Base.xcconfig
     sources:
       - path: HelmMobile
     settings:

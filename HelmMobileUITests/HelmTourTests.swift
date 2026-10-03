@@ -64,6 +64,21 @@ final class HelmTourTests: XCTestCase {
         shot("07-new-thread")
     }
 
+    func testOnboarding() throws {
+        app.terminate()
+        app.launchArguments += ["-showWelcome", "YES"]
+        app.launch()
+        XCTAssertTrue(app.buttons["connectToHelm"].waitForExistence(timeout: 10))
+        shot("30-welcome")
+        app.buttons["connectToHelm"].tap()
+        sleep(2)
+        shot("31-pairing")
+        let address = app.textFields.firstMatch
+        address.typeText("100.64.0.9")
+        sleep(1)
+        shot("32-pairing-address")
+    }
+
     /// Starts a real agent turn. Opt in with HELM_LIVE_TURN=<project title>.
     func testLiveTurn() throws {
         guard let projectTitle = ProcessInfo.processInfo.environment["HELM_LIVE_TURN"] else {

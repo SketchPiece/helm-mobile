@@ -258,5 +258,7 @@
     "few": "%lld разрешения",
     "many": "%lld разрешений",
     "other": "%lld разрешения"
-  }
+  },
+  "Found on your tailnet": "Нашёлся в твоём Tailscale",
+  "Helm on the Mac asks you to allow this phone. No code needed.": "Штурвал на Mac спросит, пустить ли этот телефон. Код не нужен."
 }

@@ -1,0 +1,4 @@
+// Machine-specific values (e.g. the Mac's tailnet address to suggest when pairing) live in
+// the gitignored Local.xcconfig; see Local.xcconfig.example.
+HELM_SUGGESTED_HOSTS =
+#include? "Local.xcconfig"

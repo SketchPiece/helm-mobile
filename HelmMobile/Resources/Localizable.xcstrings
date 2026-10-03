@@ -1174,6 +1174,16 @@
         }
       }
     },
+    "Found on your tailnet": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нашёлся в твоём Tailscale"
+          }
+        }
+      }
+    },
     "Full access": {
       "localizations": {
         "ru": {
@@ -1210,6 +1220,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Язык и размер текста берутся из настроек телефона."
+          }
+        }
+      }
+    },
+    "Helm on the Mac asks you to allow this phone. No code needed.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал на Mac спросит, пустить ли этот телефон. Код не нужен."
           }
         }
       }

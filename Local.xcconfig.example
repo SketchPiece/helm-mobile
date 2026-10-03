@@ -1,0 +1,2 @@
+// Copy to Local.xcconfig. Space-separated hosts the pairing screen probes and offers.
+HELM_SUGGESTED_HOSTS = 100.64.0.1
