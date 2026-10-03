@@ -74,6 +74,7 @@ final class HelmTourTests: XCTestCase {
         sleep(2)
         shot("31-pairing")
         let address = app.textFields.firstMatch
+        address.tap()
         address.typeText("100.64.0.9")
         sleep(1)
         shot("32-pairing-address")
