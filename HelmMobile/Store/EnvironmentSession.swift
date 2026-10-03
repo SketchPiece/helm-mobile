@@ -101,7 +101,7 @@ final class EnvironmentSession: Identifiable {
             }
             // Back off with jitter, but wake early on foreground or an explicit retry.
             let wait = delay * Double.random(in: 0.8...1.2)
-            delay = min(delay * 2, 30)
+            delay = min(delay * 2, 10)
             await sleepOrWake(seconds: wait)
         }
     }

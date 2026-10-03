@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import Observation
 import UIKit
 
@@ -21,10 +22,20 @@ struct ThreadListEntry: Identifiable, Hashable {
 @Observable
 final class AppModel {
     private(set) var environments: [EnvironmentSession] = []
+    @ObservationIgnored private let pathMonitor = NWPathMonitor()
 
     init() {
         environments = SavedEnvironments.load().map(EnvironmentSession.init(saved:))
         environments.forEach { $0.start() }
+        // A new network path (Wi-Fi ↔ cellular, Tailscale toggled) is the moment a dropped
+        // connection can come back; don't wait for the backoff timer.
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied else { return }
+            Task { @MainActor in
+                self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
+            }
+        }
+        pathMonitor.start(queue: DispatchQueue(label: "helm.path"))
     }
 
     var hasEnvironments: Bool { !environments.isEmpty }
