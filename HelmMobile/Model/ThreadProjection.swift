@@ -371,7 +371,9 @@ struct ThreadProjection: Sendable {
     }
 
     private mutating func recomputeVisibility() {
-        rows.removeAll { $0.visibility == "local" && !isVisible($0.item) }
+        let hidden = Set(rows.filter { $0.visibility == "local" && !isVisible($0.item) }.map(\.item.id))
+        guard !hidden.isEmpty else { return }
+        rows.removeAll { $0.visibility == "local" && hidden.contains($0.item.id) }
     }
 
     /// `orchestrationV2Timeline.ts`: rolled-back runs, cancelled queued messages and superseded

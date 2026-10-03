@@ -158,10 +158,28 @@ final class EnvironmentSession: Identifiable {
 
         // The config snapshot comes first; everything else depends on it.
         let configStream = connection.stream("subscribeServerConfig", [:])
-        var iterator = configStream.makeAsyncIterator()
-        guard let first = try await iterator.next(), let snapshot = first["config"],
-              let config = ServerConfig(json: snapshot)
-        else { throw RPCError.defect("No server config") }
+        let config: ServerConfig = try await withCheckedThrowingContinuation { continuation in
+            streams.append(Task { [weak self] in
+                var resumed = false
+                do {
+                    for try await event in configStream {
+                        if !resumed {
+                            resumed = true
+                            if let snapshot = event["config"], let config = ServerConfig(json: snapshot) {
+                                continuation.resume(returning: config)
+                            } else {
+                                continuation.resume(throwing: RPCError.defect("No server config"))
+                            }
+                            continue
+                        }
+                        self?.applyConfigEvent(event)
+                    }
+                    if !resumed { continuation.resume(throwing: RPCError.disconnected) }
+                } catch {
+                    if !resumed { continuation.resume(throwing: error) }
+                }
+            })
+        }
         guard config.environmentId == saved.id else {
             throw RPCError.defect(String(localized: "This address now belongs to a different Helm server."))
         }
@@ -170,11 +188,6 @@ final class EnvironmentSession: Identifiable {
             saved.label = config.label
             AppModel.persistLabel(id: id, label: config.label)
         }
-        streams.append(Task { [weak self] in
-            do {
-                while let event = try await iterator.next() { self?.applyConfigEvent(event) }
-            } catch {}
-        })
 
         var shellPayload: [String: JSON] = [:]
         if config.shellResumeCompletionMarker { shellPayload["requestCompletionMarker"] = true }
