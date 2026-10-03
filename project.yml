@@ -1,0 +1,50 @@
+name: HelmMobile
+options:
+  bundleIdPrefix: com.sketchpiece
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: 4KSA86792T
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_STRICT_CONCURRENCY: complete
+targets:
+  HelmMobile:
+    type: application
+    platform: iOS
+    sources:
+      - path: HelmMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative
+        PRODUCT_NAME: HelmMobile
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: HelmMobile/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+  HelmMobileTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: HelmMobileTests
+    dependencies:
+      - target: HelmMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelmMobile.app/HelmMobile"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+schemes:
+  HelmMobile:
+    build:
+      targets:
+        HelmMobile: all
+        HelmMobileTests: [test]
+    test:
+      targets:
+        - HelmMobileTests
