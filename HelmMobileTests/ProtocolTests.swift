@@ -283,7 +283,7 @@ final class TimelineTests: XCTestCase {
         if case .work(_, let work, let live) = blocks[1] {
             XCTAssertEqual(work.count, 3)
             XCTAssertFalse(live)
-            XCTAssertEqual(Timeline.groupSummary(work), "1 commands · 1 edits")
+            XCTAssertEqual(Timeline.groupSummary(work), "1 command · 1 edit")
         } else {
             XCTFail("expected work")
         }

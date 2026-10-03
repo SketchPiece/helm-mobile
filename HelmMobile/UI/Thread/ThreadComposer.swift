@@ -13,6 +13,8 @@ struct ThreadComposer: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var showSettings = false
     @State private var stopping = false
+    @State private var voice = VoiceInput()
+    @State private var micDrag: CGFloat = 0
     @FocusState private var focused: Bool
 
     init(environment: EnvironmentSession, session: ThreadSession, didSend: @escaping () -> Void = {}) {
@@ -40,6 +42,33 @@ struct ThreadComposer: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
             HStack(alignment: .bottom, spacing: 8) {
+                if voice.state != .idle {
+                    VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
+                } else {
+                    editor
+                }
+                trailingButtons
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .floatingSurface(cornerRadius: 24)
+        .animation(.easeOut(duration: 0.18), value: focused || !trimmed.isEmpty)
+        .animation(.easeOut(duration: 0.18), value: voice.state)
+        .onChange(of: pickerItems) { _, items in
+            guard !items.isEmpty else { return }
+            pickerItems = []
+            for item in items { attach(item) }
+        }
+        .sheet(isPresented: $showSettings) {
+            ThreadSettingsSheet(environment: environment, session: session)
+        }
+        .onDisappear { if voice.isRecording { voice.cancel() } }
+    }
+
+    @ViewBuilder
+    private var editor: some View {
                 PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
                     Image(systemName: "plus")
                         .font(.system(size: 17, weight: .medium))
@@ -57,21 +86,51 @@ struct ThreadComposer: View {
                     .accessibilityIdentifier("composer")
                     .padding(.vertical, 7)
                     .onChange(of: text) { _, value in Drafts.save(value, for: session.threadId) }
+    }
 
-                sendButton
-            }
+    /// Empty field: microphone (and stop while working). With text: send.
+    @ViewBuilder
+    private var trailingButtons: some View {
+        let holdRecording = voice.state == .recording(handsFree: false)
+        if canSend && !holdRecording {
+            sendButton
+        } else if voice.state == .idle || holdRecording {
+            MicButton(
+                voice: voice,
+                onHoldStart: { Task { await voice.start(handsFree: false) } },
+                onHoldEnd: { cancelled in
+                    if cancelled { voice.cancel() } else { finishDictation(send: true) }
+                },
+                onTap: {
+                    focused = false
+                    Task { await voice.start(handsFree: true) }
+                },
+                dragOffset: $micDrag
+            )
+            if isWorking && !holdRecording { stopButton }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .floatingSurface(cornerRadius: 24)
-        .animation(.easeOut(duration: 0.18), value: focused || !trimmed.isEmpty)
-        .onChange(of: pickerItems) { _, items in
-            guard !items.isEmpty else { return }
-            pickerItems = []
-            for item in items { attach(item) }
+    }
+
+    private func finishDictation(send: Bool) {
+        Task {
+            guard let dictated = await voice.finish(environment: environment, threadId: session.threadId) else { return }
+            insert(dictated, thenSend: send)
         }
-        .sheet(isPresented: $showSettings) {
-            ThreadSettingsSheet(environment: environment, session: session)
+    }
+
+    private func retryDictation() {
+        Task {
+            guard let dictated = await voice.retry(environment: environment, threadId: session.threadId) else { return }
+            insert(dictated, thenSend: false)
+        }
+    }
+
+    private func insert(_ dictated: String, thenSend: Bool) {
+        text = trimmed.isEmpty ? dictated : "\(trimmed) \(dictated)"
+        if thenSend {
+            send(followUp: .queue)
+        } else {
+            focused = true
         }
     }
 
@@ -79,9 +138,7 @@ struct ThreadComposer: View {
         isWorking ? String(localized: "Add to the queue…") : String(localized: "Ask the agent…")
     }
 
-    @ViewBuilder
-    private var sendButton: some View {
-        if isWorking && !canSend {
+    private var stopButton: some View {
             Button {
                 stopping = true
                 Task {
@@ -99,7 +156,9 @@ struct ThreadComposer: View {
                 .background(Palette.error, in: .circle)
             }
             .accessibilityLabel("Stop the agent")
-        } else {
+    }
+
+    private var sendButton: some View {
             Button {
                 send(followUp: .queue)
             } label: {
@@ -122,7 +181,6 @@ struct ThreadComposer: View {
                 }
             }
             .accessibilityLabel(isWorking ? "Queue message" : "Send")
-        }
     }
 
     private var settingsChips: some View {
