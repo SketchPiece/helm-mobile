@@ -364,6 +364,7 @@ struct ProjectPicker: View {
                             }
                         }
                     }
+                    .accessibilityIdentifier("projectOption")
                     .listRowBackground(Palette.surface)
                 }
             }

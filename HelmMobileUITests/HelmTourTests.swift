@@ -80,7 +80,9 @@ final class HelmTourTests: XCTestCase {
         search.tap()
         search.typeText(projectTitle)
         sleep(1)
-        app.cells.firstMatch.buttons.firstMatch.tap()
+        let option = app.buttons.matching(identifier: "projectOption").firstMatch
+        XCTAssertTrue(option.waitForExistence(timeout: 5))
+        option.tap()
         sleep(1)
         let field = app.textViews["newThreadText"].exists ? app.textViews["newThreadText"] : app.textFields["newThreadText"]
         field.tap()
