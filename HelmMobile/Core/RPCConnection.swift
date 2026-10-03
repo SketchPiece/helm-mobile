@@ -14,9 +14,9 @@ enum RPCError: Error, LocalizedError, Equatable {
         switch self {
         case .failure(_, let message): message
         case .defect(let message): message
-        case .interrupted: "The request was interrupted."
-        case .disconnected: "Not connected to Helm."
-        case .timedOut: "Helm did not answer in time."
+        case .interrupted: String(localized: "The request was interrupted.")
+        case .disconnected: String(localized: "Not connected to Helm.")
+        case .timedOut: String(localized: "Helm did not answer in time.")
         }
     }
 
@@ -99,21 +99,26 @@ actor RPCConnection {
     /// A streaming call. Cancelling the consumer interrupts the server-side handler.
     nonisolated func stream(_ tag: String, _ payload: JSON = [:]) -> AsyncThrowingStream<JSON, Error> {
         AsyncThrowingStream(bufferingPolicy: .unbounded) { continuation in
-            Task { await self.openStream(tag: tag, payload: payload, continuation: continuation) }
+            // Installed synchronously so a consumer that cancels before the request is even
+            // sent is still seen; the id arrives later from the actor.
+            let handle = StreamHandle()
+            continuation.onTermination = { [weak self] termination in
+                guard case .cancelled = termination, let id = handle.cancel() else { return }
+                Task { await self?.interrupt(id: id) }
+            }
+            Task { await self.openStream(tag: tag, payload: payload, continuation: continuation, handle: handle) }
         }
     }
 
-    private func openStream(tag: String, payload: JSON, continuation: AsyncThrowingStream<JSON, Error>.Continuation) {
+    private func openStream(tag: String, payload: JSON, continuation: AsyncThrowingStream<JSON, Error>.Continuation,
+                            handle: StreamHandle) {
         guard !closed else {
             continuation.finish(throwing: RPCError.disconnected)
             return
         }
         let id = allocateId()
+        guard handle.assign(id) else { return }  // already cancelled; never send it
         pending[id] = .stream(continuation)
-        continuation.onTermination = { [weak self] termination in
-            guard case .cancelled = termination else { return }
-            Task { await self?.interrupt(id: id) }
-        }
         do {
             try sendNow(request(id: id, tag: tag, payload: payload))
         } catch {
@@ -162,6 +167,7 @@ actor RPCConnection {
                 case .data(let data): data
                 @unknown default: Data()
                 }
+                missedPongs = 0  // any frame proves the socket is alive (big snapshots delay Pongs)
                 let json = try JSON.parse(data)
                 if let batch = json.array {
                     batch.forEach(handle)
@@ -228,6 +234,7 @@ actor RPCConnection {
     private func finish(with error: Error?) {
         guard !closed else { return }
         closed = true
+        task.cancel(with: .goingAway, reason: nil)
         let failure: RPCError = (error as? RPCError) ?? .disconnected
         for (_, entry) in pending {
             switch entry {
@@ -238,5 +245,27 @@ actor RPCConnection {
         pending.removeAll()
         onClose?(error)
         onClose = nil
+    }
+}
+
+/// Links a stream's synchronous termination handler with the request id the actor assigns.
+private final class StreamHandle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var id: Int?
+    private var cancelled = false
+
+    /// Returns false when the consumer already went away.
+    func assign(_ id: Int) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard !cancelled else { return false }
+        self.id = id
+        return true
+    }
+
+    /// Marks the stream cancelled; returns the id to interrupt if the request was sent.
+    func cancel() -> Int? {
+        lock.lock(); defer { lock.unlock() }
+        cancelled = true
+        return id
     }
 }

@@ -13,8 +13,8 @@ keys = set()
 for path in glob.glob(pattern):
     for entries in json.load(open(path)).get("tables", {}).values():
         keys.update(entry["key"] for entry in entries)
-if not keys:
-    sys.exit("No .stringsdata found; build with SWIFT_EMIT_LOC_STRINGS=YES first.")
+if len(keys) < 150:
+    sys.exit(f"Only {len(keys)} keys found; do a full successful build with SWIFT_EMIT_LOC_STRINGS=YES first.")
 
 ru = json.load(open(os.path.join(root, "Localization/ru.json")))
 en_plurals = json.load(open(os.path.join(root, "Localization/en-plurals.json")))

@@ -19,6 +19,7 @@ struct DiffFileList: View {
             } label: {
                 DiffFileRow(file: file)
             }
+            .accessibilityIdentifier("diffFile")
             .listRowBackground(Palette.surface)
         }
         .listStyle(.plain)
@@ -157,7 +158,9 @@ struct DiffFileView: View {
                     }
                 }
                 .frame(width: max(proxy.size.width, contentWidth), alignment: .leading)
+                .frame(minHeight: proxy.size.height, alignment: .top)
             }
+            .defaultScrollAnchor(.topLeading)
         }
     }
 

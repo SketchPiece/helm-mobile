@@ -1214,6 +1214,16 @@
         }
       }
     },
+    "Helm did not answer in time.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал не ответил вовремя."
+          }
+        }
+      }
+    },
     "Helm follows the phone's language and Dynamic Type text size.": {
       "localizations": {
         "ru": {
@@ -1480,6 +1490,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "На Mac никто не ответил. Попробуй ещё раз."
+          }
+        }
+      }
+    },
+    "Not connected to Helm.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет связи со Штурвалом."
           }
         }
       }
@@ -2180,6 +2200,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код не подошёл. Код работает один раз и живёт 5 минут."
+          }
+        }
+      }
+    },
+    "The request was interrupted.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запрос прерван."
           }
         }
       }

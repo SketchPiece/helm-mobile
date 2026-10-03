@@ -24,7 +24,7 @@ struct ThreadComposer: View {
         _text = State(initialValue: Drafts.text(for: session.threadId))
     }
 
-    private var thread: ThreadSummary? { session.projection?.thread ?? environment.thread(session.threadId) }
+    private var thread: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
     private var isWorking: Bool { session.projection?.isWorking ?? thread?.isWorking ?? false }
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var canSend: Bool {

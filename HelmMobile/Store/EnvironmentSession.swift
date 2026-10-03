@@ -62,7 +62,9 @@ final class EnvironmentSession: Identifiable {
             return
         }
         do {
-            _ = try await connection.call("server.probe", [:], timeout: .seconds(3))
+            // `server.probe` only exists on servers that advertise it.
+            let method = config?.capability("connectionProbe") == true ? "server.probe" : "server.getConfig"
+            _ = try await connection.call(method, [:], timeout: .seconds(4))
         } catch {
             await connection.close()
         }
@@ -74,9 +76,13 @@ final class EnvironmentSession: Identifiable {
     }
 
     private func wakeSupervisor() {
+        wakeTimer?.cancel()
+        wakeTimer = nil
         wake?.resume()
         wake = nil
     }
+
+    @ObservationIgnored private var wakeTimer: Task<Void, Never>?
 
     private func superviseLoop() async {
         var delay: Double = 1
@@ -109,8 +115,9 @@ final class EnvironmentSession: Identifiable {
     private func sleepOrWake(seconds: Double) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             wake = continuation
-            Task { [weak self] in
+            wakeTimer = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(seconds))
+                guard !Task.isCancelled else { return }
                 self?.wakeSupervisor()
             }
         }
@@ -178,6 +185,7 @@ final class EnvironmentSession: Identifiable {
                 } catch {
                     if !resumed { continuation.resume(throwing: error) }
                 }
+                await self?.streamEnded(on: connection)
             })
         }
         guard config.environmentId == saved.id else {
@@ -197,6 +205,7 @@ final class EnvironmentSession: Identifiable {
             do {
                 for try await item in shellStream { self?.shell.apply(item) }
             } catch {}
+            await self?.streamEnded(on: connection)
         })
 
         for (key, weakThread) in threads {
@@ -206,6 +215,13 @@ final class EnvironmentSession: Identifiable {
                 threads[key] = nil
             }
         }
+    }
+
+    /// The config and shell streams live as long as the socket. If one ends while the socket
+    /// is still up (a server-side failure), reconnect rather than show frozen data as "live".
+    private func streamEnded(on ended: RPCConnection) async {
+        guard ended === connection, !Task.isCancelled else { return }
+        await ended.close()
     }
 
     private func applyConfigEvent(_ event: JSON) {
@@ -233,14 +249,22 @@ final class EnvironmentSession: Identifiable {
         if let existing = threads[threadId]?.value { return existing }
         let session = ThreadSession(threadId: threadId, environment: self, cached: projectionCache[threadId])
         threads[threadId] = WeakThread(value: session)
-        if let connection, status == .live { session.subscribe(on: connection) }
+        if let connection { session.subscribe(on: connection) }
         return session
     }
 
     func cache(_ projection: ThreadProjection) {
-        projectionCache[projection.thread.id] = projection
-        if projectionCache.count > 30, let oldest = projectionCache.keys.first { projectionCache[oldest] = nil }
+        let id = projection.thread.id
+        projectionCache[id] = projection
+        cacheOrder.removeAll { $0 == id }
+        cacheOrder.append(id)
+        while cacheOrder.count > 30 { projectionCache[cacheOrder.removeFirst()] = nil }
     }
+
+    @ObservationIgnored private var cacheOrder: [String] = []
+
+    /// The live connection, for thread sessions that need to resubscribe on their own.
+    var currentConnection: RPCConnection? { status == .live ? connection : nil }
 
     // MARK: Calls
 

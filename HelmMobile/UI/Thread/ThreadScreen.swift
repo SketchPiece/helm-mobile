@@ -35,7 +35,9 @@ private struct ThreadContent: View {
         _session = State(initialValue: session)
     }
 
-    private var summary: ThreadSummary? { session.projection?.thread ?? environment.thread(session.threadId) }
+    /// The shell row carries status, plan and pending-request fields the thread projection's
+    /// AppThread lacks, so it wins; the projection covers threads the shell no longer lists.
+    private var summary: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
     private var project: Project? { environment.project(summary?.projectId) }
 
     var body: some View {
@@ -62,7 +64,8 @@ private struct ThreadContent: View {
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .scrollDismissesKeyboard(.interactively)
         .onScrollGeometryChange(for: Bool.self) { geometry in
-            geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 80
+            let visibleBottom = geometry.contentOffset.y + geometry.bounds.height - geometry.contentInsets.bottom
+            return visibleBottom >= geometry.contentSize.height - 60
         } action: { _, atBottom in
             isAtBottom = atBottom
         }
@@ -215,20 +218,24 @@ private struct ThreadContent: View {
                     WorkingPill(since: run.workingSince ?? Date())
                 }
             }
-            if !isAtBottom {
-                Button {
-                    withAnimation { scroll.scrollTo(edge: .bottom) }
-                } label: {
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 15, weight: .semibold))
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
-                .transition(.opacity)
-            }
             ThreadComposer(environment: environment, session: session) {
                 withAnimation { scroll.scrollTo(edge: .bottom) }
+            }
+            // Floats above the stack so showing it never changes the scroll insets.
+            .overlay(alignment: .topTrailing) {
+                if !isAtBottom {
+                    Button {
+                        withAnimation { scroll.scrollTo(edge: .bottom) }
+                    } label: {
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 15, weight: .semibold))
+                            .frame(width: 36, height: 36)
+                    }
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .offset(x: -4, y: -48)
+                    .transition(.opacity)
+                }
             }
         }
         .padding(.horizontal, 12)

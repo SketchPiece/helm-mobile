@@ -141,4 +141,35 @@ final class HelmTourTests: XCTestCase {
         sleep(15)
         shot("24-after-answer-later")
     }
+
+    /// Opens the newest thread, its work group and its changes. Opt in with HELM_REVIEW=1.
+    func testReviewNewestThread() throws {
+        guard ProcessInfo.processInfo.environment["HELM_REVIEW"] != nil else { throw XCTSkip("HELM_REVIEW not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(1)
+        app.buttons["threadRow"].firstMatch.tap()
+        sleep(4)
+        shot("40-rich-bottom")
+        app.swipeDown(velocity: .slow)
+        sleep(1)
+        shot("41-rich-up")
+        let work = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'edit' OR label CONTAINS[c] 'command' OR label CONTAINS[c] 'tool'")).firstMatch
+        if work.exists {
+            work.tap()
+            sleep(1)
+            shot("42-work-expanded")
+        }
+        let changes = app.buttons["changesCard"].firstMatch
+        if changes.waitForExistence(timeout: 3) {
+            changes.tap()
+            sleep(3)
+            shot("43-changes")
+            let file = app.buttons.matching(identifier: "diffFile").firstMatch
+            if file.waitForExistence(timeout: 5) {
+                file.tap()
+                sleep(2)
+                shot("44-diff-file")
+            }
+        }
+    }
 }

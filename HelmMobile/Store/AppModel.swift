@@ -32,7 +32,14 @@ final class AppModel {
         pathMonitor.pathUpdateHandler = { [weak self] path in
             guard path.status == .satisfied else { return }
             Task { @MainActor in
-                self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
+                // Live sockets may be bound to the old interface: probe them; wake the rest.
+                for environment in self?.environments ?? [] {
+                    if environment.isLive {
+                        Task { await environment.refreshAfterForeground() }
+                    } else {
+                        environment.reconnectNow()
+                    }
+                }
             }
         }
         pathMonitor.start(queue: DispatchQueue(label: "helm.path"))

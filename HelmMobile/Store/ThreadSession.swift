@@ -32,7 +32,11 @@ final class ThreadSession {
 
     isolated deinit {
         subscription?.cancel()
+        // Cache once on the way out (not per streaming event: that copies the timeline).
+        if let projection { environment?.cache(projection) }
     }
+
+    @ObservationIgnored private var retryDelay: Double = 1
 
     func subscribe(on connection: RPCConnection) {
         subscription?.cancel()
@@ -43,10 +47,26 @@ final class ThreadSession {
         subscription = Task { [weak self] in
             do {
                 for try await item in stream { self?.apply(item) }
-            } catch let error as RPCError {
-                if case .failure(_, let message) = error { self?.loadError = message }
-            } catch {}
+            } catch RPCError.disconnected {
+                return  // the environment reconnects and resubscribes every open thread
+            } catch {
+                self?.loadError = error.localizedDescription
+            }
+            guard !Task.isCancelled else { return }
+            await self?.resubscribeAfterEnd()
         }
+    }
+
+    /// The thread stream ended while the socket stayed up (a server-side failure): try again
+    /// with a short backoff, starting from a fresh snapshot.
+    private func resubscribeAfterEnd() async {
+        guard !isDeleted else { return }
+        let delay = retryDelay
+        retryDelay = min(retryDelay * 2, 15)
+        try? await Task.sleep(for: .seconds(delay))
+        guard let connection = environment?.currentConnection else { return }
+        lastSequence = 0
+        subscribe(on: connection)
     }
 
     private func apply(_ item: JSON) {
@@ -56,7 +76,9 @@ final class ThreadSession {
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
             loadError = nil
+            retryDelay = 1
             reconcileOutbox()
+            environment?.cache(next)
         case "event":
             guard let sequence = item["sequence"]?.int, sequence > lastSequence else { return }
             lastSequence = sequence
@@ -68,17 +90,20 @@ final class ThreadSession {
                 isDeleted = true
                 projection = nil
             }
-            if event["type"]?.string == "turn-item.updated" { reconcileOutbox() }
+            let type = event["type"]?.string
+            if type == "turn-item.updated" || type == "message.updated" { reconcileOutbox() }
         default:
             break
         }
-        if let projection { environment?.cache(projection) }
     }
 
+    /// Drops outgoing bubbles the server now knows about: as a timeline item, or (for queued
+    /// messages, which get their turn item only when they start) as a conversation message.
     private func reconcileOutbox() {
         guard !outbox.isEmpty, let projection else { return }
         outbox.removeAll { pending in
-            pending.failed == nil && projection.items.values.contains { $0.raw["messageId"]?.string == pending.id }
+            projection.messages[pending.id] != nil
+                || projection.items.values.contains { $0.raw["messageId"]?.string == pending.id }
         }
     }
 
@@ -89,11 +114,16 @@ final class ThreadSession {
     /// Sends a message. While a turn runs it queues (default) or steers into the running turn.
     func send(text: String, attachments: [ChatAttachment], followUp: FollowUp = .queue,
               modelSelection: ModelSelection?, runtimeMode: String?, interactionMode: String?) async {
-        guard let environment else { return }
-        let message = OutgoingMessage(
+        var message = OutgoingMessage(
             id: UUID().uuidString.lowercased(), commandId: UUID().uuidString.lowercased(),
             text: text, attachments: attachments
         )
+        guard let environment else {
+            // Never drop typed text: keep it visible with a way to retry.
+            message.failed = String(localized: "Not connected to Helm.")
+            outbox.append(message)
+            return
+        }
         outbox.append(message)
         await deliver(message, followUp: followUp, modelSelection: modelSelection,
                       runtimeMode: runtimeMode, interactionMode: interactionMode, environment: environment)
@@ -151,6 +181,8 @@ final class ThreadSession {
                 fields["dispatchMode"] = ["type": "start_immediately"]
             }
             try await environment.dispatch("message.dispatch", fields, commandId: message.commandId)
+            if let index = outbox.firstIndex(where: { $0.id == message.id }) { outbox[index].failed = nil }
+            reconcileOutbox()
         } catch {
             if let index = outbox.firstIndex(where: { $0.id == message.id }) {
                 outbox[index].failed = error.localizedDescription
@@ -219,9 +251,13 @@ final class ThreadSession {
     func markVisited() {
         guard let environment, environment.config?.capability("threadVisitedTracking") == true else { return }
         let threadId = threadId
+        // The watermark is compared with server timestamps, so never send a time earlier than
+        // the latest activity even if this phone's clock runs behind.
+        let summary = environment.thread(threadId)
+        let latest = [Date(), summary?.updatedAt, summary?.latestRunCompletedAt].compactMap { $0 }.max() ?? Date()
         Task {
             try? await environment.dispatch("thread.visit", [
-                "threadId": .string(threadId), "visitedAt": .string(ISODate.string()),
+                "threadId": .string(threadId), "visitedAt": .string(ISODate.string(latest)),
             ])
         }
     }

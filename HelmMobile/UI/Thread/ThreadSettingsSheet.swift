@@ -7,7 +7,7 @@ struct ThreadSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var error: String?
 
-    private var thread: ThreadSummary? { session.projection?.thread ?? environment.thread(session.threadId) }
+    private var thread: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
 
     var body: some View {
         NavigationStack {

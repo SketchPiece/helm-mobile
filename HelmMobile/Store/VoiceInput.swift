@@ -86,7 +86,9 @@ final class VoiceInput {
     /// Stops recording and returns the text, or nil when cancelled / failed (state says why).
     func finish(environment: EnvironmentSession, threadId: String?) async -> String? {
         guard isRecording else { return nil }
-        lastDuration = recorder?.currentTime ?? Date().timeIntervalSince(startedAt ?? Date())
+        // currentTime reads 0 once the recorder stopped itself at the cap; use the wall clock.
+        let elapsed = Date().timeIntervalSince(startedAt ?? Date())
+        lastDuration = min(Self.maxDuration, (recorder?.isRecording == true ? recorder?.currentTime : nil) ?? elapsed)
         stopRecorder()
         guard lastDuration >= 0.4 else {
             cancel()
@@ -164,20 +166,38 @@ final class VoiceInput {
         let request = SFSpeechURLRecognitionRequest(url: url)
         request.shouldReportPartialResults = false
         request.addsPunctuation = true
-        return try await withCheckedThrowingContinuation { continuation in
-            var resumed = false
-            recognizer.recognitionTask(with: request) { result, error in
-                guard !resumed else { return }
-                if let error {
-                    resumed = true
-                    continuation.resume(throwing: error)
-                } else if let result, result.isFinal {
-                    resumed = true
-                    continuation.resume(returning: result.bestTranscription.formattedString)
+        let gate = OnceGate()
+        let text = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+                let task = recognizer.recognitionTask(with: request) { result, error in
+                    if let error {
+                        if gate.claim() { continuation.resume(throwing: error) }
+                    } else if let result, result.isFinal {
+                        if gate.claim() { continuation.resume(returning: result.bestTranscription.formattedString) }
+                    }
                 }
-            }
+                // Never leave the composer stuck on "Transcribing…".
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+                    if gate.claim() {
+                        task.cancel()
+                        continuation.resume(throwing: VoiceError.unavailable)
+                    }
+                }
         }
+        withExtendedLifetime(recognizer) {}  // keep the recogniser alive until it answered
+        return text
     }
 
     enum VoiceError: Error { case recorderFailed, unavailable }
+}
+
+/// Lets exactly one of several racing callbacks resume a continuation.
+private final class OnceGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var claimed = false
+    func claim() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if claimed { return false }
+        claimed = true
+        return true
+    }
 }

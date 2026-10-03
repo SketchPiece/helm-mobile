@@ -324,6 +324,7 @@ struct ChangesCard: View {
             .background(Palette.surface, in: .rect(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("changesCard")
     }
 }
 
