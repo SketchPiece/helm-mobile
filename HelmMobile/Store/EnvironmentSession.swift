@@ -1,0 +1,251 @@
+import Foundation
+import Observation
+
+/// One paired Helm server: keeps a socket open (reconnecting with backoff), holds the server
+/// config and the shell (projects + thread list), and hands out thread subscriptions.
+@MainActor
+@Observable
+final class EnvironmentSession: Identifiable {
+    enum Status: Equatable {
+        case connecting
+        case live
+        case offline(String)
+        /// The bearer was revoked or expired; the user has to pair again.
+        case unauthorized
+    }
+
+    nonisolated let id: String
+    private(set) var saved: SavedEnvironment
+    private(set) var status: Status = .connecting
+    private(set) var config: ServerConfig?
+    private(set) var shell = ShellState()
+    private(set) var lastConnectedAt: Date?
+
+    @ObservationIgnored private var connection: RPCConnection?
+    @ObservationIgnored private var supervisor: Task<Void, Never>?
+    @ObservationIgnored private var streams: [Task<Void, Never>] = []
+    @ObservationIgnored private var wake: CheckedContinuation<Void, Never>?
+    @ObservationIgnored private var threads: [String: WeakThread] = [:]
+    @ObservationIgnored private var projectionCache: [String: ThreadProjection] = [:]
+
+    private struct WeakThread { weak var value: ThreadSession? }
+
+    init(saved: SavedEnvironment) {
+        id = saved.id
+        self.saved = saved
+    }
+
+    var label: String { config?.label ?? saved.label }
+    var http: HelmHTTP { HelmHTTP(baseURL: saved.baseURL, token: Keychain.token(for: saved.id)) }
+    var isLive: Bool { status == .live }
+
+    // MARK: Lifecycle
+
+    func start() {
+        guard supervisor == nil else { return }
+        supervisor = Task { [weak self] in await self?.superviseLoop() }
+    }
+
+    func stop() {
+        supervisor?.cancel()
+        supervisor = nil
+        teardown()
+        wake?.resume()
+        wake = nil
+    }
+
+    /// Called when the app comes back to the foreground: sockets rarely survive suspension, so
+    /// check quickly and reconnect instead of waiting for missed pongs.
+    func refreshAfterForeground() async {
+        guard let connection, status == .live else {
+            wakeSupervisor()
+            return
+        }
+        do {
+            _ = try await connection.call("server.probe", [:], timeout: .seconds(3))
+        } catch {
+            await connection.close()
+        }
+    }
+
+    func reconnectNow() {
+        if case .unauthorized = status { return }
+        wakeSupervisor()
+    }
+
+    private func wakeSupervisor() {
+        wake?.resume()
+        wake = nil
+    }
+
+    private func superviseLoop() async {
+        var delay: Double = 1
+        while !Task.isCancelled {
+            status = .connecting
+            do {
+                try await connectOnce()
+                delay = 1
+                status = .live
+                lastConnectedAt = Date()
+                await waitForClose()
+                teardown()
+                if Task.isCancelled { return }
+                status = .offline(String(localized: "Connection lost"))
+            } catch HelmHTTPError.status(401, _) {
+                teardown()
+                status = .unauthorized
+                return
+            } catch {
+                teardown()
+                status = .offline(error.localizedDescription)
+            }
+            // Back off with jitter, but wake early on foreground or an explicit retry.
+            let wait = delay * Double.random(in: 0.8...1.2)
+            delay = min(delay * 2, 30)
+            await sleepOrWake(seconds: wait)
+        }
+    }
+
+    private func sleepOrWake(seconds: Double) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            wake = continuation
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(seconds))
+                self?.wakeSupervisor()
+            }
+        }
+    }
+
+    @ObservationIgnored private var closeContinuation: CheckedContinuation<Void, Never>?
+    @ObservationIgnored private var connectionClosed = false
+
+    private func waitForClose() async {
+        guard !connectionClosed else { return }
+        await withCheckedContinuation { continuation in
+            closeContinuation = continuation
+        }
+    }
+
+    private func markClosed(_ closed: RPCConnection) {
+        guard closed === connection else { return }
+        connectionClosed = true
+        closeContinuation?.resume()
+        closeContinuation = nil
+    }
+
+    private func teardown() {
+        streams.forEach { $0.cancel() }
+        streams.removeAll()
+        if let connection {
+            Task { await connection.close() }
+        }
+        connection = nil
+        closeContinuation?.resume()
+        closeContinuation = nil
+    }
+
+    private func connectOnce() async throws {
+        let http = self.http
+        guard http.token != nil else { throw HelmHTTPError.status(401, "missing token") }
+        let ticket = try await http.webSocketTicket()
+        let url = await http.webSocketURL(ticket: ticket)
+        let connection = RPCConnection(url: url)
+        self.connection = connection
+        connectionClosed = false
+        await connection.start { [weak self] _ in
+            Task { @MainActor in self?.markClosed(connection) }
+        }
+
+        // The config snapshot comes first; everything else depends on it.
+        let configStream = connection.stream("subscribeServerConfig", [:])
+        var iterator = configStream.makeAsyncIterator()
+        guard let first = try await iterator.next(), let snapshot = first["config"],
+              let config = ServerConfig(json: snapshot)
+        else { throw RPCError.defect("No server config") }
+        guard config.environmentId == saved.id else {
+            throw RPCError.defect(String(localized: "This address now belongs to a different Helm server."))
+        }
+        self.config = config
+        if saved.label != config.label {
+            saved.label = config.label
+            AppModel.persistLabel(id: id, label: config.label)
+        }
+        streams.append(Task { [weak self] in
+            do {
+                while let event = try await iterator.next() { self?.applyConfigEvent(event) }
+            } catch {}
+        })
+
+        var shellPayload: [String: JSON] = [:]
+        if config.shellResumeCompletionMarker { shellPayload["requestCompletionMarker"] = true }
+        if shell.sequence > 0 { shellPayload["afterSequence"] = .number(Double(shell.sequence)) }
+        let shellStream = connection.stream("orchestration.subscribeShell", .object(shellPayload))
+        streams.append(Task { [weak self] in
+            do {
+                for try await item in shellStream { self?.shell.apply(item) }
+            } catch {}
+        })
+
+        for (key, weakThread) in threads {
+            if let thread = weakThread.value {
+                thread.subscribe(on: connection)
+            } else {
+                threads[key] = nil
+            }
+        }
+    }
+
+    private func applyConfigEvent(_ event: JSON) {
+        switch event["type"]?.string {
+        case "snapshot":
+            if let snapshot = event["config"], let next = ServerConfig(json: snapshot) { config = next }
+        case "providerStatuses":
+            if let list = event["payload"]?["providers"]?.array {
+                config?.providers = list.compactMap(Provider.init(json:))
+            }
+        case "settingsUpdated":
+            if let settings = event["payload"]?["settings"] {
+                config?.defaultModelSelection = ModelSelection(json: settings["defaultModelSelection"]?.nonNull)
+                config?.defaultRuntimeMode = settings["defaultRuntimeMode"]?.string ?? config?.defaultRuntimeMode ?? "full-access"
+            }
+        default:
+            break
+        }
+    }
+
+    // MARK: Threads
+
+    /// A live subscription for a thread view. Kept while the view holds it.
+    func threadSession(_ threadId: String) -> ThreadSession {
+        if let existing = threads[threadId]?.value { return existing }
+        let session = ThreadSession(threadId: threadId, environment: self, cached: projectionCache[threadId])
+        threads[threadId] = WeakThread(value: session)
+        if let connection, status == .live { session.subscribe(on: connection) }
+        return session
+    }
+
+    func cache(_ projection: ThreadProjection) {
+        projectionCache[projection.thread.id] = projection
+        if projectionCache.count > 30, let oldest = projectionCache.keys.first { projectionCache[oldest] = nil }
+    }
+
+    // MARK: Calls
+
+    func call(_ tag: String, _ payload: JSON = [:], timeout: Duration = .seconds(30)) async throws -> JSON {
+        guard let connection, status == .live else { throw RPCError.disconnected }
+        return try await connection.call(tag, payload, timeout: timeout)
+    }
+
+    /// `orchestration.dispatchCommand`. `commandId` is generated unless provided (retries reuse it).
+    @discardableResult
+    func dispatch(_ type: String, _ fields: [String: JSON], commandId: String = UUID().uuidString.lowercased()) async throws -> JSON {
+        var command = fields
+        command["type"] = .string(type)
+        command["commandId"] = .string(commandId)
+        return try await call("orchestration.dispatchCommand", .object(command))
+    }
+
+    func project(_ id: String?) -> Project? { id.flatMap { shell.projects[$0] } }
+
+    func thread(_ id: String) -> ThreadSummary? { shell.threads[id] }
+}
