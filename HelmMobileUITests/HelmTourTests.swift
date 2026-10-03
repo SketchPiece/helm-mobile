@@ -172,4 +172,27 @@ final class HelmTourTests: XCTestCase {
             }
         }
     }
+
+    /// Sends a follow-up into the newest (working) thread. Opt in with HELM_QUEUE=1.
+    func testQueueWhileWorking() throws {
+        guard ProcessInfo.processInfo.environment["HELM_QUEUE"] != nil else { throw XCTSkip("HELM_QUEUE not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(1)
+        app.buttons["threadRow"].firstMatch.tap()
+        sleep(3)
+        let composer = app.textViews["composer"].exists ? app.textViews["composer"] : app.textFields["composer"]
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        composer.tap()
+        composer.typeText("After that, also tell me today's weekday.")
+        app.buttons["send"].tap()
+        sleep(2)
+        shot("50-queued")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()  // dismiss the keyboard
+        sleep(1)
+        shot("50b-queued-no-keyboard")
+        sleep(30)
+        shot("51-queued-later")
+        sleep(30)
+        shot("52-queued-done")
+    }
 }

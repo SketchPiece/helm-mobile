@@ -25,6 +25,7 @@ private struct ThreadContent: View {
 
     @State private var scroll = ScrollPosition(edge: .bottom)
     @State private var isAtBottom = true
+    @State private var pinnedForKeyboard = false
     @State private var expandedWork: Set<String> = []
     @State private var showSettings = false
     @State private var reviewing: Checkpoint?
@@ -55,6 +56,10 @@ private struct ThreadContent: View {
                 if let projection, projection.isWorking, !blocksEndWithLiveWork(blocks) {
                     ThinkingRow()
                 }
+                // Visible exactly when the end of the conversation is on screen.
+                Color.clear
+                    .frame(height: 1)
+                    .onScrollVisibilityChange(threshold: 0.01) { visible in isAtBottom = visible }
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -63,12 +68,10 @@ private struct ThreadContent: View {
         .scrollPosition($scroll)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .scrollDismissesKeyboard(.interactively)
-        .onScrollGeometryChange(for: Bool.self) { geometry in
-            let visibleBottom = geometry.contentOffset.y + geometry.bounds.height - geometry.contentInsets.bottom
-            return visibleBottom >= geometry.contentSize.height - 60
-        } action: { _, atBottom in
-            isAtBottom = atBottom
-        }
+        // Tapping the conversation puts the keyboard away, also when it is too short to scroll.
+        .simultaneousGesture(TapGesture().onEnded {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        })
         .onChange(of: contentSignature(blocks)) {
             if isAtBottom { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(edge: .bottom) } }
         }
@@ -112,6 +115,13 @@ private struct ThreadContent: View {
                 try? await Task.sleep(for: .milliseconds(300))
                 scroll.scrollTo(edge: .bottom)
             }
+        }
+        // Keep the latest message in view when the keyboard (or the composer) grows.
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            pinnedForKeyboard = isAtBottom
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+            if pinnedForKeyboard { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(edge: .bottom) } }
         }
         .onAppear { session.markVisited() }
         .onDisappear { session.markVisited() }
