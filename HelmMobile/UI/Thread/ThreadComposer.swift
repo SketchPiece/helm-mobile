@@ -54,6 +54,7 @@ struct ThreadComposer: View {
                     .foregroundStyle(Palette.text)
                     .lineLimit(1...8)
                     .focused($focused)
+                    .accessibilityIdentifier("composer")
                     .padding(.vertical, 7)
                     .onChange(of: text) { _, value in Drafts.save(value, for: session.threadId) }
 
@@ -62,7 +63,7 @@ struct ThreadComposer: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24, style: .continuous))
+        .floatingSurface(cornerRadius: 24)
         .animation(.easeOut(duration: 0.18), value: focused || !trimmed.isEmpty)
         .onChange(of: pickerItems) { _, items in
             guard !items.isEmpty else { return }
@@ -109,6 +110,7 @@ struct ThreadComposer: View {
                     .background(canSend ? Palette.accent : Palette.border, in: .circle)
             }
             .disabled(!canSend)
+            .accessibilityIdentifier("send")
             .contextMenu {
                 if isWorking && canSend {
                     Button {

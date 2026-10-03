@@ -366,6 +366,6 @@ struct QueueStrip: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .glassEffect(.regular, in: .rect(cornerRadius: 18))
+        .floatingSurface(cornerRadius: 18)
     }
 }

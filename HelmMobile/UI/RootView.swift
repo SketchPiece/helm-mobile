@@ -42,6 +42,20 @@ struct RootView: View {
         }
         .environment(router)
         .background(Palette.canvas)
+        .task { await pairFromLaunchArguments() }
+    }
+
+    /// `-pairURL <link>` (or HELM_PAIR_URL) pairs on launch; used by UI tests and simulator runs.
+    private func pairFromLaunchArguments() async {
+        let defaults = UserDefaults.standard
+        guard let link = defaults.string(forKey: "pairURL") ?? ProcessInfo.processInfo.environment["HELM_PAIR_URL"],
+              let target = PairingTarget.parse(link: link)
+        else { return }
+        if ProcessInfo.processInfo.arguments.contains("-resetState") {
+            for environment in model.environments { model.remove(environment) }
+        }
+        guard !model.environments.contains(where: { $0.saved.baseURL == target.baseURL }) else { return }
+        _ = try? await model.pair(target)
     }
 }
 

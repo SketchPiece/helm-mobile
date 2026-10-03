@@ -95,18 +95,17 @@ struct ThreadRow: View {
 
     @ViewBuilder
     private func subtitle(thread: ThreadSummary, phase: ThreadPhase) -> some View {
+        let detail = detailText(thread: thread, phase: phase)
         HStack(spacing: 0) {
             if showsProject {
                 Text(entry.project?.title ?? entry.environmentLabel)
                     .foregroundStyle(Palette.textMuted)
-                Text(" · ").foregroundStyle(Palette.placeholder)
+                if detail != nil { Text(" · ").foregroundStyle(Palette.placeholder) }
             }
-            if (phase == .failed || phase == .limited), let error = thread.lastError {
-                Text(error).foregroundStyle(Palette.errorText)
-            } else if let text = thread.latestMessageText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
-                Text(text.replacingOccurrences(of: "\n", with: " ")).foregroundStyle(Palette.textMuted)
-            } else if let branch = thread.branch {
-                Text(branch).font(Typography.mono(13)).foregroundStyle(Palette.textMuted)
+            if let detail {
+                Text(detail.text)
+                    .font(detail.mono ? Typography.mono(13) : Typography.subheadline)
+                    .foregroundStyle(detail.isError ? Palette.errorText : Palette.textMuted)
             }
             Spacer(minLength: 0)
             if let number = thread.pullRequestNumber {
@@ -119,6 +118,17 @@ struct ThreadRow: View {
         }
         .font(Typography.subheadline)
         .lineLimit(1)
+    }
+
+    private func detailText(thread: ThreadSummary, phase: ThreadPhase) -> (text: String, mono: Bool, isError: Bool)? {
+        if phase == .failed || phase == .limited, let error = thread.lastError {
+            return (error, false, true)
+        }
+        if let text = thread.latestMessageText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+            return (text.replacingOccurrences(of: "\n", with: " "), false, false)
+        }
+        if let branch = thread.branch { return (branch, true, false) }
+        return nil
     }
 }
 

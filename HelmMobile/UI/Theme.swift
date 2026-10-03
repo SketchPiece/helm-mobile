@@ -76,6 +76,14 @@ enum Typography {
 }
 
 extension View {
+    /// An opaque raised panel that floats over the timeline (composer, queue). Glass is too
+    /// see-through over text, so these stay solid with a hairline and a soft shadow.
+    func floatingSurface(cornerRadius: CGFloat) -> some View {
+        background(Palette.surfaceRaised, in: .rect(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).stroke(Palette.border, lineWidth: 1))
+            .shadow(color: .black.opacity(0.10), radius: 14, y: 4)
+    }
+
     /// Mono caps section label, as on the desktop sidebar ("SETTLED · 12").
     func sectionLabelStyle() -> some View {
         font(Typography.sectionHeader)

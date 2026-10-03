@@ -230,7 +230,9 @@ struct WorkingPill: View {
         .foregroundStyle(Palette.text)
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .glassEffect(.regular, in: .capsule)
+        .background(Palette.surfaceRaised, in: .capsule)
+        .overlay(Capsule().stroke(Palette.border, lineWidth: 1))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
     }
 }
 

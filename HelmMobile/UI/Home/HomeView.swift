@@ -149,6 +149,7 @@ struct HomeView: View {
                           showsProject: projectFilter == nil)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("threadRow")
             .listRowBackground(Palette.canvas)
             .listRowSeparatorTint(Palette.border)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -246,6 +247,7 @@ struct HomeView: View {
                 Image(systemName: "gearshape")
             }
             .accessibilityLabel("Settings")
+            .accessibilityIdentifier("settings")
         }
         ToolbarItem(placement: .bottomBar) {
             EnvironmentStatusButton()
@@ -258,6 +260,7 @@ struct HomeView: View {
                 Image(systemName: "square.and.pencil")
             }
             .accessibilityLabel("New thread")
+            .accessibilityIdentifier("newThread")
         }
     }
 
@@ -299,6 +302,7 @@ struct HomeView: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("shelf-\(title)")
         .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 6, trailing: 16))
     }
 

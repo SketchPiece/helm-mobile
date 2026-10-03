@@ -6,12 +6,24 @@ struct HelmApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("appearance") private var appearance = Appearance.system
 
+    init() {
+        // Navigation titles in IBM Plex, like the rest of the app.
+        let bar = UINavigationBar.appearance()
+        if let large = UIFont(name: "IBMPlexSans-SemiBold", size: 32),
+           let inline = UIFont(name: "IBMPlexSans-SemiBold", size: 17)
+        {
+            bar.largeTitleTextAttributes = [.font: UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: large)]
+            bar.titleTextAttributes = [.font: UIFontMetrics(forTextStyle: .headline).scaledFont(for: inline)]
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
                 .preferredColorScheme(appearance.colorScheme)
-                .tint(Palette.accent)
+                // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
+                .tint(Palette.text)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.foregrounded() }

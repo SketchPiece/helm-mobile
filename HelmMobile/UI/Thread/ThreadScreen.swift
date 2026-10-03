@@ -100,6 +100,16 @@ private struct ThreadContent: View {
         } message: {
             Text(actionError ?? "")
         }
+        .onChange(of: projection != nil, initial: true) { _, loaded in
+            guard loaded else { return }
+            // The timeline arrives after the first layout; land on the latest message.
+            Task {
+                try? await Task.sleep(for: .milliseconds(30))
+                scroll.scrollTo(edge: .bottom)
+                try? await Task.sleep(for: .milliseconds(300))
+                scroll.scrollTo(edge: .bottom)
+            }
+        }
         .onAppear { session.markVisited() }
         .onDisappear { session.markVisited() }
         .onChange(of: session.isDeleted) { _, deleted in if deleted { dismiss() } }

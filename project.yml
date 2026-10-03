@@ -39,12 +39,26 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelmMobile.app/HelmMobile"
         BUNDLE_LOADER: "$(TEST_HOST)"
+  HelmMobileUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: HelmMobileUITests
+    dependencies:
+      - target: HelmMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: HelmMobile
 schemes:
   HelmMobile:
     build:
       targets:
         HelmMobile: all
         HelmMobileTests: [test]
+        HelmMobileUITests: [test]
     test:
       targets:
         - HelmMobileTests
+        - HelmMobileUITests

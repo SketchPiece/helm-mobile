@@ -113,6 +113,7 @@ struct NewThreadView: View {
                 .multilineTextAlignment(.center)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("projectPicker")
             if model.environments.count > 1, let environment {
                 Menu {
                     ForEach(model.environments) { option in
@@ -188,6 +189,7 @@ struct NewThreadView: View {
                 .font(Typography.body)
                 .lineLimit(3...10)
                 .focused($focused)
+                .accessibilityIdentifier("newThreadText")
                 .onChange(of: text) { _, value in Drafts.save(value, for: "new-thread") }
             HStack(spacing: 6) {
                 PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
@@ -230,10 +232,11 @@ struct NewThreadView: View {
                 }
                 .disabled(!canSend || sending)
                 .accessibilityLabel("Start thread")
+                .accessibilityIdentifier("startThread")
             }
         }
         .padding(14)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24, style: .continuous))
+        .floatingSurface(cornerRadius: 24)
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
         .onAppear { focused = true }
