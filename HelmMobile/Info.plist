@@ -12,6 +12,11 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ru</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -20,11 +25,6 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>CFBundleLocalizations</key>
-	<array>
-		<string>en</string>
-		<string>ru</string>
-	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -32,10 +32,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Helm connects to the Helm app on your Mac over your local network or tailnet.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan the pairing QR code shown by Helm on your Mac.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Helm connects to the Helm app on your Mac over your local network or tailnet.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Dictate messages to your agents.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Attach images to messages for your agents.</string>
 	<key>UIAppFonts</key>
@@ -46,6 +48,11 @@
 		<string>IBMPlexMono-Regular.ttf</string>
 		<string>Unbounded-SemiBold.ttf</string>
 	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
@@ -55,10 +62,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
 </dict>
 </plist>

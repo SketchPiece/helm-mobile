@@ -34,8 +34,8 @@ struct ThreadSettingsSheet: View {
             .navigationTitle("Thread settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) { dismiss() }
                 }
             }
         }
@@ -234,7 +234,7 @@ struct ChangesSheet: View {
             .navigationTitle("Changes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close) { dismiss() }
                 }
             }

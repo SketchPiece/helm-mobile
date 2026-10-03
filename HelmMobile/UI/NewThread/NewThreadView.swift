@@ -77,8 +77,8 @@ struct NewThreadView: View {
                     .navigationTitle("Model and access")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button(role: .confirm) { showSettings = false }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(role: .close) { showSettings = false }
                         }
                     }
                 }
@@ -153,6 +153,13 @@ struct NewThreadView: View {
                 chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
                           symbol: newWorktree ? "arrow.triangle.branch" : "folder")
             }
+            Button {
+                showSettings = true
+            } label: {
+                let mode = RuntimeMode(rawValue: runtimeMode) ?? .fullAccess
+                chipLabel(mode.title, symbol: mode.symbol)
+            }
+            .buttonStyle(.plain)
             if newWorktree, !branches.isEmpty {
                 Menu {
                     ForEach(branches, id: \.self) { branch in
@@ -215,10 +222,6 @@ struct NewThreadView: View {
                     .frame(height: 34)
                 }
                 .buttonStyle(.plain)
-                Text(RuntimeMode(rawValue: runtimeMode)?.title ?? "")
-                    .font(Typography.subheadline)
-                    .foregroundStyle(Palette.textMuted)
-                    .lineLimit(1)
                 Spacer()
                 Button(action: launch) {
                     Group {

@@ -1,0 +1,36 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Helm" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Штурвал" } }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan the pairing QR code shown by Helm on your Mac." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Чтобы отсканировать QR-код привязки со Штурвала на Mac." } }
+      }
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Helm connects to the Helm app on your Mac over your local network or tailnet." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Штурвал подключается к Mac по локальной сети или Tailscale." } }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dictate messages to your agents." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Чтобы надиктовывать сообщения агентам." } }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Attach images to messages for your agents." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Чтобы прикреплять фото к сообщениям агентам." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
