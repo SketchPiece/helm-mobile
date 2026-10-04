@@ -112,4 +112,84 @@ final class LiveServerTests: XCTestCase {
         XCTAssertEqual(threads.count, snapshot["threads"]?.array?.count)
         await connection.close()
     }
+
+    // MARK: Projects and branches
+
+    private func serverConfig(_ connection: RPCConnection) async throws -> ServerConfig {
+        let event = try await first(connection.stream("subscribeServerConfig")) { $0["type"]?.string == "snapshot" }
+        return try XCTUnwrap(event["config"].flatMap(ServerConfig.init(json:)))
+    }
+
+    func testBrowseHomeAndTmp() async throws {
+        let connection = try await connect()
+        let home = FolderListing(json: try await connection.call("filesystem.browse", FolderListing.request(directory: "~")))
+        XCTAssertTrue(home.path.hasPrefix("/"), "the listed directory comes back absolute: \(home.path)")
+        XCTAssertFalse(home.entries.isEmpty)
+        XCTAssertEqual(FolderPath.breadcrumbs(home.path).first?.name, "~")
+
+        let tmp = FolderListing(json: try await connection.call("filesystem.browse", FolderListing.request(directory: "/tmp")))
+        XCTAssertTrue(tmp.entries.contains { $0.name == "helm-sandbox" }, "\(tmp.entries.map(\.name))")
+        await connection.close()
+    }
+
+    func testListRefsWithQueryAndPaging() async throws {
+        let connection = try await connect()
+        let all = RefPage(json: try await connection.call("vcs.listRefs", RefPage.request(cwd: "/tmp/helm-sandbox")))
+        XCTAssertTrue(all.isRepo)
+        XCTAssertNotNil(all.defaultBase)
+        let matching = RefPage(json: try await connection.call("vcs.listRefs", RefPage.request(cwd: "/tmp/helm-sandbox", query: "mai")))
+        XCTAssertTrue(matching.refs.contains { $0.name == "main" }, "\(matching.refs.map(\.name))")
+        let none = RefPage(json: try await connection.call("vcs.listRefs", RefPage.request(cwd: "/tmp/helm-sandbox", query: "no-such-branch-zz")))
+        XCTAssertTrue(none.refs.filter { !$0.isRemote }.isEmpty)
+        XCTAssertNil(none.nextCursor)
+        await connection.close()
+    }
+
+    func testEnsureScratchProject() async throws {
+        let connection = try await connect()
+        let config = try await serverConfig(connection)
+        guard let root = config.scratchWorkspaceRoot else {
+            // Servers whose data dir sits inside a git checkout (dev servers) offer no Scratch;
+            // the call then fails with a typed error, which still proves the request decoded.
+            do {
+                _ = try await connection.call("projects.ensureScratch", [:])
+                XCTFail("expected ensureScratch to fail without a scratch root")
+            } catch RPCError.failure(let tag, _) {
+                XCTAssertEqual(tag, "OrchestrationDispatchCommandError")
+            }
+            await connection.close()
+            return
+        }
+        let first = try await connection.call("projects.ensureScratch", [:])
+        let id = try XCTUnwrap(first["projectId"]?.string)
+        // Idempotent: the same scratch project every time.
+        let again = try await connection.call("projects.ensureScratch", [:])
+        XCTAssertEqual(again["projectId"]?.string, id)
+
+        var shell = ShellState()
+        for try await item in connection.stream("orchestration.subscribeShell", ["requestCompletionMarker": true]) {
+            shell.apply(item)
+            if item["kind"]?.string == "synchronized" || (!config.shellResumeCompletionMarker && shell.sequence > 0) { break }
+        }
+        let project = try XCTUnwrap(shell.projects[id])
+        XCTAssertTrue(config.isScratch(project), "\(project.workspaceRoot) vs \(root)")
+        await connection.close()
+    }
+
+    func testCreateAndDeleteFolderProject() async throws {
+        let connection = try await connect()
+        let path = "/tmp/helm-mobile-test-project-\(UUID().uuidString.lowercased().prefix(8))"
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let projectId = UUID().uuidString.lowercased()
+        let created = try await connection.call("projects.mutate", ProjectCommands.create(projectId: projectId, path: path))
+        XCTAssertEqual(created["id"]?.string, projectId)
+        XCTAssertEqual(created["title"]?.string, FolderPath.lastSegment(path))
+        XCTAssertTrue(created["workspaceRoot"]?.string?.hasSuffix(FolderPath.lastSegment(path)) == true)
+
+        let listing = FolderListing(json: try await connection.call("filesystem.browse", FolderListing.request(directory: "/tmp")))
+        XCTAssertTrue(listing.entries.contains { $0.name == FolderPath.lastSegment(path) }, "createWorkspaceRootIfMissing made the folder")
+
+        _ = try await connection.call("projects.mutate", ProjectCommands.delete(projectId: projectId))
+        await connection.close()
+    }
 }
