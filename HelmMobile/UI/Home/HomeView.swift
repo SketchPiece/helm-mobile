@@ -18,10 +18,13 @@ struct HomeView: View {
     @State private var snoozeChoosing: ThreadListEntry?
     @State private var actionError: String?
     @State private var fan = NewThreadFanState()
+    /// Moves on when the next snoozed thread is due, so it walks back into the list (as "Woke")
+    /// at its wake time rather than at the next unrelated update.
+    @State private var now = Date()
 
     var body: some View {
         let entries = filteredEntries
-        let sections = HomeSections(entries: entries)
+        let sections = HomeSections(entries: entries, now: now)
         List {
             if !chips.isEmpty {
                 ProjectChips(chips: chips, selection: $projectFilter)
@@ -95,6 +98,12 @@ struct HomeView: View {
         .searchable(text: $search, prompt: Text("Search"))
         .toolbar { toolbarContent }
         .refreshable { model.environments.forEach { $0.reconnectNow() } }
+        .task(id: nextWake) {
+            guard let nextWake else { return }
+            try? await Task.sleep(for: .seconds(max(0, nextWake.timeIntervalSinceNow) + 0.5))
+            guard !Task.isCancelled else { return }
+            withAnimation(.snappy(duration: 0.3)) { now = Date() }
+        }
         .alert("Rename thread", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Title", text: $renameText)
             Button("Cancel", role: .cancel) {}
@@ -154,6 +163,11 @@ struct HomeView: View {
             .filter { counts[$0.project.id] != nil }
             .sorted { (latest[$0.project.id] ?? .distantPast) > (latest[$1.project.id] ?? .distantPast) }
             .map { ProjectChips.Chip(project: $0.project, environment: $0.environment, count: counts[$0.project.id] ?? 0) }
+    }
+
+    /// The soonest wake time still ahead.
+    private var nextWake: Date? {
+        model.allThreads().compactMap(\.thread.snoozedUntil).filter { $0 > now }.min()
     }
 
     private var filteredEntries: [ThreadListEntry] {

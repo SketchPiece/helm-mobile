@@ -69,6 +69,7 @@ extension EnvironmentSession {
 }
 
 /// Unsent composer text per thread, so leaving a thread doesn't lose a half-written message.
+@MainActor
 enum Drafts {
     static func text(for key: String) -> String {
         UserDefaults.standard.string(forKey: "draft.\(key)") ?? ""
@@ -80,6 +81,32 @@ enum Drafts {
         } else {
             UserDefaults.standard.set(text, forKey: "draft.\(key)")
         }
+        DraftIndex.shared.update(key, hasText: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
+}
+
+/// Which threads hold unsent text, so their rows can show a pen. Observable, unlike the defaults
+/// the text lives in; it changes only when a draft appears or goes, not on every keystroke.
+@MainActor
+@Observable
+final class DraftIndex {
+    static let shared = DraftIndex()
+
+    private(set) var keys: Set<String>
+
+    private init() {
+        keys = Set(UserDefaults.standard.dictionaryRepresentation().compactMap { key, value in
+            guard key.hasPrefix("draft."), let text = value as? String,
+                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+            return String(key.dropFirst("draft.".count))
+        })
+    }
+
+    func hasDraft(_ key: String) -> Bool { keys.contains(key) }
+
+    func update(_ key: String, hasText: Bool) {
+        if hasText, !keys.contains(key) { keys.insert(key) }
+        if !hasText, keys.contains(key) { keys.remove(key) }
     }
 }
 
@@ -103,7 +130,7 @@ struct NewThreadDraft: Equatable {
     }
 
     /// The saved draft, or nil when there's nothing in it.
-    static func load(hasAttachments: Bool = false) -> NewThreadDraft? {
+    @MainActor static func load(hasAttachments: Bool = false) -> NewThreadDraft? {
         let text = Drafts.text(for: key)
         guard hasAttachments || !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         let defaults = UserDefaults.standard
@@ -117,7 +144,7 @@ struct NewThreadDraft: Equatable {
         defaults.set(projectId, forKey: projectKey)
     }
 
-    static func clear() {
+    @MainActor static func clear() {
         Drafts.save("", for: key)
         saveProject(environmentId: nil, projectId: nil)
     }

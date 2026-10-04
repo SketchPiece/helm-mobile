@@ -94,6 +94,7 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
     var settledOverride: String?
     var settledAt: Date?
     var snoozedUntil: Date?
+    var snoozedAt: Date?
     var pinnedAt: Date?
     var unsettledAt: Date?
     var pinOrderKey: String?
@@ -138,6 +139,7 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
         settledOverride = json["settledOverride"]?.nonNull?.string
         settledAt = ISODate.parse(json["settledAt"]?.nonNull?.string)
         snoozedUntil = ISODate.parse(json["snoozedUntil"]?.nonNull?.string)
+        snoozedAt = ISODate.parse(json["snoozedAt"]?.nonNull?.string)
         pinnedAt = ISODate.parse(json["pinnedAt"]?.nonNull?.string)
         unsettledAt = ISODate.parse(json["unsettledAt"]?.nonNull?.string)
         pinOrderKey = json["pinOrderKey"]?.nonNull?.string
@@ -192,6 +194,36 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
         guard let snoozedUntil, snoozedUntil > now else { return false }
         return !needsAttention && !isWorking
     }
+
+    /// When a snoozed thread came back, or nil if it isn't back (or never slept). Timer wakes report
+    /// the wake time; a thread that raised its hand early (asked for you, failed, finished a run)
+    /// reports that moment, so a visit before the early wake doesn't hide it. Mirrors
+    /// client-runtime's `threadWokeAt`.
+    func wokeAt(now: Date = Date()) -> Date? {
+        guard let snoozedUntil else { return nil }
+        // A run that finished after the snooze was set. Older servers don't send `snoozedAt`;
+        // there only a request for the user or a failure wakes early.
+        let completedSinceSnooze = snoozedAt.flatMap { snoozed in latestRunCompletedAt.flatMap { $0 > snoozed ? $0 : nil } }
+        // A snooze set on an already failed thread was the user saying "seen it, not now", so only
+        // a failure newer than the snooze counts.
+        let freshFailure = status == "failed"
+            && (snoozedAt == nil || (latestRunCompletedAt ?? updatedAt).map { $0 > snoozedAt! } == true)
+        if needsAttention || freshFailure || completedSinceSnooze != nil {
+            return completedSinceSnooze ?? updatedAt ?? snoozedAt
+        }
+        return snoozedUntil <= now ? snoozedUntil : nil
+    }
+
+    /// Back from a snooze and not looked at since. The thread returns to its old place in the list,
+    /// so a "Woke" label has to say it's back. Opening the thread (or settling it) clears it.
+    func isWoke(now: Date = Date()) -> Bool {
+        guard settledOverride != "settled", let woke = wokeAt(now: now) else { return false }
+        return lastVisitedAt.map { $0 < woke } ?? true
+    }
+
+    /// Background work the user doesn't have to watch: a running turn, or one waiting on its
+    /// subagents. The list draws it quieter, so rows that need a person stand out.
+    var recedes: Bool { phase == .working || phase == .waiting }
 
     /// Settled threads are history: the user (or auto-settle) put them away.
     var isSettled: Bool { settledOverride == "settled" && !isWorking && !needsAttention }

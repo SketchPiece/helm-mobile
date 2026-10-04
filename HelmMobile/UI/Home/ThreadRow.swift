@@ -42,12 +42,17 @@ struct ThreadRow: View {
     var body: some View {
         let thread = entry.thread
         let phase = thread.phase
+        let woke = phase == .idle || phase == .done ? thread.isWoke() : false
+        let recedes = thread.recedes
         HStack(alignment: .center, spacing: 12) {
             ProjectIcon(project: entry.project, environment: environment, size: 44)
+                // Settled history recedes: a grey, faded tile keeps the tail scannable.
+                .grayscale(thread.isSettled ? 1 : 0)
+                .opacity(thread.isSettled ? 0.5 : 1)
                 .overlay(alignment: .bottomTrailing) {
-                    if phase != .idle {
+                    if phase != .idle || woke {
                         Circle()
-                            .fill(phase.color)
+                            .fill(woke ? Palette.accentText : phase.color)
                             .frame(width: 13, height: 13)
                             .overlay(Circle().stroke(Palette.canvas, lineWidth: 2.5))
                             .offset(x: 3, y: 3)
@@ -55,24 +60,42 @@ struct ThreadRow: View {
                 }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(thread.displayTitle)
-                        .font(phase == .idle ? Typography.body : Typography.bodyMedium)
-                        .foregroundStyle(thread.isSettled ? Palette.textMuted : Palette.text)
-                        .lineLimit(1)
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        // Unsent text in this thread's composer: the same pen as the new-thread draft.
+                        if DraftIndex.shared.hasDraft(thread.id) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Palette.accentText)
+                                .accessibilityLabel(Text("Unsent draft"))
+                        }
+                        Text(thread.displayTitle)
+                            .font(phase == .idle && !woke || recedes ? Typography.body : Typography.bodyMedium)
+                            .foregroundStyle(thread.isSettled || recedes ? Palette.textMuted : Palette.text)
+                            .lineLimit(1)
+                    }
                     Spacer(minLength: 4)
-                    trailing(thread: thread, phase: phase)
+                    trailing(thread: thread, phase: phase, woke: woke)
                 }
                 subtitle(thread: thread, phase: phase)
             }
         }
         .padding(.vertical, 8)
+        // A running turn fades as a whole row, status included: it takes less attention than rows
+        // that need a person.
+        .opacity(phase == .working ? 0.7 : 1)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
-    private func trailing(thread: ThreadSummary, phase: ThreadPhase) -> some View {
-        if let label = phase.label, phase != .done {
+    private func trailing(thread: ThreadSummary, phase: ThreadPhase, woke: Bool) -> some View {
+        if woke {
+            // Back from a snooze in its old place: the label carries the news until it's opened.
+            Label("Woke", systemImage: "sun.max")
+                .labelStyle(.titleAndIcon)
+                .font(Typography.footnote.weight(.medium))
+                .foregroundStyle(Palette.accentText)
+        } else if let label = phase.label, phase != .done {
             if phase == .working, let since = thread.activityRunStartedAt {
                 HStack(spacing: 4) {
                     Text(label)
