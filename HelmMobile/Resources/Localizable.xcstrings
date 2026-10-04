@@ -807,12 +807,12 @@
         }
       }
     },
-    "Attach photos": {
+    "Attach": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Прикрепить фото"
+            "value": "Прикрепить"
           }
         }
       }
@@ -903,6 +903,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Изменения"
+          }
+        }
+      }
+    },
+    "Closed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыт"
           }
         }
       }
@@ -1197,6 +1207,16 @@
         }
       }
     },
+    "Draft": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Черновик"
+          }
+        }
+      }
+    },
     "Edits freely, asks before commands": {
       "localizations": {
         "ru": {
@@ -1213,6 +1233,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ошибка"
+          }
+        }
+      }
+    },
+    "Files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы"
           }
         }
       }
@@ -1367,6 +1397,16 @@
         }
       }
     },
+    "Larger than %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Больше %@"
+          }
+        }
+      }
+    },
     "Light": {
       "localizations": {
         "ru": {
@@ -1473,6 +1513,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пометить непрочитанным"
+          }
+        }
+      }
+    },
+    "Merged": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Влит"
           }
         }
       }
@@ -1647,6 +1697,16 @@
         }
       }
     },
+    "Nothing to paste": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В буфере пусто"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "ru": {
@@ -1673,6 +1733,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "На Mac: Штурвал → Settings → Connections → Pair a device."
+          }
+        }
+      }
+    },
+    "Open": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыт"
           }
         }
       }
@@ -1777,6 +1847,16 @@
         }
       }
     },
+    "Paste": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставить"
+          }
+        }
+      }
+    },
     "Paste a pairing link into the address field, or leave the code empty to approve this phone on the Mac (Tailscale, same account).": {
       "localizations": {
         "ru": {
@@ -1793,6 +1873,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вставить ссылку привязки"
+          }
+        }
+      }
+    },
+    "Photos": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фото"
+          }
+        }
+      }
+    },
+    "Pictures in one message can't pass 80 MB": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Картинки в одном сообщении — не больше 80 МБ"
           }
         }
       }
@@ -1833,6 +1933,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Проект"
+          }
+        }
+      }
+    },
+    "Pull requests are unavailable for this project.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пулл-реквесты для этого проекта недоступны."
           }
         }
       }
@@ -1953,6 +2063,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Убрать"
+          }
+        }
+      }
+    },
+    "Remove %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убрать %@"
           }
         }
       }
@@ -2083,6 +2203,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поиск"
+          }
+        }
+      }
+    },
+    "Searching…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ищу…"
           }
         }
       }
@@ -2317,6 +2447,36 @@
         }
       }
     },
+    "Switch model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сменить модель"
+          }
+        }
+      }
+    },
+    "Switch to default mode": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обычный режим"
+          }
+        }
+      }
+    },
+    "Switch to plan mode": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Режим плана"
+          }
+        }
+      }
+    },
     "Switched to %@": {
       "localizations": {
         "ru": {
@@ -2367,6 +2527,16 @@
         }
       }
     },
+    "That's too much text for one message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком много текста для одного сообщения"
+          }
+        }
+      }
+    },
     "The agent decides what needs approval": {
       "localizations": {
         "ru": {
@@ -2403,6 +2573,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переписка и история терминала удалятся с Mac."
+          }
+        }
+      }
+    },
+    "The file is empty": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл пустой"
           }
         }
       }
@@ -2453,6 +2633,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Версия Штурвала на Mac не подходит к этому приложению."
+          }
+        }
+      }
+    },
+    "This Mac doesn't take files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот Mac не принимает файлы"
           }
         }
       }
@@ -2607,6 +2797,16 @@
         }
       }
     },
+    "Too many attachments and links in one message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком много вложений и ссылок в одном сообщении"
+          }
+        }
+      }
+    },
     "Tool": {
       "localizations": {
         "ru": {
@@ -2663,6 +2863,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Дальше в очереди"
+          }
+        }
+      }
+    },
+    "Up to 100 attachments per message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не больше 100 вложений в сообщении"
           }
         }
       }
