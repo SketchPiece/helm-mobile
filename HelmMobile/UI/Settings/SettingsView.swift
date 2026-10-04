@@ -6,9 +6,14 @@ struct SettingsView: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
     @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage(PhonePreferences.followUpKey) private var followUp = FollowUpBehavior.queue
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
+    @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
 
     var body: some View {
-        NavigationStack {
+        @Bindable var router = router
+        NavigationStack(path: $router.settingsPath) {
             Form {
                 Section {
                     ForEach(model.environments) { environment in
@@ -58,16 +63,45 @@ struct SettingsView: View {
                     Text("Threads").sectionLabelStyle()
                 }
 
+                Section {
+                    NavigationLink {
+                        ScheduledTasksView()
+                    } label: {
+                        Label("Scheduled tasks", systemImage: "calendar.badge.clock")
+                    }
+                    .accessibilityIdentifier("scheduledTasks")
+                    NavigationLink {
+                        UsageView()
+                    } label: {
+                        Label("Usage", systemImage: "chart.bar")
+                    }
+                    .accessibilityIdentifier("usage")
+                } header: {
+                    Text("Agents").sectionLabelStyle()
+                }
+
                 NotificationsSection()
 
                 Section {
-                    Picker("Appearance", selection: $appearance) {
-                        ForEach(Appearance.allCases) { option in
-                            Text(option.title).tag(option)
-                        }
+                    valueLink(String(localized: "Appearance"), value: "\(appearance.title) · \(ThemeStore.shared.theme.name)",
+                              symbol: "paintpalette") {
+                        AppearanceSettingsView()
                     }
-                    .pickerStyle(.segmented)
-                    .listRowBackground(Color.clear)
+                    .accessibilityIdentifier("appearanceSettings")
+                    valueLink(String(localized: "Follow-ups"), value: followUp.title, symbol: "text.line.first.and.arrowtriangle.forward") {
+                        FollowUpSettingsView()
+                    }
+                    .accessibilityIdentifier("followUpSettings")
+                    valueLink(String(localized: "Keyboard"), value: returnKey == .send ? String(localized: "Return sends") : String(localized: "Return adds a line"),
+                              symbol: "keyboard") {
+                        KeyboardSettingsView()
+                    }
+                    .accessibilityIdentifier("keyboardSettings")
+                    valueLink(String(localized: "Code and diffs"), value: CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap).summary,
+                              symbol: "chevron.left.forwardslash.chevron.right") {
+                        CodeSettingsView()
+                    }
+                    .accessibilityIdentifier("codeSettings")
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     } label: {
@@ -107,10 +141,27 @@ struct SettingsView: View {
             .background(Palette.canvas)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: SettingsDestination.self) { destination in
+                switch destination {
+                case .usage: UsageView()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close) { dismiss() }
                 }
+            }
+        }
+    }
+
+    private func valueLink(_ title: String, value: String, symbol: String, @ViewBuilder destination: () -> some View) -> some View {
+        NavigationLink(destination: destination) {
+            HStack {
+                Label(title, systemImage: symbol)
+                Spacer()
+                Text(value)
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.textMuted)
             }
         }
     }

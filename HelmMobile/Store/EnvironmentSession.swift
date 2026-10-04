@@ -20,7 +20,11 @@ final class EnvironmentSession: Identifiable {
     private(set) var config: ServerConfig?
     private(set) var shell = ShellState()
     private(set) var lastConnectedAt: Date?
+    /// Themes this Mac publishes (`<state>/themes/*.json`), for Settings → Appearance.
+    private(set) var themes: [HelmTheme] = []
 
+    /// Called each time the socket comes up with a fresh config (the app refreshes the widget).
+    @ObservationIgnored var onLive: (() -> Void)?
     @ObservationIgnored private var connection: RPCConnection?
     @ObservationIgnored private var supervisor: Task<Void, Never>?
     @ObservationIgnored private var streams: [Task<Void, Never>] = []
@@ -93,6 +97,7 @@ final class EnvironmentSession: Identifiable {
                 delay = 1
                 status = .live
                 lastConnectedAt = Date()
+                onLive?()
                 await waitForClose()
                 teardown()
                 if Task.isCancelled { return }
@@ -164,7 +169,8 @@ final class EnvironmentSession: Identifiable {
         }
 
         // The config snapshot comes first; everything else depends on it.
-        let configStream = connection.stream("subscribeServerConfig", [:])
+        // Opting in to themes adds `environmentThemesUpdated` events (decoded below).
+        let configStream = connection.stream("subscribeServerConfig", ["environmentThemes": true])
         let config: ServerConfig = try await withCheckedThrowingContinuation { continuation in
             streams.append(Task { [weak self] in
                 var resumed = false
@@ -241,6 +247,9 @@ final class EnvironmentSession: Identifiable {
                 config?.defaultRuntimeMode = settings["defaultRuntimeMode"]?.string ?? config?.defaultRuntimeMode ?? "full-access"
                 config?.applySettings(settings)
             }
+        case "environmentThemesUpdated":
+            themes = HelmTheme.published(event["payload"]?["themes"] ?? [], source: label)
+            ThemeStore.shared.update(from: themes)
         default:
             break
         }
@@ -309,6 +318,18 @@ final class EnvironmentSession: Identifiable {
                 config?.providers[index] = provider
             }
         }
+    }
+
+    /// `server.refreshProviders {}`: probes every provider again, usage limits included, and
+    /// replaces the catalog with the answer (the config stream would deliver it a moment later).
+    func refreshProviders() async throws {
+        let result = try await call("server.refreshProviders", [:], timeout: .seconds(45))
+        if let list = result["providers"]?.array { config?.providers = list.compactMap(Provider.init(json:)) }
+    }
+
+    /// `server.getUsageSummary` for a window from `Usage.window(days:)`. Scans transcripts, so it can be slow.
+    func usageSummary(_ window: JSON) async throws -> Usage.Summary {
+        Usage.Summary(json: try await call("server.getUsageSummary", window, timeout: .seconds(90)))
     }
 
     func project(_ id: String?) -> Project? { id.flatMap { shell.projects[$0] } }
