@@ -74,7 +74,7 @@ struct ScheduledTaskEditor: View {
                 }
             }
             .font(Typography.body)
-            .tint(Palette.accent)
+            .tint(Palette.text)
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .background(Palette.canvas)
@@ -251,6 +251,7 @@ struct ScheduledTaskEditor: View {
                 }
             }
             Toggle("Enabled", isOn: $draft.enabled)
+                .tint(Palette.accent)
                 .accessibilityIdentifier("taskEnabled")
         } header: {
             Text("Schedule").sectionLabelStyle()

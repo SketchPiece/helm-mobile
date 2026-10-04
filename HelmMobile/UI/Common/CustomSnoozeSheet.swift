@@ -64,7 +64,7 @@ struct CustomSnoozeSheet: View {
                     }
                 }
             }
-            .tint(Palette.accent)
+            .tint(Palette.text)
             .font(Typography.body)
             .scrollContentBackground(.hidden)
             .background(Palette.canvas)

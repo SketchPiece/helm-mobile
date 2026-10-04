@@ -41,7 +41,7 @@ was left out of the first version.
   core registration; the prototype uses a separate bundle id so it can live next to the old app.
   Next step once the native app replaces the old one: reuse `com.sketchpiece.helm` and port
   `helm/push` (four relay calls) and the Live Activity layout (already SwiftUI-shaped).
-- **Terminal, file browser, git sheets, scheduled tasks, usage.** Reachable from the Mac; worth
-  porting in that order if the phone becomes the main surface.
+- **Terminal, file browser, git sheets.** Reachable from the Mac; worth porting in that order if
+  the phone becomes the main surface. (Scheduled tasks, usage and themes are in Settings.)
 - **iPad layout.** iPhone only for now.
 - **Multiple Macs in one list** works, but environment switching UI is minimal (status menu).

@@ -15,6 +15,9 @@ final class SettingsTourTests: XCTestCase {
         if let style = env["HELM_APPEARANCE"] { app.launchArguments += ["-appearance", style] }
         if let language = env["HELM_LANGUAGE"] { app.launchArguments += ["-AppleLanguages", "(\(language))"] }
         app.launch()
+        // A fresh install asks about notifications first.
+        let alert = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Don’t Allow"]
+        if alert.waitForExistence(timeout: 3) { alert.tap() }
     }
 
     private func shot(_ name: String) {
@@ -34,8 +37,8 @@ final class SettingsTourTests: XCTestCase {
     }
 
     private func open(_ identifier: String) {
-        let link = app.buttons[identifier].firstMatch
-        if !link.isHittable { app.swipeUp() }
+        let link = app.descendants(matching: .any)[identifier].firstMatch
+        if !link.waitForExistence(timeout: 3) || !link.isHittable { app.swipeUp() }
         XCTAssertTrue(link.waitForExistence(timeout: 5), identifier)
         link.tap()
         sleep(1)
@@ -77,7 +80,7 @@ final class SettingsTourTests: XCTestCase {
             shot("21-appearance-themed")
             back()
             shot("22-settings-themed")
-            app.buttons["Close"].firstMatch.tap()
+            app.navigationBars.buttons.element(boundBy: 0).tap()
             sleep(1)
             shot("23-home-themed")
             openSettings()
