@@ -597,6 +597,26 @@
         }
       }
     },
+    "Add project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить проект"
+          }
+        }
+      }
+    },
+    "Add this folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить эту папку"
+          }
+        }
+      }
+    },
     "Add to the queue…": {
       "localizations": {
         "ru": {
@@ -683,6 +703,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Разрешить?"
+          }
+        }
+      }
+    },
+    "An empty folder with a README and a first commit": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пустая папка с README и первым коммитом"
           }
         }
       }
@@ -857,6 +887,16 @@
         }
       }
     },
+    "Base branch": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовая ветка"
+          }
+        }
+      }
+    },
     "Binary file not shown": {
       "localizations": {
         "ru": {
@@ -913,6 +953,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Изменения"
+          }
+        }
+      }
+    },
+    "Checking out files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распаковка файлов"
+          }
+        }
+      }
+    },
+    "Clone": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клонировать"
+          }
+        }
+      }
+    },
+    "Clone a repository": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клонировать репозиторий"
+          }
+        }
+      }
+    },
+    "Clone into this folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клонировать сюда"
           }
         }
       }
@@ -977,12 +1057,32 @@
         }
       }
     },
+    "Connect to this Mac to add a project.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключись к этому Mac, чтобы добавить проект."
+          }
+        }
+      }
+    },
     "Connected": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Подключено"
+          }
+        }
+      }
+    },
+    "Connecting": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключение"
           }
         }
       }
@@ -1013,6 +1113,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подключения"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
           }
         }
       }
@@ -1113,6 +1223,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось распознать запись."
+          }
+        }
+      }
+    },
+    "Counting objects": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подсчёт объектов"
+          }
+        }
+      }
+    },
+    "Create a private GitHub repository": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создать приватный репозиторий на GitHub"
+          }
+        }
+      }
+    },
+    "Create project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создать проект"
+          }
+        }
+      }
+    },
+    "Creating the GitHub repository…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создаю репозиторий на GitHub…"
+          }
+        }
+      }
+    },
+    "Creating the project…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создаю проект…"
           }
         }
       }
@@ -1227,12 +1387,42 @@
         }
       }
     },
+    "Fetch origin/%@ and branch off that": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скачать origin/%@ и ответвиться от него"
+          }
+        }
+      }
+    },
+    "Filter folders": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фильтр папок"
+          }
+        }
+      }
+    },
     "Finish logging in in the browser. This screen updates by itself.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Заверши вход в браузере. Этот экран обновится сам."
+          }
+        }
+      }
+    },
+    "Folder on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка на Mac"
           }
         }
       }
@@ -1247,12 +1437,32 @@
         }
       }
     },
+    "From GitHub or any git URL": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С GitHub или по любой git-ссылке"
+          }
+        }
+      }
+    },
     "Full access": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Полный доступ"
+          }
+        }
+      }
+    },
+    "Goes in %@, with a README and a first commit.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Появится в %@, с README и первым коммитом."
           }
         }
       }
@@ -1393,6 +1603,16 @@
         }
       }
     },
+    "Helm made the project, but it hasn't shown up yet. Try again in a moment.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал создал проект, но он ещё не появился. Попробуй чуть позже."
+          }
+        }
+      }
+    },
     "Helm on the Mac asks you to allow this phone. No code needed.": {
       "localizations": {
         "ru": {
@@ -1459,6 +1679,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выполни план."
+          }
+        }
+      }
+    },
+    "Into": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Куда"
           }
         }
       }
@@ -1563,6 +1793,16 @@
         }
       }
     },
+    "Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac"
+          }
+        }
+      }
+    },
     "Macs": {
       "localizations": {
         "ru": {
@@ -1623,6 +1863,16 @@
         }
       }
     },
+    "Name": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название"
+          }
+        }
+      }
+    },
     "Needs an answer": {
       "localizations": {
         "ru": {
@@ -1669,6 +1919,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Никогда не спрашивает"
+          }
+        }
+      }
+    },
+    "New project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый проект"
           }
         }
       }
@@ -1723,6 +1983,26 @@
         }
       }
     },
+    "No branches": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Веток нет"
+          }
+        }
+      }
+    },
+    "No branches match": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таких веток нет"
+          }
+        }
+      }
+    },
     "No computers on this tailnet yet.": {
       "localizations": {
         "ru": {
@@ -1739,6 +2019,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Файлы не менялись"
+          }
+        }
+      }
+    },
+    "No folders inside": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Внутри нет папок"
+          }
+        }
+      }
+    },
+    "No folders match": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таких папок нет"
+          }
+        }
+      }
+    },
+    "No project — just a task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без проекта — просто задача"
           }
         }
       }
@@ -1983,6 +2293,16 @@
         }
       }
     },
+    "Pick a folder that's already there": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери папку, которая уже есть"
+          }
+        }
+      }
+    },
     "Pin": {
       "localizations": {
         "ru": {
@@ -2089,6 +2409,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Готов"
+          }
+        }
+      }
+    },
+    "Receiving objects": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Получение объектов"
           }
         }
       }
@@ -2203,6 +2533,16 @@
         }
       }
     },
+    "Resolving deltas": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разбор изменений"
+          }
+        }
+      }
+    },
     "Restore": {
       "localizations": {
         "ru": {
@@ -2269,6 +2609,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поиск"
+          }
+        }
+      }
+    },
+    "Search branches": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск веток"
           }
         }
       }
@@ -2399,6 +2749,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Что-то пошло не так"
+          }
+        }
+      }
+    },
+    "Start from origin": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать с origin"
           }
         }
       }
@@ -2563,6 +2923,16 @@
         }
       }
     },
+    "The GitHub repository wasn't created: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Репозиторий на GitHub не создан: %@"
+          }
+        }
+      }
+    },
     "The agent decides what needs approval": {
       "localizations": {
         "ru": {
@@ -2593,12 +2963,32 @@
         }
       }
     },
+    "The clone failed.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клонирование не удалось."
+          }
+        }
+      }
+    },
     "The conversation and its terminal history are removed from the Mac.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Переписка и история терминала удалятся с Mac."
+          }
+        }
+      }
+    },
+    "The first commit failed: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Первый коммит не удался: %@"
           }
         }
       }
@@ -2843,12 +3233,32 @@
         }
       }
     },
+    "URL or owner/name": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ссылка или владелец/имя"
+          }
+        }
+      }
+    },
     "Unavailable": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Недоступен"
+          }
+        }
+      }
+    },
+    "Under %@ on GitHub.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В аккаунте %@ на GitHub."
           }
         }
       }
@@ -2923,6 +3333,16 @@
         }
       }
     },
+    "What are we doing": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что делаем"
+          }
+        }
+      }
+    },
     "What are we doing in": {
       "localizations": {
         "ru": {
@@ -2969,6 +3389,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Твои агенты — в кармане."
+          }
+        }
+      }
+    },
+    "current": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "текущая"
+          }
+        }
+      }
+    },
+    "default": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "основная"
           }
         }
       }
@@ -3029,6 +3469,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "каком проекте?"
+          }
+        }
+      }
+    },
+    "without a project?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "без проекта?"
           }
         }
       }

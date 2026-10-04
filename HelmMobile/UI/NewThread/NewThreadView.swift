@@ -15,7 +15,9 @@ struct NewThreadView: View {
     @State private var runtimeMode = "full-access"
     @State private var interactionMode = "default"
     @State private var newWorktree = false
-    @State private var branches: [String] = []
+    @State private var startFromOrigin = true
+    @State private var showBranches = false
+    @State private var repo: RefPage?
     @State private var baseBranch: String?
     @State private var attachments: [DraftAttachment] = []
     @State private var pickerItems: [PhotosPickerItem] = []
@@ -29,6 +31,8 @@ struct NewThreadView: View {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
     }
     private var project: Project? { environment?.project(projectId) }
+    /// "No project" threads run in the scratch folder, always in place.
+    private var isScratch: Bool { project.map { environment?.config?.isScratch($0) == true } ?? false }
 
     var body: some View {
         NavigationStack {
@@ -98,13 +102,13 @@ struct NewThreadView: View {
                 showProjects = true
             } label: {
                 VStack(spacing: 6) {
-                    Text("What are we doing in")
+                    Text(isScratch ? "What are we doing" : "What are we doing in")
                         .foregroundStyle(Palette.text)
                     HStack(spacing: 8) {
-                        if let project {
+                        if let project, !isScratch {
                             ProjectIcon(project: project, environment: environment, size: 26)
                         }
-                        Text(project.map { "\($0.title)?" } ?? String(localized: "which project?"))
+                        Text(projectQuestion)
                             .underline(color: Palette.placeholder)
                             .foregroundStyle(Palette.text)
                     }
@@ -136,22 +140,29 @@ struct NewThreadView: View {
         .padding(.horizontal, 24)
     }
 
+    private var projectQuestion: String {
+        if isScratch { return String(localized: "without a project?") }
+        return project.map { "\($0.title)?" } ?? String(localized: "which project?")
+    }
+
     private var workspaceChips: some View {
         HStack(spacing: 8) {
-            Menu {
-                Button {
-                    newWorktree = false
+            if !isScratch {
+                Menu {
+                    Button {
+                        newWorktree = false
+                    } label: {
+                        Label("Current checkout", systemImage: newWorktree ? "" : "checkmark")
+                    }
+                    Button {
+                        newWorktree = true
+                    } label: {
+                        Label("New worktree", systemImage: newWorktree ? "checkmark" : "")
+                    }
                 } label: {
-                    Label("Current checkout", systemImage: newWorktree ? "" : "checkmark")
+                    chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
+                              symbol: newWorktree ? "arrow.triangle.branch" : "folder")
                 }
-                Button {
-                    newWorktree = true
-                } label: {
-                    Label("New worktree", systemImage: newWorktree ? "checkmark" : "")
-                }
-            } label: {
-                chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
-                          symbol: newWorktree ? "arrow.triangle.branch" : "folder")
             }
             Button {
                 showSettings = true
@@ -160,20 +171,33 @@ struct NewThreadView: View {
                 chipLabel(mode.title, symbol: mode.symbol)
             }
             .buttonStyle(.plain)
-            if newWorktree, !branches.isEmpty {
-                Menu {
-                    ForEach(branches, id: \.self) { branch in
-                        Button(branch) { baseBranch = branch }
-                    }
+            if newWorktree, !isScratch, repo?.isRepo == true {
+                Button {
+                    showBranches = true
                 } label: {
-                    chipLabel(baseBranch ?? "main", symbol: "point.topleft.down.to.point.bottomright.curvepath", mono: true)
+                    let base = baseBranch ?? "main"
+                    chipLabel(originAvailable && startFromOrigin ? "origin/\(base)" : base,
+                              symbol: "point.topleft.down.to.point.bottomright.curvepath", mono: true)
                 }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("baseBranch")
             }
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
+        .sheet(isPresented: $showBranches) {
+            if let environment, let project {
+                BranchPicker(
+                    environment: environment, cwd: project.workspaceRoot, selected: baseBranch,
+                    showsOriginToggle: originAvailable, startFromOrigin: $startFromOrigin
+                ) { baseBranch = $0 }
+            }
+        }
     }
+
+    /// "Start from origin" only means something when the repository has an origin.
+    private var originAvailable: Bool { repo?.hasPrimaryRemote == true }
 
     private func chipLabel(_ title: String, symbol: String, mono: Bool = false) -> some View {
         HStack(spacing: 6) {
@@ -291,21 +315,16 @@ struct NewThreadView: View {
         guard let config = environment?.config else { return }
         selection = config.initialSelection(project: project)
         runtimeMode = config.defaultRuntimeMode
+        startFromOrigin = config.newWorktreesStartFromOrigin
     }
 
+    /// Whether the project is a repository, and the branch a worktree starts from by default.
     private func loadBranches() async {
-        guard let environment, let project, environment.isLive else { return }
-        guard let result = try? await environment.call("vcs.listRefs", [
-            "cwd": .string(project.workspaceRoot), "refKind": "local", "limit": 50,
-        ]) else {
-            branches = []
-            return
-        }
-        let refs = result["refs"]?.array ?? []
-        branches = refs.compactMap { $0["name"]?.string }
-        baseBranch = refs.first { $0["current"]?.bool == true }?["name"]?.string
-            ?? refs.first { $0["isDefault"]?.bool == true }?["name"]?.string
-            ?? branches.first
+        repo = nil
+        guard let environment, let project, environment.isLive, !isScratch else { return }
+        guard let page = try? await environment.listRefs(cwd: project.workspaceRoot) else { return }
+        repo = page
+        baseBranch = page.defaultBase
     }
 
     private func launch() {
@@ -317,7 +336,8 @@ struct NewThreadView: View {
             text: text.trimmingCharacters(in: .whitespacesAndNewlines),
             attachments: attachments.compactMap(\.uploaded), modelSelection: selection,
             runtimeMode: runtimeMode, interactionMode: interactionMode,
-            newWorktree: newWorktree && baseBranch != nil, baseBranch: baseBranch
+            newWorktree: newWorktree && !isScratch && baseBranch != nil, baseBranch: baseBranch,
+            startFromOrigin: startFromOrigin && originAvailable
         )
         Task {
             do {
@@ -335,7 +355,8 @@ struct NewThreadView: View {
     }
 }
 
-/// Projects across connected Macs, searchable.
+/// Projects across connected Macs, searchable. "No project" sits on top for Macs with a scratch
+/// folder, and "+" adds a project from the phone.
 struct ProjectPicker: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -343,10 +364,25 @@ struct ProjectPicker: View {
     let selectedProject: String?
     let onPick: (EnvironmentSession, Project) -> Void
     @State private var query = ""
+    @State private var showAdd = false
+    @State private var preparingScratch: String?
+    @State private var error: String?
 
     var body: some View {
         NavigationStack {
             List {
+                if query.isEmpty, !scratchEnvironments.isEmpty {
+                    Section {
+                        ForEach(scratchEnvironments) { environment in
+                            scratchRow(environment)
+                        }
+                    } footer: {
+                        if let error {
+                            Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+                        }
+                    }
+                    .listRowBackground(Palette.surface)
+                }
                 ForEach(filtered, id: \.project.id) { entry in
                     Button {
                         onPick(entry.environment, entry.project)
@@ -355,7 +391,7 @@ struct ProjectPicker: View {
                             ProjectIcon(project: entry.project, environment: entry.environment, size: 32)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.project.title).font(Typography.body).foregroundStyle(Palette.text)
-                                Text(shortPath(entry.project.workspaceRoot))
+                                Text(FolderPath.short(entry.project.workspaceRoot))
                                     .font(Typography.mono(12))
                                     .foregroundStyle(Palette.textMuted)
                                     .lineLimit(1)
@@ -380,18 +416,78 @@ struct ProjectPicker: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) { dismiss() }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showAdd = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Add project")
+                    .accessibilityIdentifier("addProject")
+                }
+            }
+            .sheet(isPresented: $showAdd) {
+                AddProjectSheet(environmentId: selectedEnvironment) { environment, project in
+                    showAdd = false
+                    onPick(environment, project)
+                }
             }
         }
         .presentationDetents([.medium, .large])
     }
 
-    private var filtered: [(environment: EnvironmentSession, project: Project)] {
-        let all = model.allProjects()
-        guard !query.isEmpty else { return all }
-        return all.filter { $0.project.title.localizedCaseInsensitiveContains(query) || $0.project.workspaceRoot.localizedCaseInsensitiveContains(query) }
+    /// Connected Macs that can run a thread without a project.
+    private var scratchEnvironments: [EnvironmentSession] {
+        model.environments.filter { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }
     }
 
-    private func shortPath(_ path: String) -> String {
-        path.replacingOccurrences(of: #"^/Users/[^/]+"#, with: "~", options: .regularExpression)
+    private func scratchRow(_ environment: EnvironmentSession) -> some View {
+        let selected = environment.id == selectedEnvironment
+            && environment.project(selectedProject).map { environment.config?.isScratch($0) == true } == true
+        return Button {
+            pickScratch(on: environment)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "text.bubble")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Palette.textMuted)
+                    .frame(width: 32, height: 32)
+                    .background(Palette.canvas, in: .rect(cornerRadius: 8))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No project — just a task").font(Typography.body).foregroundStyle(Palette.text)
+                    if scratchEnvironments.count > 1 {
+                        Text("on \(environment.label)").font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                    }
+                }
+                Spacer()
+                if preparingScratch == environment.id {
+                    ProgressView()
+                } else if selected {
+                    Image(systemName: "checkmark").foregroundStyle(Palette.accentText)
+                }
+            }
+        }
+        .disabled(preparingScratch != nil)
+        .accessibilityIdentifier("noProject")
+    }
+
+    private func pickScratch(on environment: EnvironmentSession) {
+        preparingScratch = environment.id
+        error = nil
+        Task {
+            do {
+                onPick(environment, try await environment.ensureScratchProject())
+            } catch {
+                self.error = error.localizedDescription
+            }
+            preparingScratch = nil
+        }
+    }
+
+    /// Every project except the scratch ones, which have their own row.
+    private var filtered: [(environment: EnvironmentSession, project: Project)] {
+        let all = model.allProjects().filter { $0.environment.config?.isScratch($0.project) != true }
+        guard !query.isEmpty else { return all }
+        return all.filter { $0.project.title.localizedCaseInsensitiveContains(query) || $0.project.workspaceRoot.localizedCaseInsensitiveContains(query) }
     }
 }

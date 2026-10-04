@@ -167,6 +167,8 @@ final class AppModel {
         var interactionMode: String
         var newWorktree: Bool
         var baseBranch: String?
+        /// Branch the worktree off `origin/<baseBranch>` (fetched first) instead of the local branch.
+        var startFromOrigin = false
     }
 
     /// `orchestration.launchThread`: creates the thread and sends its first message.
@@ -179,7 +181,7 @@ final class AppModel {
                 "baseRef": .string(request.baseBranch ?? "HEAD"),
                 "branch": .string("helm/\(threadId.prefix(8))"),
             ]
-            if request.baseBranch != nil { worktree["startFromOrigin"] = false }
+            if request.baseBranch != nil { worktree["startFromOrigin"] = .bool(request.startFromOrigin) }
             strategy = .object(worktree)
         }
         let title = Self.titleSeed(request.text)

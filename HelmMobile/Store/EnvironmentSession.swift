@@ -203,7 +203,10 @@ final class EnvironmentSession: Identifiable {
         let shellStream = connection.stream("orchestration.subscribeShell", .object(shellPayload))
         streams.append(Task { [weak self] in
             do {
-                for try await item in shellStream { self?.shell.apply(item) }
+                for try await item in shellStream {
+                    self?.shell.apply(item)
+                    self?.resolveProjectWaiters()
+                }
             } catch {}
             await self?.streamEnded(on: connection)
         })
@@ -236,6 +239,7 @@ final class EnvironmentSession: Identifiable {
             if let settings = event["payload"]?["settings"] {
                 config?.defaultModelSelection = ModelSelection(json: settings["defaultModelSelection"]?.nonNull)
                 config?.defaultRuntimeMode = settings["defaultRuntimeMode"]?.string ?? config?.defaultRuntimeMode ?? "full-access"
+                config?.applySettings(settings)
             }
         default:
             break
@@ -273,6 +277,12 @@ final class EnvironmentSession: Identifiable {
         return try await connection.call(tag, payload, timeout: timeout)
     }
 
+    /// A server stream on the live socket; it ends when the socket does.
+    func stream(_ tag: String, _ payload: JSON = [:]) throws -> AsyncThrowingStream<JSON, Error> {
+        guard let connection, status == .live else { throw RPCError.disconnected }
+        return connection.stream(tag, payload)
+    }
+
     /// `orchestration.dispatchCommand`. `commandId` is generated unless provided (retries reuse it).
     @discardableResult
     func dispatch(_ type: String, _ fields: [String: JSON], commandId: String = UUID().uuidString.lowercased()) async throws -> JSON {
@@ -283,6 +293,39 @@ final class EnvironmentSession: Identifiable {
     }
 
     func project(_ id: String?) -> Project? { id.flatMap { shell.projects[$0] } }
+
+    /// A project the server just created reaches the shell a moment after the RPC answers.
+    /// Waits for it to arrive, or nil after `timeout`.
+    func waitForProject(_ projectId: String, timeout: Duration = .seconds(15)) async -> Project? {
+        if let project = shell.projects[projectId] { return project }
+        let token = UUID()
+        return await withCheckedContinuation { continuation in
+            projectWaiters.append(ProjectWaiter(token: token, projectId: projectId, continuation: continuation))
+            Task { [weak self] in
+                try? await Task.sleep(for: timeout)
+                self?.resumeProjectWaiter(token, with: nil)
+            }
+        }
+    }
+
+    private struct ProjectWaiter {
+        var token: UUID
+        var projectId: String
+        var continuation: CheckedContinuation<Project?, Never>
+    }
+
+    @ObservationIgnored private var projectWaiters: [ProjectWaiter] = []
+
+    private func resolveProjectWaiters() {
+        for waiter in projectWaiters {
+            if let project = shell.projects[waiter.projectId] { resumeProjectWaiter(waiter.token, with: project) }
+        }
+    }
+
+    private func resumeProjectWaiter(_ token: UUID, with project: Project?) {
+        guard let index = projectWaiters.firstIndex(where: { $0.token == token }) else { return }
+        projectWaiters.remove(at: index).continuation.resume(returning: project)
+    }
 
     func thread(_ id: String) -> ThreadSummary? { shell.threads[id] }
 }
