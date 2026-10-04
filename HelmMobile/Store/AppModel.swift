@@ -226,6 +226,7 @@ final class AppModel {
         var projectId: String
         var text: String
         var attachments: [ChatAttachment]
+        var context: JSON? = nil
         var modelSelection: ModelSelection
         var runtimeMode: String
         var interactionMode: String
@@ -248,7 +249,13 @@ final class AppModel {
             if request.baseBranch != nil { worktree["startFromOrigin"] = .bool(request.startFromOrigin) }
             strategy = .object(worktree)
         }
-        let title = Self.titleSeed(request.text)
+        let title = Self.titleSeed(ContextReference.displayText(request.text))
+        var initialMessage: [String: JSON] = [
+            "messageId": .string(UUID().uuidString.lowercased()),
+            "text": .string(request.text),
+            "attachments": .array(request.attachments.map(\.json)),
+        ]
+        if let context = request.context { initialMessage["context"] = context }
         let payload: JSON = [
             "commandId": .string(UUID().uuidString.lowercased()),
             "creationSource": "mobile",
@@ -260,11 +267,7 @@ final class AppModel {
             "runtimeMode": .string(request.runtimeMode),
             "interactionMode": .string(request.interactionMode),
             "workspaceStrategy": strategy,
-            "initialMessage": [
-                "messageId": .string(UUID().uuidString.lowercased()),
-                "text": .string(request.text),
-                "attachments": .array(request.attachments.map(\.json)),
-            ],
+            "initialMessage": .object(initialMessage),
         ]
         PushService.shared.armForLocalWork(
             projectTitle: request.environment.project(request.projectId)?.title ?? request.environment.label,

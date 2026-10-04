@@ -17,6 +17,8 @@ final class ThreadSession {
         var commandId: String
         var text: String
         var attachments: [ChatAttachment]
+        /// `OrchestrationMessageContext` for the `t3-context://` links in `text`.
+        var context: JSON?
         var failed: String?
     }
 
@@ -112,11 +114,11 @@ final class ThreadSession {
     enum FollowUp { case queue, steer }
 
     /// Sends a message. While a turn runs it queues (default) or steers into the running turn.
-    func send(text: String, attachments: [ChatAttachment], followUp: FollowUp = .queue,
+    func send(text: String, attachments: [ChatAttachment], context: JSON? = nil, followUp: FollowUp = .queue,
               modelSelection: ModelSelection?, runtimeMode: String?, interactionMode: String?) async {
         var message = OutgoingMessage(
             id: UUID().uuidString.lowercased(), commandId: UUID().uuidString.lowercased(),
-            text: text, attachments: attachments
+            text: text, attachments: attachments, context: context
         )
         guard let environment else {
             // Never drop typed text: keep it visible with a way to retry.
@@ -162,6 +164,7 @@ final class ThreadSession {
                 "text": .string(message.text),
                 "attachments": .array(message.attachments.map(\.json)),
             ]
+            if let context = message.context { fields["context"] = context }
             if let modelSelection { fields["modelSelection"] = modelSelection.json }
             let isWorking = projection?.isWorking ?? thread?.isWorking ?? false
             let serverResolves = environment.config?.capability("serverResolvedCommandContext") ?? false

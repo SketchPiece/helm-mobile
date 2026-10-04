@@ -39,6 +39,8 @@ struct Project: Identifiable, Hashable, Sendable {
     var monogram: String?
     var defaultModelSelection: ModelSelection?
     var updatedAt: Date?
+    /// `repositoryIdentity.displayName` ("acme/app"); `#` pull request search needs it.
+    var repositoryName: String?
 
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
@@ -52,6 +54,7 @@ struct Project: Identifiable, Hashable, Sendable {
         monogram = icon?["text"]?.string ?? icon?["monogramText"]?.string
         defaultModelSelection = ModelSelection(json: json["defaultModelSelection"]?.nonNull)
         updatedAt = ISODate.parse(json["updatedAt"]?.string)
+        repositoryName = json["repositoryIdentity"]?.nonNull?["displayName"]?.string
     }
 
     var initials: String {
@@ -300,10 +303,17 @@ struct ShellState: Sendable {
                 return
             }
             sequence = snapshot["snapshotSequence"]?.int ?? sequence
+            let previous = projects
             projects = Dictionary(
                 (snapshot["projects"]?.array ?? []).compactMap(Project.init(json:)).map { ($0.id, $0) },
                 uniquingKeysWith: { _, b in b }
             )
+            // A reconnect snapshot can arrive before the server resolves repositories again.
+            for (id, project) in projects where project.repositoryName == nil {
+                if let old = previous[id], old.workspaceRoot == project.workspaceRoot {
+                    projects[id]?.repositoryName = old.repositoryName
+                }
+            }
             threads = [:]
             for thread in (snapshot["threads"]?.array ?? []).compactMap(ThreadSummary.init(json:)) {
                 threads[thread.id] = reconcile(thread)

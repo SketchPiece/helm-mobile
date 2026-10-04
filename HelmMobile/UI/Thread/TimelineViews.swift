@@ -16,7 +16,7 @@ struct UserBubble: View {
                 }
             }
             if !item.text.isEmpty {
-                Text(item.text)
+                Text(ContextReference.displayText(item.text))
                     .font(Typography.body)
                     .foregroundStyle(Palette.text)
                     .textSelection(.enabled)
@@ -47,7 +47,7 @@ struct OutgoingBubble: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
-            Text(message.text)
+            Text(ContextReference.displayText(message.text))
                 .font(Typography.body)
                 .foregroundStyle(Palette.text)
                 .padding(.horizontal, 14)

@@ -1,4 +1,3 @@
-import PhotosUI
 import SwiftUI
 
 /// Start a thread: pick a project (most recent preselected), write the task, send. Model, access
@@ -19,8 +18,8 @@ struct NewThreadView: View {
     @State private var showBranches = false
     @State private var repo: RefPage?
     @State private var baseBranch: String?
-    @State private var attachments: [DraftAttachment] = []
-    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var draft = ComposerDraft()
+    @State private var suggestions = ComposerSuggestions()
     @State private var showProjects = false
     @State private var showSettings = false
     @State private var sending = false
@@ -48,8 +47,15 @@ struct NewThreadView: View {
                         .padding(.bottom, 8)
                 }
                 workspaceChips
+                if focused && suggestions.isVisible {
+                    SuggestionPanel(suggestions: suggestions, onPick: pick)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 8)
+                        .transition(.opacity)
+                }
                 composer
             }
+            .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
             .background(Palette.canvas)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -91,6 +97,8 @@ struct NewThreadView: View {
         }
         .onAppear(perform: pickDefaults)
         .onChange(of: projectId) { _, _ in resetForProject() }
+        // Uploads belong to the Mac they went to.
+        .onChange(of: environmentId) { old, _ in if old != nil { draft.reset() } }
         .task(id: "\(environment?.id ?? "")|\(project?.workspaceRoot ?? "")") { await loadBranches() }
     }
 
@@ -213,22 +221,29 @@ struct NewThreadView: View {
 
     private var composer: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if !attachments.isEmpty {
-                AttachmentStrip(attachments: $attachments)
+            if !draft.attachments.isEmpty || draft.notice != nil {
+                AttachmentStrip(draft: draft)
             }
             TextField("Ask anything…", text: $text, axis: .vertical)
                 .font(Typography.body)
                 .lineLimit(3...10)
                 .focused($focused)
                 .accessibilityIdentifier("newThreadText")
-                .onChange(of: text) { _, value in Drafts.save(value, for: "new-thread") }
-            HStack(spacing: 6) {
-                PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .medium))
-                        .frame(width: 34, height: 34)
+                .onChange(of: text) { old, value in
+                    if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                        text = folded
+                        return
+                    }
+                    Drafts.save(value, for: "new-thread")
+                    suggestions.update(text: value, scope: suggestionScope)
                 }
-                .foregroundStyle(Palette.text)
+            HStack(spacing: 6) {
+                AttachMenu(draft: draft, environment: environment, size: 34) {
+                    if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                        text += pasted
+                    }
+                    focused = true
+                }
                 Button {
                     showSettings = true
                 } label: {
@@ -267,33 +282,38 @@ struct NewThreadView: View {
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
         .onAppear { focused = true }
-        .onChange(of: pickerItems) { _, items in
-            guard !items.isEmpty, let environment else { return }
-            pickerItems = []
-            for item in items {
-                var draft = DraftAttachment(name: "photo.jpg")
-                let id = draft.id
-                attachments.append(draft)
-                Task {
-                    do {
-                        guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { return }
-                        draft.preview = image.preparingThumbnail(of: CGSize(width: 160, height: 160))
-                        if let index = attachments.firstIndex(where: { $0.id == id }) { attachments[index].preview = draft.preview }
-                        let uploaded = try await environment.uploadImage(image)
-                        if let index = attachments.firstIndex(where: { $0.id == id }) { attachments[index].uploaded = uploaded }
-                    } catch {
-                        if let index = attachments.firstIndex(where: { $0.id == id }) {
-                            attachments[index].failed = error.localizedDescription
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private var canSend: Bool {
-        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && project != nil && selection != nil
-            && environment?.isLive == true && !attachments.contains(where: \.isUploading)
+        (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.hasUploaded) && project != nil
+            && selection != nil && environment?.isLive == true && !draft.isUploading
+    }
+
+    private var suggestionScope: ComposerSuggestions.Scope? {
+        guard let environment else { return nil }
+        return ComposerSuggestions.Scope(
+            environment: environment, providerInstanceId: selection?.instanceId, cwd: project?.workspaceRoot,
+            projectId: project?.id, repositoryName: project?.repositoryName, hasThread: false,
+            hasConversation: false, canChangeInteractionMode: true
+        )
+    }
+
+    private func pick(_ item: ComposerSuggestions.Item) {
+        guard let trigger = suggestions.trigger else { return }
+        switch item.action {
+        case .insert(let replacement):
+            text = trigger.replacing(in: text, with: replacement)
+        case .interactionMode(let mode):
+            text = trigger.replacing(in: text, with: "")
+            interactionMode = mode
+        case .modelSettings:
+            text = trigger.replacing(in: text, with: "")
+            showSettings = true
+        case .pullRequest(let reference):
+            text = trigger.replacing(in: text, with: "\(reference.token) ")
+            draft.addPullRequest(reference)
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
     }
 
     // MARK: Logic
@@ -331,10 +351,11 @@ struct NewThreadView: View {
         guard let environment, let project, let selection else { return }
         sending = true
         error = nil
+        let message = draft.message(text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    inlineContext: environment.config?.inlineMessageContext ?? false)
         let request = AppModel.LaunchRequest(
             environment: environment, projectId: project.id,
-            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-            attachments: attachments.compactMap(\.uploaded), modelSelection: selection,
+            text: message.text, attachments: message.attachments, context: message.context, modelSelection: selection,
             runtimeMode: runtimeMode, interactionMode: interactionMode,
             newWorktree: newWorktree && !isScratch && baseBranch != nil, baseBranch: baseBranch,
             startFromOrigin: startFromOrigin && originAvailable
@@ -343,6 +364,7 @@ struct NewThreadView: View {
             do {
                 let ref = try await model.launch(request)
                 Drafts.save("", for: "new-thread")
+                draft.reset()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 dismiss()
                 try? await Task.sleep(for: .milliseconds(350))
