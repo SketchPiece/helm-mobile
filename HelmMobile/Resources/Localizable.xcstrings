@@ -3482,6 +3482,16 @@
         }
       }
     },
+    "No project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без проекта"
+          }
+        }
+      }
+    },
     "No project — just a task": {
       "localizations": {
         "ru": {
