@@ -48,6 +48,11 @@ private struct ThreadContent: View {
     @State private var reviewing: Checkpoint?
     @State private var snoozingCustom = false
     @State private var actionError: String?
+    @State private var renaming = false
+    @State private var renameText = ""
+    @State private var confirmingDelete = false
+    /// "Mark as unread" leaves the thread; leaving must not mark it read again.
+    @State private var leavesUnread = false
 
     init(environment: EnvironmentSession, session: ThreadSession) {
         self.environment = environment
@@ -188,6 +193,16 @@ private struct ThreadContent: View {
         } message: {
             Text(actionError ?? "")
         }
+        .alert("Rename thread", isPresented: $renaming) {
+            TextField("Title", text: $renameText)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") { perform(.rename(renameText)) }
+        }
+        .confirmationDialog("Delete this thread?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { perform(.delete, thenDismiss: true) }
+        } message: {
+            Text("The conversation and its terminal history are removed from the computer.")
+        }
         .onChange(of: projection != nil, initial: true) { _, loaded in
             guard loaded else { return }
             // The rebuilt scroll view starts at the bottom; one id scroll settles estimated row heights.
@@ -205,7 +220,7 @@ private struct ThreadContent: View {
             PushService.shared.visibleThread = ThreadRef(environmentId: environment.id, threadId: session.threadId)
         }
         .onDisappear {
-            session.markVisited()
+            if !leavesUnread { session.markVisited() }
             if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
         }
         .onChange(of: session.isDeleted) { _, deleted in if deleted { dismiss() } }
@@ -435,6 +450,15 @@ private struct ThreadContent: View {
                     } else {
                         SnoozeMenu { perform(.snooze($0)) } custom: { snoozingCustom = true }
                     }
+                    if summary.pinnedAt == nil {
+                        Button { perform(.pin) } label: { Label("Pin", systemImage: "pin") }
+                    } else {
+                        Button { perform(.unpin) } label: { Label("Unpin", systemImage: "pin.slash") }
+                    }
+                    Button {
+                        leavesUnread = true
+                        perform(.markUnread, thenDismiss: true)
+                    } label: { Label("Mark as unread", systemImage: "circlebadge") }
                     if environment.config?.capability("threadAutoSettleOptOut") == true {
                         Toggle(isOn: Binding(
                             get: { summary.autoSettleDisabledAt == nil },
@@ -443,10 +467,18 @@ private struct ThreadContent: View {
                             Label("Auto-settle", systemImage: "clock.badge.checkmark")
                         }
                     }
+                    Divider()
+                    Button {
+                        renameText = summary.title
+                        renaming = true
+                    } label: { Label("Rename", systemImage: "pencil") }
+                    Button { perform(.regenerateTitle) } label: { Label("Regenerate title", systemImage: "sparkles") }
                     Button {
                         UIPasteboard.general.string = summary.id
                     } label: { Label("Copy thread ID", systemImage: "number") }
+                    Divider()
                     Button { perform(.archive, thenDismiss: true) } label: { Label("Archive", systemImage: "archivebox") }
+                    Button(role: .destructive) { confirmingDelete = true } label: { Label("Delete", systemImage: "trash") }
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -460,8 +492,10 @@ private struct ThreadContent: View {
         Task {
             do {
                 try await model.perform(action, on: ref)
-                if thenDismiss { dismiss() }
+                // A delete may already have closed the screen when the stream reported it.
+                if thenDismiss, !session.isDeleted { dismiss() }
             } catch {
+                leavesUnread = false
                 actionError = error.localizedDescription
             }
         }
