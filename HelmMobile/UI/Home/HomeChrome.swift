@@ -84,12 +84,24 @@ struct EnvironmentStatusButton: View {
                 Label("Settings", systemImage: "gearshape")
             }
         } label: {
+            // The lamp sits on the screen's corner, with a ring cut out of the
+            // symbol around it so it reads as a badge on any background.
             Image(systemName: "desktopcomputer")
+                .mask {
+                    Rectangle()
+                        .overlay(alignment: .topTrailing) {
+                            Circle()
+                                .frame(width: 11, height: 11)
+                                .offset(x: 2.5, y: -2.5)
+                                .blendMode(.destinationOut)
+                        }
+                        .compositingGroup()
+                }
                 .overlay(alignment: .topTrailing) {
                     Circle()
                         .fill(lampColor)
-                        .frame(width: 8, height: 8)
-                        .offset(x: 4, y: -3)
+                        .frame(width: 7, height: 7)
+                        .offset(x: 0.5, y: -0.5)
                 }
         }
         .accessibilityLabel("Connections")
