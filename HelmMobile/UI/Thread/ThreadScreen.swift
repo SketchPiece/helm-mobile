@@ -466,6 +466,14 @@ private struct ThreadContent: View {
 
     @ToolbarContentBuilder
     private func toolbar(projection: ThreadProjection?) -> some ToolbarContent {
+        if let usage = projection?.contextUsage {
+            ToolbarItem(placement: .topBarTrailing) {
+                ContextMeter(used: usage.used, max: usage.max,
+                             compactBlockedReason: compactBlockedReason(projection),
+                             compact: canCompact ? { compact() } : nil)
+            }
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 if let checkpoint = projection?.latestCheckpointWithChanges {
@@ -525,6 +533,27 @@ private struct ThreadContent: View {
                 Image(systemName: "ellipsis")
             }
             .accessibilityLabel("Thread actions")
+        }
+    }
+
+    /// The thread's provider offers `/compact`.
+    private var canCompact: Bool {
+        guard let instanceId = summary?.modelSelection?.instanceId,
+              let provider = environment.config?.provider(instanceId) else { return false }
+        return provider.slashCommands(cwd: summary?.worktreePath ?? project?.workspaceRoot).contains { $0.name == "compact" }
+    }
+
+    private func compactBlockedReason(_ projection: ThreadProjection?) -> String? {
+        if !environment.isLive { return String(localized: "The computer is offline.") }
+        if projection?.isWorking == true { return String(localized: "Wait for the agent to finish its turn.") }
+        if projection?.pendingRequests.isEmpty == false { return String(localized: "Answer the agent first.") }
+        return nil
+    }
+
+    /// Compaction is a message of its own, like on the desktop; the draft stays in the composer.
+    private func compact() {
+        Task {
+            await session.send(text: "/compact", attachments: [], modelSelection: nil, runtimeMode: nil, interactionMode: nil)
         }
     }
 
