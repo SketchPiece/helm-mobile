@@ -141,3 +141,104 @@ struct SnoozeMenu: View {
         }
     }
 }
+
+/// The swipe's "Snooze": a short bottom sheet with the presets and their wake times, then
+/// "Custom…". Stays open with Helm's reason if it refuses.
+struct SnoozeChooserSheet: View {
+    let threadTitle: String
+    let snooze: (Date) async throws -> Void
+    let custom: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var presets = Snooze.presets()
+    @State private var sending: Snooze.Preset.Kind?
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Snooze until").font(Typography.headline).foregroundStyle(Palette.text)
+                Text(threadTitle).font(Typography.footnote).foregroundStyle(Palette.textMuted).lineLimit(1)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 12)
+
+            VStack(spacing: 0) {
+                ForEach(presets) { preset in
+                    row(symbol: symbol(preset.kind), title: preset.title, detail: preset.whenLabel,
+                        busy: sending == preset.kind) {
+                        choose(preset)
+                    }
+                    Divider().padding(.leading, 52)
+                }
+                row(symbol: "calendar", title: String(localized: "Custom…"), detail: nil, busy: false) {
+                    dismiss()
+                    custom()
+                }
+            }
+            .background(Palette.surface, in: .rect(cornerRadius: 18, style: .continuous))
+            .padding(.horizontal, 16)
+
+            if let error {
+                Text(error)
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.errorText)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+            }
+            Spacer(minLength: 0)
+        }
+        .background(Palette.canvas)
+        .presentationDetents([.height(CGFloat(presets.count + 1) * 52 + 110 + (error == nil ? 0 : 40))])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(28)
+    }
+
+    private func row(symbol: String, title: String, detail: String?, busy: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: symbol)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(Palette.textMuted)
+                    .frame(width: 24)
+                Text(title).font(Typography.body).foregroundStyle(Palette.text)
+                Spacer()
+                if busy {
+                    ProgressView()
+                } else if let detail {
+                    Text(detail).font(Typography.subheadline).foregroundStyle(Palette.textMuted).monospacedDigit()
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 52)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .disabled(sending != nil)
+    }
+
+    private func symbol(_ kind: Snooze.Preset.Kind) -> String {
+        switch kind {
+        case .hour: "clock"
+        case .threeHours: "clock.arrow.circlepath"
+        case .evening: "moon"
+        case .tomorrow: "sunrise"
+        case .nextWeek: "calendar.badge.clock"
+        }
+    }
+
+    private func choose(_ preset: Snooze.Preset) {
+        sending = preset.kind
+        error = nil
+        Task {
+            do {
+                try await snooze(preset.date)
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                dismiss()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            sending = nil
+        }
+    }
+}

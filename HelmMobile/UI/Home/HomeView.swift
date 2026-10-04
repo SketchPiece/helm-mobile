@@ -103,16 +103,16 @@ struct HomeView: View {
         } message: {
             Text("The conversation and its terminal history are removed from the Mac.")
         }
-        // The swipe's "Snooze": the same choices as the context menu, each with its wake time.
-        .confirmationDialog(
-            "Snooze until", isPresented: Binding(get: { snoozeChoosing != nil }, set: { if !$0 { snoozeChoosing = nil } }),
-            titleVisibility: .visible, presenting: snoozeChoosing
-        ) { entry in
-            ForEach(Snooze.presets()) { preset in
-                Button("\(preset.title) · \(preset.whenLabel)") { run(.snooze(preset.date), on: entry) }
+        // The swipe's "Snooze": the same choices as the context menu, in a bottom sheet.
+        .sheet(item: $snoozeChoosing) { entry in
+            SnoozeChooserSheet(threadTitle: entry.thread.displayTitle) { date in
+                try await model.perform(.snooze(date), on: entry.ref)
+            } custom: {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(350))
+                    snoozingCustom = entry
+                }
             }
-            Button("Custom…") { snoozingCustom = entry }
-            Button("Cancel", role: .cancel) {}
         }
         .sheet(item: $snoozingCustom) { entry in
             CustomSnoozeSheet { date in try await model.perform(.snooze(date), on: entry.ref) }
