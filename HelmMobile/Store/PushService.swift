@@ -57,7 +57,7 @@ final class PushService: NSObject {
 
     func start() {
         // Unit tests host the app; a permission prompt there keeps the test runner from attaching.
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        guard !AppModel.isUnitTestHost else { return }
         UNUserNotificationCenter.current().delegate = self
         if UserDefaults.standard.bool(forKey: "previewLiveActivity") { previewActivity() }
         guard isAvailable else { return }
@@ -76,7 +76,7 @@ final class PushService: NSObject {
     }
 
     func foregrounded() {
-        guard isAvailable else { return }
+        guard isAvailable, !AppModel.isUnitTestHost else { return }
         Task {
             await refreshAuthorization()
             await register()

@@ -28,6 +28,9 @@ final class AppModel {
 
     init() {
         environments = SavedEnvironments.load().map(EnvironmentSession.init(saved:))
+        // As the unit-test host the app stays idle: no sockets, no Tailscale, so the test runner
+        // attaches to a quiet main thread.
+        guard !Self.isUnitTestHost else { return }
         tailscale.startIfConfigured()
         tailscale.onRunning = { [weak self] in
             self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
@@ -50,6 +53,8 @@ final class AppModel {
         }
         pathMonitor.start(queue: DispatchQueue(label: "helm.path"))
     }
+
+    nonisolated static let isUnitTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
     var hasEnvironments: Bool { !environments.isEmpty }
 
