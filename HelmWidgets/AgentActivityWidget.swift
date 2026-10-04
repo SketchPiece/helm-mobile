@@ -10,7 +10,6 @@ struct HelmWidgetsBundle: WidgetBundle {
     }
 }
 
-/// The lock screen card's colour; the timer's Always On mask paints over it.
 private let cardBackground = Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x10 / 255)
 
 /// Helm's Live Activity: whoever waits on you leads; other work is a row each. States are glyphs,
@@ -31,7 +30,7 @@ struct AgentActivityWidget: Widget {
                     Counts(model: model).padding(.trailing, 6).padding(.vertical, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    CardBody(model: model, titleSize: 15, timerSize: 12, mask: .black)
+                    CardBody(model: model, titleSize: 15, timerSize: 12)
                         .padding(.vertical, 2)
                         .padding(.horizontal, 8)
                         .widgetURL(model.link)
@@ -59,7 +58,7 @@ struct AgentActivityBanner: View {
                 Spacer(minLength: 6)
                 Counts(model: model)
             }
-            CardBody(model: model, titleSize: 17, timerSize: 13, mask: cardBackground)
+            CardBody(model: model, titleSize: 17, timerSize: 13)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -72,19 +71,18 @@ struct CardBody: View {
     let model: CardModel
     let titleSize: CGFloat
     let timerSize: CGFloat
-    let mask: Color
 
     var body: some View {
         let shown = Array(model.rest.prefix(model.hero == nil ? 3 : 2))
         let hidden = model.rest.count - shown.count
         VStack(alignment: .leading, spacing: 8) {
             if let hero = model.hero {
-                HeroBlock(row: hero, titleSize: titleSize, timerSize: timerSize, lines: shown.isEmpty ? 2 : 1, mask: mask)
+                HeroBlock(row: hero, titleSize: titleSize, timerSize: timerSize, lines: shown.isEmpty ? 2 : 1)
             }
             if !shown.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(shown.enumerated()), id: \.offset) { _, row in
-                        RowView(row: row, showsProject: model.allDone, timerSize: timerSize, mask: mask)
+                        RowView(row: row, showsProject: model.allDone, timerSize: timerSize)
                     }
                 }
             }
@@ -139,30 +137,22 @@ struct Ring: View {
     }
 }
 
-/// Time since a row entered its phase, right-aligned in a slot that fits "1:02:05". In Always On
-/// the seconds turn into "––" in place, so nothing around the timer moves.
+/// Time since a row entered its phase, right-aligned in a slot that fits "1:02:05". A timer
+/// interval (not `.timer` style) keeps its shape in Always On: the seconds turn into "––" in place
+/// instead of the text becoming "2 min", so nothing around it moves.
 struct TimerSlot: View {
     let since: Date
     var size: CGFloat = 13
     var tint: Color = .white.opacity(0.6)
-    /// The colour behind the slot: the dashes cover the seconds with it.
-    let mask: Color
-    @Environment(\.isLuminanceReduced) private var dimmed
 
     var body: some View {
-        let font = Font.system(size: size, design: .monospaced)
-        Text(since, style: .timer)
-            .font(font)
+        Text(timerInterval: since...Date.distantFuture, countsDown: false)
+            .font(.system(size: size, design: .monospaced))
             .monospacedDigit()
             .foregroundStyle(tint)
             .multilineTextAlignment(.trailing)
             .lineLimit(1)
             .frame(width: size * 4.5, alignment: .trailing)
-            .overlay(alignment: .trailing) {
-                if dimmed {
-                    Text(verbatim: "––").font(font).foregroundStyle(tint.opacity(0.5)).background(mask)
-                }
-            }
     }
 }
 
@@ -217,7 +207,6 @@ struct HeroBlock: View {
     let titleSize: CGFloat
     let timerSize: CGFloat
     let lines: Int
-    let mask: Color
 
     var body: some View {
         let tint = PhaseTint.color(row.phase, dark: true)
@@ -230,7 +219,7 @@ struct HeroBlock: View {
                     .lineLimit(1)
                 Spacer(minLength: 6)
                 if row.phase != "failed", let date = ISO8601DateFormatter.helmDate(row.updatedAt) {
-                    TimerSlot(since: date, size: timerSize, tint: tint, mask: mask)
+                    TimerSlot(since: date, size: timerSize, tint: tint)
                 }
             }
             Text(row.threadTitle)
@@ -246,7 +235,6 @@ struct RowView: View {
     /// A finished card names the project where a running row has its timer.
     let showsProject: Bool
     let timerSize: CGFloat
-    let mask: Color
 
     var body: some View {
         let finished = row.phase == "completed"
@@ -258,7 +246,7 @@ struct RowView: View {
                 .lineLimit(1)
             Spacer(minLength: 8)
             if ["running", "starting"].contains(row.phase), let date = ISO8601DateFormatter.helmDate(row.updatedAt) {
-                TimerSlot(since: date, size: timerSize, mask: mask).layoutPriority(1)
+                TimerSlot(since: date, size: timerSize).layoutPriority(1)
             } else if showsProject {
                 Text(row.projectTitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
             }
