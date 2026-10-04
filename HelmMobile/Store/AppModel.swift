@@ -244,7 +244,7 @@ final class AppModel {
     func move(_ ref: ThreadRef, _ direction: OrderKeys.Direction, in ordered: [ThreadRef], pinned: Bool) async throws {
         guard let writes = OrderKeys.planMove(ordered: ordered, keys: orderKeys(pinned: pinned), moved: ref, direction) else { return }
         guard writes.allSatisfy({ canReorder($0.id, pinned: pinned) }) else {
-            throw RPCError.defect(String(localized: "Helm on this Mac can't arrange threads."))
+            throw RPCError.defect(String(localized: "Helm on this computer can't arrange threads."))
         }
         withAnimation(.snappy(duration: 0.25)) {
             for write in writes {

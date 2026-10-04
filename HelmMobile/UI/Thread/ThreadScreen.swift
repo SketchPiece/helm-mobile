@@ -11,7 +11,7 @@ struct ThreadScreen: View {
             ThreadContent(environment: environment, session: environment.threadSession(ref.threadId))
                 .id(ref)
         } else {
-            ContentUnavailableView("This Mac isn't connected", systemImage: "desktopcomputer.trianglebadge.exclamationmark")
+            ContentUnavailableView("This computer isn't connected", systemImage: "desktopcomputer.trianglebadge.exclamationmark")
         }
     }
 }
@@ -169,7 +169,7 @@ private struct ThreadContent: View {
                     ContentUnavailableView("Thread deleted", systemImage: "trash")
                 } else if !environment.isLive, session.checkedSavedCopy {
                     ContentUnavailableView("Not saved on this phone", systemImage: "icloud.slash",
-                                           description: Text("This thread opens once the Mac is reachable."))
+                                           description: Text("This thread opens once the computer is reachable."))
                 } else {
                     ProgressView().controlSize(.large)
                 }

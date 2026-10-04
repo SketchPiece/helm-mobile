@@ -16,7 +16,7 @@ struct ScheduledTasksView: View {
     var body: some View {
         Form {
             if model.environments.isEmpty {
-                Text("Connect a Mac to see and create scheduled tasks.")
+                Text("Connect a computer to see and create scheduled tasks.")
                     .foregroundStyle(Palette.textMuted)
             }
             ForEach(model.environments) { environment in

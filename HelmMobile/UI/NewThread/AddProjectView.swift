@@ -19,7 +19,7 @@ struct AddProjectSheet: View {
             List {
                 if model.environments.count > 1 {
                     Section {
-                        Picker("Mac", selection: $environmentId) {
+                        Picker("Computer", selection: $environmentId) {
                             ForEach(model.environments) { option in
                                 Text(option.label).tag(Optional(option.id))
                             }
@@ -30,7 +30,7 @@ struct AddProjectSheet: View {
                 }
                 Section {
                     NavigationLink(value: Route.folder) {
-                        option("Folder on the Mac", detail: "Pick a folder that's already there", symbol: "folder")
+                        option("Folder on the computer", detail: "Pick a folder that's already there", symbol: "folder")
                     }
                     .accessibilityIdentifier("addProjectFolder")
                     NavigationLink(value: Route.new) {
@@ -44,7 +44,7 @@ struct AddProjectSheet: View {
                     .accessibilityIdentifier("addProjectClone")
                 } footer: {
                     if environment?.isLive != true {
-                        Text("Connect to this Mac to add a project.").font(Typography.footnote)
+                        Text("Connect to this computer to add a project.").font(Typography.footnote)
                     }
                 }
                 .listRowBackground(Palette.surface)

@@ -381,7 +381,7 @@ final class ComposerDraft {
         }
         if size == 0 { return String(localized: "The file is empty") }
         if isImage { return nil }  // pictures over 10 MB are re-encoded
-        guard let limit = config?.maxFileBytes else { return String(localized: "This Mac doesn't take files") }
+        guard let limit = config?.maxFileBytes else { return String(localized: "This computer doesn't take files") }
         if let size, size > limit {
             return String(localized: "Larger than \(ByteCountFormatter.string(fromByteCount: Int64(limit), countStyle: .file))")
         }

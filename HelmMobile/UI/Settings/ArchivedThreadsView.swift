@@ -46,7 +46,7 @@ struct ArchivedThreadsView: View {
                 if let entry = deleting { run(.delete, entry) }
             }
         } message: {
-            Text("The conversation and its terminal history are removed from the Mac.")
+            Text("The conversation and its terminal history are removed from the computer.")
         }
         .alert("Couldn't do that", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button("OK", role: .cancel) {}

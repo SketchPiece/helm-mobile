@@ -14,7 +14,7 @@ struct TailscaleSettingsView: View {
             Section {
                 switch tailscale.state {
                 case .off:
-                    Text("Log in once and Helm reaches your Macs by itself, even with the Tailscale VPN off or another VPN on.")
+                    Text("Log in once and Helm reaches your computers by itself, even with the Tailscale VPN off or another VPN on.")
                         .font(Typography.subheadline)
                         .foregroundStyle(Palette.textMuted)
                     Button {
@@ -73,12 +73,12 @@ struct TailscaleSettingsView: View {
                     Button {
                         router.showPairing = true
                     } label: {
-                        Label("Connect a Mac", systemImage: "plus")
+                        Label("Connect a computer", systemImage: "plus")
                     }
                 } header: {
                     Text("Computers").sectionLabelStyle()
                 } footer: {
-                    Text("On the Mac, turn on Helm → Settings → Connections → Network access.")
+                    Text("On the computer, turn on Helm → Settings → Connections → Network access.")
                         .font(Typography.footnote)
                 }
 
@@ -100,7 +100,7 @@ struct TailscaleSettingsView: View {
         .confirmationDialog("Log out of Tailscale?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Log out", role: .destructive) { tailscale.logout() }
         } message: {
-            Text("Helm will reach your Macs only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.")
+            Text("Helm will reach your computers only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.")
         }
     }
 

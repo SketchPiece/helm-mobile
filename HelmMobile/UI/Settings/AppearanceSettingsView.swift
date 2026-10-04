@@ -44,7 +44,7 @@ struct AppearanceSettingsView: View {
             } header: {
                 Text("Theme").sectionLabelStyle()
             } footer: {
-                Text("Macs publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.")
+                Text("Computers publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.")
                     .font(Typography.footnote)
             }
         }

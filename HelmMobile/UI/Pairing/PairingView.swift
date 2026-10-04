@@ -60,7 +60,7 @@ struct PairingView: View {
                 } header: {
                     Text("Found on your tailnet").sectionLabelStyle()
                 } footer: {
-                    Text("Helm on the Mac asks you to allow this phone. No code needed.")
+                    Text("Helm on the computer asks you to allow this phone. No code needed.")
                         .font(Typography.footnote)
                 }
             }
@@ -74,7 +74,7 @@ struct PairingView: View {
                             .font(Typography.bodyMedium)
                     }
                 } footer: {
-                    Text("On the Mac: Helm → Settings → Connections → Pair a device.")
+                    Text("On the computer: Helm → Settings → Connections → Pair a device.")
                         .font(Typography.footnote)
                 }
             }
@@ -100,7 +100,7 @@ struct PairingView: View {
             } header: {
                 Text("Address").sectionLabelStyle()
             } footer: {
-                Text("Paste a pairing link into the address field, or leave the code empty to approve this phone on the Mac (Tailscale, same account).")
+                Text("Paste a pairing link into the address field, or leave the code empty to approve this phone on the computer (Tailscale, same account).")
                     .font(Typography.footnote)
             }
 
@@ -114,7 +114,7 @@ struct PairingView: View {
                             Text(label)
                         case .waitingForApproval:
                             ProgressView().padding(.trailing, 6)
-                            Text("Allow it in Helm on the Mac")
+                            Text("Allow it in Helm on the computer")
                         default:
                             Text(code.isEmpty ? "Ask Helm to allow this phone" : "Connect")
                         }
@@ -268,8 +268,8 @@ struct PairingView: View {
             switch self {
             case .needsCode:
                 String(localized: "This Helm can't approve phones directly. Enter the pairing code from Settings → Connections.")
-            case .denied: String(localized: "Helm on the Mac said no.")
-            case .expired: String(localized: "Nobody answered on the Mac. Try again.")
+            case .denied: String(localized: "Helm on the computer said no.")
+            case .expired: String(localized: "Nobody answered on the computer. Try again.")
             }
         }
     }

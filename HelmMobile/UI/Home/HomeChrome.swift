@@ -76,7 +76,7 @@ struct EnvironmentStatusButton: View {
             Button {
                 router.showPairing = true
             } label: {
-                Label("Connect another Mac", systemImage: "plus")
+                Label("Connect another computer", systemImage: "plus")
             }
             Button {
                 router.showSettings = true
@@ -163,7 +163,7 @@ struct ConnectionBanner: View {
         case .unauthorized:
             String(localized: "This phone's access expired or was removed. Pair it again.")
         case .offline(let reason):
-            String(localized: "Can't reach the Mac. Is it awake and is Tailscale on? (\(reason))")
+            String(localized: "Can't reach the computer. Is it awake and is Tailscale on? (\(reason))")
         default:
             environment.statusText
         }

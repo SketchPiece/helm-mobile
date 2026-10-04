@@ -177,7 +177,7 @@ struct WelcomeView: View {
                 .padding(.top, 8)
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
-                step(1, String(localized: "Open Helm on your Mac."))
+                step(1, String(localized: "Open Helm on your computer."))
                 step(2, String(localized: "Settings → Connections → turn on Network access."))
                 step(3, String(localized: "Pair a device, then scan the code or paste the link here."))
             }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings, split the way the app is: this phone, the connected Macs, and about.
+/// Settings, split the way the app is: this phone, the connected computers, and about.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
@@ -35,7 +35,7 @@ struct SettingsView: View {
                     Button {
                         router.showPairing = true
                     } label: {
-                        Label("Connect a Mac", systemImage: "plus")
+                        Label("Connect a computer", systemImage: "plus")
                     }
                     NavigationLink {
                         TailscaleSettingsView()
@@ -50,7 +50,7 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("tailscaleSettings")
                 } header: {
-                    Text("Macs").sectionLabelStyle()
+                    Text("Computers").sectionLabelStyle()
                 }
 
                 Section {
@@ -210,7 +210,7 @@ struct EnvironmentDetailView: View {
             Section {
                 Button("Reconnect") { environment.reconnectNow() }
                 Button("Pair again") { router.showPairing = true }
-                Button("Remove this Mac", role: .destructive) { confirmRemove = true }
+                Button("Remove this computer", role: .destructive) { confirmRemove = true }
             }
         }
         .font(Typography.body)
@@ -223,7 +223,7 @@ struct EnvironmentDetailView: View {
                 dismiss()
             }
         } message: {
-            Text("This phone forgets the Mac. Threads stay on the Mac.")
+            Text("This phone forgets the computer. Threads stay on the computer.")
         }
     }
 

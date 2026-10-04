@@ -1202,12 +1202,12 @@
         }
       }
     },
-    "Allow it in Helm on the Mac": {
+    "Allow it in Helm on the computer": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Разреши в Штурвале на Mac"
+            "value": "Разреши в Штурвале на компьютере"
           }
         }
       }
@@ -1602,12 +1602,12 @@
         }
       }
     },
-    "Can't reach the Mac. Is it awake and is Tailscale on? (%@)": {
+    "Can't reach the computer. Is it awake and is Tailscale on? (%@)": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mac не отвечает. Он не спит и Tailscale включён? (%@)"
+            "value": "Компьютер не отвечает. Он не спит и Tailscale включён? (%@)"
           }
         }
       }
@@ -1672,12 +1672,12 @@
         }
       }
     },
-    "Choose a project on this Mac.": {
+    "Choose a project on this computer.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выбери проект на этом Mac."
+            "value": "Выбери проект на этом компьютере."
           }
         }
       }
@@ -1812,12 +1812,32 @@
         }
       }
     },
+    "Computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютер"
+          }
+        }
+      }
+    },
     "Computers": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Компьютеры"
+          }
+        }
+      }
+    },
+    "Computers publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютеры публикуют темы из папки themes Штурвала. Тема для тёмного режима не меняет светлый."
           }
         }
       }
@@ -1832,42 +1852,42 @@
         }
       }
     },
-    "Connect a Mac": {
+    "Connect a computer": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключить Mac"
+            "value": "Подключить компьютер"
           }
         }
       }
     },
-    "Connect a Mac to see and create scheduled tasks.": {
+    "Connect a computer to see and create scheduled tasks.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключи Mac, чтобы видеть и создавать задачи."
+            "value": "Подключи компьютер, чтобы видеть и создавать задачи."
           }
         }
       }
     },
-    "Connect a Mac to see usage.": {
+    "Connect a computer to see usage.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключи Mac, чтобы видеть расход."
+            "value": "Подключи компьютер, чтобы видеть расход."
           }
         }
       }
     },
-    "Connect another Mac": {
+    "Connect another computer": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключить ещё Mac"
+            "value": "Подключить ещё компьютер"
           }
         }
       }
@@ -1882,12 +1902,12 @@
         }
       }
     },
-    "Connect to this Mac to add a project.": {
+    "Connect to this computer to add a project.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подключись к этому Mac, чтобы добавить проект."
+            "value": "Подключись к этому компьютеру, чтобы добавить проект."
           }
         }
       }
@@ -2573,12 +2593,12 @@
         }
       }
     },
-    "Folder on the Mac": {
+    "Folder on the computer": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Папка на Mac"
+            "value": "Папка на компьютере"
           }
         }
       }
@@ -2839,32 +2859,32 @@
         }
       }
     },
-    "Helm on the Mac asks you to allow this phone. No code needed.": {
+    "Helm on the computer asks you to allow this phone. No code needed.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал на Mac спросит, пустить ли этот телефон. Код не нужен."
+            "value": "Штурвал на компьютере спросит, пустить ли этот телефон. Код не нужен."
           }
         }
       }
     },
-    "Helm on the Mac said no.": {
+    "Helm on the computer said no.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал на Mac отказал."
+            "value": "Штурвал на компьютере отказал."
           }
         }
       }
     },
-    "Helm on this Mac can't arrange threads.": {
+    "Helm on this computer can't arrange threads.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал на этом Mac не умеет менять порядок тредов."
+            "value": "Штурвал на этом компьютере не умеет менять порядок тредов."
           }
         }
       }
@@ -2879,12 +2899,12 @@
         }
       }
     },
-    "Helm will reach your Macs only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {
+    "Helm will reach your computers only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал будет доставать до Mac только через приложение Tailscale VPN. Если телефон больше не нужен в tailnet, удали его в консоли Tailscale."
+            "value": "Штурвал будет доставать до компьютеров только через приложение Tailscale VPN. Если телефон больше не нужен в tailnet, удали его в консоли Tailscale."
           }
         }
       }
@@ -3130,12 +3150,12 @@
         }
       }
     },
-    "Log in once and Helm reaches your Macs by itself, even with the Tailscale VPN off or another VPN on.": {
+    "Log in once and Helm reaches your computers by itself, even with the Tailscale VPN off or another VPN on.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Войди один раз — и Штурвал сам достанет до твоих Mac, даже с выключенным Tailscale VPN или другим VPN."
+            "value": "Войди один раз — и Штурвал сам достанет до твоих компьютеров, даже с выключенным Tailscale VPN или другим VPN."
           }
         }
       }
@@ -3196,36 +3216,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ищу Штурвал…"
-          }
-        }
-      }
-    },
-    "Mac": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac"
-          }
-        }
-      }
-    },
-    "Macs": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Компьютеры"
-          }
-        }
-      }
-    },
-    "Macs publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac публикуют темы из папки themes Штурвала. Тема для тёмного режима не меняет светлый."
           }
         }
       }
@@ -3744,12 +3734,12 @@
         }
       }
     },
-    "No provider on this Mac reports subscription limits.": {
+    "No provider on this computer reports subscription limits.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ни один агент на этом Mac не сообщает лимиты подписки."
+            "value": "Ни один агент на этом компьютере не сообщает лимиты подписки."
           }
         }
       }
@@ -3774,12 +3764,12 @@
         }
       }
     },
-    "Nobody answered on the Mac. Try again.": {
+    "Nobody answered on the computer. Try again.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На Mac никто не ответил. Попробуй ещё раз."
+            "value": "На компьютере никто не ответил. Попробуй ещё раз."
           }
         }
       }
@@ -3886,22 +3876,22 @@
         }
       }
     },
-    "On the Mac, turn on Helm → Settings → Connections → Network access.": {
+    "On the computer, turn on Helm → Settings → Connections → Network access.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На Mac включи Штурвал → Settings → Connections → Network access."
+            "value": "На компьютере включи Штурвал → Settings → Connections → Network access."
           }
         }
       }
     },
-    "On the Mac: Helm → Settings → Connections → Pair a device.": {
+    "On the computer: Helm → Settings → Connections → Pair a device.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На Mac: Штурвал → Settings → Connections → Pair a device."
+            "value": "На компьютере: Штурвал → Settings → Connections → Pair a device."
           }
         }
       }
@@ -3916,12 +3906,12 @@
         }
       }
     },
-    "Open Helm on your Mac.": {
+    "Open Helm on your computer.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Открой Штурвал на Mac."
+            "value": "Открой Штурвал на компьютере."
           }
         }
       }
@@ -4136,12 +4126,12 @@
         }
       }
     },
-    "Paste a pairing link into the address field, or leave the code empty to approve this phone on the Mac (Tailscale, same account).": {
+    "Paste a pairing link into the address field, or leave the code empty to approve this phone on the computer (Tailscale, same account).": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вставь ссылку привязки в поле адреса или оставь код пустым — тогда телефон можно будет разрешить на Mac (Tailscale, тот же аккаунт)."
+            "value": "Вставь ссылку привязки в поле адреса или оставь код пустым — тогда телефон можно будет разрешить на компьютере (Tailscale, тот же аккаунт)."
           }
         }
       }
@@ -4496,12 +4486,12 @@
         }
       }
     },
-    "Remove this Mac": {
+    "Remove this computer": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Убрать этот Mac"
+            "value": "Убрать этот компьютер"
           }
         }
       }
@@ -5097,12 +5087,12 @@
         }
       }
     },
-    "Start one and your agent gets to work on the Mac.": {
+    "Start one and your agent gets to work on the computer.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Начни тред — и агент возьмётся за работу на Mac."
+            "value": "Начни тред — и агент возьмётся за работу на компьютере."
           }
         }
       }
@@ -5417,12 +5407,12 @@
         }
       }
     },
-    "The conversation and its terminal history are removed from the Mac.": {
+    "The conversation and its terminal history are removed from the computer.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Переписка и история терминала удалятся с Mac."
+            "value": "Переписка и история терминала удалятся с компьютера."
           }
         }
       }
@@ -5537,36 +5527,6 @@
         }
       }
     },
-    "This Mac doesn't take files": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Этот Mac не принимает файлы"
-          }
-        }
-      }
-    },
-    "This Mac isn't connected": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Этот Mac не подключён"
-          }
-        }
-      }
-    },
-    "This Mac runs an older Helm; update it to see usage.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На этом Mac старый Штурвал — обнови его, чтобы видеть расход."
-          }
-        }
-      }
-    },
     "This address now belongs to a different Helm server.": {
       "localizations": {
         "ru": {
@@ -5577,12 +5537,12 @@
         }
       }
     },
-    "This app is older than Helm on the Mac; update it to see usage.": {
+    "This app is older than Helm on the computer; update it to see usage.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приложение старше Штурвала на Mac — обнови его, чтобы видеть расход."
+            "value": "Приложение старше Штурвала на компьютере — обнови его, чтобы видеть расход."
           }
         }
       }
@@ -5593,6 +5553,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Эта сборка не умеет получать уведомления."
+          }
+        }
+      }
+    },
+    "This computer doesn't take files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот компьютер не принимает файлы"
+          }
+        }
+      }
+    },
+    "This computer isn't connected": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот компьютер не подключён"
+          }
+        }
+      }
+    },
+    "This computer runs an older Helm; update it to see usage.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом компьютере старый Штурвал — обнови его, чтобы видеть расход."
           }
         }
       }
@@ -5617,12 +5607,12 @@
         }
       }
     },
-    "This phone forgets the Mac. Threads stay on the Mac.": {
+    "This phone forgets the computer. Threads stay on the computer.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Телефон забудет этот Mac. Треды останутся на Mac."
+            "value": "Телефон забудет этот компьютер. Треды останутся на нём."
           }
         }
       }
@@ -5637,12 +5627,12 @@
         }
       }
     },
-    "This thread opens once the Mac is reachable.": {
+    "This thread opens once the computer is reachable.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Тред откроется, когда Mac снова будет на связи."
+            "value": "Тред откроется, когда компьютер снова будет на связи."
           }
         }
       }
@@ -5728,12 +5718,12 @@
         }
       }
     },
-    "Time uses the Mac's time zone, which may differ from your phone's.": {
+    "Time uses the computer's time zone, which may differ from your phone's.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Время по часовому поясу Mac — он может отличаться от телефона."
+            "value": "Время по часовому поясу компьютера — он может отличаться от телефона."
           }
         }
       }

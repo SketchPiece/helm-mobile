@@ -110,7 +110,7 @@ struct HomeView: View {
                 if let entry = deleting { run(.delete, on: entry) }
             }
         } message: {
-            Text("The conversation and its terminal history are removed from the Mac.")
+            Text("The conversation and its terminal history are removed from the computer.")
         }
         // The swipe's "Snooze": the same choices as the context menu, in a bottom sheet.
         .sheet(item: $snoozeChoosing) { entry in
@@ -399,7 +399,7 @@ struct HomeView: View {
                 ContentUnavailableView {
                     Label("No threads yet", systemImage: "bubble.left.and.text.bubble.right")
                 } description: {
-                    Text("Start one and your agent gets to work on the Mac.")
+                    Text("Start one and your agent gets to work on the computer.")
                 } actions: {
                     Button("New thread") { router.startNewThread() }
                         .buttonStyle(.glassProminent)

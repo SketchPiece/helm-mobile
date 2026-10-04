@@ -257,7 +257,7 @@ struct ScheduledTaskEditor: View {
             Text("Schedule").sectionLabelStyle()
         } footer: {
             if draft.scheduleMode == .fixedTime {
-                Text("Time uses the Mac's time zone, which may differ from your phone's.").font(Typography.footnote)
+                Text("Time uses the computer's time zone, which may differ from your phone's.").font(Typography.footnote)
             }
         }
     }
@@ -287,7 +287,7 @@ struct ScheduledTaskEditor: View {
             error = String(localized: "Add a name, prompt, project, model, a valid schedule, and the checkout path if needed.")
             return
         } catch {
-            self.error = String(localized: "Choose a project on this Mac.")
+            self.error = String(localized: "Choose a project on this computer.")
             return
         }
         saving = true

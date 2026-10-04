@@ -40,7 +40,7 @@ struct UsageView: View {
             .listRowInsets(EdgeInsets())
 
             if environment == nil {
-                Text("Connect a Mac to see usage.").foregroundStyle(Palette.textMuted)
+                Text("Connect a computer to see usage.").foregroundStyle(Palette.textMuted)
             } else if tab == .limits {
                 limits
             } else {
@@ -56,7 +56,7 @@ struct UsageView: View {
             if model.environments.count > 1, let environment {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Picker("Mac", selection: Binding(get: { environment.id }, set: { environmentId = $0 })) {
+                        Picker("Computer", selection: Binding(get: { environment.id }, set: { environmentId = $0 })) {
                             ForEach(model.environments) { Text($0.label).tag($0.id) }
                         }
                     } label: {
@@ -108,8 +108,8 @@ struct UsageView: View {
             if !summary.isCompatible {
                 Section {
                     Text(summary.contractVersion < Usage.compatibleSince
-                         ? "This Mac runs an older Helm; update it to see usage."
-                         : "This app is older than Helm on the Mac; update it to see usage.")
+                         ? "This computer runs an older Helm; update it to see usage."
+                         : "This app is older than Helm on the computer; update it to see usage.")
                         .font(Typography.footnote).foregroundStyle(Palette.textMuted)
                 }
             } else {
@@ -331,7 +331,7 @@ struct UsageView: View {
         }
         if providers.isEmpty {
             Section {
-                Text(environment?.isLive == true ? "No provider on this Mac reports subscription limits." : "Waiting for connection…")
+                Text(environment?.isLive == true ? "No provider on this computer reports subscription limits." : "Waiting for connection…")
                     .foregroundStyle(Palette.textMuted)
             }
         }
