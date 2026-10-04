@@ -12,8 +12,13 @@ xcodebuild -project HelmMobile.xcodeproj -scheme HelmMobile \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath build/dd build
 ```
 
-- iOS 26+, iPhone only, bundle id `com.sketchpiece.helmnative`, so it installs next to the old app.
-- Signing: team `4KSA86792T`; the Xcode-managed wildcard profile covers it (no extra capabilities).
+- iOS 26+, iPhone only. The bundle id comes from `APP_BUNDLE_ID` in `Base.xcconfig`
+  (`com.sketchpiece.helmnative` today, which the wildcard profile signs without capabilities).
+- Push and Live Activity updates need a push-enabled App ID: set `APP_BUNDLE_ID`, `HELM_PUSH_ENABLED = YES`
+  and `CODE_SIGN_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements`, and put the Volna core relay URL
+  and device token in `Local.xcconfig` (see the example). Without them the app runs with push off.
+- The built-in Tailscale node needs `Vendor/libtailscale/Libtailscale.xcframework` (gitignored, 51 MB):
+  `scripts/build-libtailscale.sh` builds it (Go; it pins its toolchain).
 - To the phone: `~/.claude/skills/sideshelf/scripts/ota-deploy.sh --push` from this folder.
 - `Local.xcconfig` (gitignored, see `Local.xcconfig.example`) lists the Macs the pairing screen
   probes, so connecting is one tap plus an approval in Helm on the Mac.
@@ -50,6 +55,10 @@ regenerates `Localizable.xcstrings` and lists anything untranslated.
 - `Store/ThreadSession`: one open thread. Live projection, outbox, approvals, queue, interrupt.
 - `Model/`: wire types read leniently from JSON, plus client-runtime's reducers (`ShellState.apply`,
   `ThreadProjection.apply`) and `Timeline`, which folds agent work between messages into one block.
+- `Tailscale/`: the in-app tsnet node (from the RN module) and `TailnetRouting`, which points tailnet
+  http/ws URLs at its loopback forwarders once this phone has logged in to it.
+- `Store/PushService`: device registration with the Volna core, notification taps, the Live Activity.
+- `Shared/` + `HelmWidgets/`: the Live Activity type (wire-compatible with the core's content-state) and its UI.
 - `UI/`: SwiftUI screens in Helm's "Bakelite and lamp" palette with IBM Plex and Dynamic Type.
 
 `docs/protocol.md` and `docs/transport.md` are the wire reference this was built from;
