@@ -224,21 +224,24 @@ struct ThreadComposer: View {
         let mode = RuntimeMode(rawValue: thread?.runtimeMode ?? "") ?? .fullAccess
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                chip(config?.modelLabel(for: thread?.modelSelection) ?? String(localized: "Model"), symbol: "cpu")
-                chip(mode.title, symbol: mode.symbol)
+                let provider = thread?.modelSelection.flatMap { config?.provider($0.instanceId) }
+                chip(config?.modelLabel(for: thread?.modelSelection) ?? String(localized: "Model")) {
+                    ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 14)
+                }
+                chip(mode.title) { Image(systemName: mode.symbol) }
                 if thread?.interactionMode == "plan" {
-                    chip(String(localized: "Plan"), symbol: "list.bullet.clipboard")
+                    chip(String(localized: "Plan")) { Image(systemName: "list.bullet.clipboard") }
                 }
             }
             .padding(.horizontal, 4)
         }
     }
 
-    private func chip(_ title: String, symbol: String) -> some View {
+    private func chip(_ title: String, @ViewBuilder icon: () -> some View) -> some View {
         Button {
             showSettings = true
         } label: {
-            Label(title, systemImage: symbol)
+            Label { Text(title) } icon: { icon() }
                 .font(Typography.footnote.weight(.medium))
                 .foregroundStyle(Palette.textMuted)
                 .padding(.horizontal, 10)

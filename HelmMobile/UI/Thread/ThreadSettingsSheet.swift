@@ -86,7 +86,8 @@ struct ModelSettingsSections: View {
                         }
                     } label: {
                         HStack {
-                            ProviderGlyph(driver: provider.driver)
+                            ProviderIcon(driver: provider.driver, iconUrl: provider.iconUrl, size: 18)
+                                .frame(width: 22)
                             Text(provider.displayName).foregroundStyle(Palette.text)
                             Spacer()
                             if selection?.instanceId == provider.instanceId {
@@ -186,27 +187,6 @@ struct ModelSettingsSections: View {
             }
             .font(Typography.body)
         }
-    }
-}
-
-/// A small mark per provider so models are recognisable at a glance.
-struct ProviderGlyph: View {
-    let driver: String
-
-    var body: some View {
-        let (symbol, color): (String, Color) = switch driver {
-        case "claudeAgent": ("asterisk", Color(hex: 0xD97757))
-        case "codex": ("hexagon", Palette.text)
-        case "cursor": ("cursorarrow", Palette.text)
-        case "grok": ("bolt", Palette.text)
-        case "opencode": ("chevron.left.forwardslash.chevron.right", Palette.text)
-        case "antigravity": ("arrow.up.circle", Color(hex: 0x3D6FB0))
-        default: ("cpu", Palette.textMuted)
-        }
-        Image(systemName: symbol)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(color)
-            .frame(width: 22)
     }
 }
 

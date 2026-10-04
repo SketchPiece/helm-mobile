@@ -248,7 +248,10 @@ struct NewThreadView: View {
                     showSettings = true
                 } label: {
                     HStack(spacing: 5) {
-                        if let selection { ProviderGlyph(driver: environment?.config?.provider(selection.instanceId)?.driver ?? "") }
+                        if let selection {
+                            let provider = environment?.config?.provider(selection.instanceId)
+                            ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 16)
+                        }
                         Text(environment?.config?.modelLabel(for: selection) ?? String(localized: "Model"))
                             .font(Typography.subheadline.weight(.medium))
                         if interactionMode == "plan" {
@@ -261,6 +264,7 @@ struct NewThreadView: View {
                     .frame(height: 34)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("modelChip")
                 Spacer()
                 Button(action: launch) {
                     Group {
