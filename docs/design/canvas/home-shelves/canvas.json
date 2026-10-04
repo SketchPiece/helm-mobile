@@ -1,0 +1,111 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Snoozed / Settled shelves on Home",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · mono-caps shelves under the list"
+  },
+  "a-card-inline.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "A. A card right after the list"
+  },
+  "b-card-bottom.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "B. The card sits at the bottom (short list)"
+  },
+  "b2-card-bottom-long.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "B. Long list, scrolled to the end: the card is just the last thing"
+  },
+  "c-pills.html": {
+   "x": 0,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "C. Two pills above the bar"
+  },
+  "d-footer.html": {
+   "x": 470,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "D. A quiet text footer"
+  },
+  "e-snoozed-screen.html": {
+   "x": 940,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "Tap Snoozed → its own screen, sorted by wake time"
+  },
+  "f-settled-screen.html": {
+   "x": 1410,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "Tap Settled → its own screen, grouped by day"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-card-inline.html",
+  "b-card-bottom.html",
+  "b2-card-bottom-long.html",
+  "c-pills.html",
+  "d-footer.html",
+  "e-snoozed-screen.html",
+  "f-settled-screen.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Snoozed / Settled shelves on Home",
+   "kind": "title1",
+   "maxW": 1800
+  },
+  "r2": {
+   "x": 940,
+   "y": 904,
+   "text": "Where a tap leads (for A–D)",
+   "kind": "title2",
+   "maxW": 860
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1880,
+   "y": 0,
+   "w": 320,
+   "color": "blue",
+   "text": "Recommended: B. Same card as A, but when the list is short it rests just above the bar; when the list is long it simply comes after the last thread (B, long list). Never pinned on top of content."
+  },
+  {
+   "id": "claude-2",
+   "x": 1880,
+   "y": 1004,
+   "w": 320,
+   "color": "blue",
+   "text": "Any variant that moves the shelves down needs tap → push a screen instead of expanding in place: 294 settled rows can't unfold below the fold. Snoozed screen sorts by wake time, Settled groups by day."
+  }
+ ],
+ "designSystems": []
+}
