@@ -6,6 +6,7 @@ import WidgetKit
 struct HelmWidgetsBundle: WidgetBundle {
     var body: some Widget {
         AgentActivityWidget()
+        UsageWidget()
     }
 }
 

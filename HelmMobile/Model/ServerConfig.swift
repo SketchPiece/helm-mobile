@@ -65,6 +65,10 @@ struct Provider: Hashable, Sendable, Identifiable {
     var skills: [ProviderSkill]
     /// Per-workspace commands and skills (project `.claude/skills` etc.), keyed by cwd.
     var workspaceSnapshots: [WorkspaceSnapshot]
+    /// Subscription quota for the signed-in account, when the provider reports one.
+    var usageLimits: ProviderUsageLimits?
+    var installed: Bool
+    var enabled: Bool
 
     struct SlashCommand: Hashable, Sendable {
         var name: String
@@ -90,6 +94,9 @@ struct Provider: Hashable, Sendable, Identifiable {
         displayName = json["displayName"]?.string ?? Self.defaultName(driver)
         let enabled = json["enabled"]?.bool ?? true
         let installed = json["installed"]?.bool ?? true
+        self.enabled = enabled
+        self.installed = installed
+        usageLimits = ProviderUsageLimits(json: json["usageLimits"])
         let available = json["availability"]?.string != "unavailable"
         isUsable = enabled && installed && available && json["status"]?.string != "disabled"
         supportedRuntimeModes = json["supportedRuntimeModes"]?.array?.compactMap(\.string)
