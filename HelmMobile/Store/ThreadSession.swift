@@ -20,7 +20,7 @@ final class ThreadSession {
         var failed: String?
     }
 
-    @ObservationIgnored private weak var environment: EnvironmentSession?
+    @ObservationIgnored private(set) weak var environment: EnvironmentSession?
     @ObservationIgnored private var lastSequence = 0
     @ObservationIgnored private var subscription: Task<Void, Never>?
 
@@ -207,10 +207,18 @@ final class ThreadSession {
         ])
     }
 
-    func answer(_ request: PendingRequest, answers: [String: JSON]) async throws {
-        try await environment?.dispatch("runtime-request.respond", [
+    /// `attachmentsByQuestionId` only lists questions that have attachments, and is left out
+    /// entirely when none do.
+    func answer(_ request: PendingRequest, answers: [String: JSON],
+                attachmentsByQuestionId: [String: [ChatAttachment]] = [:]) async throws {
+        var fields: [String: JSON] = [
             "threadId": .string(threadId), "requestId": .string(request.id), "answers": .object(answers),
-        ])
+        ]
+        let attached = attachmentsByQuestionId.filter { !$0.value.isEmpty }
+        if !attached.isEmpty {
+            fields["attachmentsByQuestionId"] = .object(attached.mapValues { .array($0.map(\.json)) })
+        }
+        try await environment?.dispatch("runtime-request.respond", fields)
     }
 
     func dismiss(_ request: PendingRequest) async throws {
@@ -228,6 +236,53 @@ final class ThreadSession {
         try await environment?.dispatch("queued-message.promote-to-steer", [
             "threadId": .string(threadId), "queuedRunId": .string(runId), "targetRunId": .string(active.id),
         ])
+    }
+
+    /// Replaces a queued message's text; its attachments and context stay as they were.
+    func editQueued(_ runId: String, text: String) async throws {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        try await environment?.dispatch("queued-run.edit", [
+            "threadId": .string(threadId), "runId": .string(runId), "text": .string(trimmed),
+        ])
+    }
+
+    /// Moves a queued message right before `beforeRunId`, or to the end of the queue when nil.
+    func reorderQueued(_ runId: String, before beforeRunId: String?) async throws {
+        try await environment?.dispatch("queued-run.reorder", [
+            "threadId": .string(threadId), "runId": .string(runId),
+            "beforeRunId": beforeRunId.map { .string($0) } ?? .null,
+        ])
+    }
+
+    /// The usage-limit card's toggles: resume automatically at reset, or snooze until it.
+    /// `resetAt` is the shell's `usageLimitResetAt`, sent back verbatim.
+    func setLimitRecovery(runId: String, resetAt: String, autoResume: Bool? = nil, snooze: Bool? = nil) async throws {
+        var recovery: [String: JSON] = ["runId": .string(runId), "resetAt": .string(resetAt)]
+        if let autoResume { recovery["autoResume"] = .bool(autoResume) }
+        if let snooze { recovery["snooze"] = .bool(snooze) }
+        try await environment?.dispatch("thread.metadata.update", [
+            "threadId": .string(threadId), "limitRecovery": .object(recovery),
+        ])
+    }
+
+    /// "Continue now" after a usage limit: a continuation of the blocked run, then the queue
+    /// (held when the run failed) is let go.
+    func continueAfterLimit(runId: String) async throws {
+        guard let environment else { throw RPCError.disconnected }
+        try await environment.dispatch("message.dispatch", [
+            "createdBy": "user",
+            "creationSource": "mobile",
+            "threadId": .string(threadId),
+            "messageId": .string(UUID().uuidString.lowercased()),
+            "text": .string("Continue where you left off."),
+            "attachments": [],
+            "manualContinuationOfRunId": .string(runId),
+            "dispatchMode": ["type": "start_immediately"],
+        ])
+        if projection?.queued.contains(where: \.held) == true {
+            try await resumeQueue()
+        }
     }
 
     func resumeQueue() async throws {

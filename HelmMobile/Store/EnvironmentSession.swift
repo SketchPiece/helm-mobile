@@ -328,4 +328,13 @@ final class EnvironmentSession: Identifiable {
     }
 
     func thread(_ id: String) -> ThreadSummary? { shell.threads[id] }
+
+    /// Shows a reorder write in the list before the server confirms it.
+    func setPendingOrderKey(threadId: String, pinned: Bool, key: String) {
+        shell.setPendingOrderKey(threadId: threadId, pinned: pinned, key: key)
+    }
+
+    func revertPendingOrderKey(threadId: String) {
+        shell.revertPendingOrderKey(threadId: threadId)
+    }
 }

@@ -319,15 +319,17 @@ final class HomeSectionsTests: XCTestCase {
         }
         let now = ISODate.parse("2026-10-02T00:00:00.000Z")!
         let sections = HomeSections(entries: [
-            entry("old", ["updatedAt": "2026-09-01T00:00:00.000Z"]),
-            entry("new", ["updatedAt": "2026-10-01T23:00:00.000Z"]),
+            entry("old", ["createdAt": "2026-09-01T00:00:00.000Z", "updatedAt": "2026-10-01T23:30:00.000Z"]),
+            entry("new", ["createdAt": "2026-10-01T23:00:00.000Z"]),
             entry("pinned", ["pinnedAt": "2026-09-01T00:00:00.000Z", "updatedAt": "2026-08-01T00:00:00.000Z"]),
             entry("ask", ["pendingRuntimeRequest": ["id": "r", "kind": "user_input", "createdAt": "2026-10-01T00:00:00.000Z"]]),
             entry("sleep", ["snoozedUntil": "2026-10-05T00:00:00.000Z"]),
             entry("done", ["settledOverride": "settled"]),
         ], now: now)
         XCTAssertEqual(sections.attention.map(\.ref.threadId), ["ask"])
-        XCTAssertEqual(sections.active.map(\.ref.threadId), ["pinned", "new", "old"])
+        XCTAssertEqual(sections.pinned.map(\.ref.threadId), ["pinned"])
+        // Recent activity doesn't reorder the active list; newest first until arranged.
+        XCTAssertEqual(sections.active.map(\.ref.threadId), ["new", "old"])
         XCTAssertEqual(sections.snoozed.map(\.ref.threadId), ["sleep"])
         XCTAssertEqual(sections.settled.map(\.ref.threadId), ["done"])
     }
