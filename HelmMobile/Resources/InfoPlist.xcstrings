@@ -96,6 +96,22 @@
           }
         }
       }
+    },
+    "New task": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New task"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новая задача"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

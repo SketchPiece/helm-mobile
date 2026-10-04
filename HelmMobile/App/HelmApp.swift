@@ -29,10 +29,37 @@ struct HelmApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                LaunchActions.shared.pickUpShares()
                 model.foregrounded()
                 PushService.shared.foregrounded()
             }
         }
+    }
+}
+
+/// Receives the APNs device token and home-screen quick actions.
+final class HelmAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        MainActor.assumeIsolated { PushService.shared.didRegister(deviceToken: deviceToken) }
+    }
+
+    /// A quick action that launched the app arrives here; one tapped while it runs, in the scene delegate.
+    func application(
+        _ application: UIApplication, configurationForConnecting session: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        if let item = options.shortcutItem {
+            MainActor.assumeIsolated { _ = LaunchActions.shared.perform(item) }
+        }
+        let configuration = UISceneConfiguration(name: nil, sessionRole: session.role)
+        configuration.delegateClass = HelmSceneDelegate.self
+        return configuration
+    }
+}
+
+final class HelmSceneDelegate: NSObject, UIWindowSceneDelegate {
+    func windowScene(_ windowScene: UIWindowScene, performActionFor shortcutItem: UIApplicationShortcutItem) async -> Bool {
+        await MainActor.run { LaunchActions.shared.perform(shortcutItem) }
     }
 }
 

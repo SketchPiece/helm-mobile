@@ -25,11 +25,17 @@ struct NewThreadView: View {
     @State private var sending = false
     @State private var error: String?
     @State private var focused = false
+    /// Shared files waiting for the Mac to be connected before they upload.
+    @State private var sharedFiles: [SharedFile] = []
 
     private var environment: EnvironmentSession? {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
     }
     private var project: Project? { environment?.project(projectId) }
+    /// The Mac is connected and its config and projects are in.
+    private var isReady: Bool {
+        environment.map { $0.isLive && $0.config != nil && !$0.shell.projects.isEmpty } ?? false
+    }
     /// "No project" threads run in the scratch folder, always in place.
     private var isScratch: Bool { project.map { environment?.config?.isScratch($0) == true } ?? false }
 
@@ -95,7 +101,16 @@ struct NewThreadView: View {
                 .presentationDetents([.medium, .large])
             }
         }
-        .onAppear(perform: pickDefaults)
+        .onAppear {
+            pickDefaults()
+            takeSeed()
+        }
+        .onChange(of: router.newThreadSeed) { takeSeed() }
+        // Opened from a quick action or share on a cold start: the Mac connects after this appears.
+        .onChange(of: isReady) {
+            if projectId == nil || selection == nil { pickDefaults() }
+            attachSharedFiles()
+        }
         .onChange(of: projectId) { _, _ in resetForProject() }
         // Uploads belong to the Mac they went to.
         .onChange(of: environmentId) { old, _ in if old != nil { draft.reset() } }
@@ -333,6 +348,25 @@ struct NewThreadView: View {
             }?.id
         }
         resetForProject()
+    }
+
+    /// Shared text goes into the composer after what's there; files upload once the Mac is live.
+    private func takeSeed() {
+        guard let seed = router.newThreadSeed else { return }
+        router.newThreadSeed = nil
+        // The draft survives cancel, so sharing the same thing again doesn't repeat it.
+        if !seed.text.isEmpty, !text.contains(seed.text) {
+            let current = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            text = current.isEmpty ? seed.text : current + "\n\n" + seed.text
+        }
+        sharedFiles += seed.files
+        attachSharedFiles()
+    }
+
+    private func attachSharedFiles() {
+        guard !sharedFiles.isEmpty, let environment, environment.isLive, environment.config != nil else { return }
+        draft.attach(shared: sharedFiles, environment: environment)
+        sharedFiles = []
     }
 
     private func resetForProject() {

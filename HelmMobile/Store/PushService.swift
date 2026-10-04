@@ -286,10 +286,3 @@ extension PushService: UNUserNotificationCenterDelegate {
         await MainActor.run { PushService.shared.pendingThread = ref }
     }
 }
-
-/// Receives the APNs device token.
-final class HelmAppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        MainActor.assumeIsolated { PushService.shared.didRegister(deviceToken: deviceToken) }
-    }
-}

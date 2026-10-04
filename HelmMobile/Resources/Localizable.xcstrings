@@ -503,12 +503,42 @@
         }
       }
     },
+    "%lldh %lldm": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ч %lld мин"
+          }
+        }
+      }
+    },
     "%lldm": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld мин"
+          }
+        }
+      }
+    },
+    "%lldm %llds": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld мин %lld с"
+          }
+        }
+      }
+    },
+    "%llds": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld с"
           }
         }
       }
@@ -1267,6 +1297,16 @@
         }
       }
     },
+    "Couldn't share to Helm": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не получилось отправить в Штурвал"
+          }
+        }
+      }
+    },
     "Couldn't transcribe the recording.": {
       "localizations": {
         "ru": {
@@ -1683,6 +1723,16 @@
         }
       }
     },
+    "Helm can't save shared items in this build.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эта сборка Штурвала не может сохранять то, чем делятся."
+          }
+        }
+      }
+    },
     "Helm did not answer in time.": {
       "localizations": {
         "ru": {
@@ -2083,6 +2133,16 @@
         }
       }
     },
+    "New task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новая задача"
+          }
+        }
+      }
+    },
     "New thread": {
       "localizations": {
         "ru": {
@@ -2343,6 +2403,16 @@
         }
       }
     },
+    "Open Helm to start the thread.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открой Штурвал, чтобы начать тред."
+          }
+        }
+      }
+    },
     "Open login again": {
       "localizations": {
         "ru": {
@@ -2359,6 +2429,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть тред агента"
+          }
+        }
+      }
+    },
+    "Opens a new thread in Helm.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывает новый тред в Штурвале."
           }
         }
       }
@@ -2853,6 +2933,26 @@
         }
       }
     },
+    "Saved": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранено"
+          }
+        }
+      }
+    },
+    "Saving for Helm…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохраняю для Штурвала…"
+          }
+        }
+      }
+    },
     "Scan QR code": {
       "localizations": {
         "ru": {
@@ -3039,6 +3139,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Что-то пошло не так"
+          }
+        }
+      }
+    },
+    "Start a Helm task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новая задача в Штурвале"
+          }
+        }
+      }
+    },
+    "Start a task in ${applicationName}": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}: новая задача"
           }
         }
       }
@@ -3369,6 +3489,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сброс уже прошёл. Продолжи тред сам."
+          }
+        }
+      }
+    },
+    "There's nothing here Helm can use.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тут нет ничего, с чем Штурвал может работать."
           }
         }
       }
@@ -3759,6 +3889,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Когда агент просит разрешения, задаёт вопрос, заканчивает или падает. Live Activity показывает работу на экране блокировки и в Dynamic Island."
+          }
+        }
+      }
+    },
+    "Worked": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работал"
+          }
+        }
+      }
+    },
+    "Worked for %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работал %@"
           }
         }
       }

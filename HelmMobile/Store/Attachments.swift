@@ -178,6 +178,22 @@ final class ComposerDraft {
         }
     }
 
+    /// Files shared from other apps. Pictures in a type providers don't take (HEIC from Photos) are
+    /// re-encoded as JPEG; everything else goes through `attach(fileURLs:)`.
+    func attach(shared files: [SharedFile], environment: EnvironmentSession) {
+        for file in files {
+            let name = file.url.lastPathComponent
+            let declared = UTType(filenameExtension: file.url.pathExtension)?.preferredMIMEType ?? ""
+            if file.isImage, AttachmentLimits.imageMimeType(name: name, mimeType: declared) == nil,
+               let image = UIImage(contentsOfFile: file.url.path)
+            {
+                attach(image: image, environment: environment)
+            } else {
+                attach(fileURLs: [file.url], environment: environment)
+            }
+        }
+    }
+
     /// Long pasted text as `pasted-text[-N].txt`, which the agent reads instead of getting inline.
     func attach(pastedText text: String, environment: EnvironmentSession) {
         let name = PastedText.nextFileName(existing: attachments.map(\.name))
