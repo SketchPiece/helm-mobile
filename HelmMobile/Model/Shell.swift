@@ -246,6 +246,13 @@ struct ShellState: Sendable {
     var projects: [String: Project] = [:]
     var threads: [String: ThreadSummary] = [:]
     var isSynchronized = false
+    /// A full snapshot from the server is in. False for an empty list and for one read back
+    /// from the local cache, so the server's next snapshot replaces it whole.
+    private(set) var isFromServer = false
+    /// The server's JSON for each project and thread, so the list can be saved and read back
+    /// through `apply` exactly as it came.
+    private var rawProjects: [String: JSON] = [:]
+    private var rawThreads: [String: JSON] = [:]
     /// Order keys this phone wrote that the server hasn't echoed yet. The row moves at once and
     /// stays put if an unrelated update for the thread arrives before the echo.
     private(set) var pendingOrderKeys: [String: PendingOrderKey] = [:]
@@ -288,26 +295,58 @@ struct ShellState: Sendable {
         return overlaid
     }
 
-    /// Mirrors client-runtime's `applyShellStreamEvent`.
-    mutating func apply(_ item: JSON) {
+    /// The list as a `snapshot` item, for the local cache; `restored(from:)` reads it back.
+    var snapshotItem: JSON {
+        [
+            "kind": "snapshot",
+            "snapshot": [
+                "snapshotSequence": .number(Double(sequence)),
+                "projects": .array(projects.keys.sorted().compactMap { rawProjects[$0] }),
+                "threads": .array(threads.keys.sorted().compactMap { rawThreads[$0] }),
+            ],
+        ]
+    }
+
+    /// A list saved with `snapshotItem`. It is shown until the server's snapshot replaces it,
+    /// and never used to resume the stream.
+    static func restored(from item: JSON) -> ShellState? {
+        guard item["kind"]?.string == "snapshot", item["snapshot"] != nil else { return nil }
+        var shell = ShellState()
+        shell.apply(item)
+        shell.isFromServer = false
+        return shell
+    }
+
+    /// Mirrors client-runtime's `applyShellStreamEvent`. Returns true when a full snapshot
+    /// replaced the list.
+    @discardableResult
+    mutating func apply(_ item: JSON) -> Bool {
         switch item["kind"]?.string {
         case "synchronized":
             isSynchronized = true
         case "snapshot":
-            guard let snapshot = item["snapshot"] else { return }
-            if item["resolvedRepositoryIdentityRoots"] != nil, !projects.isEmpty {
+            guard let snapshot = item["snapshot"] else { return false }
+            // The full snapshot carries the resolved roots too; the enrichment frame that
+            // follows it has projects only.
+            if item["resolvedRepositoryIdentityRoots"] != nil, isFromServer, snapshot["threads"]?.array?.isEmpty != false {
                 // Enrichment frame: projects' repository metadata only, threads are empty.
-                for project in (snapshot["projects"]?.array ?? []).compactMap(Project.init(json:)) {
+                for json in snapshot["projects"]?.array ?? [] {
+                    guard let project = Project(json: json) else { continue }
                     projects[project.id] = project
+                    rawProjects[project.id] = json
                 }
-                return
+                return false
             }
             sequence = snapshot["snapshotSequence"]?.int ?? sequence
+            isFromServer = true
             let previous = projects
-            projects = Dictionary(
-                (snapshot["projects"]?.array ?? []).compactMap(Project.init(json:)).map { ($0.id, $0) },
-                uniquingKeysWith: { _, b in b }
-            )
+            projects = [:]
+            rawProjects = [:]
+            for json in snapshot["projects"]?.array ?? [] {
+                guard let project = Project(json: json) else { continue }
+                projects[project.id] = project
+                rawProjects[project.id] = json
+            }
             // A reconnect snapshot can arrive before the server resolves repositories again.
             for (id, project) in projects where project.repositoryName == nil {
                 if let old = previous[id], old.workspaceRoot == project.workspaceRoot {
@@ -315,31 +354,47 @@ struct ShellState: Sendable {
                 }
             }
             threads = [:]
-            for thread in (snapshot["threads"]?.array ?? []).compactMap(ThreadSummary.init(json:)) {
+            rawThreads = [:]
+            for json in snapshot["threads"]?.array ?? [] {
+                guard let thread = ThreadSummary(json: json) else { continue }
                 threads[thread.id] = reconcile(thread)
+                rawThreads[thread.id] = json
             }
             pendingOrderKeys = pendingOrderKeys.filter { threads[$0.key] != nil }
+            return true
         default:
-            guard let seq = item["sequence"]?.int else { return }
-            if seq <= sequence { return }
+            guard let seq = item["sequence"]?.int else { return false }
+            if seq <= sequence { return false }
             sequence = seq
             switch item["kind"]?.string {
             case "project.updated":
-                if let project = item["project"].flatMap(Project.init(json:)) { projects[project.id] = project }
+                if let json = item["project"], let project = Project(json: json) {
+                    projects[project.id] = project
+                    rawProjects[project.id] = json
+                }
             case "project.removed":
-                if let id = item["projectId"]?.string { projects[id] = nil }
+                if let id = item["projectId"]?.string {
+                    projects[id] = nil
+                    rawProjects[id] = nil
+                }
             case "thread.updated":
-                guard let thread = item["thread"].flatMap(ThreadSummary.init(json:)) else { return }
+                guard let json = item["thread"], let thread = ThreadSummary(json: json) else { return false }
                 if item["location"]?.string == "archive" {
                     threads[thread.id] = nil
+                    rawThreads[thread.id] = nil
                 } else {
                     threads[thread.id] = reconcile(thread)
+                    rawThreads[thread.id] = json
                 }
             case "thread.removed":
-                if let id = item["threadId"]?.string { threads[id] = nil }
+                if let id = item["threadId"]?.string {
+                    threads[id] = nil
+                    rawThreads[id] = nil
+                }
             default:
                 break
             }
         }
+        return false
     }
 }

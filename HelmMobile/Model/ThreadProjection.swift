@@ -98,9 +98,13 @@ struct Run: Identifiable, Hashable, Sendable {
     var workStartedAt: Date?
     var checkpointId: String?
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         ordinal = json["ordinal"]?.int ?? 0
         status = json["status"]?.string ?? "completed"
         userMessageId = json["userMessageId"]?.nonNull?.string
@@ -127,9 +131,13 @@ struct RunAttempt: Identifiable, Hashable, Sendable {
     var status: String
     var providerTurnId: String?
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         runId = json["runId"]?.string ?? ""
         rootNodeId = json["rootNodeId"]?.nonNull?.string
         status = json["status"]?.string ?? ""
@@ -144,9 +152,13 @@ struct RuntimeRequest: Identifiable, Hashable, Sendable {
     var responseCapability: String
     var createdAt: Date?
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         kind = json["kind"]?.string ?? "permission"
         status = json["status"]?.string ?? "pending"
         responseCapability = json["responseCapability"]?["type"]?.string ?? "live"
@@ -161,9 +173,13 @@ struct ProviderSessionInfo: Identifiable, Hashable, Sendable {
     var supportsQueuedMessages: Bool
     var supportsInterrupt: Bool
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         status = json["status"]?.string ?? ""
         let turns = json["capabilities"]?["turns"]
         supportsActiveSteering = turns?["supportsActiveSteering"]?.bool ?? false
@@ -178,9 +194,13 @@ struct ProviderThreadInfo: Identifiable, Hashable, Sendable {
     var usedTokens: Int?
     var maxTokens: Int?
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         providerSessionId = json["providerSessionId"]?.nonNull?.string
         let usage = json["contextUsage"]?.nonNull
         usedTokens = usage?["usedTokens"]?.int
@@ -202,9 +222,13 @@ struct Checkpoint: Identifiable, Hashable, Sendable {
         var deletions: Int
     }
 
+    /// As the server sent it, for the local cache.
+    var raw: JSON
+
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
         self.id = id
+        raw = json
         runId = json["runId"]?.nonNull?.string
         appRunOrdinal = json["appRunOrdinal"]?.nonNull?.int
         status = json["status"]?.string ?? ""
@@ -304,6 +328,11 @@ struct ThreadProjection: Sendable {
 
         /// Identity across pages (`threadHistoryMerge.ts`).
         var key: String { "\(sourceThreadId):\(sourceItemId)" }
+
+        var json: JSON {
+            ["visibility": .string(visibility), "item": item.raw,
+             "sourceThreadId": .string(sourceThreadId), "sourceItemId": .string(sourceItemId)]
+        }
     }
 
     /// Progressive history (`acceptBoundedSnapshot`): the snapshot holds a recent window, older
@@ -346,6 +375,45 @@ struct ThreadProjection: Sendable {
         rows = (json["visibleTurnItems"]?.array ?? []).compactMap(Row.init(json:))
         // Items referenced by visible rows count as known items too.
         for row in rows where items[row.item.id] == nil { items[row.item.id] = row.item }
+    }
+
+    /// A `snapshot` item of `orchestration.subscribeThread`: the projection and its history window.
+    init?(snapshot item: JSON) {
+        guard let json = item["projection"] else { return nil }
+        self.init(json: json)
+        history = History(snapshot: item)
+    }
+
+    /// The projection as a `snapshot` item, for the local cache; `init(snapshot:)` reads it back.
+    /// A timeline longer than `maxRows` keeps its newest rows and drops the history cursor:
+    /// what was cut comes back with the server's next snapshot.
+    func snapshotItem(maxRows: Int = .max) -> JSON {
+        var keptRows = rows
+        var keptItems = Array(items.values)
+        var history = history
+        if rows.count > maxRows {
+            keptRows = Array(rows.suffix(maxRows))
+            let ids = Set(keptRows.map(\.item.id))
+            let oldest = keptRows.filter { $0.visibility == "local" }.map(\.item.ordinal).min() ?? .min
+            keptItems.removeAll { !ids.contains($0.id) && $0.ordinal < oldest }
+            history = History()
+        }
+        let projection: JSON = [
+            "thread": threadJSON,
+            "runs": .array(runs.values.map(\.raw)),
+            "attempts": .array(attempts.values.map(\.raw)),
+            "runtimeRequests": .array(runtimeRequests.values.map(\.raw)),
+            "providerSessions": .array(providerSessions.values.map(\.raw)),
+            "providerThreads": .array(providerThreads.values.map(\.raw)),
+            "checkpoints": .array(checkpoints.values.map(\.raw)),
+            "messages": .array(Array(messages.values)),
+            "turnItems": .array(keptItems.map(\.raw)),
+            "visibleTurnItems": .array(keptRows.map(\.json)),
+        ]
+        var item: [String: JSON] = ["kind": "snapshot", "projection": projection, "hasMoreHistory": .bool(history.hasMore)]
+        if let cursor = history.cursor { item["historyCursor"] = .string(cursor) }
+        if let ordinal = history.latestLocalTurnOrdinal { item["latestLocalTurnOrdinal"] = .number(Double(ordinal)) }
+        return .object(item)
     }
 
     private static func index<T: Identifiable>(_ json: JSON?, _ make: (JSON) -> T?) -> [String: T] where T.ID == String {
