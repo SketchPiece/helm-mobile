@@ -35,13 +35,10 @@ was left out of the first version.
   transcription keeps the recording for Retry. Transcription runs on the Mac (`voice.transcribe`),
   with Apple's on-device recogniser as a fallback for servers without it.
 
-## Left out of v0.1, deliberately
+## Not ported yet
 
-- **Push notifications and Live Activities.** They need an APNs-entitled bundle id and the Volna
-  core registration; the prototype uses a separate bundle id so it can live next to the old app.
-  Next step once the native app replaces the old one: reuse `com.sketchpiece.helm` and port
-  `helm/push` (four relay calls) and the Live Activity layout (already SwiftUI-shaped).
-- **Terminal, file browser, git sheets, scheduled tasks, usage.** Reachable from the Mac; worth
-  porting in that order if the phone becomes the main surface.
-- **iPad layout.** iPhone only for now.
-- **Multiple Macs in one list** works, but environment switching UI is minimal (status menu).
+- **Git, project files, comments on diff lines, terminal.** Next stage of work with code from the phone.
+- **Server settings** (defaults for new threads, source control, agent behaviour, maintenance, provider
+  accounts, server-side thread behaviour). Change them in Helm on the Mac for now.
+- **Device preview** (the streamed simulator/device screen from the RN app). Planned.
+- **iPad layout, hardware-keyboard shortcuts and the command palette.** Out of scope for now.
