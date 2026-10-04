@@ -270,8 +270,14 @@ private struct ThreadContent: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contextMenu {
                     Button {
-                        UIPasteboard.general.string = item.text
-                    } label: { Label("Copy", systemImage: "doc.on.doc") }
+                        UIPasteboard.general.string = ClipboardText.markdown(item.text)
+                    } label: { Label("Copy as Markdown", systemImage: "doc.on.doc") }
+                    Button {
+                        UIPasteboard.general.string = ClipboardText.plain(ClipboardText.markdown(item.text))
+                    } label: { Label("Copy as plain text", systemImage: "text.alignleft") }
+                    ShareLink(item: ClipboardText.markdown(item.text)) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
                 }
         case .work(let id, let items, let isLive):
             WorkGroupView(

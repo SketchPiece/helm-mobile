@@ -126,6 +126,8 @@
   "Context compacted": "Контекст сжат",
   "Copied": "Скопировано",
   "Copy": "Скопировать",
+  "Copy as Markdown": "Скопировать как Markdown",
+  "Copy as plain text": "Скопировать текстом",
   "Copy code": "Скопировать код",
   "Copy thread ID": "Скопировать ID треда",
   "Couldn't compact the context": "Не удалось сжать контекст",

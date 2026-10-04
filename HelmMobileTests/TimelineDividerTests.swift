@@ -51,3 +51,41 @@ final class TimelineDividerTests: XCTestCase {
         XCTAssertEqual(TokenCount.short(nil), "?")
     }
 }
+
+final class ClipboardTextTests: XCTestCase {
+    func testContextChipsBecomeReadableLinks() {
+        let pr = PullRequestReference(json: ["number": 42, "title": "Fix login", "url": "https://github.com/a/b/pull/42"],
+                                      contextId: "pr1")!
+        let thread = ThreadReference(environmentId: "e", threadId: "t9", title: "Old work")
+        let text = "See \(ContextReference.link(kind: "review-comment", contextId: "pr1", label: pr.token)) and \(thread.link)"
+        let context: JSON = ["version": 1, "records": [pr.record, thread.record]]
+        XCTAssertEqual(ClipboardText.markdown(text, context: context),
+                       "See [#42 Fix login](https://github.com/a/b/pull/42) and Old work")
+        XCTAssertEqual(ClipboardText.markdown("plain [link](https://x.y)"), "plain [link](https://x.y)")
+    }
+
+    func testPlainTextDropsMarkup() {
+        let markdown = """
+        ## Done
+
+        Fixed **the bug** in `login.ts`, see [docs](https://x.y).
+
+        - one
+        - [x] two
+
+        ```swift
+        let a = 1
+        ```
+        """
+        XCTAssertEqual(ClipboardText.plain(markdown), """
+        Done
+
+        Fixed the bug in login.ts, see docs.
+
+        • one
+        ☑︎ two
+
+        let a = 1
+        """)
+    }
+}

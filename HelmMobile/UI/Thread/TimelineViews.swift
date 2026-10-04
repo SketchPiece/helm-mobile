@@ -41,7 +41,7 @@ struct UserBubble: View {
                     .background(Palette.message, in: .rect(cornerRadius: 20, style: .continuous))
                     .contextMenu {
                         Button {
-                            UIPasteboard.general.string = item.text
+                            UIPasteboard.general.string = ClipboardText.markdown(item.text, context: item.raw["context"])
                         } label: { Label("Copy", systemImage: "doc.on.doc") }
                     }
             }
