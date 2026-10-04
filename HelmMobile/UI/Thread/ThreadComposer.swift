@@ -1,16 +1,16 @@
-import PhotosUI
 import SwiftUI
 
 /// The composer pill: attach, type, send. While the agent works, an empty composer's button
 /// stops it; with text, the message queues (long-press to steer it into the running turn).
+/// Typing `/`, `@`, `$` or `#` opens suggestions above it.
 struct ThreadComposer: View {
     let environment: EnvironmentSession
     let session: ThreadSession
     var didSend: () -> Void = {}
 
     @State private var text: String
-    @State private var attachments: [DraftAttachment] = []
-    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var draft = ComposerDraft()
+    @State private var suggestions = ComposerSuggestions()
     @State private var showSettings = false
     @State private var stopping = false
     @State private var voice = VoiceInput()
@@ -28,14 +28,28 @@ struct ThreadComposer: View {
     private var isWorking: Bool { session.projection?.isWorking ?? thread?.isWorking ?? false }
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var canSend: Bool {
-        (!trimmed.isEmpty || attachments.contains { $0.uploaded != nil })
-            && !attachments.contains(where: \.isUploading) && environment.isLive
+        (!trimmed.isEmpty || draft.hasUploaded) && !draft.isUploading && environment.isLive
     }
 
     var body: some View {
+        VStack(spacing: 8) {
+            if focused && suggestions.isVisible {
+                SuggestionPanel(suggestions: suggestions, onPick: pick)
+                    .transition(.opacity)
+            }
+            pill
+        }
+        .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
+        .sheet(isPresented: $showSettings) {
+            ThreadSettingsSheet(environment: environment, session: session)
+        }
+        .onDisappear { if voice.isRecording { voice.cancel() } }
+    }
+
+    private var pill: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !attachments.isEmpty {
-                AttachmentStrip(attachments: $attachments)
+            if !draft.attachments.isEmpty || draft.notice != nil {
+                AttachmentStrip(draft: draft)
             }
             if focused || !trimmed.isEmpty {
                 settingsChips
@@ -56,27 +70,16 @@ struct ThreadComposer: View {
         .floatingSurface(cornerRadius: 24)
         .animation(.easeOut(duration: 0.18), value: focused || !trimmed.isEmpty)
         .animation(.easeOut(duration: 0.18), value: voice.state)
-        .onChange(of: pickerItems) { _, items in
-            guard !items.isEmpty else { return }
-            pickerItems = []
-            for item in items { attach(item) }
-        }
-        .sheet(isPresented: $showSettings) {
-            ThreadSettingsSheet(environment: environment, session: session)
-        }
-        .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
     @ViewBuilder
     private var editor: some View {
-                PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .medium))
-                        .frame(width: 36, height: 36)
-                        .contentShape(.circle)
+                AttachMenu(draft: draft, environment: environment) {
+                    if let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                        text += pasted
+                    }
+                    focused = true
                 }
-                .foregroundStyle(Palette.text)
-                .accessibilityLabel("Attach photos")
 
                 TextField(placeholder, text: $text, axis: .vertical)
                     .font(Typography.body)
@@ -85,7 +88,42 @@ struct ThreadComposer: View {
                     .focused($focused)
                     .accessibilityIdentifier("composer")
                     .padding(.vertical, 7)
-                    .onChange(of: text) { _, value in Drafts.save(value, for: session.threadId) }
+                    .onChange(of: text) { old, value in
+                        if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                            text = folded
+                            return
+                        }
+                        Drafts.save(value, for: session.threadId)
+                        suggestions.update(text: value, scope: suggestionScope)
+                    }
+    }
+
+    private var suggestionScope: ComposerSuggestions.Scope {
+        let project = environment.project(thread?.projectId)
+        return ComposerSuggestions.Scope(
+            environment: environment, providerInstanceId: thread?.modelSelection?.instanceId,
+            cwd: thread?.worktreePath ?? project?.workspaceRoot, projectId: thread?.projectId,
+            repositoryName: project?.repositoryName, hasThread: true,
+            hasConversation: !(session.projection?.messages.isEmpty ?? true), canChangeInteractionMode: true
+        )
+    }
+
+    private func pick(_ item: ComposerSuggestions.Item) {
+        guard let trigger = suggestions.trigger else { return }
+        switch item.action {
+        case .insert(let replacement):
+            text = trigger.replacing(in: text, with: replacement)
+        case .interactionMode(let mode):
+            text = trigger.replacing(in: text, with: "")
+            Task { try? await session.setInteractionMode(mode) }
+        case .modelSettings:
+            text = trigger.replacing(in: text, with: "")
+            showSettings = true
+        case .pullRequest(let reference):
+            text = trigger.replacing(in: text, with: "\(reference.token) ")
+            draft.addPullRequest(reference)
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
     }
 
     /// Empty field: microphone (and stop while working). With text: send.
@@ -214,80 +252,16 @@ struct ThreadComposer: View {
 
     private func send(followUp: ThreadSession.FollowUp) {
         guard canSend else { return }
-        let message = trimmed
-        let uploaded = attachments.compactMap(\.uploaded)
+        let message = draft.message(text: trimmed, inlineContext: environment.config?.inlineMessageContext ?? false)
         text = ""
-        attachments = []
+        draft.reset()
+        suggestions.clear()
         Drafts.save("", for: session.threadId)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         didSend()
         Task {
-            await session.send(text: message, attachments: uploaded, followUp: followUp,
-                               modelSelection: nil, runtimeMode: nil, interactionMode: nil)
-        }
-    }
-
-    private func attach(_ item: PhotosPickerItem) {
-        var draft = DraftAttachment(name: "photo.jpg")
-        let id = draft.id
-        attachments.append(draft)
-        Task {
-            do {
-                guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else {
-                    throw RPCError.defect(String(localized: "Couldn't read the photo"))
-                }
-                draft.preview = image.preparingThumbnail(of: CGSize(width: 160, height: 160))
-                update(id) { $0.preview = draft.preview }
-                let uploaded = try await environment.uploadImage(image, name: "photo-\(Int(Date().timeIntervalSince1970)).jpg")
-                update(id) { $0.uploaded = uploaded }
-            } catch {
-                update(id) { $0.failed = error.localizedDescription }
-            }
-        }
-    }
-
-    private func update(_ id: UUID, _ change: (inout DraftAttachment) -> Void) {
-        if let index = attachments.firstIndex(where: { $0.id == id }) { change(&attachments[index]) }
-    }
-}
-
-struct AttachmentStrip: View {
-    @Binding var attachments: [DraftAttachment]
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(attachments) { attachment in
-                    ZStack {
-                        Palette.surface
-                        if let preview = attachment.preview {
-                            Image(uiImage: preview).resizable().scaledToFill()
-                        }
-                        if attachment.isUploading {
-                            Color.black.opacity(0.3)
-                            ProgressView().tint(.white)
-                        } else if attachment.failed != nil {
-                            Color.black.opacity(0.4)
-                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Palette.errorText)
-                        }
-                    }
-                    .frame(width: 64, height: 64)
-                    .clipShape(.rect(cornerRadius: 12, style: .continuous))
-                    .overlay(alignment: .topTrailing) {
-                        Button {
-                            attachments.removeAll { $0.id == attachment.id }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.6))
-                                .font(.system(size: 18))
-                        }
-                        .offset(x: 5, y: -5)
-                    }
-                }
-            }
-            .padding(.top, 6)
-            .padding(.horizontal, 6)
+            await session.send(text: message.text, attachments: message.attachments, context: message.context,
+                               followUp: followUp, modelSelection: nil, runtimeMode: nil, interactionMode: nil)
         }
     }
 }

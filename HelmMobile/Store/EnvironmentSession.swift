@@ -282,6 +282,25 @@ final class EnvironmentSession: Identifiable {
         return try await call("orchestration.dispatchCommand", .object(command))
     }
 
+    @ObservationIgnored private var workspaceRefreshes: [String: Date] = [:]
+
+    /// Asks the provider to scan a workspace's own skills and slash commands
+    /// (`server.refreshProviders {instanceId, cwd}`), once per provider and cwd, retrying after 10 s.
+    func refreshProviderWorkspace(instanceId: String, cwd: String) async {
+        guard config?.provider(instanceId)?.hasSnapshot(cwd: cwd) == false else { return }
+        let key = "\(instanceId)|\(cwd)"
+        if let last = workspaceRefreshes[key], Date().timeIntervalSince(last) < 10 { return }
+        workspaceRefreshes[key] = Date()
+        guard let result = try? await call("server.refreshProviders", [
+            "instanceId": .string(instanceId), "cwd": .string(cwd),
+        ], timeout: .seconds(30)), let list = result["providers"]?.array else { return }
+        for provider in list.compactMap(Provider.init(json:)) {
+            if let index = config?.providers.firstIndex(where: { $0.instanceId == provider.instanceId }) {
+                config?.providers[index] = provider
+            }
+        }
+    }
+
     func project(_ id: String?) -> Project? { id.flatMap { shell.projects[$0] } }
 
     func thread(_ id: String) -> ThreadSummary? { shell.threads[id] }
