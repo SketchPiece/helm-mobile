@@ -61,7 +61,27 @@ struct Provider: Hashable, Sendable, Identifiable {
     var supportedRuntimeModes: [String]
     var showInteractionModeToggle: Bool
     var models: [ProviderModel]
-    var slashCommands: [String]
+    var slashCommands: [SlashCommand]
+    var skills: [ProviderSkill]
+    /// Per-workspace commands and skills (project `.claude/skills` etc.), keyed by cwd.
+    var workspaceSnapshots: [WorkspaceSnapshot]
+
+    struct SlashCommand: Hashable, Sendable {
+        var name: String
+        var description: String?
+
+        init?(json: JSON) {
+            guard let name = json["name"]?.string, !name.isEmpty else { return nil }
+            self.name = name
+            description = json["description"]?.string
+        }
+    }
+
+    struct WorkspaceSnapshot: Hashable, Sendable {
+        var cwd: String
+        var slashCommands: [SlashCommand]
+        var skills: [ProviderSkill]
+    }
 
     init?(json: JSON) {
         guard let instanceId = json["instanceId"]?.string else { return nil }
@@ -76,7 +96,27 @@ struct Provider: Hashable, Sendable, Identifiable {
             ?? ["approval-required", "auto-accept-edits", "auto", "full-access"]
         showInteractionModeToggle = json["showInteractionModeToggle"]?.bool ?? false
         models = (json["models"]?.array ?? []).compactMap(ProviderModel.init(json:))
-        slashCommands = (json["slashCommands"]?.array ?? []).compactMap { $0["name"]?.string }
+        slashCommands = (json["slashCommands"]?.array ?? []).compactMap(SlashCommand.init(json:))
+        skills = (json["skills"]?.array ?? []).compactMap(ProviderSkill.init(json:))
+        workspaceSnapshots = (json["workspaceSnapshots"]?.array ?? []).compactMap { snapshot in
+            guard let cwd = snapshot["cwd"]?.string else { return nil }
+            return WorkspaceSnapshot(
+                cwd: cwd,
+                slashCommands: (snapshot["slashCommands"]?.array ?? []).compactMap(SlashCommand.init(json:)),
+                skills: (snapshot["skills"]?.array ?? []).compactMap(ProviderSkill.init(json:))
+            )
+        }
+    }
+
+    func hasSnapshot(cwd: String?) -> Bool { cwd.map { cwd in workspaceSnapshots.contains { $0.cwd == cwd } } ?? false }
+
+    /// The workspace's own commands when the provider has scanned that cwd, else the global ones.
+    func slashCommands(cwd: String?) -> [SlashCommand] {
+        workspaceSnapshots.first { $0.cwd == cwd }?.slashCommands ?? slashCommands
+    }
+
+    func skills(cwd: String?) -> [ProviderSkill] {
+        workspaceSnapshots.first { $0.cwd == cwd }?.skills ?? skills
     }
 
     static func defaultName(_ driver: String) -> String {
@@ -90,6 +130,39 @@ struct Provider: Hashable, Sendable, Identifiable {
         default: driver.capitalized
         }
     }
+}
+
+/// A skill the provider can run (`ServerProviderSkill`). The composer offers it as `$name`.
+struct ProviderSkill: Hashable, Sendable {
+    var name: String
+    var displayName: String?
+    var shortDescription: String?
+    var description: String?
+    var enabled: Bool
+    /// `false` means only the agent may start it.
+    var userInvocable: Bool
+
+    init?(json: JSON) {
+        guard let name = json["name"]?.string, !name.isEmpty else { return nil }
+        self.name = name
+        displayName = json["displayName"]?.string
+        shortDescription = json["shortDescription"]?.string
+        description = json["description"]?.string
+        enabled = json["enabled"]?.bool ?? true
+        userInvocable = json["userInvocable"]?.bool ?? true
+    }
+
+    init(name: String, displayName: String? = nil, shortDescription: String? = nil, description: String? = nil) {
+        self.name = name
+        self.displayName = displayName
+        self.shortDescription = shortDescription
+        self.description = description
+        enabled = true
+        userInvocable = true
+    }
+
+    var title: String { displayName ?? name }
+    var summary: String { shortDescription ?? description ?? "" }
 }
 
 /// The parts of `ServerConfig` this client uses.
@@ -118,6 +191,16 @@ struct ServerConfig: Sendable {
     }
 
     func capability(_ name: String) -> Bool { capabilities[name]?.bool ?? false }
+
+    /// The largest file the server takes, or nil when it only takes images
+    /// (needs both `attachmentUploads` and `fileAttachments`).
+    var maxFileBytes: Int? {
+        guard capability("attachmentUploads"), let files = capabilities["fileAttachments"]?.object else { return nil }
+        return min(files["maxUploadBytes"]?.int ?? AttachmentLimits.maxFileBytes, AttachmentLimits.maxFileBytes)
+    }
+
+    /// Context records and `t3-context://` links travel as-is (else files go as a bare list).
+    var inlineMessageContext: Bool { capability("inlineMessageContext") }
 
     var usableProviders: [Provider] { providers.filter(\.isUsable) }
 

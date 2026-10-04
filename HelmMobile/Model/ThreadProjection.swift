@@ -49,13 +49,16 @@ struct ChatAttachment: Identifiable, Hashable, Sendable {
     var name: String
     var mimeType: String
     var sizeBytes: Int
+    /// `"pasted-text"` for long text folded into a file (the agent reads it instead of inlining it).
+    var source: String?
 
-    init(id: String, type: String, name: String, mimeType: String, sizeBytes: Int) {
+    init(id: String, type: String, name: String, mimeType: String, sizeBytes: Int, source: String? = nil) {
         self.id = id
         self.type = type
         self.name = name
         self.mimeType = mimeType
         self.sizeBytes = sizeBytes
+        self.source = source
     }
 
     init?(json: JSON) {
@@ -65,11 +68,16 @@ struct ChatAttachment: Identifiable, Hashable, Sendable {
         name = json["name"]?.string ?? id
         mimeType = json["mimeType"]?.string ?? "application/octet-stream"
         sizeBytes = json["sizeBytes"]?.int ?? 0
+        source = json["source"]?["_tag"]?.string
     }
 
     var json: JSON {
-        ["type": .string(type), "id": .string(id), "name": .string(name), "mimeType": .string(mimeType),
-         "sizeBytes": .number(Double(sizeBytes))]
+        var fields: [String: JSON] = [
+            "type": .string(type), "id": .string(id), "name": .string(name), "mimeType": .string(mimeType),
+            "sizeBytes": .number(Double(sizeBytes)),
+        ]
+        if let source { fields["source"] = ["_tag": .string(source)] }
+        return .object(fields)
     }
 
     var isImage: Bool { type == "image" }
