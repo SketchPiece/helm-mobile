@@ -32,7 +32,7 @@ final class SettingsTourTests: XCTestCase {
     }
 
     private func back() {
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["BackButton"].firstMatch.tap()
         sleep(1)
     }
 
@@ -82,7 +82,7 @@ final class SettingsTourTests: XCTestCase {
             shot("21-appearance-themed")
             back()
             shot("22-settings-themed")
-            app.navigationBars.buttons.element(boundBy: 0).tap()
+            app.buttons["Close"].firstMatch.tap()
             sleep(1)
             shot("23-home-themed")
             openSettings()
