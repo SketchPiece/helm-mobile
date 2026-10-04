@@ -7,6 +7,8 @@ struct UsageLimitCard: View {
     let session: ThreadSession
     @State private var pending: Action?
     @State private var error: String?
+    /// The switch's position while the server applies it, so it doesn't flick back meanwhile.
+    @State private var autoResumeChoice: Bool?
 
     private enum Action { case autoResume, snooze, resume }
 
@@ -26,7 +28,7 @@ struct UsageLimitCard: View {
                 }
             }
             if state.canSchedule {
-                Toggle(isOn: Binding(get: { state.autoResume }, set: { setAutoResume($0) })) {
+                Toggle(isOn: Binding(get: { autoResumeChoice ?? state.autoResume }, set: { setAutoResume($0) })) {
                     Text("Resume automatically").font(Typography.subheadline)
                 }
                 .tint(Palette.working)
@@ -59,6 +61,7 @@ struct UsageLimitCard: View {
         }
         .padding(14)
         .floatingSurface(cornerRadius: 18)
+        .onChange(of: state.autoResume) { autoResumeChoice = nil }
     }
 
     private var resetPassed: Bool { (state.resetDate ?? .distantPast) <= Date() }
@@ -80,7 +83,15 @@ struct UsageLimitCard: View {
 
     private func setAutoResume(_ on: Bool) {
         guard let resetAt = state.resetAt else { return }
-        run(.autoResume) { try await session.setLimitRecovery(runId: state.runId, resetAt: resetAt, autoResume: on) }
+        autoResumeChoice = on
+        run(.autoResume) {
+            do {
+                try await session.setLimitRecovery(runId: state.runId, resetAt: resetAt, autoResume: on)
+            } catch {
+                autoResumeChoice = nil
+                throw error
+            }
+        }
     }
 
     private func toggleSnooze() {
