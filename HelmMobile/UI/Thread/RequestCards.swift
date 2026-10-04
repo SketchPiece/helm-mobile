@@ -682,7 +682,7 @@ private struct QueuedMessageEditor: View {
                     Spacer(minLength: 0)
                 }
                 if !draft.attachments.isEmpty || draft.notice != nil {
-                    AttachmentStrip(draft: draft)
+                    AttachmentStrip(draft: draft, environment: environment)
                 }
                 if let error {
                     Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)

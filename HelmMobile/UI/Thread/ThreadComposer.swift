@@ -52,7 +52,7 @@ struct ThreadComposer: View {
     private var pill: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !draft.attachments.isEmpty || draft.notice != nil {
-                AttachmentStrip(draft: draft)
+                AttachmentStrip(draft: draft, environment: environment)
             }
             if focused || !trimmed.isEmpty {
                 settingsChips

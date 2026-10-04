@@ -291,6 +291,18 @@ final class EnvironmentSession: Identifiable {
         return try await connection.call(tag, payload, timeout: timeout)
     }
 
+    /// Waits for the socket to come (back) up, e.g. right after returning from another app.
+    /// Throws `RPCError.disconnected` when it doesn't within `timeout` or pairing was revoked.
+    func waitUntilLive(timeout: Duration = .seconds(15)) async throws {
+        if status == .live { return }
+        reconnectNow()
+        let deadline = ContinuousClock.now + timeout
+        while status != .live {
+            if status == .unauthorized || ContinuousClock.now >= deadline { throw RPCError.disconnected }
+            try await Task.sleep(for: .milliseconds(200))
+        }
+    }
+
     /// A server stream on the live socket; it ends when the socket does.
     func stream(_ tag: String, _ payload: JSON = [:]) throws -> AsyncThrowingStream<JSON, Error> {
         guard let connection, status == .live else { throw RPCError.disconnected }

@@ -107,6 +107,7 @@ struct CameraPicker: UIViewControllerRepresentable {
 /// Picked photos as tiles and files as chips (name and size), each removable.
 struct AttachmentStrip: View {
     let draft: ComposerDraft
+    var environment: EnvironmentSession?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -123,6 +124,10 @@ struct AttachmentStrip: View {
                         ForEach(draft.attachments) { attachment in
                             Group {
                                 if attachment.isImage { imageTile(attachment) } else { fileChip(attachment) }
+                            }
+                            .onTapGesture {
+                                // A failed upload: try again, or say why it failed.
+                                if let environment, attachment.failed != nil { draft.retry(attachment.id, environment: environment) }
                             }
                             .overlay(alignment: .topTrailing) {
                                 Button {

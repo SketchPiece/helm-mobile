@@ -238,7 +238,7 @@ struct NewThreadView: View {
     private var composer: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !draft.attachments.isEmpty || draft.notice != nil {
-                AttachmentStrip(draft: draft)
+                AttachmentStrip(draft: draft, environment: environment)
             }
             ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
                              minLines: 3, maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,

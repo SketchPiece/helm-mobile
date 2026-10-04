@@ -25,7 +25,16 @@ extension EnvironmentSession {
             "name": .string(name), "mimeType": .string(mimeType), "sizeBytes": .number(Double(data.count)),
         ]
         if type != "image" { payload["type"] = .string(type) }
-        let result = try await call("attachments.createUploadUrl", .object(payload))
+        // Attaching often follows a switch from another app (copy there, paste here), while the
+        // socket is still reconnecting: wait for it, and retry once if it drops mid-call.
+        let result: JSON
+        do {
+            try await waitUntilLive()
+            result = try await call("attachments.createUploadUrl", .object(payload))
+        } catch RPCError.disconnected, RPCError.timedOut {
+            try await waitUntilLive()
+            result = try await call("attachments.createUploadUrl", .object(payload))
+        }
         guard let id = result["attachmentId"]?.string, let relative = result["relativeUrl"]?.string else {
             throw RPCError.defect("No upload URL")
         }
@@ -88,10 +97,29 @@ final class ComposerDraft {
     var isUploading: Bool { attachments.contains(where: \.isUploading) }
     var hasUploaded: Bool { attachments.contains { $0.uploaded != nil } }
 
-    func remove(_ id: UUID) { attachments.removeAll { $0.id == id } }
+    /// Full pictures behind pasted and photographed tiles, so a failed upload can be retried.
+    @ObservationIgnored private var images: [UUID: UIImage] = [:]
+
+    func remove(_ id: UUID) {
+        attachments.removeAll { $0.id == id }
+        images[id] = nil
+    }
+
+    /// A tap on a failed tile: uploads the picture again when it is still at hand, otherwise says why it failed.
+    func retry(_ id: UUID, environment: EnvironmentSession) {
+        guard let attachment = attachments.first(where: { $0.id == id }), let failed = attachment.failed else { return }
+        guard let image = images[id] else {
+            notice = "\(attachment.name): \(failed)"
+            return
+        }
+        notice = nil
+        update(id) { $0.failed = nil }
+        upload(image, id: id, name: (attachment.name as NSString).deletingPathExtension, environment: environment)
+    }
 
     func reset() {
         attachments = []
+        images = [:]
         pullRequests = []
         threads = []
         notice = nil
@@ -154,9 +182,15 @@ final class ComposerDraft {
         var draft = DraftAttachment(name: "\(name).jpg")
         draft.preview = image.preparingThumbnail(of: CGSize(width: 160, height: 160))
         guard let id = begin(draft) else { return }
+        images[id] = image
+        upload(image, id: id, name: name, environment: environment)
+    }
+
+    private func upload(_ image: UIImage, id: UUID, name: String, environment: EnvironmentSession) {
         Task {
             do {
                 finish(id, try await environment.uploadImage(image, name: "\(name)-\(Int(Date().timeIntervalSince1970)).jpg"))
+                images[id] = nil
             } catch {
                 update(id) { $0.failed = error.localizedDescription }
             }
