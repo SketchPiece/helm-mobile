@@ -42,3 +42,25 @@ was left out of the first version.
   accounts, server-side thread behaviour). Change them in Helm on the Mac for now.
 - **Device preview** (the streamed simulator/device screen from the RN app). Planned.
 - **iPad layout, hardware-keyboard shortcuts and the command palette.** Out of scope for now.
+
+## Ideas (not scheduled)
+
+- Word wrap for long lines in diffs (code blocks already wrap).
+- A separate theme choice for light and dark appearance, as the RN app had.
+- Usage across all Macs at once; the widget's cost summed without double counting.
+- An "Open Helm thread" Shortcuts intent (needs a thread App Entity).
+- The Helm Mobile project icon in Helm's sidebar (drawn; installing it was blocked).
+- From the classic client: project grouping and overview, client storage cleanup, diagnostics
+  (crash log), licenses and legal.
+
+## To check on a real iPhone
+
+Built and tested on the simulator or against the protocol only:
+
+- Push alerts and the Live Activity from the Volna core, and whether the alert inside the Live
+  Activity shows Russian text (`loc-key`) or falls back to English.
+- Voice input with real transcription on the Mac.
+- Logging in to the built-in Tailscale node.
+- Share → Helm opening the app by itself (the simulator did; a device may need the "open Helm" card),
+  and whether shared text ends up duplicated in the composer.
+- The camera in the "+" menu.
