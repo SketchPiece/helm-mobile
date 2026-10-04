@@ -280,13 +280,52 @@ struct WorkingPill: View {
 struct PlanCard: View {
     let item: TurnItem
     let actionable: Bool
+    /// Where "Save to project" writes, relative paths from here; nil hides it.
+    var saveRoot: String?
+    var save: ((_ relativePath: String, _ contents: String) async throws -> String)?
     let implement: () -> Void
+    @State private var savePath = ""
+    @State private var askingPath = false
+    @State private var saved: String?
+    @State private var saveError: String?
 
     var body: some View {
+        let plan = PlanExport(markdown: item.text)
         VStack(alignment: .leading, spacing: 10) {
-            Label("Plan", systemImage: "list.bullet.clipboard")
-                .sectionLabelStyle()
+            HStack {
+                Label("Plan", systemImage: "list.bullet.clipboard")
+                    .sectionLabelStyle()
+                Spacer()
+                Menu {
+                    Button {
+                        UIPasteboard.general.string = plan.contents
+                    } label: { Label("Copy", systemImage: "doc.on.doc") }
+                    ShareLink(item: plan, preview: SharePreview(plan.filename)) {
+                        Label("Share as file", systemImage: "square.and.arrow.up")
+                    }
+                    if saveRoot != nil, save != nil {
+                        Button {
+                            savePath = plan.filename
+                            askingPath = true
+                        } label: { Label("Save to project", systemImage: "folder.badge.plus") }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Palette.textMuted)
+                        .frame(width: 32, height: 24)
+                        .contentShape(.rect)
+                }
+                .accessibilityLabel("Plan actions")
+                .accessibilityIdentifier("planActions")
+            }
             MarkdownView(text: item.text)
+            if let saved {
+                Label("Saved to \(saved)", systemImage: "checkmark.circle")
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.done)
+                    .transition(.opacity)
+            }
             if actionable {
                 Button(action: implement) {
                     Text("Implement plan").font(Typography.headline).frame(maxWidth: .infinity)
@@ -298,6 +337,34 @@ struct PlanCard: View {
         }
         .padding(16)
         .background(Palette.surface, in: .rect(cornerRadius: 18, style: .continuous))
+        .alert("Save plan to project", isPresented: $askingPath) {
+            TextField("Path", text: $savePath)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            Button("Cancel", role: .cancel) {}
+            Button("Save") { write(plan) }
+        } message: {
+            Text("A path inside \(saveRoot.map { ($0 as NSString).lastPathComponent } ?? "the project").")
+        }
+        .alert("Couldn't save the plan", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveError ?? "")
+        }
+    }
+
+    private func write(_ plan: PlanExport) {
+        let path = savePath.trimmingCharacters(in: .whitespaces)
+        guard !path.isEmpty, let save else { return }
+        Task {
+            do {
+                let written = try await save(path, plan.contents)
+                withAnimation { saved = written }
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } catch {
+                saveError = error.localizedDescription
+            }
+        }
     }
 }
 

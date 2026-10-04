@@ -290,7 +290,16 @@ private struct ThreadContent: View {
                 )
             )
         case .plan(let item):
-            PlanCard(item: item, actionable: summary?.hasActionableProposedPlan == true && item.id == lastPlanId(projection)) {
+            let saveRoot = summary?.worktreePath ?? project?.workspaceRoot
+            PlanCard(item: item, actionable: summary?.hasActionableProposedPlan == true && item.id == lastPlanId(projection),
+                     saveRoot: saveRoot?.isEmpty == false ? saveRoot : nil,
+                     save: { path, contents in
+                         guard let saveRoot else { return path }
+                         let result = try await environment.call("projects.writeFile", [
+                             "cwd": .string(saveRoot), "relativePath": .string(path), "contents": .string(contents),
+                         ])
+                         return result["relativePath"]?.string ?? path
+                     }) {
                 implement(plan: item)
             }
         case .todo(let item):

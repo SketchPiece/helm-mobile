@@ -89,3 +89,12 @@ final class ClipboardTextTests: XCTestCase {
         """)
     }
 }
+
+final class PlanExportTests: XCTestCase {
+    func testFileIsNamedAfterTheFirstHeading() {
+        XCTAssertEqual(PlanExport(markdown: "Intro\n\n## Fix the login (redirect)!\n\n- step").filename, "fix-the-login-redirect.md")
+        XCTAssertEqual(PlanExport(markdown: "- just steps").filename, "plan.md")
+        XCTAssertEqual(PlanExport(markdown: "# План\n").filename, "plan.md")
+        XCTAssertEqual(PlanExport(markdown: "# A\n\n\n").contents, "# A\n")
+    }
+}
