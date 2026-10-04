@@ -10,7 +10,7 @@ struct NewThreadFanItem: Identifiable {
 
     /// The projects of the most recently active threads, newest first, and "no project" when a Mac has it.
     @MainActor
-    static func recent(in model: AppModel, limit: Int = 3) -> [NewThreadFanItem] {
+    static func recent(in model: AppModel, limit: Int = 4) -> [NewThreadFanItem] {
         var items: [NewThreadFanItem] = []
         var seen = Set<String>()
         let entries = model.allThreads().sorted { ($0.thread.updatedAt ?? .distantPast) > ($1.thread.updatedAt ?? .distantPast) }
