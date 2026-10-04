@@ -1,0 +1,72 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Composer: liquid glass and the amber mic",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "Now"
+  },
+  "a-slot.html": {
+   "x": 1800,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "A. Glass pill, one amber slot"
+  },
+  "b-card.html": {
+   "x": 0,
+   "y": 1000,
+   "w": 1720,
+   "h": 900,
+   "title": "B. Glass card with the model in it"
+  },
+  "c-split.html": {
+   "x": 1800,
+   "y": 1000,
+   "w": 1720,
+   "h": 900,
+   "title": "C. Pill + separate amber button"
+  },
+  "d-glass.html": {
+   "x": 0,
+   "y": 2000,
+   "w": 1720,
+   "h": 900,
+   "title": "Glass: how it reacts"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-slot.html",
+  "b-card.html",
+  "c-split.html",
+  "d-glass.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Composer: liquid glass and the amber mic",
+   "kind": "title1",
+   "maxW": 3520
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1800,
+   "y": 2000,
+   "w": 420,
+   "color": "blue",
+   "text": "My pick: B. It also fixes the jump when the chips slide in on focus, and the model is visible before you type, like in ChatGPT. The glass (board on the left) applies to whichever you pick."
+  }
+ ],
+ "designSystems": []
+}
