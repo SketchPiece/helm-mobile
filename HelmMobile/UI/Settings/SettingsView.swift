@@ -32,6 +32,18 @@ struct SettingsView: View {
                     } label: {
                         Label("Connect a Mac", systemImage: "plus")
                     }
+                    NavigationLink {
+                        TailscaleSettingsView()
+                    } label: {
+                        HStack {
+                            Label("Tailscale", systemImage: "network")
+                            Spacer()
+                            Text(model.tailscale.isRunning ? String(localized: "Built-in") : String(localized: "VPN app"))
+                                .font(Typography.footnote)
+                                .foregroundStyle(Palette.textMuted)
+                        }
+                    }
+                    .accessibilityIdentifier("tailscaleSettings")
                 } header: {
                     Text("Macs").sectionLabelStyle()
                 }

@@ -12,6 +12,8 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_STRICT_CONCURRENCY: complete
+    # The app and its test bundle both see `import Libtailscale` (module map next to the header).
+    SWIFT_INCLUDE_PATHS: $(SRCROOT)/Vendor/libtailscale
 targets:
   HelmMobile:
     type: application
@@ -21,6 +23,14 @@ targets:
       Release: Base.xcconfig
     sources:
       - path: HelmMobile
+    dependencies:
+      # Static library (scripts/build-libtailscale.sh rebuilds it; gitignored, 51 MB).
+      - framework: Vendor/libtailscale/Libtailscale.xcframework
+        embed: false
+      - sdk: CoreFoundation.framework
+      - sdk: Security.framework
+      - sdk: SystemConfiguration.framework
+      - sdk: libresolv.tbd
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative

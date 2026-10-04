@@ -157,25 +157,36 @@ struct PairingView: View {
         .task { await discover() }
     }
 
-    /// Probes the hosts baked into this build (the owner's Macs on the tailnet) for Helm.
+    /// Probes for Helm: the Macs baked into this build, plus every online computer the
+    /// built-in Tailscale node can see (Helm listens on 3783 and up; T3 Code on 3773).
     private func discover() async {
-        let hosts = (Bundle.main.object(forInfoDictionaryKey: "HelmSuggestedHosts") as? String ?? "")
+        var hosts = (Bundle.main.object(forInfoDictionaryKey: "HelmSuggestedHosts") as? String ?? "")
             .split(separator: " ").map(String.init).filter { !$0.isEmpty }
+        if model.tailscale.isRunning {
+            for peer in model.tailscale.peers where peer.isComputer && peer.online {
+                for port in [3783, 3784, 3785, 3773] where !hosts.contains("\(peer.address):\(port)") {
+                    hosts.append("\(peer.address):\(port)")
+                }
+            }
+        }
         let paired = Set(model.environments.map(\.id))
         var results: [FoundHelm] = []
-        await withTaskGroup(of: FoundHelm?.self) { group in
+        var seen: Set<String> = []
+        await withTaskGroup(of: (FoundHelm, String)?.self) { group in
             for host in hosts {
                 group.addTask {
                     guard let base = PairingTarget.normalizeHost(host, defaultScheme: nil) else { return nil }
-                    var http = HelmHTTP(baseURL: base, token: nil)
-                    http.token = nil
+                    let http = HelmHTTP(baseURL: base, token: nil)
                     guard let descriptor = try? await http.descriptor(), !paired.contains(descriptor.environmentId) else { return nil }
-                    return FoundHelm(host: host, label: descriptor.label)
+                    return (FoundHelm(host: host, label: descriptor.label), descriptor.environmentId)
                 }
             }
-            for await result in group { if let result { results.append(result) } }
+            for await result in group {
+                guard let (helm, environmentId) = result, seen.insert(environmentId).inserted else { continue }
+                results.append(helm)
+            }
         }
-        withAnimation { found = results }
+        withAnimation { found = results.sorted { $0.label < $1.label } }
         if results.isEmpty { focused = .address }
     }
 

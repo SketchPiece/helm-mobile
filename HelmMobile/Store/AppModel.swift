@@ -22,10 +22,15 @@ struct ThreadListEntry: Identifiable, Hashable {
 @Observable
 final class AppModel {
     private(set) var environments: [EnvironmentSession] = []
+    let tailscale = TailscaleService()
     @ObservationIgnored private let pathMonitor = NWPathMonitor()
 
     init() {
         environments = SavedEnvironments.load().map(EnvironmentSession.init(saved:))
+        tailscale.startIfConfigured()
+        tailscale.onRunning = { [weak self] in
+            self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
+        }
         environments.forEach { $0.start() }
         // A new network path (Wi-Fi ↔ cellular, Tailscale toggled) is the moment a dropped
         // connection can come back; don't wait for the backoff timer.

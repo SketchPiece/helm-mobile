@@ -195,4 +195,21 @@ final class HelmTourTests: XCTestCase {
         sleep(30)
         shot("52-queued-done")
     }
+
+    /// Starts the built-in Tailscale node up to its login link. Opt in with HELM_TAILSCALE=1.
+    func testTailscaleLogin() throws {
+        guard ProcessInfo.processInfo.environment["HELM_TAILSCALE"] != nil else { throw XCTSkip("HELM_TAILSCALE not set") }
+        XCTAssertTrue(app.buttons["settings"].waitForExistence(timeout: 15))
+        app.buttons["settings"].tap()
+        let row = app.buttons["tailscaleSettings"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        sleep(1)
+        shot("60-tailscale-off")
+        app.buttons["tailscaleLogin"].tap()
+        sleep(12)
+        app.activate()
+        sleep(2)
+        shot("61-tailscale-login")
+    }
 }

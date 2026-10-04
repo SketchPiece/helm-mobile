@@ -24,6 +24,9 @@
         }
       }
     },
+    "%@ · %@": {
+      "shouldTranslate": false
+    },
     "%lld": {
       "shouldTranslate": false
     },
@@ -854,6 +857,26 @@
         }
       }
     },
+    "Built-in": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроенный"
+          }
+        }
+      }
+    },
+    "Built-in Tailscale": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроенный Tailscale"
+          }
+        }
+      }
+    },
     "Can't reach the Mac. Is it awake and is Tailscale on? (%@)": {
       "localizations": {
         "ru": {
@@ -890,6 +913,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сжал переписку"
+          }
+        }
+      }
+    },
+    "Computers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютеры"
           }
         }
       }
@@ -1184,6 +1217,16 @@
         }
       }
     },
+    "Finish logging in in the browser. This screen updates by itself.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заверши вход в браузере. Этот экран обновится сам."
+          }
+        }
+      }
+    },
     "Found on your tailnet": {
       "localizations": {
         "ru": {
@@ -1274,6 +1317,16 @@
         }
       }
     },
+    "Helm will reach your Macs only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал будет доставать до Mac только через приложение Tailscale VPN. Если телефон больше не нужен в tailnet, удали его в консоли Tailscale."
+          }
+        }
+      }
+    },
     "Hold to talk, release to send": {
       "localizations": {
         "ru": {
@@ -1330,6 +1383,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Лимит"
+          }
+        }
+      }
+    },
+    "Log in once and Helm reaches your Macs by itself, even with the Tailscale VPN off or another VPN on.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Войди один раз — и Штурвал сам достанет до твоих Mac, даже с выключенным Tailscale VPN или другим VPN."
+          }
+        }
+      }
+    },
+    "Log in to Tailscale": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Войти в Tailscale"
+          }
+        }
+      }
+    },
+    "Log out": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выйти"
+          }
+        }
+      }
+    },
+    "Log out of Tailscale": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выйти из Tailscale"
+          }
+        }
+      }
+    },
+    "Log out of Tailscale?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выйти из Tailscale?"
           }
         }
       }
@@ -1484,6 +1587,16 @@
         }
       }
     },
+    "No computers on this tailnet yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этом tailnet пока нет компьютеров."
+          }
+        }
+      }
+    },
     "No file changes": {
       "localizations": {
         "ru": {
@@ -1544,6 +1657,16 @@
         }
       }
     },
+    "On the Mac, turn on Helm → Settings → Connections → Network access.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На Mac включи Штурвал → Settings → Connections → Network access."
+          }
+        }
+      }
+    },
     "On the Mac: Helm → Settings → Connections → Pair a device.": {
       "localizations": {
         "ru": {
@@ -1560,6 +1683,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открой Штурвал на Mac."
+          }
+        }
+      }
+    },
+    "Open login again": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть вход ещё раз"
           }
         }
       }
@@ -2104,6 +2237,16 @@
         }
       }
     },
+    "Starting Tailscale…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запускаю Tailscale…"
+          }
+        }
+      }
+    },
     "Status": {
       "localizations": {
         "ru": {
@@ -2190,6 +2333,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Как в системе"
+          }
+        }
+      }
+    },
+    "Tailnet": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tailnet"
+          }
+        }
+      }
+    },
+    "Tailscale": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tailscale"
           }
         }
       }
@@ -2464,6 +2627,16 @@
         }
       }
     },
+    "Try again": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попробовать ещё раз"
+          }
+        }
+      }
+    },
     "Unavailable": {
       "localizations": {
         "ru": {
@@ -2500,6 +2673,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Упёрлись в лимит"
+          }
+        }
+      }
+    },
+    "VPN app": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через VPN"
           }
         }
       }

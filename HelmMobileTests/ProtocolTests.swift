@@ -360,3 +360,34 @@ final class ApprovalDetailTests: XCTestCase {
         XCTAssertEqual(Timeline.blocks(from: [failed], liveRunId: nil).count, 1)
     }
 }
+
+final class TailnetRoutingTests: XCTestCase {
+    func testTailnetHosts() {
+        XCTAssertTrue(TailnetRouting.isTailnetHost("100.64.0.1"))
+        XCTAssertTrue(TailnetRouting.isTailnetHost("100.64.0.1"))
+        XCTAssertTrue(TailnetRouting.isTailnetHost("100.127.255.255"))
+        XCTAssertFalse(TailnetRouting.isTailnetHost("100.128.0.1"))
+        XCTAssertFalse(TailnetRouting.isTailnetHost("100.63.0.1"))
+        XCTAssertFalse(TailnetRouting.isTailnetHost("192.168.1.5"))
+        XCTAssertTrue(TailnetRouting.isTailnetHost("my-mac.tailnet.ts.net"))
+        XCTAssertTrue(TailnetRouting.isTailnetHost("[fd7a:115c:a1e0::6101:16de]"))
+        XCTAssertFalse(TailnetRouting.isTailnetHost("example.com"))
+    }
+
+    func testRoutingIsOffUntilEnabledAndNeverTouchesTLS() {
+        TailnetRouting.isEnabled = false
+        let url = URL(string: "http://100.64.0.1:3783/ws")!
+        XCTAssertEqual(TailnetRouting.route(url), url)
+        TailnetRouting.isEnabled = true
+        defer { TailnetRouting.isEnabled = false }
+        let tls = URL(string: "https://my-mac.tailnet.ts.net/ws")!
+        XCTAssertEqual(TailnetRouting.route(tls), tls)
+        let lan = URL(string: "http://192.168.1.5:3783/")!
+        XCTAssertEqual(TailnetRouting.route(lan), lan)
+        let routed = TailnetRouting.route(url)
+        XCTAssertEqual(routed.host(), "127.0.0.1")
+        XCTAssertEqual(routed.path(), "/ws")
+        // The same tailnet address keeps its loopback port.
+        XCTAssertEqual(TailnetRouting.route(url).port, routed.port)
+    }
+}

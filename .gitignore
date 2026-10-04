@@ -7,3 +7,4 @@ xcuserdata/
 release/
 .env
 Local.xcconfig
+Vendor/libtailscale/Libtailscale.xcframework/

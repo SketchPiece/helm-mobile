@@ -113,8 +113,10 @@ struct HelmHTTP: Sendable {
 
     static let mobileScopes = "orchestration:read orchestration:operate terminal:operate review:write relay:read"
 
+    /// Every request, the WebSocket and asset URLs come through here, so this is the one place
+    /// tailnet addresses get routed through the built-in Tailscale node when it is in use.
     func url(_ path: String) -> URL {
-        URL(string: path, relativeTo: baseURL)!.absoluteURL
+        TailnetRouting.route(URL(string: path, relativeTo: baseURL)!.absoluteURL)
     }
 
     func request(_ path: String, method: String = "GET") -> URLRequest {
