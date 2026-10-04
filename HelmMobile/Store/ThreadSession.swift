@@ -119,8 +119,9 @@ final class ThreadSession {
     // MARK: History
 
     /// Prepends the next older page of the timeline (`GET …/threads/{id}/history?cursor=`).
-    /// A page that comes back after a new snapshot replaced the window is dropped.
-    func loadEarlier() async {
+    /// `beforeMerge` lets the view hold the page until it can keep its scroll position. A page
+    /// that comes back after a new snapshot replaced the window is dropped.
+    func loadEarlier(beforeMerge: () async -> Void = {}) async {
         guard !isLoadingHistory, let environment, let history = projection?.history, history.hasMore,
               let cursor = history.cursor
         else { return }
@@ -128,6 +129,7 @@ final class ThreadSession {
         historyError = nil
         do {
             let page = try await environment.threadHistoryPage(threadId: threadId, cursor: cursor)
+            await beforeMerge()
             if projection?.history.cursor == cursor { projection?.mergeOlder(page: page) }
         } catch {
             if projection?.history.cursor == cursor {

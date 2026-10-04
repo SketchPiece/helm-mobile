@@ -34,9 +34,13 @@ private struct ThreadContent: View {
     @State private var scrollPhase = ScrollPhase.idle
     /// The user has scrolled this thread themselves; reaching the top then loads older history.
     @State private var userScrolled = false
-    /// While an older page lands, the scroll view keeps its distance from the bottom so the
-    /// rows on screen stay put as content grows above them.
-    @State private var holdsPositionOnPrepend = false
+    /// Only used to shift the offset when an older page lands above what is on screen.
+    @State private var position = ScrollPosition()
+    /// The latest content offset and height.
+    @State private var scrollMetrics = ScrollMetrics()
+    /// Offset and height right before an older page was merged; the next height change
+    /// moves the offset by the growth so the rows on screen stay put.
+    @State private var prependBase: ScrollMetrics?
     @State private var expandedWork: Set<String> = []
     @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
@@ -72,7 +76,7 @@ private struct ThreadContent: View {
                     EarlierHistoryRow(isLoading: session.isLoadingHistory, error: session.historyError,
                                       canLoad: projection.history.hasMore, load: loadEarlier)
                         .onScrollVisibilityChange(threshold: 0.5) { visible in
-                            if visible, userScrolled, session.historyError == nil { loadEarlier() }
+                            if visible, userScrolled, session.historyError == nil, !Self.manualHistory { loadEarlier() }
                         }
                 }
                 ForEach(blocks) { block in
@@ -104,7 +108,17 @@ private struct ThreadContent: View {
         }
         .environment(\.threadEnvironmentId, environment.id)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
-        .defaultScrollAnchor(holdsPositionOnPrepend ? .bottom : nil, for: .sizeChanges)
+        .scrollPosition($position)
+        .onScrollGeometryChange(for: ScrollMetrics.self) {
+            // `scrollTo(y:)` counts from the content's top, the offset from the top inset.
+            ScrollMetrics(offset: $0.contentOffset.y + $0.contentInsets.top, height: $0.contentSize.height)
+        } action: { _, metrics in
+            scrollMetrics = metrics
+            if let base = prependBase, metrics.height != base.height {
+                prependBase = nil
+                position.scrollTo(y: base.offset + metrics.height - base.height)
+            }
+        }
         .scrollDismissesKeyboard(.interactively)
         // Tapping the conversation puts the keyboard away, also when it is too short to scroll.
         .simultaneousGesture(TapGesture().onEnded {
@@ -300,14 +314,24 @@ private struct ThreadContent: View {
 
     private static let bottomId = "timeline-bottom"
 
+    /// UI tests measure a tapped load with `-manualHistory`: reaching the top doesn't load by itself.
+    private static let manualHistory: Bool = {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-manualHistory")
+        #else
+        false
+        #endif
+    }()
+
     private func loadEarlier() {
         guard !session.isLoadingHistory else { return }
-        holdsPositionOnPrepend = true
         Task {
-            await session.loadEarlier()
-            // Let the grown content lay out with the anchor held before normal scrolling resumes.
-            try? await Task.sleep(for: .milliseconds(400))
-            holdsPositionOnPrepend = false
+            await session.loadEarlier {
+                // Land the page once the scroll view is at rest (a fling or the bounce at the top
+                // would override the correction), then shift by what it adds above.
+                for _ in 0..<60 where scrollPhase != .idle { try? await Task.sleep(for: .milliseconds(50)) }
+                prependBase = scrollMetrics
+            }
         }
     }
 
@@ -449,4 +473,10 @@ private struct EarlierHistoryRow: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
+
+/// Where the thread's scroll view is: content offset and content height.
+private struct ScrollMetrics: Equatable {
+    var offset: CGFloat = 0
+    var height: CGFloat = 0
 }

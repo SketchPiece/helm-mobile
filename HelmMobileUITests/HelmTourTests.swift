@@ -348,7 +348,15 @@ final class HelmTourTests: XCTestCase {
         shot("a4-dragged-to-end")
     }
 
+    /// Answers the notification permission prompt of a freshly installed app, if it is up.
+    private func dismissSystemPrompt() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+        if deny.waitForExistence(timeout: 3) { deny.tap() }
+    }
+
     private func openThread(_ title: String) {
+        dismissSystemPrompt()
         XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
         sleep(2)
         let row = app.buttons.matching(NSPredicate(format: "identifier == 'threadRow' AND label CONTAINS[c] %@", title)).firstMatch
@@ -358,36 +366,56 @@ final class HelmTourTests: XCTestCase {
         sleep(3)
     }
 
-    /// Scrolls a long thread (HELM_HISTORY=<title>) to its top: the previous page loads and the
-    /// message that was on screen stays where it was.
+    /// A long thread (HELM_HISTORY=<title>) scrolled to the top of its loaded window: tapping
+    /// "Load earlier messages" prepends the previous page without moving what is on screen.
+    /// (`-manualHistory` keeps the top from loading by itself, so the moment can be measured.)
     func testHistoryPaging() throws {
         guard let title = ProcessInfo.processInfo.environment["HELM_HISTORY"] else { throw XCTSkip("HELM_HISTORY not set") }
+        if ProcessInfo.processInfo.environment["HELM_HISTORY_AUTO"] != nil {
+            // Scrolling up by hand: the page loads by itself; screenshots per step, checked by eye.
+            openThread(title)
+            let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            for step in 1...8 {
+                start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 120)))
+                shot(String(format: "ha%d-step", step))
+                sleep(2)
+                shot(String(format: "ha%d-step-later", step))
+            }
+            return
+        }
+        app.terminate()
+        app.launchArguments += ["-manualHistory"]
+        app.launch()
         openThread(title)
         shot("h0-opened")
         let loader = app.buttons["loadEarlier"]
-        var swipes = 0
-        while !loader.isHittable, swipes < 30 {
-            app.swipeDown(velocity: .slow)
-            swipes += 1
+        let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        for _ in 0..<12 where !loader.isHittable {
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 200)))
         }
-        // The swipe that revealed the loader started the load; find a message still on screen.
-        let turns = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Turn '"))
-        let window = app.windows.firstMatch.frame
-        let visible = turns.allElementsBoundByIndex.filter { $0.exists && window.contains($0.frame) }
-        let anchor = try XCTUnwrap(visible.first, "no message on screen")
-        let label = anchor.label
-        let before = anchor.frame.minY
-        shot("h1-at-top")
-        sleep(4)
-        shot("h2-after-page")
-        let after = app.staticTexts[label].frame.minY
-        XCTAssertEqual(after, before, accuracy: 4, "\(label) moved from \(before) to \(after)")
-        // Had the view jumped to the top of the new page, the first prompt would be on screen.
-        let firstPrompt = app.staticTexts["Turn 1. Reply with OK only."]
-        XCTAssertFalse(firstPrompt.exists && window.contains(firstPrompt.frame), "jumped to the oldest message")
-        app.swipeDown(velocity: .slow)
+        XCTAssertTrue(loader.isHittable, "never reached the load-earlier row")
         sleep(1)
-        shot("h3-scrolled-into-older")
+        let window = app.windows.firstMatch.frame
+        let prompts = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Turn '"))
+        func visiblePrompts() -> [(String, CGFloat)] {
+            prompts.allElementsBoundByIndex.filter { $0.exists && window.contains($0.frame) }.map { ($0.label, $0.frame.minY) }
+        }
+        let before = visiblePrompts()
+        shot("h1-top-of-window")
+        loader.tap()
+        sleep(3)
+        let after = visiblePrompts()
+        shot("h2-after-page")
+        print("before \(before.map { "\($0.0.prefix(7))@\(Int($0.1))" }) after \(after.map { "\($0.0.prefix(7))@\(Int($0.1))" })")
+        XCTAssertFalse(before.isEmpty)
+        for (label, y) in before {
+            let moved = try XCTUnwrap(after.first { $0.0 == label }, "\(label) left the screen")
+            XCTAssertEqual(moved.1, y, accuracy: 4, "\(label) jumped")
+        }
+        start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)))
+        sleep(1)
+        shot("h3-older-page")
+        XCTAssertTrue(app.staticTexts["Turn 1. Reply with OK only."].exists)
     }
 
     /// Drags the second queued message above the first in a working sandbox thread.
@@ -396,6 +424,7 @@ final class HelmTourTests: XCTestCase {
         guard let projectTitle = ProcessInfo.processInfo.environment["HELM_QUEUE_DRAG"] else {
             throw XCTSkip("HELM_QUEUE_DRAG not set")
         }
+        dismissSystemPrompt()
         XCTAssertTrue(app.buttons["newThread"].waitForExistence(timeout: 20))
         sleep(2)
         app.buttons["newThread"].tap()
@@ -448,6 +477,7 @@ final class HelmTourTests: XCTestCase {
         app.terminate()
         app.launchArguments += ["-uiTestCamera"]
         app.launch()
+        dismissSystemPrompt()
         XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
         sleep(1)
         app.buttons["threadRow"].firstMatch.tap()
