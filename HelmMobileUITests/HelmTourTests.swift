@@ -418,52 +418,26 @@ final class HelmTourTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Turn 1. Reply with OK only."].exists)
     }
 
-    /// Drags the second queued message above the first in a working sandbox thread.
-    /// Opt in with HELM_QUEUE_DRAG=<project title>.
+    /// Drags the second queued message above the first in the busy thread named by
+    /// HELM_QUEUE_DRAG (prepared by the live test `testPrepareQueueDragThread`), then opens
+    /// the first one's editor.
     func testQueueDrag() throws {
-        guard let projectTitle = ProcessInfo.processInfo.environment["HELM_QUEUE_DRAG"] else {
-            throw XCTSkip("HELM_QUEUE_DRAG not set")
-        }
-        dismissSystemPrompt()
-        XCTAssertTrue(app.buttons["newThread"].waitForExistence(timeout: 20))
-        sleep(2)
-        app.buttons["newThread"].tap()
-        let picker = app.buttons["projectPicker"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 5))
-        picker.tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 5))
-        search.tap()
-        search.typeText(projectTitle)
-        sleep(1)
-        app.buttons.matching(identifier: "projectOption").firstMatch.tap()
-        sleep(1)
-        let field = app.textViews["newThreadText"].exists ? app.textViews["newThreadText"] : app.textFields["newThreadText"]
-        field.tap()
-        field.typeText("UI drag test: run `sleep 45` in the foreground, then reply OK.")
-        app.buttons["startThread"].tap()
-        let composer = app.textViews["composer"]
-        XCTAssertTrue(composer.waitForExistence(timeout: 20))
-        sleep(6)
-        for text in ["First queued: reply A.", "Second queued: reply B."] {
-            composer.tap()
-            composer.typeText(text)
-            app.buttons["send"].tap()
-            sleep(2)
-        }
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        guard let title = ProcessInfo.processInfo.environment["HELM_QUEUE_DRAG"] else { throw XCTSkip("HELM_QUEUE_DRAG not set") }
+        openThread(title)
+        shot("q-opened")
         let handles = app.descendants(matching: .any).matching(identifier: "queueDragHandle")
         XCTAssertTrue(handles.element(boundBy: 1).waitForExistence(timeout: 15), "no drag handles")
         shot("q0-queue")
         let first = app.staticTexts["First queued: reply A."], second = app.staticTexts["Second queued: reply B."]
         XCTAssertLessThan(first.frame.minY, second.frame.minY)
         let from = handles.element(boundBy: 1).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        from.press(forDuration: 0.2, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -45)))
+        from.press(forDuration: 0.3, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -45)))
         sleep(3)
         shot("q1-dragged")
         XCTAssertLessThan(second.frame.minY, first.frame.minY, "order didn't change")
-        // Edit sheet with attachment controls.
-        app.buttons.matching(NSPredicate(format: "label == 'More' OR label CONTAINS 'ellipsis'")).firstMatch.tap()
+        // The editor of the (now second) first message, with its attachment controls.
+        let menus = app.buttons.matching(NSPredicate(format: "label == 'More' OR label CONTAINS[c] 'ellipsis'"))
+        menus.element(boundBy: menus.count - 1).tap()
         sleep(1)
         shot("q2-menu")
         app.buttons["Edit"].firstMatch.tap()

@@ -36,7 +36,10 @@ xcodebuild … test -only-testing:HelmMobileUITests    # UI tour; screenshots la
 
 UI scenarios that drive real agents are opt-in: `HELM_LIVE_TURN=<project>`, `HELM_ANSWER=1` (a thread
 waiting on an approval or question), `HELM_REVIEW=1`, `HELM_QUEUE=1`. `HELM_APPEARANCE=dark` and
-`HELM_LANGUAGE=ru` change the tour's look. Pass them with the `TEST_RUNNER_` prefix and run them
+`HELM_LANGUAGE=ru` change the tour's look. `HELM_HISTORY=<thread title>` checks that loading older history
+doesn't move the view (the live test keeps a long sandbox thread with `HELM_KEEP_HISTORY_THREAD=1`),
+`HELM_QUEUE_DRAG="Helm Mobile queue drag"` drags a queued message (the live test with `HELM_PREPARE_QUEUE=1`
+sets that thread up; `HELM_CLEANUP=1` deletes both), and `HELM_CAMERA=1` looks for the camera in the "+" menus. Pass them with the `TEST_RUNNER_` prefix and run them
 against an isolated dev server (t3code's `.t3`), never the live Helm. Point agent turns at a scratch
 repo: agents follow the global "commit often" rule and will commit into whatever project they run in.
 

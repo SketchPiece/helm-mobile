@@ -652,4 +652,37 @@ final class LiveServerTests: XCTestCase {
         }
         await connection.close()
     }
+
+    /// Leaves a sandbox thread busy for a minute and a half with two queued follow-ups, for the queue
+    /// drag UI scenario. Opt in with HELM_PREPARE_QUEUE=1; HELM_CLEANUP=1 deletes it again.
+    func testPrepareQueueDragThread() async throws {
+        guard ProcessInfo.processInfo.environment["HELM_PREPARE_QUEUE"] == "1" else { throw XCTSkip("HELM_PREPARE_QUEUE not set") }
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let threadId = try await launch(connection, projectId: project.id, text: "Run `python3 -c 'import time; time.sleep(90)'` in the foreground and wait for it, then reply OK.",
+                                        title: "Helm Mobile queue drag", keep: true)
+        try await Self.poll("the turn to run", timeout: 60) { try await Self.projection(connection, threadId).isWorking }
+        for text in ["First queued: reply A.", "Second queued: reply B."] {
+            try await Self.queueMessage(connection, threadId, ComposerMessage(text: text, attachments: [], context: nil))
+        }
+        try await Self.poll("two queued runs", timeout: 20) { try await Self.projection(connection, threadId).queued.count == 2 }
+        await connection.close()
+    }
+
+    /// Deletes the threads the opt-in scenarios keep, only in the sandbox project.
+    func testCleanupKeptThreads() async throws {
+        guard ProcessInfo.processInfo.environment["HELM_CLEANUP"] == "1" else { throw XCTSkip("HELM_CLEANUP not set") }
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let kept = try await shell(connection).threads.values.filter {
+            $0.projectId == project.id && ["Helm Mobile history test", "Helm Mobile queue drag"].contains($0.title)
+        }
+        for thread in kept {
+            if let active = try await Self.projection(connection, thread.id).activeRun {
+                try? await Self.dispatch(connection, "run.interrupt", ["threadId": .string(thread.id), "runId": .string(active.id)])
+            }
+            try await Self.dispatch(connection, "thread.delete", ["threadId": .string(thread.id)])
+        }
+        await connection.close()
+    }
 }

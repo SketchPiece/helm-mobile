@@ -525,7 +525,6 @@ struct QueueStrip: View {
         }
         .background(dragging == message.id ? Palette.surfaceRaised : .clear, in: .rect(cornerRadius: 10))
         .scaleEffect(dragging == message.id ? 1.02 : 1)
-        .accessibilityIdentifier("queuedMessage")
     }
 
     private func menu(_ message: QueuedMessage) -> some View {
