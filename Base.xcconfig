@@ -1,4 +1,15 @@
-// Machine-specific values (e.g. the Mac's tailnet address to suggest when pairing) live in
-// the gitignored Local.xcconfig; see Local.xcconfig.example.
+// Machine-specific values live in the gitignored Local.xcconfig (see Local.xcconfig.example):
+// the Macs the pairing screen suggests, and the push relay credentials.
 HELM_SUGGESTED_HOSTS =
+HELM_PUSH_URL =
+HELM_PUSH_TOKEN =
+
+// The app's identity. Push and Live Activity updates need an App ID with the Push
+// Notifications capability; set APP_BUNDLE_ID to it and HELM_PUSH_ENABLED = YES together with
+// CODE_SIGN_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements.
+APP_BUNDLE_ID = com.sketchpiece.helmnative
+HELM_PUSH_ENABLED = NO
+HELM_APS_ENVIRONMENT = production
+HELM_APS_ENVIRONMENT[config=Debug] = sandbox
+
 #include? "Local.xcconfig"

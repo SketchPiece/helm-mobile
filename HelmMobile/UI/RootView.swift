@@ -48,6 +48,20 @@ struct RootView: View {
         .environment(router)
         .background(Palette.canvas)
         .task { await pairFromLaunchArguments() }
+        // Live Activity taps and other links: helm://threads/<env>/<thread>.
+        .onOpenURL { url in
+            if let target = HelmLink.thread(from: url) {
+                router.open(ThreadRef(environmentId: target.environmentId, threadId: target.threadId))
+            }
+        }
+        // Notification taps.
+        .onChange(of: PushService.shared.pendingThread) { _, ref in
+            guard let ref else { return }
+            router.showNewThread = false
+            router.showSettings = false
+            router.open(ref)
+            PushService.shared.pendingThread = nil
+        }
     }
 
     /// `-pairURL <link>` (or HELM_PAIR_URL) pairs on launch; used by UI tests and simulator runs.

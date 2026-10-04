@@ -181,6 +181,10 @@ final class ThreadSession {
                 fields["dispatchMode"] = ["type": "start_immediately"]
             }
             try await environment.dispatch("message.dispatch", fields, commandId: message.commandId)
+            PushService.shared.armForLocalWork(
+                projectTitle: environment.project(thread?.projectId)?.title ?? environment.label,
+                threadTitle: thread?.displayTitle ?? ""
+            )
             if let index = outbox.firstIndex(where: { $0.id == message.id }) { outbox[index].failed = nil }
             reconcileOutbox()
         } catch {

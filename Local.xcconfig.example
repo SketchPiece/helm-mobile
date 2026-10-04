@@ -1,2 +1,6 @@
-// Copy to Local.xcconfig. Space-separated hosts the pairing screen probes and offers.
+// Copy to Local.xcconfig (gitignored).
+// Space-separated hosts the pairing screen probes and offers.
 HELM_SUGGESTED_HOSTS = 100.64.0.1
+// Volna core push relay (t3code .env HELM_PUSH_URL / HELM_PUSH_TOKEN). `/$()/` keeps the `//`.
+HELM_PUSH_URL = https:/$()/core.example.com
+HELM_PUSH_TOKEN = device-token

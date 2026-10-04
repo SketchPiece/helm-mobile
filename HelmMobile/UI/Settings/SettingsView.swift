@@ -58,6 +58,8 @@ struct SettingsView: View {
                     Text("Threads").sectionLabelStyle()
                 }
 
+                NotificationsSection()
+
                 Section {
                     Picker("Appearance", selection: $appearance) {
                         ForEach(Appearance.allCases) { option in
@@ -183,6 +185,52 @@ struct EnvironmentDetailView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .textSelection(.enabled)
+        }
+    }
+}
+
+/// Alerts and the Live Activity, delivered by the Volna core when agents need you or finish.
+struct NotificationsSection: View {
+    @Bindable private var push = PushService.shared
+
+    var body: some View {
+        Section {
+            if !push.isAvailable {
+                Text("This build can't receive notifications.")
+                    .foregroundStyle(Palette.textMuted)
+            } else {
+                HStack {
+                    Text("Notifications")
+                    Spacer()
+                    Text(statusText)
+                        .font(Typography.footnote)
+                        .foregroundStyle(push.registered && push.authorization == .authorized ? Palette.done : Palette.textMuted)
+                }
+                if push.authorization == .denied {
+                    Button("Allow in iOS Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }
+                }
+                Toggle("Live Activity", isOn: $push.liveActivitiesEnabled)
+                    .tint(Palette.accent)
+                if let error = push.lastError {
+                    Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+                }
+            }
+        } header: {
+            Text("Notifications").sectionLabelStyle()
+        } footer: {
+            Text("When an agent asks for approval, has a question, finishes or fails. The Live Activity shows work in progress on the lock screen and in the Dynamic Island.")
+                .font(Typography.footnote)
+        }
+    }
+
+    private var statusText: String {
+        switch push.authorization {
+        case .authorized, .provisional, .ephemeral:
+            push.registered ? String(localized: "On") : String(localized: "Connecting…")
+        case .denied: String(localized: "Off in iOS Settings")
+        default: String(localized: "Not asked yet")
         }
     }
 }

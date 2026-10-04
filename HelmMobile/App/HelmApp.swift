@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct HelmApp: App {
+    @UIApplicationDelegateAdaptor(HelmAppDelegate.self) private var appDelegate
     @State private var model = AppModel()
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("appearance") private var appearance = Appearance.system
@@ -21,12 +22,16 @@ struct HelmApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .onAppear { PushService.shared.start() }
                 .preferredColorScheme(appearance.colorScheme)
                 // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
                 .tint(Palette.text)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.foregrounded() }
+            if phase == .active {
+                model.foregrounded()
+                PushService.shared.foregrounded()
+            }
         }
     }
 }

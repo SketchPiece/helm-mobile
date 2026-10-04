@@ -127,8 +127,14 @@ private struct ThreadContent: View {
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
             if pinnedForKeyboard { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(edge: .bottom) } }
         }
-        .onAppear { session.markVisited() }
-        .onDisappear { session.markVisited() }
+        .onAppear {
+            session.markVisited()
+            PushService.shared.visibleThread = ThreadRef(environmentId: environment.id, threadId: session.threadId)
+        }
+        .onDisappear {
+            session.markVisited()
+            if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
+        }
         .onChange(of: session.isDeleted) { _, deleted in if deleted { dismiss() } }
     }
 

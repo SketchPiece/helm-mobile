@@ -1,0 +1,26 @@
+{
+  "HELM_ALERT_APPROVAL": {
+    "en": "Approval needed: %@",
+    "ru": "Ждёт разрешения: %@"
+  },
+  "HELM_ALERT_INPUT": {
+    "en": "Waiting for input: %@",
+    "ru": "Ждёт ответа: %@"
+  },
+  "HELM_ALERT_DONE": {
+    "en": "Done: %@",
+    "ru": "Готово: %@"
+  },
+  "HELM_ALERT_FAILED": {
+    "en": "Failed: %@",
+    "ru": "Ошибка: %@"
+  },
+  "HELM_ALERT_MANY_WAITING": {
+    "en": "%@ agents need attention",
+    "ru": "Агенты ждут тебя: %@"
+  },
+  "HELM_ALERT_MANY_DONE": {
+    "en": "%@ agents finished",
+    "ru": "Агенты закончили: %@"
+  }
+}

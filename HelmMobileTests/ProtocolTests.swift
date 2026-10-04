@@ -391,3 +391,45 @@ final class TailnetRoutingTests: XCTestCase {
         XCTAssertEqual(TailnetRouting.route(url).port, routed.port)
     }
 }
+
+final class PushPayloadTests: XCTestCase {
+    func testThreadLinksFromNotificationsAndLiveActivity() {
+        XCTAssertEqual(PushService.thread(fromNotification: ["deepLink": "/threads/env%201/t-1"]),
+                       ThreadRef(environmentId: "env 1", threadId: "t-1"))
+        XCTAssertEqual(PushService.thread(fromNotification: ["deepLink": "//evil/x", "environmentId": "e", "threadId": "t"]),
+                       ThreadRef(environmentId: "e", threadId: "t"))
+        XCTAssertNil(PushService.thread(fromNotification: ["deepLink": "/"]))
+        let url = HelmLink.url(forPath: "/threads/e/t")!
+        XCTAssertEqual(url.absoluteString, "helm://threads/e/t")
+        XCTAssertEqual(HelmLink.thread(from: url)?.threadId, "t")
+        XCTAssertEqual(HelmLink.thread(from: URL(string: "t3code://threads/e/t")!)?.environmentId, "e")
+        XCTAssertNil(HelmLink.url(forPath: "/"))
+    }
+
+    /// The core pushes content-state as {name, props: "<JSON string>"}.
+    func testCoreContentStateDecodesAndOrdersRows() throws {
+        let props = """
+        {"title":"Helm","subtitle":"Agent work in progress","activeCount":2,"updatedAt":"2026-10-04T12:00:00.000Z",
+         "activities":[
+          {"environmentId":"e","threadId":"a","projectTitle":"t3code","threadTitle":"Running one","modelTitle":"Opus","phase":"running","status":"Working","updatedAt":"2026-10-04T11:59:00.000Z","deepLink":"/threads/e/a"},
+          {"environmentId":"e","threadId":"b","projectTitle":"Volna","threadTitle":"Needs me","modelTitle":"GPT","phase":"waiting_for_approval","status":"Approval","updatedAt":"2026-10-04T12:00:00.000Z","deepLink":"/threads/e/b"}
+         ]}
+        """
+        let wire = try JSONSerialization.data(withJSONObject: ["name": "AgentActivity", "props": props])
+        let state = try JSONDecoder().decode(LiveActivityAttributes.ContentState.self, from: wire)
+        let model = CardModel(state, stale: false)
+        XCTAssertEqual(model.hero?.threadId, "b")
+        XCTAssertEqual(model.rest.map(\.threadId), ["a"])
+        XCTAssertEqual(model.waiting, 1)
+        XCTAssertEqual(model.working, 1)
+        XCTAssertEqual(model.link?.absoluteString, "helm://threads/e/b")
+        let stale = CardModel(state, stale: true)
+        XCTAssertEqual(stale.ordered.first(where: { $0.threadId == "a" })?.phase, "stale")
+    }
+
+    func testPlaceholderRoundTrips() {
+        let state = AgentAggregate.placeholder(projectTitle: "Sandbox", threadTitle: "Fix it").contentState
+        XCTAssertEqual(state.name, "AgentActivity")
+        XCTAssertEqual(AgentAggregate(state: state)?.activities.first?.phase, "starting")
+    }
+}

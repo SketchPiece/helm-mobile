@@ -288,5 +288,19 @@
   "Helm will reach your Macs only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": "Штурвал будет доставать до Mac только через приложение Tailscale VPN. Если телефон больше не нужен в tailnet, удали его в консоли Tailscale.",
   "Built-in": "Встроенный",
   "VPN app": "Через VPN",
-  "Tailscale": "Tailscale"
+  "Tailscale": "Tailscale",
+  "This build can't receive notifications.": "Эта сборка не умеет получать уведомления.",
+  "Notifications": "Уведомления",
+  "Allow in iOS Settings": "Разрешить в настройках iOS",
+  "Live Activity": "Live Activity",
+  "When an agent asks for approval, has a question, finishes or fails. The Live Activity shows work in progress on the lock screen and in the Dynamic Island.": "Когда агент просит разрешения, задаёт вопрос, заканчивает или падает. Live Activity показывает работу на экране блокировки и в Dynamic Island.",
+  "On": "Включены",
+  "Off in iOS Settings": "Выключены в настройках iOS",
+  "Not asked yet": "Ещё не спрашивали",
+  "Needs approval": "Ждёт разрешения",
+  "Needs input": "Ждёт ответа",
+  "Starting": "Запускается",
+  "Out of date": "Устарело",
+  "failed": "ошибка",
+  "✓ done": "✓ готово"
 }

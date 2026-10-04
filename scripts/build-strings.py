@@ -8,7 +8,7 @@ Localization/en-plurals.json. Prints keys that still lack a Russian translation.
 import glob, json, os, sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-pattern = os.path.join(root, "build/dd/Build/Intermediates.noindex/HelmMobile.build/*/HelmMobile.build/Objects-normal/*/*.stringsdata")
+pattern = os.path.join(root, "build/dd/Build/Intermediates.noindex/HelmMobile.build/*/Helm*.build/Objects-normal/*/*.stringsdata")
 keys = set()
 for path in glob.glob(pattern):
     for entries in json.load(open(path)).get("tables", {}).values():
@@ -46,6 +46,10 @@ for key in sorted(keys):
         if entry["shouldTranslate"]:
             del entry["shouldTranslate"]
     strings[key] = entry
+
+# Keys the server sends (push alert loc-keys) never appear in Swift source.
+for key, values in json.load(open(os.path.join(root, "Localization/push-alerts.json"))).items():
+    strings[key] = {"localizations": {lang: unit(text) for lang, text in values.items()}}
 
 catalog = {"sourceLanguage": "en", "strings": strings, "version": "1.0"}
 out = os.path.join(root, "HelmMobile/Resources/Localizable.xcstrings")

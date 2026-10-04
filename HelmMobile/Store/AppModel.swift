@@ -200,6 +200,10 @@ final class AppModel {
                 "attachments": .array(request.attachments.map(\.json)),
             ],
         ]
+        PushService.shared.armForLocalWork(
+            projectTitle: request.environment.project(request.projectId)?.title ?? request.environment.label,
+            threadTitle: title
+        )
         let result = try await request.environment.call("orchestration.launchThread", payload, timeout: .seconds(60))
         let id = result["threadId"]?.string ?? threadId
         if let projectionJSON = result["projection"], let projection = ThreadProjection(json: projectionJSON) {
