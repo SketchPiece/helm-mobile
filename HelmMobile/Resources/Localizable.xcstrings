@@ -837,6 +837,16 @@
         }
       }
     },
+    "Auto-settle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автозавершение"
+          }
+        }
+      }
+    },
     "Back": {
       "localizations": {
         "ru": {
@@ -1007,6 +1017,16 @@
         }
       }
     },
+    "Continue now": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить сейчас"
+          }
+        }
+      }
+    },
     "Copied": {
       "localizations": {
         "ru": {
@@ -1097,6 +1117,16 @@
         }
       }
     },
+    "Couldn't save. It may have already started.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не сохранилось. Возможно, оно уже ушло агенту."
+          }
+        }
+      }
+    },
     "Couldn't transcribe the recording.": {
       "localizations": {
         "ru": {
@@ -1113,6 +1143,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Текущая копия"
+          }
+        }
+      }
+    },
+    "Custom…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Своё время…"
           }
         }
       }
@@ -1193,6 +1233,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Готово"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменить"
+          }
+        }
+      }
+    },
+    "Edit queued message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сообщение в очереди"
           }
         }
       }
@@ -1303,6 +1363,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Штурвал на Mac отказал."
+          }
+        }
+      }
+    },
+    "Helm on this Mac can't arrange threads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал на этом Mac не умеет менять порядок тредов."
           }
         }
       }
@@ -1503,6 +1573,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Модель и доступ"
+          }
+        }
+      }
+    },
+    "Move down": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ниже"
+          }
+        }
+      }
+    },
+    "Move up": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выше"
           }
         }
       }
@@ -1797,12 +1887,32 @@
         }
       }
     },
+    "Pick a time in the future.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери время в будущем."
+          }
+        }
+      }
+    },
     "Pin": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Закрепить"
+          }
+        }
+      }
+    },
+    "Pinned": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закреплённые"
           }
         }
       }
@@ -2037,6 +2147,16 @@
         }
       }
     },
+    "Resume automatically": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить само после сброса"
+          }
+        }
+      }
+    },
     "Retry": {
       "localizations": {
         "ru": {
@@ -2063,6 +2183,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выполнить команду?"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить"
           }
         }
       }
@@ -2193,6 +2323,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отложить"
+          }
+        }
+      }
+    },
+    "Snooze until": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отложить до"
+          }
+        }
+      }
+    },
+    "Snooze until reset": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отложить до сброса"
           }
         }
       }
@@ -2417,12 +2567,32 @@
         }
       }
     },
+    "The provider didn't say when it resets. Continue when your limit is back.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Провайдер не сказал, когда сброс. Продолжи, когда лимит вернётся."
+          }
+        }
+      }
+    },
     "The request was interrupted.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Запрос прерван."
+          }
+        }
+      }
+    },
+    "The reset time has passed. Continue the thread yourself.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сброс уже прошёл. Продолжи тред сам."
           }
         }
       }
@@ -2703,6 +2873,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вернуть"
+          }
+        }
+      }
+    },
+    "Wake at": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернуть в"
           }
         }
       }
