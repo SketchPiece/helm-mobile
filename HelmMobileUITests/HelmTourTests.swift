@@ -472,6 +472,42 @@ final class HelmTourTests: XCTestCase {
         shot("c1-new-thread-attach-menu")
     }
 
+    /// New Thread pushes like a thread: back with nothing written leaves nothing, back with text
+    /// leaves a draft row on Home that reopens it and swipes away.
+    func testNewThreadDraft() throws {
+        XCTAssertTrue(app.buttons["newThread"].waitForExistence(timeout: 20))
+        sleep(2)
+        app.buttons["newThread"].tap()
+        XCTAssertTrue(app.buttons["projectPicker"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        sleep(1)
+        XCTAssertFalse(app.buttons["newThreadDraft"].exists, "an empty new thread left a draft")
+
+        app.buttons["newThread"].tap()
+        let field = app.textViews["newThreadText"].exists ? app.textViews["newThreadText"] : app.textFields["newThreadText"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        sleep(1)
+        field.typeText("Draft from the UI test\nSecond line")
+        shot("d1-new-thread")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let draft = app.buttons["newThreadDraft"]
+        XCTAssertTrue(draft.waitForExistence(timeout: 3), "no draft row after going back")
+        sleep(1)
+        shot("d2-home-draft")
+
+        draft.tap()
+        XCTAssertTrue(app.buttons["startThread"].waitForExistence(timeout: 5))
+        XCTAssertTrue((field.value as? String ?? "").contains("Draft from the UI test"), "the draft didn't come back")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(draft.waitForExistence(timeout: 3))
+        draft.swipeLeft()
+        // A long swipe discards by itself; a short one shows the button.
+        let discard = app.buttons["Discard"].firstMatch
+        if discard.waitForExistence(timeout: 2) { discard.tap() }
+        sleep(1)
+        XCTAssertFalse(draft.exists, "Discard left the draft")
+    }
+
     /// Swipe a thread and snooze it from the swipe's chooser. Opt in with HELM_SWIPE_SNOOZE=1.
     func testSwipeSnoozeChooser() throws {
         guard ProcessInfo.processInfo.environment["HELM_SWIPE_SNOOZE"] != nil else { throw XCTSkip("HELM_SWIPE_SNOOZE not set") }
