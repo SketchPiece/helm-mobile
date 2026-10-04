@@ -229,6 +229,48 @@ final class PendingOrderKeyTests: XCTestCase {
     }
 }
 
+final class PendingShelfMoveTests: XCTestCase {
+    private func shell(_ extra: [String: JSON] = [:]) -> ShellState {
+        var shell = ShellState()
+        shell.apply(["kind": "snapshot", "snapshot": [
+            "snapshotSequence": 1, "projects": [], "threads": [Fixtures.thread(extra: extra)], "archivedThreads": [],
+        ]])
+        return shell
+    }
+
+    func testSettleShowsAtOnceAndSurvivesUnrelatedUpdatesUntilEchoed() {
+        var shell = shell()
+        shell.setPendingShelfMove(threadId: "t1", .settle)
+        XCTAssertEqual(shell.threads["t1"]?.isSettled, true)
+        shell.apply(["kind": "thread.updated", "sequence": 2, "location": "active",
+                     "thread": Fixtures.thread(extra: ["title": "Renamed"])])
+        XCTAssertEqual(shell.threads["t1"]?.isSettled, true)
+        XCTAssertEqual(shell.threads["t1"]?.title, "Renamed")
+        shell.apply(["kind": "thread.updated", "sequence": 3, "location": "active",
+                     "thread": Fixtures.thread(extra: ["settledOverride": "settled"])])
+        XCTAssertTrue(shell.pendingShelfMoves.isEmpty)
+        XCTAssertEqual(shell.threads["t1"]?.isSettled, true)
+    }
+
+    func testFailedSettleRestoresTheServerRow() {
+        var shell = shell()
+        shell.setPendingShelfMove(threadId: "t1", .settle)
+        shell.revertPendingShelfMove(threadId: "t1")
+        XCTAssertEqual(shell.threads["t1"]?.isSettled, false)
+        XCTAssertTrue(shell.pendingShelfMoves.isEmpty)
+    }
+
+    func testReopenAndWake() {
+        var settled = shell(["settledOverride": "settled"])
+        settled.setPendingShelfMove(threadId: "t1", .unsettle)
+        XCTAssertEqual(settled.threads["t1"]?.isSettled, false)
+
+        var snoozed = shell(["snoozedUntil": "2099-01-01T00:00:00.000Z"])
+        snoozed.setPendingShelfMove(threadId: "t1", .unsnooze)
+        XCTAssertEqual(snoozed.threads["t1"]?.isSnoozed(), false)
+    }
+}
+
 final class LimitRecoveryTests: XCTestCase {
     private let limited: [String: JSON] = [
         "lastErrorClass": "usage_limit", "latestRunId": "run-7",

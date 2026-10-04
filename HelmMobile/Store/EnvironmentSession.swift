@@ -471,4 +471,13 @@ final class EnvironmentSession: Identifiable {
     func revertPendingOrderKey(threadId: String) {
         shell.revertPendingOrderKey(threadId: threadId)
     }
+
+    /// Shows a settle, reopen, snooze or wake in the list before the server confirms it.
+    func setPendingShelfMove(threadId: String, _ move: ShellState.ShelfMove) {
+        shell.setPendingShelfMove(threadId: threadId, move)
+    }
+
+    func revertPendingShelfMove(threadId: String) {
+        shell.revertPendingShelfMove(threadId: threadId)
+    }
 }

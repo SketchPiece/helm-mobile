@@ -286,9 +286,69 @@ struct ShellState: Sendable {
         threads[threadId] = thread
     }
 
+    /// Settles, reopens, snoozes and wakes this phone sent that the server hasn't echoed yet. The
+    /// row changes section (with an animation) at once rather than when the update lands.
+    private(set) var pendingShelfMoves: [String: ShelfMove] = [:]
+
+    enum ShelfMove: Sendable, Equatable {
+        case settle, unsettle, snooze(Date), unsnooze
+
+        func apply(to thread: inout ThreadSummary, now: Date = Date()) {
+            switch self {
+            case .settle:
+                thread.settledOverride = "settled"
+                thread.settledAt = now
+            case .unsettle:
+                thread.settledOverride = nil
+                thread.unsettledAt = now
+            case .snooze(let date): thread.snoozedUntil = date
+            case .unsnooze: thread.snoozedUntil = nil
+            }
+        }
+
+        func isReported(by thread: ThreadSummary) -> Bool {
+            switch self {
+            case .settle: thread.settledOverride == "settled"
+            case .unsettle: thread.settledOverride != "settled"
+            case .snooze: thread.snoozedUntil != nil
+            case .unsnooze: thread.snoozedUntil == nil
+            }
+        }
+    }
+
+    mutating func setPendingShelfMove(threadId: String, _ move: ShelfMove) {
+        guard var thread = threads[threadId] else { return }
+        pendingShelfMoves[threadId] = move
+        move.apply(to: &thread)
+        threads[threadId] = thread
+    }
+
+    /// Back to what the server last reported, after the command failed.
+    mutating func revertPendingShelfMove(threadId: String) {
+        guard pendingShelfMoves.removeValue(forKey: threadId) != nil,
+              let json = rawThreads[threadId], let thread = ThreadSummary(json: json) else { return }
+        threads[threadId] = reconcile(thread)
+    }
+
+    private mutating func reconcile(_ thread: ThreadSummary) -> ThreadSummary {
+        reconcileShelfMove(reconcileOrderKey(thread))
+    }
+
+    /// Keeps a pending shelf move over server rows until the server reports it.
+    private mutating func reconcileShelfMove(_ thread: ThreadSummary) -> ThreadSummary {
+        guard let move = pendingShelfMoves[thread.id] else { return thread }
+        if move.isReported(by: thread) {
+            pendingShelfMoves[thread.id] = nil
+            return thread
+        }
+        var overlaid = thread
+        move.apply(to: &overlaid)
+        return overlaid
+    }
+
     /// Keeps a pending key over server rows until the server reports it (or the thread left
     /// the section the key belongs to).
-    private mutating func reconcile(_ thread: ThreadSummary) -> ThreadSummary {
+    private mutating func reconcileOrderKey(_ thread: ThreadSummary) -> ThreadSummary {
         guard var pending = pendingOrderKeys[thread.id] else { return thread }
         let incoming = pending.pinned ? thread.pinOrderKey : thread.activeOrderKey
         let leftSection = pending.pinned ? thread.pinnedAt == nil : (thread.pinnedAt != nil || thread.settledOverride == "settled")
@@ -369,6 +429,7 @@ struct ShellState: Sendable {
                 rawThreads[thread.id] = json
             }
             pendingOrderKeys = pendingOrderKeys.filter { threads[$0.key] != nil }
+            pendingShelfMoves = pendingShelfMoves.filter { threads[$0.key] != nil }
             return true
         default:
             guard let seq = item["sequence"]?.int else { return false }

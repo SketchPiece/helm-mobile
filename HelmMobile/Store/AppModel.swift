@@ -164,7 +164,30 @@ final class AppModel {
 
     func perform(_ action: ThreadAction, on ref: ThreadRef) async throws {
         guard let environment = environment(ref.environmentId) else { return }
-        let id: JSON = .string(ref.threadId)
+        // A row that changes section moves out right away, animated, not when the server's echo lands.
+        let shelfMove: ShellState.ShelfMove? = switch action {
+        case .settle: .settle
+        case .unsettle: .unsettle
+        case .snooze(let date): .snooze(date)
+        case .unsnooze: .unsnooze
+        default: nil
+        }
+        if let shelfMove {
+            withAnimation(.snappy(duration: 0.3)) { environment.setPendingShelfMove(threadId: ref.threadId, shelfMove) }
+        }
+        do {
+            try await dispatch(action, on: ref.threadId, in: environment)
+        } catch {
+            if shelfMove != nil {
+                withAnimation(.snappy(duration: 0.3)) { environment.revertPendingShelfMove(threadId: ref.threadId) }
+            }
+            throw error
+        }
+        await UIImpactFeedbackGenerator.light()
+    }
+
+    private func dispatch(_ action: ThreadAction, on threadId: String, in environment: EnvironmentSession) async throws {
+        let id: JSON = .string(threadId)
         switch action {
         case .settle: try await environment.dispatch("thread.settle", ["threadId": id])
         case .unsettle: try await environment.dispatch("thread.unsettle", ["threadId": id, "reason": "user"])
@@ -192,7 +215,6 @@ final class AppModel {
         case .autoSettle(let enabled):
             try await environment.dispatch("thread.auto-settle.set", ["threadId": id, "enabled": .bool(enabled)])
         }
-        await UIImpactFeedbackGenerator.light()
     }
 
     // MARK: Arranging
