@@ -4,6 +4,7 @@ import SwiftUI
 struct UserBubble: View {
     let item: TurnItem
     let environment: EnvironmentSession
+    @State private var viewing: ChatAttachment?
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
@@ -11,8 +12,23 @@ struct UserBubble: View {
             if !attachments.isEmpty {
                 HStack(spacing: 6) {
                     ForEach(attachments) { attachment in
-                        AttachmentThumbnail(attachment: attachment, environment: environment)
+                        if attachment.isImage {
+                            Button {
+                                viewing = attachment
+                            } label: {
+                                AttachmentThumbnail(attachment: attachment, environment: environment)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Open \(attachment.name)"))
+                            .accessibilityIdentifier("attachmentImage")
+                        } else {
+                            AttachmentThumbnail(attachment: attachment, environment: environment)
+                        }
                     }
+                }
+                .fullScreenCover(item: $viewing) { attachment in
+                    ImageViewer(attachments: attachments.filter(\.isImage), environment: environment,
+                                selection: attachment.id)
                 }
             }
             if !item.text.isEmpty {
@@ -429,14 +445,44 @@ struct AttachmentThumbnail: View {
 }
 
 enum AttachmentLoader {
+    /// Thumbnails and full images already fetched this session, so scrolling back and reopening
+    /// the viewer don't download them again.
+    @MainActor private static let cache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.totalCostLimit = 96 * 1024 * 1024
+        return cache
+    }()
+
     @MainActor
     static func image(_ attachment: ChatAttachment, environment: EnvironmentSession) async -> UIImage? {
+        let key = "thumb:\(attachment.id)" as NSString
+        if let cached = cache.object(forKey: key) { return cached }
+        guard let data = await data(attachment, environment: environment) else { return nil }
+        let image = await Task.detached { UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 300, height: 300)) }.value
+        if let image { cache.setObject(image, forKey: key, cost: 300 * 300 * 4) }
+        return image
+    }
+
+    /// The image at full size, decoded off the main thread, for the viewer.
+    @MainActor
+    static func fullImage(_ attachment: ChatAttachment, environment: EnvironmentSession) async -> UIImage? {
+        let key = "full:\(attachment.id)" as NSString
+        if let cached = cache.object(forKey: key) { return cached }
+        guard let data = await data(attachment, environment: environment) else { return nil }
+        let image = await Task.detached { UIImage(data: data)?.preparingForDisplay() }.value
+        if let image {
+            cache.setObject(image, forKey: key, cost: Int(image.size.width * image.size.height * image.scale * image.scale * 4))
+        }
+        return image
+    }
+
+    @MainActor
+    private static func data(_ attachment: ChatAttachment, environment: EnvironmentSession) async -> Data? {
         guard let result = try? await environment.call("assets.createUrl", [
             "resource": ["_tag": "attachment", "attachmentId": .string(attachment.id),
                          "fileName": .string(attachment.name), "mimeType": .string(attachment.mimeType)],
         ]), let relative = result["relativeUrl"]?.string else { return nil }
-        guard let (data, _) = try? await HelmHTTP.session.data(from: environment.http.url(relative)) else { return nil }
-        return await Task.detached { UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 300, height: 300)) }.value
+        return try? await HelmHTTP.session.data(from: environment.http.url(relative)).0
     }
 }
 
