@@ -178,7 +178,8 @@ private struct ThreadContent: View {
                                        description: Text("Write below to give the agent a task."))
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        // A bar rather than an inset: the timeline fades out softly under the glass composer.
+        .safeAreaBar(edge: .bottom, spacing: 0) {
             bottomStack(projection: projection)
         }
         .background(Palette.canvas)
