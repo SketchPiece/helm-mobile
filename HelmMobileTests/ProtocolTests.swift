@@ -435,3 +435,60 @@ final class PushPayloadTests: XCTestCase {
         XCTAssertEqual(AgentAggregate(state: state)?.activities.first?.phase, "starting")
     }
 }
+
+final class RunFoldTests: XCTestCase {
+    private func blocks(_ json: [JSON]) -> [TimelineBlock] {
+        Timeline.blocks(from: json.compactMap(TurnItem.init(json:)), liveRunId: nil)
+    }
+
+    private let turn: [JSON] = [
+        Fixtures.item("u", type: "user_message", ordinal: 1, runId: "r1", extra: ["text": "fix it", "startedAt": "2026-10-01T10:00:00.000Z"]),
+        Fixtures.item("a1", type: "assistant_message", ordinal: 2, extra: ["text": "Looking."]),
+        Fixtures.item("c1", type: "command_execution", ordinal: 3, extra: ["input": "ls"]),
+        Fixtures.item("a2", type: "assistant_message", ordinal: 4, extra: ["text": "Found it."]),
+        Fixtures.item("c2", type: "file_change", ordinal: 5, extra: ["fileName": "a.ts"]),
+        Fixtures.item("a3", type: "assistant_message", ordinal: 6, extra: ["text": "Done: fixed."]),
+        Fixtures.item("k", type: "checkpoint", ordinal: 7, extra: ["files": [["path": "a.ts", "kind": "modified", "additions": 1, "deletions": 0]]]),
+    ]
+
+    private var runs: [String: Run] {
+        [
+            "r1": Run(json: ["id": "r1", "ordinal": 1, "status": "completed", "requestedAt": "2026-10-01T10:00:00.000Z",
+                             "startedAt": "2026-10-01T10:00:00.000Z", "completedAt": "2026-10-01T10:03:12.000Z"])!,
+        ]
+    }
+
+    func testFinishedTurnKeepsFirstAndFinalMessage() {
+        let folded = Timeline.folded(blocks(turn), runs: runs, activeRunId: nil, isWorking: false, expanded: [])
+        XCTAssertEqual(folded.map(\.id), ["u", "a1", "fold:r1", "a3", "k"])
+        if case .fold(_, let label, let expanded) = folded[2] {
+            XCTAssertEqual(label, "Worked for 3m 12s")
+            XCTAssertFalse(expanded)
+        } else {
+            XCTFail("no fold")
+        }
+    }
+
+    func testExpandedTurnShowsEverything() {
+        let folded = Timeline.folded(blocks(turn), runs: runs, activeRunId: nil, isWorking: false, expanded: ["r1"])
+        XCTAssertEqual(folded.map(\.id), ["u", "a1", "fold:r1", "work:c1", "a2", "work:c2", "a3", "k"])
+    }
+
+    func testRunningFailedAndStoppedTurnsStayOpen() {
+        XCTAssertFalse(Timeline.folded(blocks(turn), runs: runs, activeRunId: "r1", isWorking: true, expanded: [])
+            .contains { if case .fold = $0 { true } else { false } })
+        var failedRuns = runs
+        failedRuns["r1"]?.status = "failed"
+        XCTAssertFalse(Timeline.folded(blocks(turn), runs: failedRuns, activeRunId: nil, isWorking: false, expanded: [])
+            .contains { if case .fold = $0 { true } else { false } })
+        let stopped = turn + [Fixtures.item("x", type: "run_interrupt_result", ordinal: 8, extra: ["message": "Stopped"])]
+        XCTAssertFalse(Timeline.folded(blocks(stopped), runs: runs, activeRunId: nil, isWorking: false, expanded: [])
+            .contains { if case .fold = $0 { true } else { false } })
+    }
+
+    func testDurations() {
+        XCTAssertEqual(Timeline.duration(45), "45s")
+        XCTAssertEqual(Timeline.duration(192), "3m 12s")
+        XCTAssertEqual(Timeline.duration(3900), "1h 5m")
+    }
+}

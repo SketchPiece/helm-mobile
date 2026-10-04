@@ -20,7 +20,9 @@ struct MicButton: View {
             .font(.system(size: 16, weight: .semibold))
             .frame(width: 36, height: 36)
             .foregroundStyle(recordingHold ? .white : Palette.text)
-            .background(recordingHold ? Palette.error : Color.clear, in: .circle)
+            // Its own round button, like send, so it reads as tappable.
+            .background(recordingHold ? Palette.error : Palette.message, in: .circle)
+            .overlay(Circle().stroke(recordingHold ? .clear : Palette.border, lineWidth: 1))
             .scaleEffect(recordingHold ? 1.25 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
             .contentShape(.circle)

@@ -444,3 +444,29 @@ extension EnvironmentValues {
     /// The environment of the thread being shown, for rows that link to related threads.
     @Entry var threadEnvironmentId: String?
 }
+
+/// "Worked for 3m 12s": a finished turn's steps, folded away; tap to see them.
+struct FoldRow: View {
+    let label: String
+    let expanded: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .rotationEffect(.degrees(expanded ? 90 : 0))
+                    .frame(width: 13)
+                Text(label)
+                Rectangle().fill(Palette.border).frame(height: 1)
+            }
+            .font(Typography.subheadline)
+            .foregroundStyle(Palette.textMuted)
+            .contentShape(.rect)
+            .padding(.vertical, 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("runFold")
+    }
+}

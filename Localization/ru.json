@@ -387,5 +387,10 @@
   "Open": "Открыт",
   "Switch model": "Сменить модель",
   "Switch to plan mode": "Режим плана",
-  "Switch to default mode": "Обычный режим"
+  "Switch to default mode": "Обычный режим",
+  "Worked": "Работал",
+  "Worked for %@": "Работал %@",
+  "%llds": "%lld с",
+  "%lldm %llds": "%lld мин %lld с",
+  "%lldh %lldm": "%lld ч %lld мин"
 }

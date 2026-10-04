@@ -27,6 +27,7 @@ private struct ThreadContent: View {
     @State private var isAtBottom = true
     @State private var pinnedForKeyboard = false
     @State private var expandedWork: Set<String> = []
+    @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
     @State private var reviewing: Checkpoint?
     @State private var snoozingCustom = false
@@ -44,7 +45,13 @@ private struct ThreadContent: View {
 
     var body: some View {
         let projection = session.projection
-        let blocks = Timeline.blocks(from: projection?.rows.map(\.item) ?? [], liveRunId: projection?.activeRun?.id)
+        let blocks = Timeline.folded(
+            Timeline.blocks(from: projection?.rows.map(\.item) ?? [], liveRunId: projection?.activeRun?.id),
+            runs: projection?.runs ?? [:],
+            activeRunId: projection?.activeRun?.id,
+            isWorking: projection?.isWorking ?? false,
+            expanded: expandedRuns
+        )
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 18) {
                 ForEach(blocks) { block in
@@ -57,15 +64,20 @@ private struct ThreadContent: View {
                 if let projection, projection.isWorking, !blocksEndWithLiveWork(blocks) {
                     ThinkingRow()
                 }
-                // Visible exactly when the end of the conversation is on screen.
+                // Visible exactly when the end of the conversation is on screen; also the target
+                // of "scroll to bottom" (scrolling to an id materialises the lazy rows, scrolling to
+                // the edge can leave them blank until the next touch).
                 Color.clear
                     .frame(height: 1)
+                    .id(Self.bottomId)
                     .onScrollVisibilityChange(threshold: 0.01) { visible in isAtBottom = visible }
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
         }
+        // Rebuilt once the timeline arrives, so the initial bottom anchor applies to real content.
+        .id(projection == nil ? "loading" : "loaded")
         .environment(\.threadEnvironmentId, environment.id)
         .scrollPosition($scroll)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
@@ -75,7 +87,24 @@ private struct ThreadContent: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         })
         .onChange(of: contentSignature(blocks)) {
-            if isAtBottom { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(edge: .bottom) } }
+            if isAtBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
+        }
+        // Above the composer (the overlay keeps to the safe area the composer inset leaves).
+        .overlay(alignment: .bottomTrailing) {
+            if !isAtBottom, projection != nil {
+                Button {
+                    withAnimation { scrollToBottom() }
+                } label: {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .padding(.trailing, 14)
+                .padding(.bottom, 10)
+                .transition(.opacity)
+            }
         }
         .overlay {
             if projection == nil {
@@ -118,12 +147,10 @@ private struct ThreadContent: View {
         }
         .onChange(of: projection != nil, initial: true) { _, loaded in
             guard loaded else { return }
-            // The timeline arrives after the first layout; land on the latest message.
+            // The rebuilt scroll view starts at the bottom; one id scroll settles estimated row heights.
             Task {
-                try? await Task.sleep(for: .milliseconds(30))
-                scroll.scrollTo(edge: .bottom)
-                try? await Task.sleep(for: .milliseconds(300))
-                scroll.scrollTo(edge: .bottom)
+                try? await Task.sleep(for: .milliseconds(120))
+                scrollToBottom()
             }
         }
         // Keep the latest message in view when the keyboard (or the composer) grows.
@@ -131,7 +158,7 @@ private struct ThreadContent: View {
             pinnedForKeyboard = isAtBottom
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
-            if pinnedForKeyboard { withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(edge: .bottom) } }
+            if pinnedForKeyboard { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
         }
         .onAppear {
             session.markVisited()
@@ -212,6 +239,12 @@ private struct ThreadContent: View {
             ErrorCard(item: item)
         case .notice(let item):
             NoticeRow(item: item)
+        case .fold(let key, let label, let expanded):
+            FoldRow(label: label, expanded: expanded) {
+                withAnimation(.snappy(duration: 0.25)) {
+                    if expanded { expandedRuns.remove(key) } else { expandedRuns.insert(key) }
+                }
+            }
         }
     }
 
@@ -226,6 +259,12 @@ private struct ThreadContent: View {
                 modelSelection: nil, runtimeMode: nil, interactionMode: "default"
             )
         }
+    }
+
+    private static let bottomId = "timeline-bottom"
+
+    private func scrollToBottom() {
+        scroll.scrollTo(id: Self.bottomId, anchor: .bottom)
     }
 
     // MARK: Bottom
@@ -249,23 +288,7 @@ private struct ThreadContent: View {
                 }
             }
             ThreadComposer(environment: environment, session: session) {
-                withAnimation { scroll.scrollTo(edge: .bottom) }
-            }
-            // Floats above the stack so showing it never changes the scroll insets.
-            .overlay(alignment: .topTrailing) {
-                if !isAtBottom {
-                    Button {
-                        withAnimation { scroll.scrollTo(edge: .bottom) }
-                    } label: {
-                        Image(systemName: "arrow.down")
-                            .font(.system(size: 15, weight: .semibold))
-                            .frame(width: 36, height: 36)
-                    }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.circle)
-                    .offset(x: -4, y: -48)
-                    .transition(.opacity)
-                }
+                withAnimation { scrollToBottom() }
             }
         }
         .padding(.horizontal, 12)

@@ -12,6 +12,8 @@ enum TimelineBlock: Identifiable, Hashable {
     case changes(TurnItem)
     case error(TurnItem)
     case notice(TurnItem)
+    /// A finished turn's work, folded: "Worked for 3m 12s". `key` toggles it open.
+    case fold(key: String, label: String, expanded: Bool)
 
     var id: String {
         switch self {
@@ -20,6 +22,21 @@ enum TimelineBlock: Identifiable, Hashable {
             item.id
         case .work(let id, _, _):
             "work:\(id)"
+        case .fold(let key, _, _):
+            "fold:\(key)"
+        }
+    }
+
+    /// The items a block was built from, for grouping blocks by turn.
+    var items: [TurnItem] {
+        switch self {
+        case .user(let item), .assistant(let item), .plan(let item), .todo(let item), .changes(let item),
+             .error(let item), .notice(let item):
+            [item]
+        case .work(_, let items, _):
+            items
+        case .fold:
+            []
         }
     }
 }
@@ -99,6 +116,93 @@ enum Timeline {
             }.map(\.element)
         }
         return blocks
+    }
+
+    /// Folds every finished turn like the T3 Code clients do (`threadActivity.ts`
+    /// `deriveThreadFeedRunFolds`): the first and the final agent message stay, everything in
+    /// between hides behind "Worked for …" until opened. The running turn, a stopped or failed
+    /// one, and one still streaming stay open. Turns without a run (imported history) fold per prompt.
+    static func folded(_ blocks: [TimelineBlock], runs: [String: Run], activeRunId: String?, isWorking: Bool,
+                       expanded: Set<String>) -> [TimelineBlock] {
+        struct Group {
+            var key: String
+            var indices: [Int] = []
+            var startedAt: Date?
+        }
+        var groups: [Group] = []
+        var groupIndex: [String: Int] = [:]
+        var runlessKey: String?
+        var promptAt: Date?
+        for (index, block) in blocks.enumerated() {
+            if case .user(let item) = block {
+                runlessKey = item.runId == nil ? "runless:\(item.id)" : nil
+                promptAt = item.startedAt ?? item.completedAt
+                continue
+            }
+            guard let key = block.items.first(where: { $0.runId != nil })?.runId ?? runlessKey else { continue }
+            if let existing = groupIndex[key] {
+                groups[existing].indices.append(index)
+            } else {
+                groupIndex[key] = groups.count
+                groups.append(Group(key: key, indices: [index], startedAt: promptAt))
+                promptAt = nil
+            }
+        }
+
+        var hidden: Set<Int> = []
+        var foldAt: [Int: TimelineBlock] = [:]
+        for (position, group) in groups.enumerated() {
+            let isLast = position == groups.count - 1
+            if group.key == activeRunId || (isWorking && isLast) { continue }
+            let groupBlocks = group.indices.map { blocks[$0] }
+            let stopped = groupBlocks.contains { block in
+                if case .error = block { return true }
+                if case .notice(let item) = block { return item.type == "run_interrupt_result" || item.type == "run_interrupt_request" }
+                if case .assistant(let item) = block { return item.isStreaming }
+                return false
+            }
+            if stopped || runs[group.key]?.status == "failed" { continue }
+            let assistants = group.indices.filter { if case .assistant = blocks[$0] { true } else { false } }
+            let keep = Set([assistants.first, assistants.last].compactMap { $0 })
+            let toHide = group.indices.filter { index in
+                if keep.contains(index) { return false }
+                switch blocks[index] {
+                case .changes, .plan: return false
+                case .notice(let item): return !(item.type == "notification" || item.type == "handoff")
+                default: return true
+                }
+            }
+            // Only worth a fold when real work hides behind it.
+            guard let first = toHide.first,
+                  toHide.contains(where: { if case .work = blocks[$0] { true } else { false } } ) || toHide.count > 1
+            else { continue }
+            let isOpen = expanded.contains(group.key)
+            if !isOpen { hidden.formUnion(toHide) }
+            foldAt[first] = .fold(key: group.key, label: foldLabel(promptAt: group.startedAt, blocks: groupBlocks, run: runs[group.key]), expanded: isOpen)
+        }
+
+        var result: [TimelineBlock] = []
+        for (index, block) in blocks.enumerated() {
+            if let fold = foldAt[index] { result.append(fold) }
+            if !hidden.contains(index) { result.append(block) }
+        }
+        return result
+    }
+
+    private static func foldLabel(promptAt: Date?, blocks: [TimelineBlock], run: Run?) -> String {
+        let items = blocks.flatMap(\.items)
+        let start = run?.startedAt ?? run?.requestedAt ?? promptAt ?? items.compactMap(\.startedAt).min()
+        let end = run?.completedAt ?? items.compactMap { $0.completedAt ?? $0.startedAt }.max()
+        guard let start, let end, end > start else { return String(localized: "Worked") }
+        return String(localized: "Worked for \(duration(end.timeIntervalSince(start)))")
+    }
+
+    /// "45s", "3m 12s", "1h 5m".
+    static func duration(_ seconds: TimeInterval) -> String {
+        let total = max(1, Int(seconds.rounded()))
+        if total < 60 { return String(localized: "\(total)s") }
+        if total < 3600 { return String(localized: "\(total / 60)m \(total % 60)s") }
+        return String(localized: "\(total / 3600)h \((total % 3600) / 60)m")
     }
 
     /// One line describing a work item, e.g. "Ran `npm test`" or "Edited Shell.swift".
