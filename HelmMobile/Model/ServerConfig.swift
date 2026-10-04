@@ -103,6 +103,13 @@ struct ServerConfig: Sendable {
     var defaultRuntimeMode: String
     var shellResumeCompletionMarker: Bool
     var threadResumeCompletionMarker: Bool
+    /// Where "no project" threads run; absent on servers without scratch support.
+    var scratchWorkspaceRoot: String?
+    /// Where `projects.createNew` puts new projects; absent when unsupported.
+    var newProjectsRoot: String?
+    /// Settings: where the folder browser starts, and the default for "Start from origin".
+    var addProjectBaseDirectory: String?
+    var newWorktreesStartFromOrigin: Bool
 
     init?(json: JSON) {
         guard let environment = json["environment"], let id = environment["environmentId"]?.string else { return nil }
@@ -115,6 +122,25 @@ struct ServerConfig: Sendable {
         defaultRuntimeMode = json["settings"]?["defaultRuntimeMode"]?.string ?? "full-access"
         shellResumeCompletionMarker = json["shellResumeCompletionMarker"]?.bool ?? false
         threadResumeCompletionMarker = json["threadResumeCompletionMarker"]?.bool ?? false
+        scratchWorkspaceRoot = json["scratchWorkspaceRoot"]?.nonNull?.string
+        newProjectsRoot = json["newProjectsRoot"]?.nonNull?.string
+        addProjectBaseDirectory = nil
+        newWorktreesStartFromOrigin = true
+        applySettings(json["settings"])
+    }
+
+    /// The settings this client reads, from the snapshot or a `settingsUpdated` event.
+    mutating func applySettings(_ settings: JSON?) {
+        guard let settings else { return }
+        let base = settings["addProjectBaseDirectory"]?.string?.trimmingCharacters(in: .whitespaces) ?? ""
+        addProjectBaseDirectory = base.isEmpty ? nil : base
+        newWorktreesStartFromOrigin = settings["newWorktreesStartFromOrigin"]?.bool ?? true
+    }
+
+    /// The environment's scratch project backs "No project" threads; it always runs in place.
+    func isScratch(_ project: Project) -> Bool {
+        guard let scratchWorkspaceRoot else { return false }
+        return project.workspaceRoot == scratchWorkspaceRoot
     }
 
     func capability(_ name: String) -> Bool { capabilities[name]?.bool ?? false }
