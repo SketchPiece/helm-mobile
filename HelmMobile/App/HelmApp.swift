@@ -35,6 +35,8 @@ struct HelmApp: App {
                 LaunchActions.shared.pickUpShares()
                 model.foregrounded()
                 PushService.shared.foregrounded()
+            } else if phase == .background {
+                model.backgrounded()
             }
         }
     }

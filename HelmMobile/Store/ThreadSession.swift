@@ -15,6 +15,11 @@ final class ThreadSession {
     private(set) var isLoadingHistory = false
     /// Why the last older page didn't load; cleared by the next try.
     private(set) var historyError: String?
+    /// When the timeline on screen was last in step with the server: set while it is a saved
+    /// copy or the connection is down, nil once a live snapshot is in.
+    private(set) var savedAt: Date?
+    /// Looked for a copy saved on this phone (found or not).
+    private(set) var checkedSavedCopy = false
 
     struct OutgoingMessage: Identifiable, Hashable {
         var id: String  // messageId
@@ -29,17 +34,70 @@ final class ThreadSession {
     @ObservationIgnored private(set) weak var environment: EnvironmentSession?
     @ObservationIgnored private var lastSequence = 0
     @ObservationIgnored private var subscription: Task<Void, Never>?
+    /// The projection changed since it was last written to disk.
+    @ObservationIgnored private var isDirty = false
+    @ObservationIgnored private var pendingSave: Task<Void, Never>?
 
-    init(threadId: String, environment: EnvironmentSession, cached: ThreadProjection?) {
+    init(threadId: String, environment: EnvironmentSession, cached: EnvironmentSession.CachedProjection?) {
         self.threadId = threadId
         self.environment = environment
-        projection = cached
+        projection = cached?.projection
+        savedAt = cached?.savedAt
+        checkedSavedCopy = cached != nil
+        if cached == nil { restoreSavedCopy() }
     }
 
     isolated deinit {
         subscription?.cancel()
+        pendingSave?.cancel()
         // Cache once on the way out (not per streaming event: that copies the timeline).
-        if let projection { environment?.cache(projection) }
+        if let projection { environment?.cache(projection, savedAt: savedAt ?? Date()) }
+        saveToDisk()
+    }
+
+    // MARK: Local cache
+
+    /// Shows the copy saved on this phone until the server's snapshot arrives.
+    private func restoreSavedCopy() {
+        guard let environmentId = environment?.id, !AppModel.isUnitTestHost else {
+            checkedSavedCopy = true
+            return
+        }
+        Task { [weak self, threadId] in
+            let saved = await LocalCache.shared.thread(threadId, environmentId: environmentId)
+            guard let self else { return }
+            self.checkedSavedCopy = true
+            guard let saved, self.projection == nil, !self.isDeleted else { return }
+            self.projection = saved.projection
+            self.savedAt = saved.savedAt
+        }
+    }
+
+    /// Writes the timeline if it changed; a copy read from disk is never written back.
+    func saveToDisk() {
+        pendingSave?.cancel()
+        pendingSave = nil
+        guard isDirty, let projection, let environment else { return }
+        isDirty = false
+        LocalCache.shared.saveThread(projection, environmentId: environment.id, savedAt: savedAt ?? Date())
+    }
+
+    /// While events stream in, write at most every few seconds.
+    private func saveSoon() {
+        isDirty = true
+        guard pendingSave == nil else { return }
+        pendingSave = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            self?.pendingSave = nil
+            self?.saveToDisk()
+        }
+    }
+
+    /// The stream stopped: what is on screen was current until now.
+    private func wentOffline() {
+        if projection != nil, savedAt == nil { savedAt = Date() }
+        saveToDisk()
     }
 
     @ObservationIgnored private var retryDelay: Double = 1
@@ -55,11 +113,13 @@ final class ThreadSession {
             do {
                 for try await item in stream { self?.apply(item) }
             } catch RPCError.disconnected {
+                if !Task.isCancelled { self?.wentOffline() }
                 return  // the environment reconnects and resubscribes every open thread
             } catch {
                 self?.loadError = error.localizedDescription
             }
             guard !Task.isCancelled else { return }
+            self?.wentOffline()
             await self?.resubscribeAfterEnd()
         }
     }
@@ -79,31 +139,44 @@ final class ThreadSession {
     private func apply(_ item: JSON) {
         switch item["kind"]?.string {
         case "snapshot":
-            guard let json = item["projection"], var next = ThreadProjection(json: json) else { return }
-            next.history = ThreadProjection.History(snapshot: item)
+            guard let next = ThreadProjection(snapshot: item) else { return }
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
+            savedAt = nil
             historyError = nil
             loadError = nil
             retryDelay = 1
             reconcileOutbox()
             environment?.cache(next)
+            isDirty = true
+            saveToDisk()
         case "event":
             guard let sequence = item["sequence"]?.int, sequence > lastSequence else { return }
             lastSequence = sequence
             guard let event = item["event"], projection != nil else {
-                if item["event"]?["type"]?.string == "thread.deleted" { isDeleted = true }
+                if item["event"]?["type"]?.string == "thread.deleted" { markDeleted() }
                 return
             }
             if projection?.apply(event: event) == false {
-                isDeleted = true
-                projection = nil
+                markDeleted()
+                return
             }
             let type = event["type"]?.string
             if type == "turn-item.updated" || type == "message.updated" { reconcileOutbox() }
+            savedAt = nil
+            saveSoon()
         default:
-            break
+            // A resumed stream sends no new snapshot; it is live again once it speaks.
+            if lastSequence > 0 { savedAt = nil }
         }
+    }
+
+    private func markDeleted() {
+        isDeleted = true
+        projection = nil
+        isDirty = false
+        pendingSave?.cancel()
+        environment?.forgetThread(threadId)
     }
 
     /// Drops outgoing bubbles the server now knows about: as a timeline item, or (for queued

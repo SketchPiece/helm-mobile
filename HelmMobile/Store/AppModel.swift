@@ -101,6 +101,7 @@ final class AppModel {
         environments.removeAll { $0.id == environment.id }
         SavedEnvironments.save(SavedEnvironments.load().filter { $0.id != environment.id })
         Keychain.setToken(nil, for: environment.id)
+        LocalCache.shared.removeEnvironment(environment.id)
     }
 
     func foregrounded() {
@@ -108,6 +109,17 @@ final class AppModel {
             Task { await environment.refreshAfterForeground() }
         }
         Task { await UsageWidgetPublisher.shared.publish(from: environments) }
+    }
+
+    /// On the way to the background: what is on screen goes to disk, so the next cold start
+    /// (or a dead connection) still shows it.
+    func backgrounded() {
+        environments.forEach { $0.saveToDisk() }
+        let task = UIApplication.shared.beginBackgroundTask(withName: "helm.local-cache")
+        guard task != .invalid else { return }
+        LocalCache.shared.flush {
+            Task { @MainActor in UIApplication.shared.endBackgroundTask(task) }
+        }
     }
 
     /// A Mac that just connected brings fresh limits for the Usage widget.

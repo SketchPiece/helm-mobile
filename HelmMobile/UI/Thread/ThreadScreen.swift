@@ -167,6 +167,9 @@ private struct ThreadContent: View {
                                            description: Text(error))
                 } else if session.isDeleted {
                     ContentUnavailableView("Thread deleted", systemImage: "trash")
+                } else if !environment.isLive, session.checkedSavedCopy {
+                    ContentUnavailableView("Not saved on this phone", systemImage: "icloud.slash",
+                                           description: Text("This thread opens once the Mac is reachable."))
                 } else {
                     ProgressView().controlSize(.large)
                 }
@@ -344,6 +347,9 @@ private struct ThreadContent: View {
     @ViewBuilder
     private func bottomStack(projection: ThreadProjection?) -> some View {
         VStack(spacing: 10) {
+            if projection != nil, !environment.isLive {
+                SavedCopyNotice(status: environment.status, savedAt: session.savedAt)
+            }
             if let projection {
                 ForEach(projection.pendingRequests) { request in
                     PendingRequestCard(request: request, session: session)
@@ -474,6 +480,35 @@ private struct EarlierHistoryRow: View {
             }
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// Above the composer while the Mac is out of reach: the timeline is the copy saved on this phone.
+private struct SavedCopyNotice: View {
+    let status: EnvironmentSession.Status
+    let savedAt: Date?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if status == .connecting {
+                ProgressView().controlSize(.mini)
+                Text("Connecting…")
+            } else {
+                Image(systemName: status == .unauthorized ? "key.slash" : "wifi.slash")
+                    .font(.system(size: 12, weight: .semibold))
+                if status == .unauthorized { Text("Pair again") } else { Text("Offline") }
+            }
+            if let savedAt {
+                Text(verbatim: "·")
+                Text("As of \(savedAt.asOfDescription)")
+            }
+        }
+        .font(Typography.footnote.weight(.medium))
+        .foregroundStyle(Palette.textMuted)
+        .padding(.horizontal, 14)
+        .frame(minHeight: 30)
+        .background(Palette.surface, in: .capsule)
+        .accessibilityElement(children: .combine)
     }
 }
 

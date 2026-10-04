@@ -22,6 +22,9 @@ final class EnvironmentSession: Identifiable {
     private(set) var lastConnectedAt: Date?
     /// Themes this Mac publishes (`<state>/themes/*.json`), for Settings → Appearance.
     private(set) var themes: [HelmTheme] = []
+    /// When the thread list on screen was last in step with the server: set while it is a copy
+    /// saved on this phone or the connection is down, nil while it is live.
+    private(set) var shellSavedAt: Date?
 
     /// Called each time the socket comes up with a fresh config (the app refreshes the widget).
     @ObservationIgnored var onLive: (() -> Void)?
@@ -30,7 +33,15 @@ final class EnvironmentSession: Identifiable {
     @ObservationIgnored private var streams: [Task<Void, Never>] = []
     @ObservationIgnored private var wake: CheckedContinuation<Void, Never>?
     @ObservationIgnored private var threads: [String: WeakThread] = [:]
-    @ObservationIgnored private var projectionCache: [String: ThreadProjection] = [:]
+    @ObservationIgnored private var projectionCache: [String: CachedProjection] = [:]
+    @ObservationIgnored private var shellDirty = false
+    @ObservationIgnored private var shellSave: Task<Void, Never>?
+
+    struct CachedProjection {
+        var projection: ThreadProjection
+        /// When it was last in step with the server.
+        var savedAt: Date
+    }
 
     private struct WeakThread { weak var value: ThreadSession? }
 
@@ -47,12 +58,14 @@ final class EnvironmentSession: Identifiable {
 
     func start() {
         guard supervisor == nil else { return }
+        restoreShell()
         supervisor = Task { [weak self] in await self?.superviseLoop() }
     }
 
     func stop() {
         supervisor?.cancel()
         supervisor = nil
+        saveShell()
         teardown()
         wake?.resume()
         wake = nil
@@ -97,8 +110,10 @@ final class EnvironmentSession: Identifiable {
                 delay = 1
                 status = .live
                 lastConnectedAt = Date()
+                if shell.isFromServer { shellSavedAt = nil }
                 onLive?()
                 await waitForClose()
+                wentOffline()
                 teardown()
                 if Task.isCancelled { return }
                 status = .offline(String(localized: "Connection lost"))
@@ -205,12 +220,13 @@ final class EnvironmentSession: Identifiable {
 
         var shellPayload: [String: JSON] = [:]
         if config.shellResumeCompletionMarker { shellPayload["requestCompletionMarker"] = true }
-        if shell.sequence > 0 { shellPayload["afterSequence"] = .number(Double(shell.sequence)) }
+        // Resume only from a list this session got from the server; a saved one gets a fresh snapshot.
+        if shell.isFromServer, shell.sequence > 0 { shellPayload["afterSequence"] = .number(Double(shell.sequence)) }
         let shellStream = connection.stream("orchestration.subscribeShell", .object(shellPayload))
         streams.append(Task { [weak self] in
             do {
                 for try await item in shellStream {
-                    self?.shell.apply(item)
+                    self?.applyShell(item)
                     self?.resolveProjectWaiters()
                 }
             } catch {}
@@ -231,6 +247,66 @@ final class EnvironmentSession: Identifiable {
     private func streamEnded(on ended: RPCConnection) async {
         guard ended === connection, !Task.isCancelled else { return }
         await ended.close()
+    }
+
+    // MARK: Local cache
+
+    /// Shows the list saved on this phone until the server's own arrives.
+    private func restoreShell() {
+        guard !AppModel.isUnitTestHost else { return }
+        Task { [weak self, id] in
+            guard let saved = await LocalCache.shared.shell(environmentId: id) else { return }
+            guard let self, !self.shell.isFromServer, self.shell.threads.isEmpty, self.shell.projects.isEmpty else { return }
+            self.shell = saved.shell
+            self.shellSavedAt = saved.savedAt
+        }
+    }
+
+    private func applyShell(_ item: JSON) {
+        let replaced = shell.apply(item)
+        guard shell.isFromServer else { return }
+        if replaced {
+            shellSavedAt = nil
+            LocalCache.shared.keepThreads(Set(shell.threads.keys), environmentId: id)
+        }
+        if item["kind"]?.string == "thread.removed", let threadId = item["threadId"]?.string {
+            forgetThread(threadId)
+        }
+        shellDirty = true
+        shellSave = shellSave ?? Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.shellSave = nil
+            self?.saveShell()
+        }
+    }
+
+    /// Writes the list if it changed. Only ever a list that came from the server.
+    private func saveShell() {
+        shellSave?.cancel()
+        shellSave = nil
+        guard shellDirty, shell.isFromServer else { return }
+        shellDirty = false
+        LocalCache.shared.saveShell(shell, environmentId: id, savedAt: shellSavedAt ?? Date())
+    }
+
+    /// The socket closed: what is on screen was current until now.
+    private func wentOffline() {
+        if shell.isFromServer, shellSavedAt == nil { shellSavedAt = Date() }
+        saveShell()
+    }
+
+    /// Writes everything that changed now, e.g. on the way to the background.
+    func saveToDisk() {
+        saveShell()
+        for weakThread in threads.values { weakThread.value?.saveToDisk() }
+    }
+
+    /// A deleted thread: nothing to show for it any more.
+    func forgetThread(_ threadId: String) {
+        projectionCache[threadId] = nil
+        cacheOrder.removeAll { $0 == threadId }
+        LocalCache.shared.removeThread(threadId, environmentId: id)
     }
 
     private func applyConfigEvent(_ event: JSON) {
@@ -266,9 +342,10 @@ final class EnvironmentSession: Identifiable {
         return session
     }
 
-    func cache(_ projection: ThreadProjection) {
+    /// Keeps a projection in memory for the next time the thread opens.
+    func cache(_ projection: ThreadProjection, savedAt: Date = Date()) {
         let id = projection.thread.id
-        projectionCache[id] = projection
+        projectionCache[id] = CachedProjection(projection: projection, savedAt: savedAt)
         cacheOrder.removeAll { $0 == id }
         cacheOrder.append(id)
         while cacheOrder.count > 30 { projectionCache[cacheOrder.removeFirst()] = nil }

@@ -1194,6 +1194,16 @@
         }
       }
     },
+    "As of %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По состоянию на %@"
+          }
+        }
+      }
+    },
     "Ask Helm to allow this phone": {
       "localizations": {
         "ru": {
@@ -3634,6 +3644,16 @@
         }
       }
     },
+    "Not saved on this phone": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не сохранён на телефоне"
+          }
+        }
+      }
+    },
     "Nothing here yet": {
       "localizations": {
         "ru": {
@@ -3700,6 +3720,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выключены в настройках iOS"
+          }
+        }
+      }
+    },
+    "Offline": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет связи"
           }
         }
       }
@@ -5414,6 +5444,16 @@
         }
       }
     },
+    "This thread opens once the Mac is reachable.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред откроется, когда Mac снова будет на связи."
+          }
+        }
+      }
+    },
     "This week": {
       "localizations": {
         "ru": {
@@ -5480,6 +5520,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Треды"
+          }
+        }
+      }
+    },
+    "Threads as of %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Треды по состоянию на %@"
           }
         }
       }

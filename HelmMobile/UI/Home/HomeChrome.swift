@@ -126,6 +126,10 @@ struct ConnectionBanner: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(environment.label).font(Typography.bodyMedium).foregroundStyle(Palette.text)
                 Text(detail).font(Typography.footnote).foregroundStyle(Palette.textMuted).lineLimit(2)
+                if let savedAt = environment.shellSavedAt {
+                    Text("Threads as of \(savedAt.asOfDescription)")
+                        .font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                }
             }
             Spacer()
             if environment.status == .unauthorized {
@@ -151,5 +155,12 @@ struct ConnectionBanner: View {
         default:
             environment.statusText
         }
+    }
+}
+
+extension Date {
+    /// "14:32" today, "Oct 3, 14:32" before: how old a saved copy is.
+    var asOfDescription: String {
+        formatted(date: Calendar.current.isDateInToday(self) ? .omitted : .abbreviated, time: .shortened)
     }
 }
