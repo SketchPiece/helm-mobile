@@ -79,6 +79,9 @@ struct AddProjectSheet: View {
             }
         }
         .presentationDetents([.large])
+        .onAppear {
+            if environmentId == nil { environmentId = environment?.id }
+        }
     }
 
     private func option(_ title: LocalizedStringKey, detail: LocalizedStringKey, symbol: String) -> some View {
