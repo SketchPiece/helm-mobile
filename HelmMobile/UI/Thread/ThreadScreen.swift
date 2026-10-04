@@ -32,6 +32,11 @@ private struct ThreadContent: View {
     /// keep it at the bottom. Only the user's own scrolling turns this off (and shows "↓").
     @State private var followsBottom = true
     @State private var scrollPhase = ScrollPhase.idle
+    /// The user has scrolled this thread themselves; reaching the top then loads older history.
+    @State private var userScrolled = false
+    /// While an older page lands, the scroll view keeps its distance from the bottom so the
+    /// rows on screen stay put as content grows above them.
+    @State private var holdsPositionOnPrepend = false
     @State private var expandedWork: Set<String> = []
     @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
@@ -63,6 +68,13 @@ private struct ThreadContent: View {
             // A plain stack: a lazy one guesses the height of rows it hasn't drawn, so "scroll to
             // the newest message" stopped short or left blank rows. Folded turns keep it small.
             VStack(alignment: .leading, spacing: 18) {
+                if let projection, projection.history.hasMore || session.historyError != nil {
+                    EarlierHistoryRow(isLoading: session.isLoadingHistory, error: session.historyError,
+                                      canLoad: projection.history.hasMore, load: loadEarlier)
+                        .onScrollVisibilityChange(threshold: 0.5) { visible in
+                            if visible, userScrolled, session.historyError == nil { loadEarlier() }
+                        }
+                }
                 ForEach(blocks) { block in
                     blockView(block, projection: projection)
                         .id(block.id)
@@ -92,6 +104,7 @@ private struct ThreadContent: View {
         }
         .environment(\.threadEnvironmentId, environment.id)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
+        .defaultScrollAnchor(holdsPositionOnPrepend ? .bottom : nil, for: .sizeChanges)
         .scrollDismissesKeyboard(.interactively)
         // Tapping the conversation puts the keyboard away, also when it is too short to scroll.
         .simultaneousGesture(TapGesture().onEnded {
@@ -101,6 +114,7 @@ private struct ThreadContent: View {
         // drag (and its deceleration) ends away from the end, "↓" appears.
         .onScrollPhaseChange { old, phase in
             scrollPhase = phase
+            if phase == .interacting { userScrolled = true }
             if phase == .idle, old == .interacting || old == .decelerating {
                 followsBottom = bottomVisible
             }
@@ -286,6 +300,17 @@ private struct ThreadContent: View {
 
     private static let bottomId = "timeline-bottom"
 
+    private func loadEarlier() {
+        guard !session.isLoadingHistory else { return }
+        holdsPositionOnPrepend = true
+        Task {
+            await session.loadEarlier()
+            // Let the grown content lay out with the anchor held before normal scrolling resumes.
+            try? await Task.sleep(for: .milliseconds(400))
+            holdsPositionOnPrepend = false
+        }
+    }
+
     private func scrollToBottom() {
         scrollProxy?.scrollTo(Self.bottomId, anchor: .bottom)
     }
@@ -381,5 +406,47 @@ private struct ThreadContent: View {
                 actionError = error.localizedDescription
             }
         }
+    }
+}
+
+/// Above the oldest loaded message of a long thread: loads the previous page (also on its own
+/// when the user scrolls up to it), or says why it couldn't.
+private struct EarlierHistoryRow: View {
+    let isLoading: Bool
+    let error: String?
+    let canLoad: Bool
+    let load: () -> Void
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if canLoad {
+                Button(action: load) {
+                    HStack(spacing: 8) {
+                        if isLoading {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: error == nil ? "chevron.up" : "arrow.clockwise")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        Text(isLoading ? String(localized: "Loading earlier messages…")
+                             : error == nil ? String(localized: "Load earlier messages") : String(localized: "Try again"))
+                            .font(Typography.footnote.weight(.medium))
+                    }
+                    .foregroundStyle(Palette.textMuted)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 34)
+                    .background(Palette.surface, in: .capsule)
+                }
+                .buttonStyle(.plain)
+                .disabled(isLoading)
+                .accessibilityIdentifier("loadEarlier")
+            }
+            if let error {
+                Text(error)
+                    .font(Typography.caption)
+                    .foregroundStyle(Palette.textMuted)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }

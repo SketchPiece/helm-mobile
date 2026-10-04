@@ -267,6 +267,87 @@ final class ThreadProjectionTests: XCTestCase {
     }
 }
 
+final class ThreadHistoryTests: XCTestCase {
+    private func row(_ item: JSON, visibility: String = "local", sourceThreadId: String = "t1") -> JSON {
+        ["position": 0, "visibility": .string(visibility), "sourceThreadId": .string(sourceThreadId),
+         "sourceItemId": item["id"]!, "item": item]
+    }
+
+    private func user(_ id: String, _ ordinal: Int) -> JSON {
+        Fixtures.item(id, type: "user_message", ordinal: ordinal, extra: ["text": .string(id)])
+    }
+
+    /// The recent window of a long thread: items 10 and 11, more history behind cursor c1.
+    private func window() throws -> ThreadProjection {
+        var projection = try XCTUnwrap(ThreadProjection(json: Fixtures.projection(items: [user("u10", 10), user("u11", 11)])))
+        projection.history = ThreadProjection.History(snapshot: [
+            "kind": "snapshot", "historyCursor": "c1", "hasMoreHistory": true, "latestLocalTurnOrdinal": 11,
+        ])
+        return projection
+    }
+
+    func testSnapshotFieldsSetTheWindowAndAFullSnapshotClearsIt() {
+        let bounded = ThreadProjection.History(snapshot: ["historyCursor": "c1", "hasMoreHistory": true, "latestLocalTurnOrdinal": 11])
+        XCTAssertEqual(bounded.cursor, "c1")
+        XCTAssertTrue(bounded.isPartial)
+        let full = ThreadProjection.History(snapshot: ["kind": "snapshot", "snapshotSequence": 3])
+        XCTAssertFalse(full.isPartial)
+        XCTAssertNil(full.latestLocalTurnOrdinal)
+    }
+
+    func testOlderPagePrependsInOrderAndAdvancesTheCursor() throws {
+        var projection = try window()
+        projection.mergeOlder(page: [
+            "snapshotSequence": 50, "nextCursor": "c2", "hasMoreHistory": true,
+            "items": [row(user("u8", 8)), row(user("u9", 9)), row(user("u10", 10))],
+        ])
+        // u10 was already in the window: not duplicated.
+        XCTAssertEqual(projection.rows.map(\.item.id), ["u8", "u9", "u10", "u11"])
+        XCTAssertNotNil(projection.items["u8"])
+        XCTAssertEqual(projection.history.cursor, "c2")
+        XCTAssertEqual(projection.history.latestLocalTurnOrdinal, 11, "the watermark survives pages")
+
+        projection.mergeOlder(page: ["snapshotSequence": 50, "nextCursor": nil, "hasMoreHistory": false,
+                                     "items": [row(user("u7", 7))]])
+        XCTAssertEqual(projection.rows.first?.item.id, "u7")
+        XCTAssertFalse(projection.history.isPartial)
+    }
+
+    func testPageDoesNotResurrectAnItemALiveEventHid() throws {
+        var projection = try window()
+        // While the page was in flight, the window's run was rolled back: u10 and u11 left the timeline.
+        projection.apply(event: Fixtures.event("run.updated", ["id": "r1", "ordinal": 1, "status": "rolled_back",
+                                                               "requestedAt": "2026-10-01T10:00:00.000Z"]))
+        XCTAssertTrue(projection.rows.isEmpty)
+        // Inherited rows from a fork parent are keyed by their own thread.
+        let inherited = row(Fixtures.item("p1", type: "user_message", ordinal: 1, extra: ["text": "parent"]),
+                            visibility: "inherited", sourceThreadId: "parent")
+        let older = Fixtures.item("u8", type: "user_message", ordinal: 8, runId: "r0", extra: ["text": "u8"])
+        projection.mergeOlder(page: ["nextCursor": nil, "hasMoreHistory": false,
+                                     "items": [inherited, row(older), row(user("u10", 10))]])
+        XCTAssertEqual(projection.rows.map(\.key), ["parent:p1", "t1:u8"])
+    }
+
+    func testUpdatesToItemsOlderThanTheWindowAreDropped() throws {
+        var projection = try window()
+        // An old item (below the watermark, not loaded) changes: it waits for its page.
+        projection.apply(event: Fixtures.event("turn-item.updated", Fixtures.item("old", type: "assistant_message", ordinal: 4,
+                                                                                    extra: ["text": "edited"])))
+        XCTAssertEqual(projection.rows.map(\.item.id), ["u10", "u11"])
+        XCTAssertNil(projection.items["old"])
+        // New work lands at the end and raises the watermark.
+        projection.apply(event: Fixtures.event("turn-item.updated", Fixtures.item("new", type: "assistant_message", ordinal: 12,
+                                                                                    extra: ["text": "hi"])))
+        XCTAssertEqual(projection.rows.map(\.item.id), ["u10", "u11", "new"])
+        XCTAssertEqual(projection.history.latestLocalTurnOrdinal, 12)
+        // A fully loaded timeline takes any item, in ordinal order.
+        projection.history = ThreadProjection.History()
+        projection.apply(event: Fixtures.event("turn-item.updated", Fixtures.item("old", type: "assistant_message", ordinal: 4,
+                                                                                    extra: ["text": "edited"])))
+        XCTAssertEqual(projection.rows.first?.item.id, "old")
+    }
+}
+
 final class TimelineTests: XCTestCase {
     private func items(_ json: [JSON]) -> [TurnItem] { json.compactMap(TurnItem.init(json:)) }
 

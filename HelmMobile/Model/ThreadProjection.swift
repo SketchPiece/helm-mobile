@@ -280,10 +280,53 @@ struct ThreadProjection: Sendable {
     /// The visible timeline. `local` rows are maintained here; inherited/synthetic rows are
     /// kept as the server sent them.
     var rows: [Row] = []
+    /// Where older history continues when the server sent a bounded window.
+    var history = History()
 
     struct Row: Hashable, Sendable {
         var visibility: String
         var item: TurnItem
+        var sourceThreadId: String
+        var sourceItemId: String
+
+        init(visibility: String, item: TurnItem, sourceThreadId: String? = nil, sourceItemId: String? = nil) {
+            self.visibility = visibility
+            self.item = item
+            self.sourceThreadId = sourceThreadId ?? item.threadId
+            self.sourceItemId = sourceItemId ?? item.id
+        }
+
+        init?(json: JSON) {
+            guard let item = json["item"].flatMap(TurnItem.init(json:)) else { return nil }
+            self.init(visibility: json["visibility"]?.string ?? "local", item: item,
+                      sourceThreadId: json["sourceThreadId"]?.string, sourceItemId: json["sourceItemId"]?.string)
+        }
+
+        /// Identity across pages (`threadHistoryMerge.ts`).
+        var key: String { "\(sourceThreadId):\(sourceItemId)" }
+    }
+
+    /// Progressive history (`acceptBoundedSnapshot`): the snapshot holds a recent window, older
+    /// rows come in pages over HTTP.
+    struct History: Equatable, Sendable {
+        /// Opaque; the next older page starts here.
+        var cursor: String?
+        var hasMore = false
+        /// The highest local turn ordinal the server knew at snapshot time. Updates to items
+        /// older than the window are dropped rather than appended out of place.
+        var latestLocalTurnOrdinal: Int?
+
+        /// The timeline is a window: something older is not loaded.
+        var isPartial: Bool { hasMore || cursor != nil }
+
+        /// From a `snapshot` stream item; a full snapshot (no history fields) resets it.
+        init(snapshot item: JSON) {
+            cursor = item["historyCursor"]?.nonNull?.string
+            hasMore = item["hasMoreHistory"]?.bool ?? false
+            latestLocalTurnOrdinal = item["latestLocalTurnOrdinal"]?.nonNull?.int
+        }
+
+        init() {}
     }
 
     init?(json: JSON) {
@@ -300,10 +343,7 @@ struct ThreadProjection: Sendable {
             if let id = message["id"]?.string { messages[id] = message }
         }
         items = Self.index(json["turnItems"], TurnItem.init(json:))
-        rows = (json["visibleTurnItems"]?.array ?? []).compactMap { row in
-            guard let item = row["item"].flatMap(TurnItem.init(json:)) else { return nil }
-            return Row(visibility: row["visibility"]?.string ?? "local", item: item)
-        }
+        rows = (json["visibleTurnItems"]?.array ?? []).compactMap(Row.init(json:))
         // Items referenced by visible rows count as known items too.
         for row in rows where items[row.item.id] == nil { items[row.item.id] = row.item }
     }
@@ -352,24 +392,31 @@ struct ThreadProjection: Sendable {
             if let id = payload["id"]?.string { messages[id] = payload }
         case "turn-item.updated":
             guard let item = TurnItem(json: payload) else { break }
+            let partial = history.isPartial
+            // Something older than the loaded window changed: it shows up when its page loads.
+            if partial, items[item.id] == nil, isOutsideWindow(item) { break }
             let previous = items[item.id]
             items[item.id] = item
             if item.type == "run_interrupt_request" || previous?.type == "run_interrupt_request" {
                 recomputeVisibility()
             }
-            upsertRow(item)
+            upsertRow(item, partial: partial)
+            if partial, item.ordinal > (history.latestLocalTurnOrdinal ?? Int.min) {
+                history.latestLocalTurnOrdinal = item.ordinal
+            }
         default:
             break
         }
         return true
     }
 
-    private mutating func upsertRow(_ item: TurnItem) {
+    private mutating func upsertRow(_ item: TurnItem, partial: Bool) {
         let existing = rows.firstIndex { $0.visibility == "local" && $0.item.id == item.id }
         guard isVisible(item) else {
             if let existing { rows.remove(at: existing) }
             return
         }
+        if existing == nil, partial, isOutsideWindow(item) { return }
         if let existing, rows[existing].item.ordinal == item.ordinal {
             rows[existing].item = item
             return
@@ -380,6 +427,41 @@ struct ThreadProjection: Sendable {
                 && (row.item.ordinal > item.ordinal || (row.item.ordinal == item.ordinal && row.item.id > item.id))
         }
         rows.insert(Row(visibility: "local", item: item), at: insertAt ?? rows.endIndex)
+    }
+
+    /// `shouldDropMissingPartialTurnItem`: not a visible row, and at or below the snapshot's
+    /// watermark or older than the oldest loaded local row.
+    private func isOutsideWindow(_ item: TurnItem) -> Bool {
+        if rows.contains(where: { $0.item.id == item.id }) { return false }
+        if let watermark = history.latestLocalTurnOrdinal, item.ordinal <= watermark { return true }
+        guard let oldest = rows.filter({ $0.visibility == "local" }).map(\.item.ordinal).min() else { return false }
+        return item.ordinal < oldest
+    }
+
+    // MARK: History pages
+
+    /// Prepends an older page (`OrchestrationV2ThreadHistoryPage`, rows oldest first) as
+    /// `mergeOlderHistoryIntoProjection` does: rows already present are skipped, and an item a
+    /// live event already changed keeps that version (so a hidden one isn't resurrected).
+    mutating func mergeOlder(page: JSON) {
+        var keys = Set(rows.map(\.key))
+        var prepended: [Row] = []
+        for json in page["items"]?.array ?? [] {
+            guard var row = Row(json: json), !keys.contains(row.key) else { continue }
+            if row.visibility == "local" || row.sourceThreadId == thread.id, let current = items[row.sourceItemId] {
+                // Retained interrupt requests live outside the window and join it with their page.
+                guard current.type == "run_interrupt_request", isVisible(current) else { continue }
+                row.item = current
+            }
+            keys.insert(row.key)
+            prepended.append(row)
+        }
+        for row in prepended where row.visibility == "local" || row.sourceThreadId == thread.id {
+            if items[row.sourceItemId] == nil { items[row.sourceItemId] = row.item }
+        }
+        rows = prepended + rows
+        history.cursor = page["nextCursor"]?.nonNull?.string
+        history.hasMore = page["hasMoreHistory"]?.bool ?? false
     }
 
     private mutating func recomputeVisibility() {

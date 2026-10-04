@@ -11,6 +11,10 @@ final class ThreadSession {
     private(set) var loadError: String?
     /// Messages sent from this phone that the server hasn't echoed yet.
     private(set) var outbox: [OutgoingMessage] = []
+    /// An older history page is on its way.
+    private(set) var isLoadingHistory = false
+    /// Why the last older page didn't load; cleared by the next try.
+    private(set) var historyError: String?
 
     struct OutgoingMessage: Identifiable, Hashable {
         var id: String  // messageId
@@ -42,7 +46,8 @@ final class ThreadSession {
 
     func subscribe(on connection: RPCConnection) {
         subscription?.cancel()
-        var payload: [String: JSON] = ["threadId": .string(threadId)]
+        // A long thread arrives as its recent window; older pages load on demand.
+        var payload: [String: JSON] = ["threadId": .string(threadId), "acceptBoundedSnapshot": true]
         if environment?.config?.threadResumeCompletionMarker == true { payload["requestCompletionMarker"] = true }
         if projection != nil, lastSequence > 0 { payload["afterSequence"] = .number(Double(lastSequence)) }
         let stream = connection.stream("orchestration.subscribeThread", .object(payload))
@@ -74,9 +79,11 @@ final class ThreadSession {
     private func apply(_ item: JSON) {
         switch item["kind"]?.string {
         case "snapshot":
-            guard let json = item["projection"], let next = ThreadProjection(json: json) else { return }
+            guard let json = item["projection"], var next = ThreadProjection(json: json) else { return }
+            next.history = ThreadProjection.History(snapshot: item)
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
+            historyError = nil
             loadError = nil
             retryDelay = 1
             reconcileOutbox()
@@ -107,6 +114,27 @@ final class ThreadSession {
             projection.messages[pending.id] != nil
                 || projection.items.values.contains { $0.raw["messageId"]?.string == pending.id }
         }
+    }
+
+    // MARK: History
+
+    /// Prepends the next older page of the timeline (`GET …/threads/{id}/history?cursor=`).
+    /// A page that comes back after a new snapshot replaced the window is dropped.
+    func loadEarlier() async {
+        guard !isLoadingHistory, let environment, let history = projection?.history, history.hasMore,
+              let cursor = history.cursor
+        else { return }
+        isLoadingHistory = true
+        historyError = nil
+        do {
+            let page = try await environment.threadHistoryPage(threadId: threadId, cursor: cursor)
+            if projection?.history.cursor == cursor { projection?.mergeOlder(page: page) }
+        } catch {
+            if projection?.history.cursor == cursor {
+                historyError = String(localized: "Couldn't load earlier messages.")
+            }
+        }
+        isLoadingHistory = false
     }
 
     // MARK: Actions
