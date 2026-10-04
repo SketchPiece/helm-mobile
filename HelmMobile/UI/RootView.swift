@@ -14,6 +14,8 @@ final class Router {
     var showPairing = false
     /// What New Thread should start with (shared text and files), taken by it when it opens.
     var newThreadSeed: SharedContent?
+    /// Where New Thread should start, picked by a long press on the New thread button; taken when it opens.
+    var newThreadTarget: NewThreadTarget?
     /// New Thread's attachments outlive the screen, so going back keeps them with the draft.
     let newThreadComposer = ComposerDraft()
     /// What New Thread was left holding, listed on top of Home.
@@ -32,6 +34,12 @@ final class Router {
             merged.append(seed)
             newThreadSeed = merged
         }
+        startNewThread()
+    }
+
+    /// New Thread in a given project (or without one); a draft keeps its text and moves there.
+    func startNewThread(in target: NewThreadTarget) {
+        newThreadTarget = target
         startNewThread()
     }
 
@@ -61,6 +69,12 @@ final class Router {
 }
 
 enum SettingsDestination: Hashable { case usage }
+
+/// A project to start a thread in; no project id means the Mac's "no project" scratch folder.
+struct NewThreadTarget: Equatable {
+    var environmentId: String
+    var projectId: String?
+}
 
 struct RootView: View {
     @Environment(AppModel.self) private var model

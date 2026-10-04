@@ -19,6 +19,7 @@ struct HomeView: View {
     /// The row whose swipe asked "snooze until when?".
     @State private var snoozeChoosing: ThreadListEntry?
     @State private var actionError: String?
+    @State private var fan = NewThreadFanState()
 
     var body: some View {
         let entries = filteredEntries
@@ -82,6 +83,7 @@ struct HomeView: View {
         .scrollContentBackground(.hidden)
         .background(Palette.canvas)
         .overlay { emptyState(entries: entries) }
+        .overlay { NewThreadFan(state: fan) }
         .navigationTitle(navigationTitle)
         .toolbarTitleDisplayMode(.inlineLarge)
         .searchable(text: $search, prompt: Text("Search"))
@@ -334,14 +336,21 @@ struct HomeView: View {
         DefaultToolbarItem(kind: .search, placement: .bottomBar)
         ToolbarSpacer(.fixed, placement: .bottomBar)
         ToolbarItem(placement: .bottomBar) {
+            // Tap: New Thread as it was left. Long press and slide up: right into a recent project.
             Button {
-                router.startNewThread()
+                if !fan.justClosed { router.startNewThread() }
             } label: {
-                Image(systemName: "square.and.pencil")
+                Image(systemName: "plus")
+                    .font(.system(size: 19, weight: .semibold))
             }
             .buttonStyle(.glassProminent)
             .tint(Palette.accent)
             .foregroundStyle(Palette.accentForeground)
+            .newThreadFan($fan) {
+                NewThreadFanItem.recent(in: model)
+            } onPick: { item in
+                router.startNewThread(in: item.target)
+            }
             .accessibilityLabel("New thread")
             .accessibilityIdentifier("newThread")
         }

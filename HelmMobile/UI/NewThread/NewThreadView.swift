@@ -24,6 +24,8 @@ struct NewThreadView: View {
     @State private var sending = false
     @State private var error: String?
     @State private var focused = false
+    /// "No project" was picked from the long press and its scratch folder is being set up on the Mac.
+    @State private var preparingScratch = false
     /// Shared files waiting for the Mac to be connected before they upload.
     @State private var sharedFiles: [SharedFile] = []
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
@@ -99,6 +101,7 @@ struct NewThreadView: View {
             .presentationDetents([.medium, .large])
         }
         .onAppear {
+            takeTarget()
             restoreProject()
             pickDefaults()
             takeSeed()
@@ -357,10 +360,38 @@ struct NewThreadView: View {
         projectId = saved.projectId
     }
 
+    /// The project picked by a long press on the New thread button; "no project" is set up on the Mac first.
+    private func takeTarget() {
+        guard let target = router.newThreadTarget else { return }
+        router.newThreadTarget = nil
+        environmentId = target.environmentId
+        if let id = target.projectId {
+            projectId = id
+            return
+        }
+        guard let environment = model.environment(target.environmentId) else { return }
+        if let scratch = environment.shell.projects.values.first(where: { environment.config?.isScratch($0) == true }) {
+            projectId = scratch.id
+            return
+        }
+        preparingScratch = true
+        Task {
+            do {
+                let scratch = try await environment.ensureScratchProject()
+                preparingScratch = false
+                projectId = scratch.id
+            } catch {
+                preparingScratch = false
+                self.error = error.localizedDescription
+                pickDefaults()
+            }
+        }
+    }
+
     private func pickDefaults() {
         guard let environment else { return }
         if environmentId == nil { environmentId = environment.id }
-        if projectId == nil {
+        if projectId == nil, !preparingScratch {
             // The project of the most recently active thread is the best guess.
             let recent = environment.shell.threads.values.max { ($0.updatedAt ?? .distantPast) < ($1.updatedAt ?? .distantPast) }
             projectId = recent?.projectId ?? environment.shell.projects.values.max {
