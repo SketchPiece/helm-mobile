@@ -47,6 +47,20 @@
    "w": 1720,
    "h": 900,
    "title": "E. Collapsed pill that opens into B"
+  },
+  "f-thread-mode.html": {
+   "x": 0,
+   "y": 3000,
+   "w": 1720,
+   "h": 900,
+   "title": "F. Thread: model and mode both in the card"
+  },
+  "g-new-thread.html": {
+   "x": 1800,
+   "y": 3000,
+   "w": 1720,
+   "h": 900,
+   "title": "G. New thread in the same card"
   }
  },
  "order": [
@@ -55,7 +69,9 @@
   "b-card.html",
   "c-split.html",
   "d-glass.html",
-  "e-morph.html"
+  "e-morph.html",
+  "f-thread-mode.html",
+  "g-new-thread.html"
  ],
  "notes": {
   "t": {
@@ -64,16 +80,23 @@
    "text": "Helm Mobile · Composer: liquid glass and the amber mic",
    "kind": "title1",
    "maxW": 3520
+  },
+  "t2": {
+   "x": 0,
+   "y": 2920,
+   "text": "Round 2: keep the access mode, and the new-thread screen",
+   "kind": "title2",
+   "maxW": 3520
   }
  },
  "annotations": [
   {
    "id": "claude-1",
    "x": 3600,
-   "y": 2000,
+   "y": 3000,
    "w": 420,
    "color": "blue",
-   "text": "My pick now: E. Collapsed one-row pill at rest (takes the least of the timeline), opens into the B card on focus in one spring. Mic behaviour is the same in A, B and E."
+   "text": "Pick: E at rest + F when opened (model and mode both in the card) + G for a new thread (same card, one «where» row on top). Mic behaviour is the same everywhere."
   }
  ],
  "designSystems": []
