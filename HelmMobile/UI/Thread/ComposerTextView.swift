@@ -11,6 +11,10 @@ struct ComposerTextView: UIViewRepresentable {
     var minLines = 1
     var maxLines = 8
     var accessibilityIdentifier: String?
+    /// Settings → Keyboard: Return sends (Shift-Return is a new line) or inserts a new line.
+    var returnKey: ReturnKeyBehavior = .newline
+    /// Sends the draft. `alternate` is Command-Return while Return sends: the other follow-up.
+    var onSubmit: ((_ alternate: Bool) -> Void)?
     var onPasteImages: ([UIImage]) -> Void
 
     func makeUIView(context: Context) -> PastingTextView {
@@ -33,6 +37,7 @@ struct ComposerTextView: UIViewRepresentable {
         view.placeholderLabel.textColor = UIColor(Palette.placeholder)
         view.accessibilityIdentifier = accessibilityIdentifier
         view.onPasteImages = onPasteImages
+        view.configureReturnKey(returnKey, onSubmit: onSubmit)
         view.text = text
         view.updatePlaceholder()
         return view
@@ -41,6 +46,10 @@ struct ComposerTextView: UIViewRepresentable {
     func updateUIView(_ view: PastingTextView, context: Context) {
         context.coordinator.parent = self
         view.onPasteImages = onPasteImages
+        view.configureReturnKey(returnKey, onSubmit: onSubmit)
+        view.textColor = UIColor(Palette.text)
+        view.tintColor = UIColor(Palette.accent)
+        view.placeholderLabel.textColor = UIColor(Palette.placeholder)
         if view.text != text {
             view.text = text
             view.updatePlaceholder()
@@ -83,6 +92,13 @@ struct ComposerTextView: UIViewRepresentable {
             }
         }
 
+        /// The on-screen keyboard's Return; hardware Return arrives as a key command instead.
+        func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+            guard text == "\n", parent.returnKey == .send, let onSubmit = parent.onSubmit else { return true }
+            onSubmit(false)
+            return false
+        }
+
         func textViewDidBeginEditing(_ textView: UITextView) {
             if !parent.isFocused { parent.isFocused = true }
         }
@@ -115,6 +131,38 @@ final class PastingTextView: UITextView {
     func updatePlaceholder() {
         placeholderLabel.isHidden = !text.isEmpty
     }
+
+    private var returnKey = ReturnKeyBehavior.newline
+    private var onSubmit: ((Bool) -> Void)?
+
+    func configureReturnKey(_ behavior: ReturnKeyBehavior, onSubmit: ((Bool) -> Void)?) {
+        self.onSubmit = onSubmit
+        returnKey = behavior
+        let type: UIReturnKeyType = behavior == .send && onSubmit != nil ? .send : .default
+        guard returnKeyType != type else { return }
+        returnKeyType = type
+        if isFirstResponder { reloadInputViews() }
+    }
+
+    /// Hardware keyboard: Return and Shift-Return per the setting, Command-Return always sends.
+    override var keyCommands: [UIKeyCommand]? {
+        guard onSubmit != nil else { return super.keyCommands }
+        var commands = [
+            UIKeyCommand(input: "\r", modifierFlags: .command, action: #selector(commandReturn)),
+        ]
+        if returnKey == .send {
+            commands.append(UIKeyCommand(input: "\r", modifierFlags: [], action: #selector(plainReturn)))
+            commands.append(UIKeyCommand(input: "\r", modifierFlags: .shift, action: #selector(newline)))
+        }
+        commands.forEach { $0.wantsPriorityOverSystemBehavior = true }
+        return commands + (super.keyCommands ?? [])
+    }
+
+    @objc private func plainReturn() { onSubmit?(false) }
+
+    @objc private func commandReturn() { onSubmit?(returnKey == .send) }
+
+    @objc private func newline() { insertText("\n") }
 
     override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if action == #selector(paste(_:)), UIPasteboard.general.hasImages { return true }

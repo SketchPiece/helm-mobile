@@ -57,6 +57,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).widgets
         PRODUCT_NAME: HelmWidgets
+        # The app group the app writes the Usage widget's snapshot to.
+        CODE_SIGN_ENTITLEMENTS: HelmWidgets/HelmWidgets.entitlements
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: HelmWidgets/Info.plist
         GENERATE_INFOPLIST_FILE: NO
@@ -72,6 +74,9 @@ targets:
       - path: HelmShare
       - path: Shared/ShareInbox.swift
       - path: HelmMobile/UI/Theme.swift
+      # The palette follows the chosen theme, so the extension carries the theme store too.
+      - path: HelmMobile/UI/ThemeStore.swift
+      - path: HelmMobile/Core/JSON.swift
       - path: HelmMobile/Resources/Localizable.xcstrings
       - path: HelmMobile/Resources/Fonts/IBMPlexSans-Regular.ttf
       - path: HelmMobile/Resources/Fonts/IBMPlexSans-SemiBold.ttf

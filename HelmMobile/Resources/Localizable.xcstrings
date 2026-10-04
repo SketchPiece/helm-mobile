@@ -14,6 +14,76 @@
     "#%lld": {
       "shouldTranslate": false
     },
+    "%@ at %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ в %@"
+          }
+        }
+      }
+    },
+    "%@ cache writes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ записей в кэш"
+          }
+        }
+      }
+    },
+    "%@ of cost · %@ tokens": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ стоимости · %@ токенов"
+          }
+        }
+      }
+    },
+    "%@ of input": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ввода"
+          }
+        }
+      }
+    },
+    "%@ per active day": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ за активный день"
+          }
+        }
+      }
+    },
+    "%@ per active hour": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ за активный час"
+          }
+        }
+      }
+    },
+    "%@ premium": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ надбавка"
+          }
+        }
+      }
+    },
     "%@ wants to continue": {
       "localizations": {
         "ru": {
@@ -26,6 +96,68 @@
     },
     "%@ · %@": {
       "shouldTranslate": false
+    },
+    "%@ · %lld sessions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld session"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld sessions"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld сессии"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld сессий"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld сессия"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ · %lld сессии"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%@× the raw cost": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@× от стоимости"
+          }
+        }
+      }
     },
     "%lld": {
       "shouldTranslate": false
@@ -324,6 +456,16 @@
         }
       }
     },
+    "%lld pt": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld пт"
+          }
+        }
+      }
+    },
     "%lld questions": {
       "localizations": {
         "en": {
@@ -480,6 +622,19 @@
         }
       }
     },
+    "%lld%%": {
+      "shouldTranslate": false
+    },
+    "%lld%% left": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Осталось %lld%%"
+          }
+        }
+      }
+    },
     "%lld/%lld": {
       "shouldTranslate": false
     },
@@ -543,6 +698,16 @@
         }
       }
     },
+    "* if billed at full API rates": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "* по полной цене API"
+          }
+        }
+      }
+    },
     "+%lld": {
       "shouldTranslate": false
     },
@@ -556,23 +721,49 @@
         }
       }
     },
-    "1 hour": {
+    "100.64.0.1 or my-mac.tailnet.ts.net": {},
+    "15": {
+      "shouldTranslate": false
+    },
+    "2": {
+      "shouldTranslate": false
+    },
+    "24h": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На час"
+            "value": "24 ч"
           }
         }
       }
     },
-    "100.64.0.1 or my-mac.tailnet.ts.net": {},
-    "3 hours": {
+    "30d": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На 3 часа"
+            "value": "30 д"
+          }
+        }
+      }
+    },
+    "7d": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 д"
+          }
+        }
+      }
+    },
+    "90d": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 д"
           }
         }
       }
@@ -617,12 +808,84 @@
         }
       }
     },
+    "Across %lld sessions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Across %lld session"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Across %lld sessions"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "За %lld сессии"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "За %lld сессий"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "За %lld сессию"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "За %lld сессии"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Actions for %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действия: %@"
+          }
+        }
+      }
+    },
     "Active": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "В работе"
+          }
+        }
+      }
+    },
+    "Add a name, prompt, project, model, a valid schedule, and the checkout path if needed.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нужны название, промпт, проект, модель, правильное расписание и путь к копии, если он нужен."
           }
         }
       }
@@ -683,6 +946,58 @@
           "stringUnit": {
             "state": "translated",
             "value": "Все"
+          }
+        }
+      }
+    },
+    "All %lld models": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "All %lld model"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "All %lld models"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Все %lld модели"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Все %lld моделей"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Все %lld модель"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Все %lld модели"
+                }
+              }
+            }
           }
         }
       }
@@ -773,6 +1088,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Оформление"
+          }
+        }
+      }
+    },
+    "Applies to the on-screen keyboard and a hardware keyboard.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для экранной и подключённой клавиатуры."
           }
         }
       }
@@ -877,6 +1202,16 @@
         }
       }
     },
+    "At a time": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В заданное время"
+          }
+        }
+      }
+    },
     "Attach": {
       "localizations": {
         "ru": {
@@ -923,6 +1258,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Автозавершение"
+          }
+        }
+      }
+    },
+    "Automatic": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Авто"
           }
         }
       }
@@ -977,6 +1322,76 @@
         }
       }
     },
+    "By model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По моделям"
+          }
+        }
+      }
+    },
+    "By speed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По скорости"
+          }
+        }
+      }
+    },
+    "By type": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По типу"
+          }
+        }
+      }
+    },
+    "Cache read": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтение кэша"
+          }
+        }
+      }
+    },
+    "Cache savings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экономия на кэше"
+          }
+        }
+      }
+    },
+    "Cache write": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись в кэш"
+          }
+        }
+      }
+    },
+    "Cached input": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввод из кэша"
+          }
+        }
+      }
+    },
     "Can't reach the Mac. Is it awake and is Tailscale on? (%@)": {
       "localizations": {
         "ru": {
@@ -1007,12 +1422,102 @@
         }
       }
     },
+    "Check for issues": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить задачи"
+          }
+        }
+      }
+    },
+    "Checked %@ ago": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверено %@ назад"
+          }
+        }
+      }
+    },
     "Checking out files": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Распаковка файлов"
+          }
+        }
+      }
+    },
+    "Checkout path": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь к копии"
+          }
+        }
+      }
+    },
+    "Choose a project on this Mac.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери проект на этом Mac."
+          }
+        }
+      }
+    },
+    "Choose a valid date and time in the future.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери дату и время в будущем."
+          }
+        }
+      }
+    },
+    "Choose days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери дни"
+          }
+        }
+      }
+    },
+    "Choose model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери модель"
+          }
+        }
+      }
+    },
+    "Choose project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери проект"
+          }
+        }
+      }
+    },
+    "Choose when the thread comes back to your list.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда тред вернётся в список."
           }
         }
       }
@@ -1057,6 +1562,26 @@
         }
       }
     },
+    "Code and diffs": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Код и диффы"
+          }
+        }
+      }
+    },
+    "Code blocks and diffs follow the phone's text size unless you set one here. Diffs always scroll sideways.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Диффы всегда листаются вбок."
+          }
+        }
+      }
+    },
     "Compacted the conversation": {
       "localizations": {
         "ru": {
@@ -1093,6 +1618,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подключить Mac"
+          }
+        }
+      }
+    },
+    "Connect a Mac to see and create scheduled tasks.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключи Mac, чтобы видеть и создавать задачи."
+          }
+        }
+      }
+    },
+    "Connect a Mac to see usage.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключи Mac, чтобы видеть расход."
           }
         }
       }
@@ -1177,6 +1722,16 @@
         }
       }
     },
+    "Context": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекст"
+          }
+        }
+      }
+    },
     "Continue": {
       "localizations": {
         "ru": {
@@ -1233,6 +1788,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Скопировать ID треда"
+          }
+        }
+      }
+    },
+    "Cost": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стоимость"
           }
         }
       }
@@ -1347,6 +1912,16 @@
         }
       }
     },
+    "Create task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создать задачу"
+          }
+        }
+      }
+    },
     "Creating the GitHub repository…": {
       "localizations": {
         "ru": {
@@ -1377,6 +1952,26 @@
         }
       }
     },
+    "Custom font size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свой размер шрифта"
+          }
+        }
+      }
+    },
+    "Custom snooze": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Своё время"
+          }
+        }
+      }
+    },
     "Custom…": {
       "localizations": {
         "ru": {
@@ -1397,6 +1992,36 @@
         }
       }
     },
+    "Date": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата"
+          }
+        }
+      }
+    },
+    "Date and time": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата и время"
+          }
+        }
+      }
+    },
+    "Days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дни"
+          }
+        }
+      }
+    },
     "Decline": {
       "localizations": {
         "ru": {
@@ -1413,6 +2038,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалить"
+          }
+        }
+      }
+    },
+    "Delete this task?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить задачу?"
           }
         }
       }
@@ -1447,6 +2082,26 @@
         }
       }
     },
+    "Discard changes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не сохранять"
+          }
+        }
+      }
+    },
+    "Discard changes?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не сохранять изменения?"
+          }
+        }
+      }
+    },
     "Dismiss without answering": {
       "localizations": {
         "ru": {
@@ -1477,6 +2132,16 @@
         }
       }
     },
+    "Duration": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через сколько"
+          }
+        }
+      }
+    },
     "Edit": {
       "localizations": {
         "ru": {
@@ -1497,6 +2162,16 @@
         }
       }
     },
+    "Edit scheduled task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задача по расписанию"
+          }
+        }
+      }
+    },
     "Edits freely, asks before commands": {
       "localizations": {
         "ru": {
@@ -1507,12 +2182,102 @@
         }
       }
     },
+    "Enabled": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включена"
+          }
+        }
+      }
+    },
+    "Enter a positive duration.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Укажи срок больше нуля."
+          }
+        }
+      }
+    },
+    "Every %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждые %@"
+          }
+        }
+      }
+    },
+    "Every day": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый день"
+          }
+        }
+      }
+    },
+    "Every hour": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый час"
+          }
+        }
+      }
+    },
+    "Every interval": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С интервалом"
+          }
+        }
+      }
+    },
+    "Every minute": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждую минуту"
+          }
+        }
+      }
+    },
+    "Every week": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждую неделю"
+          }
+        }
+      }
+    },
     "Failed": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Ошибка"
+          }
+        }
+      }
+    },
+    "Fast": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрые"
           }
         }
       }
@@ -1567,6 +2332,26 @@
         }
       }
     },
+    "Follow-ups": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока агент занят"
+          }
+        }
+      }
+    },
+    "Font size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер шрифта"
+          }
+        }
+      }
+    },
     "Found on your tailnet": {
       "localizations": {
         "ru": {
@@ -1577,12 +2362,52 @@
         }
       }
     },
+    "From %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "От %@"
+          }
+        }
+      }
+    },
+    "From %@ · %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С %@ · %@"
+          }
+        }
+      }
+    },
+    "From %@ · saved": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С %@ · сохранена"
+          }
+        }
+      }
+    },
     "From GitHub or any git URL": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "С GitHub или по любой git-ссылке"
+          }
+        }
+      }
+    },
+    "From origin/%@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "От origin/%@"
           }
         }
       }
@@ -1813,12 +2638,32 @@
         }
       }
     },
+    "Helm's default · Light · Dark": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стандартная · светлая · тёмная"
+          }
+        }
+      }
+    },
     "Hold to talk, release to send": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Удерживай и говори, отпусти — отправлю"
+          }
+        }
+      }
+    },
+    "Hours": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Часы"
           }
         }
       }
@@ -1843,12 +2688,82 @@
         }
       }
     },
+    "In 1 hour": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через час"
+          }
+        }
+      }
+    },
+    "In 3 hours": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 3 часа"
+          }
+        }
+      }
+    },
+    "Input": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввод"
+          }
+        }
+      }
+    },
+    "Insert new line": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новая строка"
+          }
+        }
+      }
+    },
+    "Intervals must be at least 1 minute.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Интервал — не меньше минуты."
+          }
+        }
+      }
+    },
     "Into": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Куда"
+          }
+        }
+      }
+    },
+    "Keep editing": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
+          }
+        }
+      }
+    },
+    "Keyboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клавиатура"
           }
         }
       }
@@ -1873,6 +2788,16 @@
         }
       }
     },
+    "Last run failed: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прошлый запуск не удался: %@"
+          }
+        }
+      }
+    },
     "Light": {
       "localizations": {
         "ru": {
@@ -1893,12 +2818,32 @@
         }
       }
     },
+    "Limits": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лимиты"
+          }
+        }
+      }
+    },
     "Live Activity": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Live Activity"
+          }
+        }
+      }
+    },
+    "Loading tasks…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загружаю задачи…"
           }
         }
       }
@@ -1953,6 +2898,16 @@
         }
       }
     },
+    "Long-press the send button to use the other option for one message. With a hardware keyboard, Command-Return does the same.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удержи кнопку отправки, чтобы для одного сообщения сделать наоборот. С клавиатуры — Command-Return."
+          }
+        }
+      }
+    },
     "Looking for Helm…": {
       "localizations": {
         "ru": {
@@ -1983,6 +2938,16 @@
         }
       }
     },
+    "Macs publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac публикуют темы из папки themes Штурвала. Тема для тёмного режима не меняет светлый."
+          }
+        }
+      }
+    },
     "Make these edits?": {
       "localizations": {
         "ru": {
@@ -2003,6 +2968,16 @@
         }
       }
     },
+    "Measure": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что считать"
+          }
+        }
+      }
+    },
     "Merged": {
       "localizations": {
         "ru": {
@@ -2019,6 +2994,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Доступ к микрофону выключен. Включи его в Настройках."
+          }
+        }
+      }
+    },
+    "Minutes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Минуты"
+          }
+        }
+      }
+    },
+    "Minutes between runs": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Минут между запусками"
           }
         }
       }
@@ -2133,6 +3128,16 @@
         }
       }
     },
+    "New scheduled task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новая задача"
+          }
+        }
+      }
+    },
     "New task": {
       "localizations": {
         "ru": {
@@ -2173,12 +3178,166 @@
         }
       }
     },
+    "Next run %@ at %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск: %@, %@"
+          }
+        }
+      }
+    },
+    "Next run due": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск вот-вот"
+          }
+        }
+      }
+    },
+    "Next run in %lld hours": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Next run in %lld hour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Next run in %lld hours"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld часа"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld часов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld час"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld часа"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Next run in %lld minutes": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Next run in %lld minute"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Next run in %lld minutes"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld минуты"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld минут"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld минуту"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Запуск через %lld минуты"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Next run in less than a minute": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск меньше чем через минуту"
+          }
+        }
+      }
+    },
+    "Next run tomorrow at %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запуск завтра в %@"
+          }
+        }
+      }
+    },
     "Next week": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "На следующей неделе"
+          }
+        }
+      }
+    },
+    "No activity in this period.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За этот период ничего."
           }
         }
       }
@@ -2253,12 +3412,42 @@
         }
       }
     },
+    "No limits reported right now.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сейчас лимитов нет."
+          }
+        }
+      }
+    },
     "No project — just a task": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Без проекта — просто задача"
+          }
+        }
+      }
+    },
+    "No provider on this Mac reports subscription limits.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ни один агент на этом Mac не сообщает лимиты подписки."
+          }
+        }
+      }
+    },
+    "No scheduled tasks yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задач пока нет."
           }
         }
       }
@@ -2403,6 +3592,16 @@
         }
       }
     },
+    "Open Helm to load usage.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открой Штурвал, чтобы загрузить расход."
+          }
+        }
+      }
+    },
     "Open Helm to start the thread.": {
       "localizations": {
         "ru": {
@@ -2463,12 +3662,32 @@
         }
       }
     },
+    "Other": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прочее"
+          }
+        }
+      }
+    },
     "Out of date": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Устарело"
+          }
+        }
+      }
+    },
+    "Output": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вывод"
           }
         }
       }
@@ -2523,6 +3742,46 @@
         }
       }
     },
+    "Past 24 hours": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За 24 часа"
+          }
+        }
+      }
+    },
+    "Past 30 days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За 30 дней"
+          }
+        }
+      }
+    },
+    "Past 7 days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За 7 дней"
+          }
+        }
+      }
+    },
+    "Past 90 days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За 90 дней"
+          }
+        }
+      }
+    },
     "Paste": {
       "localizations": {
         "ru": {
@@ -2553,6 +3812,36 @@
         }
       }
     },
+    "Pause": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приостановить"
+          }
+        }
+      }
+    },
+    "Paused": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На паузе"
+          }
+        }
+      }
+    },
+    "Period": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Период"
+          }
+        }
+      }
+    },
     "Photos": {
       "localizations": {
         "ru": {
@@ -2569,16 +3858,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выбери папку, которая уже есть"
-          }
-        }
-      }
-    },
-    "Pick a time in the future.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выбери время в будущем."
           }
         }
       }
@@ -2633,12 +3912,62 @@
         }
       }
     },
+    "Processed tokens": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обработано токенов"
+          }
+        }
+      }
+    },
     "Project": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Проект"
+          }
+        }
+      }
+    },
+    "Project checkout": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка проекта"
+          }
+        }
+      }
+    },
+    "Prompt": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Промпт"
+          }
+        }
+      }
+    },
+    "Provider": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Провайдер"
+          }
+        }
+      }
+    },
+    "Providers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Провайдеры"
           }
         }
       }
@@ -2673,6 +4002,16 @@
         }
       }
     },
+    "Queue": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В очередь"
+          }
+        }
+      }
+    },
     "Queue after this turn": {
       "localizations": {
         "ru": {
@@ -2699,6 +4038,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Очередь на паузе"
+          }
+        }
+      }
+    },
+    "Raw token cost": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стоимость токенов"
           }
         }
       }
@@ -2843,6 +4192,16 @@
         }
       }
     },
+    "Repeat": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повтор"
+          }
+        }
+      }
+    },
     "Resets %@": {
       "localizations": {
         "ru": {
@@ -2903,12 +4262,82 @@
         }
       }
     },
+    "Return adds a line": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return — новая строка"
+          }
+        }
+      }
+    },
+    "Return inserts a new line. Command-Return sends the message.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return — новая строка, Command-Return отправляет."
+          }
+        }
+      }
+    },
+    "Return key": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клавиша Return"
+          }
+        }
+      }
+    },
+    "Return sends": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return отправляет"
+          }
+        }
+      }
+    },
+    "Return sends the message. Shift-Return inserts a new line.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return отправляет сообщение, Shift-Return — новая строка."
+          }
+        }
+      }
+    },
     "Review changes": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Посмотреть изменения"
+          }
+        }
+      }
+    },
+    "Run in": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Где работать"
+          }
+        }
+      }
+    },
+    "Run now": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустить сейчас"
           }
         }
       }
@@ -2923,7 +4352,27 @@
         }
       }
     },
+    "Runs on": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Где запускать"
+          }
+        }
+      }
+    },
     "Save": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить"
+          }
+        }
+      }
+    },
+    "Save changes": {
       "localizations": {
         "ru": {
           "stringUnit": {
@@ -2959,6 +4408,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сканировать QR-код"
+          }
+        }
+      }
+    },
+    "Scanning provider transcripts…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Читаю журналы агентов…"
+          }
+        }
+      }
+    },
+    "Schedule": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расписание"
+          }
+        }
+      }
+    },
+    "Schedule type": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как задать"
+          }
+        }
+      }
+    },
+    "Scheduled tasks": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задачи по расписанию"
           }
         }
       }
@@ -3009,6 +4498,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отправить ответы"
+          }
+        }
+      }
+    },
+    "Send message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить сообщение"
           }
         }
       }
@@ -3083,6 +4582,16 @@
         }
       }
     },
+    "Show": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать"
+          }
+        }
+      }
+    },
     "Show older models": {
       "localizations": {
         "ru": {
@@ -3103,12 +4612,12 @@
         }
       }
     },
-    "Snooze until": {
+    "Snooze for": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Отложить до"
+            "value": "Отложить на"
           }
         }
       }
@@ -3133,12 +4642,42 @@
         }
       }
     },
+    "Snoozed until %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отложен до %@"
+          }
+        }
+      }
+    },
     "Something went wrong": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Что-то пошло не так"
+          }
+        }
+      }
+    },
+    "Specific checkout": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конкретная копия"
+          }
+        }
+      }
+    },
+    "Standard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обычные"
           }
         }
       }
@@ -3223,6 +4762,36 @@
         }
       }
     },
+    "Steer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вмешаться"
+          }
+        }
+      }
+    },
+    "Steer the agent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вмешаться"
+          }
+        }
+      }
+    },
+    "Steer the agent…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вмешаться в работу…"
+          }
+        }
+      }
+    },
     "Steered": {
       "localizations": {
         "ru": {
@@ -3269,6 +4838,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Субагент"
+          }
+        }
+      }
+    },
+    "Subscription limits left and the past day's cost.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остаток лимитов подписки и стоимость за сутки."
           }
         }
       }
@@ -3349,6 +4928,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tailscale"
+          }
+        }
+      }
+    },
+    "Task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задача"
           }
         }
       }
@@ -3493,6 +5082,16 @@
         }
       }
     },
+    "Theme": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тема"
+          }
+        }
+      }
+    },
     "There's nothing here Helm can use.": {
       "localizations": {
         "ru": {
@@ -3553,12 +5152,32 @@
         }
       }
     },
+    "This Mac runs an older Helm; update it to see usage.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом Mac старый Штурвал — обнови его, чтобы видеть расход."
+          }
+        }
+      }
+    },
     "This address now belongs to a different Helm server.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "По этому адресу теперь другой Штурвал."
+          }
+        }
+      }
+    },
+    "This app is older than Helm on the Mac; update it to see usage.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложение старше Штурвала на Mac — обнови его, чтобы видеть расход."
           }
         }
       }
@@ -3663,6 +5282,26 @@
         }
       }
     },
+    "Time": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Время"
+          }
+        }
+      }
+    },
+    "Time uses the Mac's time zone, which may differ from your phone's.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Время по часовому поясу Mac — он может отличаться от телефона."
+          }
+        }
+      }
+    },
     "Title": {
       "localizations": {
         "ru": {
@@ -3683,22 +5322,22 @@
         }
       }
     },
+    "Tokens": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Токены"
+          }
+        }
+      }
+    },
     "Tomorrow": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Завтра"
-          }
-        }
-      }
-    },
-    "Tomorrow morning": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Завтра утром"
           }
         }
       }
@@ -3719,6 +5358,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Инструмент"
+          }
+        }
+      }
+    },
+    "Totals": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Итого"
           }
         }
       }
@@ -3753,12 +5402,32 @@
         }
       }
     },
+    "Ultrafast": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сверхбыстрые"
+          }
+        }
+      }
+    },
     "Unavailable": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Недоступен"
+          }
+        }
+      }
+    },
+    "Uncached input": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввод без кэша"
           }
         }
       }
@@ -3773,12 +5442,32 @@
         }
       }
     },
+    "Unit": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Единицы"
+          }
+        }
+      }
+    },
     "Unpin": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Открепить"
+          }
+        }
+      }
+    },
+    "Unpriced": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без цены"
           }
         }
       }
@@ -3803,6 +5492,16 @@
         }
       }
     },
+    "Usage": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расход"
+          }
+        }
+      }
+    },
     "Usage limit reached": {
       "localizations": {
         "ru": {
@@ -3823,12 +5522,32 @@
         }
       }
     },
+    "Value": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Значение"
+          }
+        }
+      }
+    },
     "Version %@": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Версия %@"
+          }
+        }
+      }
+    },
+    "Waiting for connection…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жду подключения…"
           }
         }
       }
@@ -3843,22 +5562,32 @@
         }
       }
     },
-    "Wake at": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вернуть в"
-          }
-        }
-      }
-    },
     "Wake now": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Вернуть сейчас"
+          }
+        }
+      }
+    },
+    "Wakes %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернётся %@"
+          }
+        }
+      }
+    },
+    "Weekdays": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По будням"
           }
         }
       }
@@ -3883,12 +5612,32 @@
         }
       }
     },
+    "What should the agent do each time?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что агенту делать каждый раз?"
+          }
+        }
+      }
+    },
     "When an agent asks for approval, has a question, finishes or fails. The Live Activity shows work in progress on the lock screen and in the Dynamic Island.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Когда агент просит разрешения, задаёт вопрос, заканчивает или падает. Live Activity показывает работу на экране блокировки и в Dynamic Island."
+          }
+        }
+      }
+    },
+    "While the agent is working": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока агент работает"
           }
         }
       }
@@ -3923,6 +5672,26 @@
         }
       }
     },
+    "Workspace": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рабочая папка"
+          }
+        }
+      }
+    },
+    "Wrap long lines": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переносить длинные строки"
+          }
+        }
+      }
+    },
     "Write below to give the agent a task.": {
       "localizations": {
         "ru": {
@@ -3939,6 +5708,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Твои агенты — в кармане."
+          }
+        }
+      }
+    },
+    "Your message reaches the agent right away, changing what it is working on.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сообщение сразу попадёт к агенту и изменит то, чем он занят."
+          }
+        }
+      }
+    },
+    "Your message waits and runs after the current turn finishes.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сообщение подождёт и уйдёт, когда закончится текущий ход."
+          }
+        }
+      }
+    },
+    "Your unsaved changes will be lost.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Несохранённые изменения пропадут."
           }
         }
       }
@@ -3993,6 +5792,36 @@
         }
       }
     },
+    "in 24h": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "за 24 ч"
+          }
+        }
+      }
+    },
+    "incl. %@ reasoning": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "в т. ч. %@ на рассуждения"
+          }
+        }
+      }
+    },
+    "no known rates · %@ tokens": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "нет цен · %@ токенов"
+          }
+        }
+      }
+    },
     "now": {
       "localizations": {
         "ru": {
@@ -4003,12 +5832,42 @@
         }
       }
     },
+    "of records, left out of cost": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "записей, не вошли в стоимость"
+          }
+        }
+      }
+    },
     "on %@": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "на %@"
+          }
+        }
+      }
+    },
+    "tomorrow %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "завтра %@"
+          }
+        }
+      }
+    },
+    "vs full input rates": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "против полной цены ввода"
           }
         }
       }

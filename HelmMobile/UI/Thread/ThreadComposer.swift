@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// The composer pill: attach, type, send. While the agent works, an empty composer's button
-/// stops it; with text, the message queues (long-press to steer it into the running turn).
+/// stops it; with text, the message queues or steers per Settings → Follow-ups (long-press for
+/// the other one).
 /// Typing `/`, `@`, `$` or `#` opens suggestions above it.
 struct ThreadComposer: View {
     let environment: EnvironmentSession
@@ -16,6 +17,8 @@ struct ThreadComposer: View {
     @State private var voice = VoiceInput()
     @State private var micDrag: CGFloat = 0
     @State private var focused = false
+    @AppStorage(PhonePreferences.followUpKey) private var followUpBehavior = FollowUpBehavior.queue
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
 
     init(environment: EnvironmentSession, session: ThreadSession, didSend: @escaping () -> Void = {}) {
         self.environment = environment
@@ -82,7 +85,10 @@ struct ThreadComposer: View {
                 }
 
                 ComposerTextView(text: $text, isFocused: $focused, placeholder: placeholder,
-                                 accessibilityIdentifier: "composer") { images in
+                                 accessibilityIdentifier: "composer", returnKey: returnKey,
+                                 onSubmit: { alternate in
+                                     send(followUp: alternate ? followUpBehavior.other.followUp : followUpBehavior.followUp)
+                                 }) { images in
                     images.forEach { draft.attach(image: $0, environment: environment) }
                 }
                     .padding(.vertical, 7)
@@ -164,14 +170,15 @@ struct ThreadComposer: View {
     private func insert(_ dictated: String, thenSend: Bool) {
         text = trimmed.isEmpty ? dictated : "\(trimmed) \(dictated)"
         if thenSend {
-            send(followUp: .queue)
+            send(followUp: followUpBehavior.followUp)
         } else {
             focused = true
         }
     }
 
     private var placeholder: String {
-        isWorking ? String(localized: "Add to the queue…") : String(localized: "Ask the agent…")
+        guard isWorking else { return String(localized: "Ask the agent…") }
+        return followUpBehavior == .queue ? String(localized: "Add to the queue…") : String(localized: "Steer the agent…")
     }
 
     private var stopButton: some View {
@@ -196,7 +203,7 @@ struct ThreadComposer: View {
 
     private var sendButton: some View {
             Button {
-                send(followUp: .queue)
+                send(followUp: followUpBehavior.followUp)
             } label: {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 16, weight: .bold))
@@ -208,15 +215,20 @@ struct ThreadComposer: View {
             .accessibilityIdentifier("send")
             .contextMenu {
                 if isWorking && canSend {
-                    Button {
-                        send(followUp: .steer)
-                    } label: { Label("Send now (steer)", systemImage: "arrow.turn.down.right") }
-                    Button {
-                        send(followUp: .queue)
-                    } label: { Label("Queue after this turn", systemImage: "clock") }
+                    // The default is the tap; long-press offers the other one.
+                    switch followUpBehavior.other {
+                    case .steer:
+                        Button {
+                            send(followUp: .steer)
+                        } label: { Label("Send now (steer)", systemImage: "arrow.turn.down.right") }
+                    case .queue:
+                        Button {
+                            send(followUp: .queue)
+                        } label: { Label("Queue after this turn", systemImage: "clock") }
+                    }
                 }
             }
-            .accessibilityLabel(isWorking ? "Queue message" : "Send")
+            .accessibilityLabel(!isWorking ? "Send" : followUpBehavior == .queue ? "Queue message" : "Steer the agent")
     }
 
     private var settingsChips: some View {

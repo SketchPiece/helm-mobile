@@ -22,6 +22,9 @@ final class Router {
         showNewThread = true
     }
 
+    /// Screens pushed inside Settings, for links such as the Usage widget's.
+    var settingsPath: [SettingsDestination] = []
+
     func open(_ ref: ThreadRef) {
         if path.last != ref { path = [ref] }
     }
@@ -31,6 +34,8 @@ final class Router {
         if path.last != ref { path.append(ref) }
     }
 }
+
+enum SettingsDestination: Hashable { case usage }
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
@@ -48,7 +53,7 @@ struct RootView: View {
                 .sheet(isPresented: $router.showNewThread) {
                     NewThreadView()
                 }
-                .sheet(isPresented: $router.showSettings) {
+                .sheet(isPresented: $router.showSettings, onDismiss: { router.settingsPath = [] }) {
                     SettingsView()
                 }
             } else {
@@ -67,6 +72,9 @@ struct RootView: View {
                 LaunchActions.shared.pickUpShares()
             } else if let target = HelmLink.thread(from: url) {
                 router.open(ThreadRef(environmentId: target.environmentId, threadId: target.threadId))
+            } else if url.scheme == "helm", url.host() == "usage" {
+                router.settingsPath = [.usage]
+                router.showSettings = true
             }
         }
         // Notification taps.

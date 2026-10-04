@@ -30,5 +30,25 @@
   "%lld approvals": {
     "one": "%lld approval",
     "other": "%lld approvals"
+  },
+  "Next run in %lld minutes": {
+    "one": "Next run in %lld minute",
+    "other": "Next run in %lld minutes"
+  },
+  "Next run in %lld hours": {
+    "one": "Next run in %lld hour",
+    "other": "Next run in %lld hours"
+  },
+  "Across %lld sessions": {
+    "one": "Across %lld session",
+    "other": "Across %lld sessions"
+  },
+  "%@ · %lld sessions": {
+    "one": "%@ · %lld session",
+    "other": "%@ · %lld sessions"
+  },
+  "All %lld models": {
+    "one": "All %lld model",
+    "other": "All %lld models"
   }
 }

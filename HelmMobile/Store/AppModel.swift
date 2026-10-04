@@ -31,6 +31,7 @@ final class AppModel {
         // As the unit-test host the app stays idle: no sockets, no Tailscale, so the test runner
         // attaches to a quiet main thread.
         guard !Self.isUnitTestHost else { return }
+        environments.forEach(adopt)
         tailscale.startIfConfigured()
         tailscale.onRunning = { [weak self] in
             self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
@@ -89,6 +90,7 @@ final class AppModel {
             environments.removeAll { $0.id == saved.id }
         }
         let session = EnvironmentSession(saved: saved)
+        adopt(session)
         environments.append(session)
         session.start()
         return session
@@ -104,6 +106,15 @@ final class AppModel {
     func foregrounded() {
         for environment in environments {
             Task { await environment.refreshAfterForeground() }
+        }
+        Task { await UsageWidgetPublisher.shared.publish(from: environments) }
+    }
+
+    /// A Mac that just connected brings fresh limits for the Usage widget.
+    private func adopt(_ environment: EnvironmentSession) {
+        environment.onLive = { [weak self] in
+            guard let self else { return }
+            Task { await UsageWidgetPublisher.shared.publish(from: self.environments) }
         }
     }
 

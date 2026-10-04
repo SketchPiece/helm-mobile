@@ -186,7 +186,7 @@ struct HomeView: View {
         } else {
             Button { run(.settle, on: entry) } label: { Label("Settle", systemImage: "checkmark.circle") }
                 .tint(Palette.done)
-            Button { run(.snooze(SnoozePreset.tomorrowMorning.date()), on: entry) } label: {
+            Button { run(.snooze(Snooze.presets().first { $0.kind == .tomorrow }?.date ?? Date()), on: entry) } label: {
                 Label("Tomorrow", systemImage: "moon.zzz")
             }
             .tint(Palette.question)
@@ -210,17 +210,13 @@ struct HomeView: View {
         } else {
             Button { run(.settle, on: entry) } label: { Label("Settle", systemImage: "checkmark.circle") }
         }
-        if thread.isSnoozed() {
-            Button { run(.unsnooze, on: entry) } label: { Label("Wake now", systemImage: "sun.max") }
-        } else {
-            Menu {
-                ForEach(SnoozePreset.allCases) { preset in
-                    Button(preset.title) { run(.snooze(preset.date()), on: entry) }
-                }
-                Button("Custom…") { snoozingCustom = entry }
-            } label: {
-                Label("Snooze", systemImage: "moon.zzz")
+        if thread.isSnoozed(), let wake = thread.snoozedUntil {
+            Button { run(.unsnooze, on: entry) } label: {
+                Label("Wake now", systemImage: "sun.max")
+                Text("Snoozed until \(Snooze.wakeDescription(until: wake))")
             }
+        } else {
+            SnoozeMenu { run(.snooze($0), on: entry) } custom: { snoozingCustom = entry }
         }
         if thread.pinnedAt == nil {
             Button { run(.pin, on: entry) } label: { Label("Pin", systemImage: "pin") }
@@ -392,37 +388,5 @@ struct HomeSections {
         active = active.sortedActive()
         snoozed.sort { ($0.thread.snoozedUntil ?? .distantFuture) < ($1.thread.snoozedUntil ?? .distantFuture) }
         settled.sort(by: byRecent)
-    }
-}
-
-enum SnoozePreset: String, CaseIterable, Identifiable {
-    case oneHour, threeHours, tonight, tomorrowMorning, nextWeek
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .oneHour: String(localized: "1 hour")
-        case .threeHours: String(localized: "3 hours")
-        case .tonight: String(localized: "This evening")
-        case .tomorrowMorning: String(localized: "Tomorrow morning")
-        case .nextWeek: String(localized: "Next week")
-        }
-    }
-
-    func date(now: Date = Date(), calendar: Calendar = .current) -> Date {
-        switch self {
-        case .oneHour: return now.addingTimeInterval(3600)
-        case .threeHours: return now.addingTimeInterval(3 * 3600)
-        case .tonight:
-            let evening = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: now) ?? now
-            return evening > now ? evening : now.addingTimeInterval(3600)
-        case .tomorrowMorning:
-            let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
-            return calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tomorrow) ?? tomorrow
-        case .nextWeek:
-            let monday = calendar.nextDate(after: now, matching: DateComponents(hour: 9, minute: 0, weekday: 2),
-                                           matchingPolicy: .nextTime) ?? now
-            return monday
-        }
     }
 }

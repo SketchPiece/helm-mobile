@@ -58,7 +58,8 @@ regenerates `Localizable.xcstrings` and lists anything untranslated.
 - `Tailscale/`: the in-app tsnet node (from the RN module) and `TailnetRouting`, which points tailnet
   http/ws URLs at its loopback forwarders once this phone has logged in to it.
 - `Store/PushService`: device registration with the Volna core, notification taps, the Live Activity.
-- `Shared/` + `HelmWidgets/`: the Live Activity type (wire-compatible with the core's content-state) and its UI.
+- `Shared/` + `HelmWidgets/`: the Live Activity type (wire-compatible with the core's content-state) and its UI,
+  and the "Usage" widget, which reads a snapshot the app writes to the `group.com.sketchpiece.helm` app group.
 - `HelmShare/` + `Shared/ShareInbox`: "Helm" in the share sheet. It copies what was shared into the App Group
   (`group.com.sketchpiece.helm`) and opens the app, which starts a new thread with it.
   `App/LaunchActions` routes shares, the "New task" quick action and the Shortcuts intent to New Thread.
