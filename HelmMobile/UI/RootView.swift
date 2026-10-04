@@ -7,7 +7,11 @@ final class Router {
     enum Route: Hashable {
         case thread(ThreadRef)
         case newThread
+        /// Snoozed or Settled on its own screen, within Home's project filter.
+        case shelf(Shelf, projectId: String?)
     }
+
+    enum Shelf: Hashable { case snoozed, settled }
 
     var path: [Route] = []
     var showSettings = false
@@ -62,7 +66,11 @@ final class Router {
         if path.last != .thread(ref) { path = [.thread(ref)] }
     }
 
-    /// Opens a related thread (a subagent's) on top of the current one, so Back returns.
+    func openShelf(_ shelf: Shelf, projectId: String?) {
+        path = [.shelf(shelf, projectId: projectId)]
+    }
+
+    /// Opens a thread on top of the current screen (a subagent's thread, a shelf's row), so Back returns.
     func push(_ ref: ThreadRef) {
         if path.last != .thread(ref) { path.append(.thread(ref)) }
     }
@@ -89,6 +97,7 @@ struct RootView: View {
                             switch route {
                             case .thread(let ref): ThreadScreen(ref: ref)
                             case .newThread: NewThreadView()
+                            case .shelf(let shelf, let projectId): ShelfScreen(shelf: shelf, projectId: projectId)
                             }
                         }
                 }

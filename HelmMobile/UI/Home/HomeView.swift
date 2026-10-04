@@ -2,15 +2,13 @@ import SwiftUI
 
 /// Home: every thread across connected Macs. What needs you comes first, then pinned and active
 /// threads in the order the user arranged on any client; snoozed and settled threads are tucked
-/// into sections at the bottom.
+/// behind two shelf rows at the end, each opening its own screen.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
 
     @State private var search = ""
     @State private var projectFilter: String?
-    @State private var showSnoozed = false
-    @State private var showSettled = false
     @State private var settledLimit = 20
     @State private var renaming: ThreadListEntry?
     @State private var renameText = ""
@@ -57,25 +55,33 @@ struct HomeView: View {
                     }
                 }
             }
-            if !sections.snoozed.isEmpty {
-                Section {
-                    if showSnoozed || !search.isEmpty { rows(sections.snoozed) }
-                } header: {
-                    shelfHeader(String(localized: "Snoozed"), count: sections.snoozed.count, expanded: $showSnoozed)
+            if search.isEmpty {
+                if !sections.snoozed.isEmpty || !sections.settled.isEmpty {
+                    Section {
+                        if !sections.snoozed.isEmpty { shelfRow(.snoozed, sections.snoozed) }
+                        if !sections.settled.isEmpty { shelfRow(.settled, sections.settled) }
+                    }
                 }
-            }
-            if !sections.settled.isEmpty {
-                Section {
-                    if showSettled || !search.isEmpty {
+            } else {
+                // A search reaches into the shelves and lists what it finds right here.
+                if !sections.snoozed.isEmpty {
+                    Section {
+                        rows(sections.snoozed)
+                    } header: {
+                        sectionHeader(String(localized: "Snoozed"), count: sections.snoozed.count)
+                    }
+                }
+                if !sections.settled.isEmpty {
+                    Section {
                         rows(Array(sections.settled.prefix(settledLimit)))
                         if sections.settled.count > settledLimit {
                             Color.clear.frame(height: 1)
                                 .listRowBackground(Color.clear)
                                 .onAppear { settledLimit += 25 }
                         }
+                    } header: {
+                        sectionHeader(String(localized: "Settled"), count: sections.settled.count)
                     }
-                } header: {
-                    shelfHeader(String(localized: "Settled"), count: sections.settled.count, expanded: $showSettled)
                 }
             }
         }
@@ -378,24 +384,17 @@ struct HomeView: View {
         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
     }
 
-    private func shelfHeader(_ title: String, count: Int, expanded: Binding<Bool>) -> some View {
+    private func shelfRow(_ shelf: Router.Shelf, _ entries: [ThreadListEntry]) -> some View {
         Button {
-            withAnimation(.easeOut(duration: 0.2)) { expanded.wrappedValue.toggle() }
+            router.openShelf(shelf, projectId: projectFilter)
         } label: {
-            HStack(spacing: 6) {
-                Text(title)
-                Text("\(count)").foregroundStyle(Palette.placeholder)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .rotationEffect(.degrees(expanded.wrappedValue ? 90 : 0))
-            }
-            .sectionLabelStyle()
-            .contentShape(.rect)
+            ShelfRow(shelf: shelf, entries: entries)
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("shelf-\(title)")
-        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 6, trailing: 16))
+        .accessibilityIdentifier("shelf-\(shelf == .snoozed ? "Snoozed" : "Settled")")
+        .listRowBackground(Palette.canvas)
+        .listRowSeparatorTint(Palette.border)
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
     }
 
     @ViewBuilder

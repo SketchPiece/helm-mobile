@@ -570,6 +570,58 @@
         }
       }
     },
+    "%lld threads": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld thread"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld threads"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тред"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тредов"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld tools": {
       "localizations": {
         "en": {
@@ -2182,6 +2234,16 @@
         }
       }
     },
+    "Earlier": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Раньше"
+          }
+        }
+      }
+    },
     "Edit": {
       "localizations": {
         "ru": {
@@ -2834,6 +2896,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Прошлый запуск не удался: %@"
+          }
+        }
+      }
+    },
+    "Later": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позже"
           }
         }
       }
@@ -3568,6 +3640,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пока пусто"
+          }
+        }
+      }
+    },
+    "Nothing settled": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не завершено"
+          }
+        }
+      }
+    },
+    "Nothing snoozed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не отложено"
           }
         }
       }
@@ -5312,6 +5404,16 @@
         }
       }
     },
+    "This week": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этой неделе"
+          }
+        }
+      }
+    },
     "Thought": {
       "localizations": {
         "ru": {
@@ -5408,6 +5510,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Задачи"
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сегодня"
           }
         }
       }
@@ -5792,6 +5904,16 @@
         }
       }
     },
+    "Yesterday": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вчера"
+          }
+        }
+      }
+    },
     "Your coding agents, from your pocket.": {
       "localizations": {
         "ru": {
@@ -5898,6 +6020,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "в т. ч. %@ на рассуждения"
+          }
+        }
+      }
+    },
+    "next wakes %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "первый вернётся %@"
           }
         }
       }

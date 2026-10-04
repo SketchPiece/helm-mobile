@@ -414,6 +414,33 @@ final class HomeSectionsTests: XCTestCase {
         XCTAssertEqual(sections.snoozed.map(\.ref.threadId), ["sleep"])
         XCTAssertEqual(sections.settled.map(\.ref.threadId), ["done"])
     }
+
+    func testShelfScreenGroupsByDay() {
+        func entry(_ id: String, _ extra: [String: JSON]) -> ThreadListEntry {
+            let thread = ThreadSummary(json: Fixtures.thread(id: id, extra: extra))!
+            return ThreadListEntry(ref: ThreadRef(environmentId: "e", threadId: id), thread: thread, project: nil, environmentLabel: "Mac")
+        }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let now = ISODate.parse("2026-10-04T10:00:00.000Z")!
+
+        let snoozed = ShelfScreen.groups([
+            entry("noon", ["snoozedUntil": "2026-10-04T12:00:00.000Z"]),
+            entry("tomorrow", ["snoozedUntil": "2026-10-05T09:00:00.000Z"]),
+            entry("monday", ["snoozedUntil": "2026-10-12T09:00:00.000Z"]),
+        ], shelf: .snoozed, now: now, calendar: calendar)
+        XCTAssertEqual(snoozed.map(\.title), ["Today", "Tomorrow", "Later"])
+
+        let settled = ShelfScreen.groups([
+            entry("a", ["updatedAt": "2026-10-04T08:00:00.000Z"]),
+            entry("b", ["updatedAt": "2026-10-04T01:00:00.000Z"]),
+            entry("c", ["updatedAt": "2026-10-03T20:00:00.000Z"]),
+            entry("d", ["updatedAt": "2026-09-30T20:00:00.000Z"]),
+            entry("e", ["updatedAt": "2026-08-01T20:00:00.000Z"]),
+        ], shelf: .settled, now: now, calendar: calendar)
+        XCTAssertEqual(settled.map(\.title), ["Today", "Yesterday", "This week", "Earlier"])
+        XCTAssertEqual(settled.first?.entries.map(\.ref.threadId), ["a", "b"])
+    }
 }
 
 final class ApprovalDetailTests: XCTestCase {

@@ -32,6 +32,8 @@ final class HelmTourTests: XCTestCase {
             snoozed.tap()
             sleep(1)
             shot("02-home-snoozed")
+            app.navigationBars.buttons.firstMatch.tap()
+            sleep(1)
         }
 
         // Open the longest-looking thread: the last row usually has history.
@@ -484,7 +486,7 @@ final class HelmTourTests: XCTestCase {
         XCTAssertFalse(app.buttons["newThreadDraft"].exists, "an empty new thread left a draft")
 
         app.buttons["newThread"].tap()
-        let field = app.textViews["newThreadText"].exists ? app.textViews["newThreadText"] : app.textFields["newThreadText"]
+        let field = app.descendants(matching: .any)["newThreadText"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         sleep(1)
         field.typeText("Draft from the UI test\nSecond line")
