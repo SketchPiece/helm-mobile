@@ -268,5 +268,7 @@
   "No archived threads": "В архиве пусто",
   "Restore": "Вернуть",
   "Threads": "Треды",
-  "Open the agent's thread": "Открыть тред агента"
+  "Open the agent's thread": "Открыть тред агента",
+  "Nothing here yet": "Пока пусто",
+  "Write below to give the agent a task.": "Напиши ниже, чтобы дать агенту задачу."
 }

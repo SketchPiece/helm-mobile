@@ -86,6 +86,9 @@ private struct ThreadContent: View {
                 } else {
                     ProgressView().controlSize(.large)
                 }
+            } else if blocks.isEmpty, session.outbox.isEmpty, projection?.isWorking == false {
+                ContentUnavailableView("Nothing here yet", systemImage: "text.bubble",
+                                       description: Text("Write below to give the agent a task."))
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {

@@ -1524,6 +1524,16 @@
         }
       }
     },
+    "Nothing here yet": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока пусто"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "ru": {
@@ -2540,6 +2550,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Работает"
+          }
+        }
+      }
+    },
+    "Write below to give the agent a task.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Напиши ниже, чтобы дать агенту задачу."
           }
         }
       }
