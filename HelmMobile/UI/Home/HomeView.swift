@@ -31,6 +31,7 @@ struct HomeView: View {
                     .listRowSeparator(.hidden)
             }
             connectionBanner
+            draftRow
 
             if !sections.attention.isEmpty {
                 Section {
@@ -163,6 +164,38 @@ struct HomeView: View {
     }
 
     // MARK: Rows
+
+    /// The unsent new thread, unless a search or another project's filter hides it.
+    private var visibleDraft: NewThreadDraft? {
+        guard let draft = router.newThreadDraft, search.isEmpty else { return nil }
+        if let projectFilter, draft.projectId != projectFilter { return nil }
+        return draft
+    }
+
+    @ViewBuilder
+    private var draftRow: some View {
+        if let draft = visibleDraft {
+            let environment = draft.environmentId.flatMap { model.environment($0) }
+            Button {
+                router.startNewThread()
+            } label: {
+                DraftRow(draft: draft, project: environment?.project(draft.projectId), environment: environment,
+                         showsProject: projectFilter == nil)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("newThreadDraft")
+            .listRowBackground(Palette.canvas)
+            .listRowSeparatorTint(Palette.border)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) {
+                    withAnimation { router.discardNewThreadDraft() }
+                } label: {
+                    Label("Discard", systemImage: "trash")
+                }
+            }
+        }
+    }
 
     /// The sections whose order the user can change with Move up / Move down.
     enum Arrangement { case pinned, active }
@@ -298,7 +331,7 @@ struct HomeView: View {
         DefaultToolbarItem(kind: .search, placement: .bottomBar)
         ToolbarItem(placement: .bottomBar) {
             Button {
-                router.showNewThread = true
+                router.startNewThread()
             } label: {
                 Image(systemName: "square.and.pencil")
             }
@@ -351,7 +384,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func emptyState(entries: [ThreadListEntry]) -> some View {
-        if entries.isEmpty {
+        if entries.isEmpty, visibleDraft == nil {
             if !search.isEmpty {
                 ContentUnavailableView.search(text: search)
             } else if model.environments.contains(where: { $0.status == .connecting }) && model.allThreads().isEmpty {
@@ -362,7 +395,7 @@ struct HomeView: View {
                 } description: {
                     Text("Start one and your agent gets to work on the Mac.")
                 } actions: {
-                    Button("New thread") { router.showNewThread = true }
+                    Button("New thread") { router.startNewThread() }
                         .buttonStyle(.glassProminent)
                 }
             }

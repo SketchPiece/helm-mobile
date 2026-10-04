@@ -1,37 +1,62 @@
 import SwiftUI
 
-/// Navigation for the whole app: the thread list is home; threads push onto it.
+/// Navigation for the whole app: the thread list is home; threads and New Thread push onto it.
 @MainActor
 @Observable
 final class Router {
-    var path: [ThreadRef] = []
-    var showNewThread = false
+    enum Route: Hashable {
+        case thread(ThreadRef)
+        case newThread
+    }
+
+    var path: [Route] = []
     var showSettings = false
     var showPairing = false
     /// What New Thread should start with (shared text and files), taken by it when it opens.
     var newThreadSeed: SharedContent?
+    /// New Thread's attachments outlive the screen, so going back keeps them with the draft.
+    let newThreadComposer = ComposerDraft()
+    /// What New Thread was left holding, listed on top of Home.
+    private(set) var newThreadDraft = NewThreadDraft.load()
+
+    /// New Thread, right on top of Home; what was left in it is still there.
+    func startNewThread() {
+        showSettings = false
+        if path != [.newThread] { path = [.newThread] }
+    }
 
     /// New Thread, prefilled with `seed` on top of what it already holds.
     func startNewThread(with seed: SharedContent) {
-        showSettings = false
         if !seed.isEmpty {
             var merged = newThreadSeed ?? SharedContent()
             merged.append(seed)
             newThreadSeed = merged
         }
-        showNewThread = true
+        startNewThread()
+    }
+
+    /// Re-reads the new-thread draft after New Thread closes. Attachments alone count as a draft too.
+    func refreshNewThreadDraft() {
+        newThreadDraft = NewThreadDraft.load(hasAttachments: !newThreadComposer.attachments.isEmpty)
+    }
+
+    /// Throws the new-thread draft away: text, project and attachments.
+    func discardNewThreadDraft() {
+        NewThreadDraft.clear()
+        newThreadComposer.reset()
+        newThreadDraft = nil
     }
 
     /// Screens pushed inside Settings, for links such as the Usage widget's.
     var settingsPath: [SettingsDestination] = []
 
     func open(_ ref: ThreadRef) {
-        if path.last != ref { path = [ref] }
+        if path.last != .thread(ref) { path = [.thread(ref)] }
     }
 
     /// Opens a related thread (a subagent's) on top of the current one, so Back returns.
     func push(_ ref: ThreadRef) {
-        if path.last != ref { path.append(ref) }
+        if path.last != .thread(ref) { path.append(.thread(ref)) }
     }
 }
 
@@ -46,12 +71,12 @@ struct RootView: View {
             if model.hasEnvironments && !UserDefaults.standard.bool(forKey: "showWelcome") {
                 NavigationStack(path: $router.path) {
                     HomeView()
-                        .navigationDestination(for: ThreadRef.self) { ref in
-                            ThreadScreen(ref: ref)
+                        .navigationDestination(for: Router.Route.self) { route in
+                            switch route {
+                            case .thread(let ref): ThreadScreen(ref: ref)
+                            case .newThread: NewThreadView()
+                            }
                         }
-                }
-                .sheet(isPresented: $router.showNewThread) {
-                    NewThreadView()
                 }
                 .sheet(isPresented: $router.showSettings, onDismiss: { router.settingsPath = [] }) {
                     SettingsView()
@@ -80,7 +105,6 @@ struct RootView: View {
         // Notification taps.
         .onChange(of: PushService.shared.pendingThread) { _, ref in
             guard let ref else { return }
-            router.showNewThread = false
             router.showSettings = false
             router.open(ref)
             PushService.shared.pendingThread = nil

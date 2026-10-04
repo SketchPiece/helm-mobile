@@ -139,6 +139,58 @@ struct ThreadRow: View {
     }
 }
 
+/// The unsent new thread on top of Home, laid out like a thread row: its project, the first line,
+/// and "Draft" where the time goes.
+struct DraftRow: View {
+    let draft: NewThreadDraft
+    let project: Project?
+    let environment: EnvironmentSession?
+    var showsProject = true
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            ProjectIcon(project: project, environment: environment, size: 44)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(draft.title.isEmpty ? String(localized: "New thread") : draft.title)
+                        .font(Typography.body)
+                        .foregroundStyle(Palette.text)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text("Draft")
+                        .font(Typography.footnote.weight(.medium))
+                        .foregroundStyle(Palette.accentText)
+                }
+                subtitle
+            }
+        }
+        .padding(.vertical, 8)
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// The project, then whatever follows the first line.
+    @ViewBuilder
+    private var subtitle: some View {
+        let rest = draft.remainder
+        let projectTitle = showsProject ? (project?.title ?? environment?.label) : nil
+        if projectTitle != nil || !rest.isEmpty {
+            HStack(spacing: 0) {
+                if let projectTitle {
+                    Text(projectTitle).foregroundStyle(Palette.textMuted)
+                    if !rest.isEmpty { Text(" · ").foregroundStyle(Palette.placeholder) }
+                }
+                if !rest.isEmpty {
+                    Text(rest).foregroundStyle(Palette.textMuted)
+                }
+                Spacer(minLength: 0)
+            }
+            .font(Typography.subheadline)
+            .lineLimit(1)
+        }
+    }
+}
+
 enum RelativeTime {
     /// "now", "5m", "3h", "2d", then a short date.
     static func short(_ date: Date, now: Date = Date()) -> String {

@@ -83,6 +83,46 @@ enum Drafts {
     }
 }
 
+/// What New Thread was left holding: the text (kept by `Drafts`) and the project it was written
+/// for, so Home can list it and New Thread reopens on the same project.
+struct NewThreadDraft: Equatable {
+    static let key = "new-thread"
+    private static let environmentKey = "draft.new-thread.environmentId"
+    private static let projectKey = "draft.new-thread.projectId"
+
+    var text: String
+    var environmentId: String?
+    var projectId: String?
+
+    /// For a list row: the first line as the title, the rest folded onto one line.
+    var title: String { lines.first ?? "" }
+    var remainder: String { lines.dropFirst().joined(separator: " ") }
+
+    private var lines: [String] {
+        text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    /// The saved draft, or nil when there's nothing in it.
+    static func load(hasAttachments: Bool = false) -> NewThreadDraft? {
+        let text = Drafts.text(for: key)
+        guard hasAttachments || !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        let defaults = UserDefaults.standard
+        return NewThreadDraft(text: text, environmentId: defaults.string(forKey: environmentKey),
+                              projectId: defaults.string(forKey: projectKey))
+    }
+
+    static func saveProject(environmentId: String?, projectId: String?) {
+        let defaults = UserDefaults.standard
+        defaults.set(environmentId, forKey: environmentKey)
+        defaults.set(projectId, forKey: projectKey)
+    }
+
+    static func clear() {
+        Drafts.save("", for: key)
+        saveProject(environmentId: nil, projectId: nil)
+    }
+}
+
 /// What a composer holds besides its text: attachments (uploaded as soon as they are picked),
 /// pull requests picked from `#` and threads picked from `@`. Shared by the thread and new-thread composers.
 @MainActor

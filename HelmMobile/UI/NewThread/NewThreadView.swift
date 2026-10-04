@@ -1,15 +1,15 @@
 import SwiftUI
 
 /// Start a thread: pick a project (most recent preselected), write the task, send. Model, access
-/// and workspace are one tap away but never in the way.
+/// and workspace are one tap away but never in the way. It pushes like a thread: going back with
+/// nothing written cancels it, anything written stays as a draft on Home.
 struct NewThreadView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
-    @Environment(\.dismiss) private var dismiss
 
     @State private var environmentId: String?
     @State private var projectId: String?
-    @State private var text = Drafts.text(for: "new-thread")
+    @State private var text = Drafts.text(for: NewThreadDraft.key)
     @State private var selection: ModelSelection?
     @State private var runtimeMode = "full-access"
     @State private var interactionMode = "default"
@@ -18,7 +18,6 @@ struct NewThreadView: View {
     @State private var showBranches = false
     @State private var repo: RefPage?
     @State private var baseBranch: String?
-    @State private var draft = ComposerDraft()
     @State private var suggestions = ComposerSuggestions()
     @State private var showProjects = false
     @State private var showSettings = false
@@ -28,6 +27,8 @@ struct NewThreadView: View {
     /// Shared files waiting for the Mac to be connected before they upload.
     @State private var sharedFiles: [SharedFile] = []
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+
+    private var draft: ComposerDraft { router.newThreadComposer }
 
     private var environment: EnvironmentSession? {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
@@ -41,78 +42,80 @@ struct NewThreadView: View {
     private var isScratch: Bool { project.map { environment?.config?.isScratch($0) == true } ?? false }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                Spacer(minLength: 24)
-                header
-                Spacer(minLength: 24)
-                if let error {
-                    Text(error)
-                        .font(Typography.footnote)
-                        .foregroundStyle(Palette.errorText)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-                }
-                workspaceChips
-                if focused && suggestions.isVisible {
-                    SuggestionPanel(suggestions: suggestions, onPick: pick)
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 8)
-                        .transition(.opacity)
-                }
-                composer
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
+            header
+            Spacer(minLength: 24)
+            if let error {
+                Text(error)
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.errorText)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
             }
-            .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
-            .background(Palette.canvas)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .cancel) { dismiss() }
-                }
+            workspaceChips
+            if focused && suggestions.isVisible {
+                SuggestionPanel(suggestions: suggestions, onPick: pick)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                    .transition(.opacity)
             }
-            .sheet(isPresented: $showProjects) {
-                ProjectPicker(selectedEnvironment: environment?.id, selectedProject: projectId) { environment, project in
-                    environmentId = environment.id
-                    projectId = project.id
-                    showProjects = false
-                }
-            }
-            .sheet(isPresented: $showSettings) {
-                NavigationStack {
-                    Form {
-                        if let config = environment?.config {
-                            ModelSettingsSections(
-                                config: config, selection: selection, runtimeMode: runtimeMode,
-                                interactionMode: interactionMode,
-                                onSelection: { selection = $0 },
-                                onRuntimeMode: { runtimeMode = $0 },
-                                onInteractionMode: { interactionMode = $0 }
-                            )
-                        }
-                    }
-                    .scrollContentBackground(.hidden)
-                    .background(Palette.canvas)
-                    .navigationTitle("Model and access")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button(role: .close) { showSettings = false }
-                        }
-                    }
-                }
-                .presentationDetents([.medium, .large])
+            composer
+        }
+        .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
+        .background(Palette.canvas)
+        .navigationTitle("New thread")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showProjects) {
+            ProjectPicker(selectedEnvironment: environment?.id, selectedProject: projectId) { environment, project in
+                environmentId = environment.id
+                projectId = project.id
+                showProjects = false
             }
         }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                Form {
+                    if let config = environment?.config {
+                        ModelSettingsSections(
+                            config: config, selection: selection, runtimeMode: runtimeMode,
+                            interactionMode: interactionMode,
+                            onSelection: { selection = $0 },
+                            onRuntimeMode: { runtimeMode = $0 },
+                            onInteractionMode: { interactionMode = $0 }
+                        )
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .background(Palette.canvas)
+                .navigationTitle("Model and access")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .close) { showSettings = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
         .onAppear {
+            restoreProject()
             pickDefaults()
             takeSeed()
         }
+        .onDisappear(perform: leave)
         .onChange(of: router.newThreadSeed) { takeSeed() }
         // Opened from a quick action or share on a cold start: the Mac connects after this appears.
         .onChange(of: isReady) {
+            // The draft's project may be gone from the Mac by now.
+            if isReady, project == nil { projectId = nil }
             if projectId == nil || selection == nil { pickDefaults() }
             attachSharedFiles()
         }
-        .onChange(of: projectId) { _, _ in resetForProject() }
+        .onChange(of: projectId) { _, _ in
+            resetForProject()
+            NewThreadDraft.saveProject(environmentId: environmentId, projectId: projectId)
+        }
         // Uploads belong to the Mac they went to.
         .onChange(of: environmentId) { old, _ in if old != nil { draft.reset() } }
         .task(id: "\(environment?.id ?? "")|\(project?.workspaceRoot ?? "")") { await loadBranches() }
@@ -251,7 +254,7 @@ struct NewThreadView: View {
                         text = folded
                         return
                     }
-                    Drafts.save(value, for: "new-thread")
+                    Drafts.save(value, for: NewThreadDraft.key)
                     suggestions.update(text: value, scope: suggestionScope)
                 }
             HStack(spacing: 6) {
@@ -342,6 +345,18 @@ struct NewThreadView: View {
 
     // MARK: Logic
 
+    /// Reopening a draft: back on the project it was written for, while that project is still there.
+    private func restoreProject() {
+        guard environmentId == nil, let saved = NewThreadDraft.load(hasAttachments: !draft.attachments.isEmpty),
+              let savedEnvironment = saved.environmentId.flatMap({ model.environment($0) })
+        else { return }
+        let projects = savedEnvironment.shell.projects
+        // Projects not in yet (a cold start): keep the saved one and check again once they are.
+        guard projects.isEmpty || savedEnvironment.project(saved.projectId) != nil else { return }
+        environmentId = savedEnvironment.id
+        projectId = saved.projectId
+    }
+
     private func pickDefaults() {
         guard let environment else { return }
         if environmentId == nil { environmentId = environment.id }
@@ -359,7 +374,7 @@ struct NewThreadView: View {
     private func takeSeed() {
         guard let seed = router.newThreadSeed else { return }
         router.newThreadSeed = nil
-        // The draft survives cancel, so sharing the same thing again doesn't repeat it.
+        // The draft survives going back, so sharing the same thing again doesn't repeat it.
         if !seed.text.isEmpty, !text.contains(seed.text) {
             let current = text.trimmingCharacters(in: .whitespacesAndNewlines)
             text = current.isEmpty ? seed.text : current + "\n\n" + seed.text
@@ -390,6 +405,18 @@ struct NewThreadView: View {
         baseBranch = page.defaultBase
     }
 
+    /// Back with nothing written cancels; anything else stays as the draft Home lists. A thread
+    /// being started clears the draft itself.
+    private func leave() {
+        guard !sending else { return }
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && draft.attachments.isEmpty {
+            router.discardNewThreadDraft()
+        } else {
+            NewThreadDraft.saveProject(environmentId: environment?.id, projectId: projectId)
+            router.refreshNewThreadDraft()
+        }
+    }
+
     private func launch() {
         guard let environment, let project, let selection else { return }
         sending = true
@@ -406,15 +433,15 @@ struct NewThreadView: View {
         Task {
             do {
                 let ref = try await model.launch(request)
-                Drafts.save("", for: "new-thread")
-                draft.reset()
+                router.discardNewThreadDraft()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                dismiss()
-                try? await Task.sleep(for: .milliseconds(350))
+                // The thread takes New Thread's place, so Back goes to Home.
                 router.open(ref)
             } catch {
                 self.error = error.localizedDescription
                 sending = false
+                // Gone back while it was starting: the text is still the draft.
+                router.refreshNewThreadDraft()
             }
         }
     }
