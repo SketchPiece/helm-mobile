@@ -85,7 +85,14 @@ private struct ThreadContent: View {
                             if visible, userScrolled, session.historyError == nil, !Self.manualHistory { loadEarlier() }
                         }
                 }
+                if let lineage = lineageLink {
+                    lineage
+                }
+                let days = Timeline.dayBreaks(blocks)
                 ForEach(blocks) { block in
+                    if let day = days[block.id] {
+                        TimelineDivider(label: day)
+                    }
                     blockView(block, projection: projection)
                         .id(block.id)
                 }
@@ -293,7 +300,7 @@ private struct ThreadContent: View {
         case .error(let item):
             ErrorCard(item: item)
         case .notice(let item):
-            NoticeRow(item: item)
+            NoticeRow(item: item, threadId: session.threadId)
         case .fold(let key, let label, let expanded):
             FoldRow(label: label, expanded: expanded) {
                 withAnimation(.snappy(duration: 0.25)) {
@@ -301,6 +308,25 @@ private struct ThreadContent: View {
                 }
             }
         }
+    }
+
+    /// A subagent's or a fork's thread starts with where it came from; tap to go there.
+    private var lineageLink: AnyView? {
+        guard let summary, let parentId = summary.parentThreadId,
+              summary.relationshipToParent == "subagent" || summary.relationshipToParent == "fork" else { return nil }
+        let parentTitle = environment.thread(parentId)?.displayTitle
+        let isSubagent = summary.relationshipToParent == "subagent"
+        return AnyView(
+            Button {
+                router.push(ThreadRef(environmentId: environment.id, threadId: parentId))
+            } label: {
+                TimelineDivider(symbol: isSubagent ? "person.2" : "arrow.triangle.branch",
+                                label: isSubagent ? String(localized: "Subagent of") : String(localized: "Forked from"),
+                                detail: parentTitle ?? String(localized: "the parent thread"), opens: true)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("lineageLink")
+        )
     }
 
     private func lastPlanId(_ projection: ThreadProjection?) -> String? {

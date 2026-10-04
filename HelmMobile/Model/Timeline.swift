@@ -44,12 +44,13 @@ enum TimelineBlock: Identifiable, Hashable {
 enum Timeline {
     static let workTypes: Set<String> = [
         "reasoning", "command_execution", "file_change", "file_search", "web_search", "dynamic_tool",
-        "subagent", "compaction", "approval_request", "user_input_request",
+        "subagent", "approval_request", "user_input_request",
     ]
 
+    /// Drawn as a divider across the timeline: things that happened to the conversation itself.
     static let noticeTypes: Set<String> = [
         "system_notice", "run_interrupt_request", "run_interrupt_result", "notification", "handoff", "fork",
-        "thread_created",
+        "compaction", "thread_created",
     ]
 
     /// Folds visible rows into blocks. `liveRunId` marks the work block of the running turn as live.
@@ -99,8 +100,8 @@ enum Timeline {
                 flushWork()
                 blocks.append(.error(item))
             case _ where noticeTypes.contains(item.type):
-                // Notices about the parent fork/thread creation are noise in a phone timeline.
-                if item.type == "thread_created" || item.type == "fork" { continue }
+                // The thread's own creation is noise in a phone timeline.
+                if item.type == "thread_created" { continue }
                 flushWork()
                 blocks.append(.notice(item))
             default:
@@ -178,7 +179,7 @@ enum Timeline {
                 if keep.contains(index) { return false }
                 switch blocks[index] {
                 case .changes, .plan: return false
-                case .notice(let item): return !(item.type == "notification" || item.type == "handoff")
+                case .notice(let item): return !["notification", "handoff", "compaction", "fork"].contains(item.type)
                 default: return true
                 }
             }
@@ -205,6 +206,35 @@ enum Timeline {
         let end = run?.completedAt ?? items.compactMap { $0.completedAt ?? $0.startedAt }.max()
         guard let start, let end, end > start else { return String(localized: "Worked") }
         return String(localized: "Worked for \(duration(end.timeIntervalSince(start)))")
+    }
+
+    /// A day label above the first block of each new day ("Today", "Yesterday", "Monday",
+    /// "12 Sep"). A thread that is all today gets none.
+    static func dayBreaks(_ blocks: [TimelineBlock], now: Date = Date(), calendar: Calendar = .current) -> [String: String] {
+        var breaks: [String: String] = [:]
+        var previousDay: Date?
+        for block in blocks {
+            guard let date = block.items.lazy.compactMap({ $0.startedAt ?? $0.completedAt }).first else { continue }
+            let day = calendar.startOfDay(for: date)
+            if day != previousDay, previousDay != nil || !calendar.isDate(day, inSameDayAs: now) {
+                breaks[block.id] = dayLabel(day, now: now, calendar: calendar)
+            }
+            previousDay = day
+        }
+        return breaks
+    }
+
+    static func dayLabel(_ day: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
+        if calendar.isDate(day, inSameDayAs: now) { return String(localized: "Today") }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(day, inSameDayAs: yesterday) {
+            return String(localized: "Yesterday")
+        }
+        let days = calendar.dateComponents([.day], from: day, to: calendar.startOfDay(for: now)).day ?? 0
+        if days < 7 { return day.formatted(.dateTime.weekday(.wide)) }
+        if calendar.component(.year, from: day) == calendar.component(.year, from: now) {
+            return day.formatted(.dateTime.day().month(.abbreviated))
+        }
+        return day.formatted(.dateTime.day().month(.abbreviated).year())
     }
 
     /// "45s", "3m 12s", "1h 5m".

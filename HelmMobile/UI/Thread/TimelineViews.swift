@@ -45,10 +45,22 @@ struct UserBubble: View {
                         } label: { Label("Copy", systemImage: "doc.on.doc") }
                     }
             }
-            if item.inputIntent == "steer" || item.inputIntent == "promoted_queued_to_steer" {
-                Label("Steered", systemImage: "arrow.turn.down.right")
-                    .font(Typography.caption)
-                    .foregroundStyle(Palette.textMuted)
+            let steered = item.inputIntent == "steer" || item.inputIntent == "promoted_queued_to_steer"
+            let sentAt = item.startedAt ?? item.completedAt
+            if steered || sentAt != nil {
+                HStack(spacing: 6) {
+                    if steered {
+                        Label("Steered", systemImage: "arrow.turn.down.right")
+                        if sentAt != nil { Text(verbatim: "·") }
+                    }
+                    if let sentAt {
+                        Text(sentAt, format: .dateTime.hour().minute())
+                            .monospacedDigit()
+                    }
+                }
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textMuted)
+                .padding(.trailing, 6)
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -387,25 +399,120 @@ struct ErrorCard: View {
     }
 }
 
+/// Something that happened to the conversation itself, drawn as a divider across the timeline:
+/// a stop, a model switch, a compaction, a fork.
 struct NoticeRow: View {
     let item: TurnItem
+    /// The thread on screen; a fork that points at it is where this thread began.
+    let threadId: String
+    @Environment(Router.self) private var router
+    @Environment(\.threadEnvironmentId) private var environmentId
+    @Environment(AppModel.self) private var model
 
     var body: some View {
-        let text: String = switch item.type {
-        case "run_interrupt_request": String(localized: "Stopped by you")
-        case "run_interrupt_result": item.text.isEmpty ? String(localized: "Stopped") : item.text
-        case "notification": item.raw["summary"]?.string ?? item.text
-        case "handoff": String(localized: "Switched to \(item.raw["toModel"]?.string ?? item.raw["toProviderInstanceId"]?.string ?? "another model")")
-        default: item.text
+        let notice = presentation
+        if let target = notice.opens, let environmentId {
+            Button {
+                router.push(ThreadRef(environmentId: environmentId, threadId: target))
+            } label: {
+                TimelineDivider(symbol: notice.symbol, label: notice.label, detail: notice.detail,
+                                isRunning: item.isRunning, opens: true)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Opens the thread"))
+        } else {
+            TimelineDivider(symbol: notice.symbol, label: notice.label, detail: notice.detail, isRunning: item.isRunning)
         }
-        HStack {
-            Spacer()
-            Text(text)
-                .font(Typography.footnote)
-                .foregroundStyle(Palette.textMuted)
-                .multilineTextAlignment(.center)
-            Spacer()
+    }
+
+    private var presentation: (symbol: String, label: String, detail: String?, opens: String?) {
+        let raw = item.raw
+        switch item.type {
+        case "run_interrupt_request":
+            return ("hand.raised", String(localized: "Stopped by you"), nonEmpty(raw["message"]?.string), nil)
+        case "run_interrupt_result":
+            return ("stop.circle", String(localized: "Stopped"), nonEmpty(item.text), nil)
+        case "notification":
+            return ("bell", raw["summary"]?.string ?? item.text, nil, nil)
+        case "handoff":
+            let model = raw["toModel"]?.string ?? raw["toProviderInstanceId"]?.string ?? String(localized: "another model")
+            return ("bolt", String(localized: "Switched to \(model)"), nonEmpty(raw["summary"]?.string), nil)
+        case "compaction":
+            if item.isRunning { return ("arrow.down.right.and.arrow.up.left", String(localized: "Compacting context"), nil, nil) }
+            let before = raw["beforeTokenCount"]?.int, after = raw["afterTokenCount"]?.int
+            let tokens = before != nil || after != nil
+                ? String(localized: "\(TokenCount.short(before)) → \(TokenCount.short(after)) tokens") : nil
+            let failed = item.status == "failed"
+            return ("arrow.down.right.and.arrow.up.left",
+                    failed ? String(localized: "Couldn't compact the context") : String(localized: "Context compacted"), tokens, nil)
+        case "fork":
+            guard let target = raw["targetThreadId"]?.string, target != threadId else {
+                return ("arrow.triangle.branch", String(localized: "Forked here"), nil, nil)
+            }
+            let title = environmentId.flatMap { model.environment($0)?.thread(target)?.displayTitle }
+            return ("arrow.triangle.branch", String(localized: "Forked"), title.map { String(localized: "continues in \($0)") }, target)
+        default:
+            return ("info.circle", item.text.isEmpty ? (item.title ?? item.type.replacingOccurrences(of: "_", with: " ")) : item.text, nil, nil)
         }
+    }
+
+    private func nonEmpty(_ text: String?) -> String? {
+        guard let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+        return text
+    }
+}
+
+/// A hairline across the timeline with a short label in the middle.
+struct TimelineDivider: View {
+    var symbol: String?
+    let label: String
+    var detail: String?
+    var isRunning = false
+    var opens = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            line
+            HStack(spacing: 5) {
+                if isRunning {
+                    ProgressView().controlSize(.mini)
+                } else if let symbol {
+                    Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
+                }
+                Text(label).fontWeight(.medium)
+                if let detail {
+                    Text(verbatim: "·")
+                    Text(detail).lineLimit(1)
+                }
+                if opens {
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold))
+                }
+            }
+            .font(Typography.caption)
+            .foregroundStyle(Palette.textMuted)
+            .layoutPriority(1)
+            line
+        }
+        .padding(.vertical, 2)
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var line: some View {
+        Rectangle().fill(Palette.border).frame(height: 1).frame(minWidth: 16)
+    }
+}
+
+enum TokenCount {
+    /// "850", "12k", "1.2M".
+    static func short(_ count: Int?) -> String {
+        guard let count else { return "?" }
+        if count < 1000 { return "\(count)" }
+        if count < 1_000_000 {
+            let thousands = Double(count) / 1000
+            return thousands < 10 ? String(format: "%.1fk", thousands).replacingOccurrences(of: ".0k", with: "k") : "\(Int(thousands.rounded()))k"
+        }
+        return String(format: "%.1fM", Double(count) / 1_000_000).replacingOccurrences(of: ".0M", with: "M")
     }
 }
 
