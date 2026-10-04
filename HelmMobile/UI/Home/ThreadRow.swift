@@ -40,19 +40,18 @@ struct ThreadRow: View {
     var body: some View {
         let thread = entry.thread
         let phase = thread.phase
-        HStack(alignment: .top, spacing: 12) {
-            ProjectIcon(project: entry.project, environment: environment, size: 36)
+        HStack(alignment: .center, spacing: 12) {
+            ProjectIcon(project: entry.project, environment: environment, size: 44)
                 .overlay(alignment: .bottomTrailing) {
                     if phase != .idle {
                         Circle()
                             .fill(phase.color)
-                            .frame(width: 11, height: 11)
+                            .frame(width: 13, height: 13)
                             .overlay(Circle().stroke(Palette.canvas, lineWidth: 2.5))
                             .offset(x: 3, y: 3)
                     }
                 }
-                .padding(.top, 1)
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(thread.displayTitle)
                         .font(phase == .idle ? Typography.body : Typography.bodyMedium)
@@ -64,7 +63,7 @@ struct ThreadRow: View {
                 subtitle(thread: thread, phase: phase)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
