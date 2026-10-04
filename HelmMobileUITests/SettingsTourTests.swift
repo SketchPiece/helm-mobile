@@ -38,8 +38,10 @@ final class SettingsTourTests: XCTestCase {
 
     private func open(_ identifier: String) {
         let link = app.descendants(matching: .any)[identifier].firstMatch
-        if !link.waitForExistence(timeout: 3) || !link.isHittable { app.swipeUp() }
-        XCTAssertTrue(link.waitForExistence(timeout: 5), identifier)
+        // Lists build rows lazily: scroll until the row is there.
+        for _ in 0..<4 where !(link.waitForExistence(timeout: 2) && link.isHittable) { app.swipeUp() }
+        if !link.waitForExistence(timeout: 5) { print(app.debugDescription) }
+        XCTAssertTrue(link.exists, identifier)
         link.tap()
         sleep(1)
     }
