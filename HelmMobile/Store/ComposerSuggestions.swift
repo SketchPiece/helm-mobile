@@ -80,6 +80,8 @@ final class ComposerSuggestions {
             clear()
             return
         }
+        // Another kind of menu: drop the old rows rather than show them while the new ones load.
+        if self.trigger?.kind != trigger.kind { items = [] }
         self.trigger = trigger
         let config = scope.environment.config
         let provider = scope.providerInstanceId.flatMap { config?.provider($0) }
