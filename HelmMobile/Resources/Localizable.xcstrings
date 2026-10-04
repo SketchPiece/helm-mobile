@@ -4672,6 +4672,16 @@
         }
       }
     },
+    "Snooze until": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отложить до"
+          }
+        }
+      }
+    },
     "Snooze until reset": {
       "localizations": {
         "ru": {

@@ -471,4 +471,18 @@ final class HelmTourTests: XCTestCase {
         XCTAssertTrue(app.buttons["Camera"].waitForExistence(timeout: 3), "no Camera in the new-thread + menu")
         shot("c1-new-thread-attach-menu")
     }
+
+    /// Swipe a thread and snooze it from the swipe's chooser. Opt in with HELM_SWIPE_SNOOZE=1.
+    func testSwipeSnoozeChooser() throws {
+        guard ProcessInfo.processInfo.environment["HELM_SWIPE_SNOOZE"] != nil else { throw XCTSkip("HELM_SWIPE_SNOOZE not set") }
+        let row = app.buttons["threadRow"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 20))
+        sleep(2)
+        row.swipeLeft()
+        sleep(1)
+        shot("s1-swipe")
+        app.buttons["Snooze"].firstMatch.tap()
+        sleep(1)
+        shot("s2-chooser")
+    }
 }

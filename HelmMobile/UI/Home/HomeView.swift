@@ -16,6 +16,8 @@ struct HomeView: View {
     @State private var renameText = ""
     @State private var deleting: ThreadListEntry?
     @State private var snoozingCustom: ThreadListEntry?
+    /// The row whose swipe asked "snooze until when?".
+    @State private var snoozeChoosing: ThreadListEntry?
     @State private var actionError: String?
 
     var body: some View {
@@ -100,6 +102,17 @@ struct HomeView: View {
             }
         } message: {
             Text("The conversation and its terminal history are removed from the Mac.")
+        }
+        // The swipe's "Snooze": the same choices as the context menu, each with its wake time.
+        .confirmationDialog(
+            "Snooze until", isPresented: Binding(get: { snoozeChoosing != nil }, set: { if !$0 { snoozeChoosing = nil } }),
+            titleVisibility: .visible, presenting: snoozeChoosing
+        ) { entry in
+            ForEach(Snooze.presets()) { preset in
+                Button("\(preset.title) · \(preset.whenLabel)") { run(.snooze(preset.date), on: entry) }
+            }
+            Button("Custom…") { snoozingCustom = entry }
+            Button("Cancel", role: .cancel) {}
         }
         .sheet(item: $snoozingCustom) { entry in
             CustomSnoozeSheet { date in try await model.perform(.snooze(date), on: entry.ref) }
@@ -186,8 +199,8 @@ struct HomeView: View {
         } else {
             Button { run(.settle, on: entry) } label: { Label("Settle", systemImage: "checkmark.circle") }
                 .tint(Palette.done)
-            Button { run(.snooze(Snooze.presets().first { $0.kind == .tomorrow }?.date ?? Date()), on: entry) } label: {
-                Label("Tomorrow", systemImage: "moon.zzz")
+            Button { snoozeChoosing = entry } label: {
+                Label("Snooze", systemImage: "moon.zzz")
             }
             .tint(Palette.question)
         }
