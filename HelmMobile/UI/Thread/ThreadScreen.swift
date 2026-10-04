@@ -75,9 +75,8 @@ private struct ThreadContent: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
+            .scrollTargetLayout()
         }
-        // Rebuilt once the timeline arrives, so the initial bottom anchor applies to real content.
-        .id(projection == nil ? "loading" : "loaded")
         .environment(\.threadEnvironmentId, environment.id)
         .scrollPosition($scroll)
         .defaultScrollAnchor(.bottom, for: .initialOffset)

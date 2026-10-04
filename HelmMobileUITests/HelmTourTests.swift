@@ -257,4 +257,54 @@ final class HelmTourTests: XCTestCase {
             }
         }
     }
+
+    /// Opens the thread whose row contains HELM_THREAD and photographs it untouched, then opens
+    /// its folded work.
+    func testOpenNamedThread() throws {
+        guard let title = ProcessInfo.processInfo.environment["HELM_THREAD"] else { throw XCTSkip("HELM_THREAD not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        let row = app.buttons.matching(NSPredicate(format: "identifier == 'threadRow' AND label CONTAINS[c] %@", title)).firstMatch
+        if !row.exists { app.buttons["shelf-Snoozed"].firstMatch.tap(); sleep(1) }
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        sleep(2)
+        shot("80-opened-untouched")
+        sleep(3)
+        shot("81-opened-later")
+        let fold = app.buttons["runFold"].firstMatch
+        if fold.exists {
+            fold.tap()
+            sleep(1)
+            shot("82-fold-open")
+        }
+        app.swipeDown(velocity: .fast)
+        sleep(1)
+        shot("83-scrolled-up")
+    }
+
+    /// Pastes a picture from the clipboard straight into the composer. Opt in with HELM_PASTE=1.
+    func testPasteImage() throws {
+        guard ProcessInfo.processInfo.environment["HELM_PASTE"] != nil else { throw XCTSkip("HELM_PASTE not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        app.buttons["threadRow"].firstMatch.tap()
+        let composer = app.textViews["composer"]
+        XCTAssertTrue(composer.waitForExistence(timeout: 10))
+        sleep(2)
+        shot("90-composer")
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 120, height: 80))
+        UIPasteboard.general.image = renderer.image { context in
+            UIColor.systemOrange.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 120, height: 80))
+        }
+        composer.tap()
+        sleep(1)
+        composer.press(forDuration: 1.2)
+        let paste = app.menuItems["Paste"].exists ? app.menuItems["Paste"] : app.buttons["Paste"]
+        XCTAssertTrue(paste.waitForExistence(timeout: 5), "no Paste in the edit menu")
+        shot("91-paste-menu")
+        paste.tap()
+        sleep(3)
+        shot("92-pasted")
+    }
 }

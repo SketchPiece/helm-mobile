@@ -24,7 +24,7 @@ struct NewThreadView: View {
     @State private var showSettings = false
     @State private var sending = false
     @State private var error: String?
-    @FocusState private var focused: Bool
+    @State private var focused = false
 
     private var environment: EnvironmentSession? {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
@@ -224,11 +224,11 @@ struct NewThreadView: View {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft)
             }
-            TextField("Ask anything…", text: $text, axis: .vertical)
-                .font(Typography.body)
-                .lineLimit(3...10)
-                .focused($focused)
-                .accessibilityIdentifier("newThreadText")
+            ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
+                             minLines: 3, maxLines: 10, accessibilityIdentifier: "newThreadText") { images in
+                guard let environment else { return }
+                images.forEach { draft.attach(image: $0, environment: environment) }
+            }
                 .onChange(of: text) { old, value in
                     if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
                         text = folded

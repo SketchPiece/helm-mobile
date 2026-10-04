@@ -59,6 +59,7 @@ enum Timeline {
 
         func flushWork() {
             guard let first = pendingWork.first else { return }
+            // Provisionally live; only the newest block of the running turn keeps it (below).
             let isLive = liveRunId != nil && pendingWork.contains { $0.runId == liveRunId }
             blocks.append(.work(id: first.id, items: pendingWork, isLive: isLive))
             pendingWork.removeAll()
@@ -107,6 +108,15 @@ enum Timeline {
             }
         }
         flushWork()
+
+        // A long turn has many work blocks; finished ones aren't "working". Live is the last block
+        // of the conversation, or any block with a step still running.
+        let lastIndex = blocks.indices.last
+        blocks = blocks.enumerated().map { index, block in
+            guard case .work(let id, let items, true) = block else { return block }
+            let live = index == lastIndex || items.contains(where: \.isRunning)
+            return .work(id: id, items: items, isLive: live)
+        }
 
         // Keep only the latest todo list; earlier versions are the same list in progress.
         if let lastTodo = blocks.lastIndex(where: { if case .todo = $0 { true } else { false } }) {

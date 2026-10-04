@@ -492,3 +492,21 @@ final class RunFoldTests: XCTestCase {
         XCTAssertEqual(Timeline.duration(3900), "1h 5m")
     }
 }
+
+final class LiveWorkTests: XCTestCase {
+    func testOnlyTheNewestWorkOfTheRunningTurnIsLive() {
+        let items = [
+            Fixtures.item("u", type: "user_message", ordinal: 1, extra: ["text": "go"]),
+            Fixtures.item("c1", type: "command_execution", ordinal: 2, extra: ["input": "ls"]),
+            Fixtures.item("a1", type: "assistant_message", ordinal: 3, extra: ["text": "Next."]),
+            Fixtures.item("c2", type: "command_execution", ordinal: 4, extra: ["input": "pwd"]),
+        ].compactMap(TurnItem.init(json:))
+        let blocks = Timeline.blocks(from: items, liveRunId: "r1")
+        let live = blocks.compactMap { block -> (String, Bool)? in
+            if case .work(let id, _, let isLive) = block { return (id, isLive) }
+            return nil
+        }
+        XCTAssertEqual(live.map(\.0), ["c1", "c2"])
+        XCTAssertEqual(live.map(\.1), [false, true])
+    }
+}

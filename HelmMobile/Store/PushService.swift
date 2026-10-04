@@ -56,6 +56,8 @@ final class PushService: NSObject {
     // MARK: Lifecycle
 
     func start() {
+        // Unit tests host the app; a permission prompt there keeps the test runner from attaching.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
         UNUserNotificationCenter.current().delegate = self
         if UserDefaults.standard.bool(forKey: "previewLiveActivity") { previewActivity() }
         guard isAvailable else { return }

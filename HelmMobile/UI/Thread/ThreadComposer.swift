@@ -15,7 +15,7 @@ struct ThreadComposer: View {
     @State private var stopping = false
     @State private var voice = VoiceInput()
     @State private var micDrag: CGFloat = 0
-    @FocusState private var focused: Bool
+    @State private var focused = false
 
     init(environment: EnvironmentSession, session: ThreadSession, didSend: @escaping () -> Void = {}) {
         self.environment = environment
@@ -81,12 +81,10 @@ struct ThreadComposer: View {
                     focused = true
                 }
 
-                TextField(placeholder, text: $text, axis: .vertical)
-                    .font(Typography.body)
-                    .foregroundStyle(Palette.text)
-                    .lineLimit(1...8)
-                    .focused($focused)
-                    .accessibilityIdentifier("composer")
+                ComposerTextView(text: $text, isFocused: $focused, placeholder: placeholder,
+                                 accessibilityIdentifier: "composer") { images in
+                    images.forEach { draft.attach(image: $0, environment: environment) }
+                }
                     .padding(.vertical, 7)
                     .onChange(of: text) { old, value in
                         if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
