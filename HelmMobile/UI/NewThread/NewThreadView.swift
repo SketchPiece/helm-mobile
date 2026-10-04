@@ -264,6 +264,7 @@ struct NewThreadView: View {
                     .frame(height: 34)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("modelChip")
                 Spacer()
                 Button(action: launch) {
                     Group {
