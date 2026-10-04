@@ -194,8 +194,15 @@ struct CardModel {
         hero?.phase ?? (allDone ? (failed ? "failed" : "completed") : "running")
     }
 
+    /// Short enough for the Dynamic Island's trailing slot.
     var compactLabel: String {
-        if let hero { return CardModel.label(hero.phase) }
+        if let hero {
+            switch hero.phase {
+            case "waiting_for_approval": return String(localized: "Approval")
+            case "waiting_for_input": return String(localized: "Question")
+            default: return CardModel.label(hero.phase)
+            }
+        }
         if allDone { return failed ? String(localized: "Failed") : String(localized: "Done") }
         return "\(working)"
     }
