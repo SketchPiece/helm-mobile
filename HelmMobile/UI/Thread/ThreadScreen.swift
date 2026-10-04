@@ -31,6 +31,7 @@ private struct ThreadContent: View {
     /// The view sticks to the newest message: new content, the keyboard and a growing composer
     /// keep it at the bottom. Only the user's own scrolling turns this off (and shows "↓").
     @State private var followsBottom = true
+    @State private var arrowHeight: CGFloat = 48
     @State private var scrollPhase = ScrollPhase.idle
     /// The user has scrolled this thread themselves; reaching the top then loads older history.
     @State private var userScrolled = false
@@ -136,28 +137,13 @@ private struct ThreadContent: View {
         .onChange(of: contentSignature(blocks)) {
             if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
         }
-        // Above the composer (the overlay keeps to the safe area the composer inset leaves).
+        // Above the cards over the composer, when there are any (the overlay keeps to the safe
+        // area the composer inset leaves). Otherwise it hangs right above the composer itself.
         .overlay(alignment: .bottomTrailing) {
-            if !followsBottom, projection != nil {
-                Button {
-                    followsBottom = true
-                    withAnimation { scrollToBottom() }
-                    // Lazy rows settle their real heights on the way; land precisely after.
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(250))
-                        scrollToBottom()
-                    }
-                } label: {
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 15, weight: .semibold))
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
-                .accessibilityIdentifier("scrollToBottom")
-                .padding(.trailing, 14)
-                .padding(.bottom, 10)
-                .transition(.opacity)
+            if !followsBottom, let projection, hasCards(projection) {
+                scrollToBottomButton
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 10)
             }
         }
         .overlay {
@@ -178,8 +164,7 @@ private struct ThreadContent: View {
                                        description: Text("Write below to give the agent a task."))
             }
         }
-        // A bar rather than an inset: the timeline fades out softly under the glass composer.
-        .safeAreaBar(edge: .bottom, spacing: 0) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             bottomStack(projection: projection)
         }
         .background(Palette.canvas)
@@ -345,6 +330,33 @@ private struct ThreadContent: View {
 
     // MARK: Bottom
 
+    /// Full-width cards between the timeline and the composer.
+    private func hasCards(_ projection: ThreadProjection) -> Bool {
+        !projection.pendingRequests.isEmpty || !projection.queued.isEmpty
+            || (summary?.usageLimitRecovery != nil && !projection.isWorking)
+            || (!projection.isWorking && !(summary?.backgroundTasks.isEmpty ?? true))
+    }
+
+    private var scrollToBottomButton: some View {
+        Button {
+            followsBottom = true
+            withAnimation { scrollToBottom() }
+            // Lazy rows settle their real heights on the way; land precisely after.
+            Task {
+                try? await Task.sleep(for: .milliseconds(250))
+                scrollToBottom()
+            }
+        } label: {
+            Image(systemName: "arrow.down")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 36, height: 36)
+        }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .accessibilityIdentifier("scrollToBottom")
+        .transition(.opacity)
+    }
+
     @ViewBuilder
     private func bottomStack(projection: ThreadProjection?) -> some View {
         VStack(spacing: 10) {
@@ -373,6 +385,14 @@ private struct ThreadContent: View {
             }
             ThreadComposer(environment: environment, session: session) {
                 withAnimation { scrollToBottom() }
+            }
+            // Beside a working or offline pill (they sit in the middle), 8 pt above the composer.
+            .overlay(alignment: .topTrailing) {
+                if !followsBottom, let projection, !hasCards(projection) {
+                    scrollToBottomButton
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { arrowHeight = $0 }
+                        .offset(y: -(arrowHeight + 8))
+                }
             }
         }
         .padding(.horizontal, 12)

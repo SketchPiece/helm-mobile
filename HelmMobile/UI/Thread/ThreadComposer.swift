@@ -62,7 +62,8 @@ struct ThreadComposer: View {
                 AttachmentStrip(draft: draft, environment: environment)
             }
             // The text view keeps its place in this row in both shapes, so it never loses focus.
-            HStack(alignment: .bottom, spacing: 6) {
+            // One centred row at rest; opened, the last line of text lines up with the bottom.
+            HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
                 if !expanded && voice.state == .idle { attachMenu }
                 if voice.state != .idle {
                     VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
