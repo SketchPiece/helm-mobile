@@ -876,7 +876,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "и ещё %lld"
+            "value": "ещё %lld"
           }
         }
       }
@@ -6250,16 +6250,6 @@
         }
       }
     },
-    "failed": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ошибка"
-          }
-        }
-      }
-    },
     "file": {
       "localizations": {
         "ru": {
@@ -6383,17 +6373,6 @@
     },
     "−%lld": {
       "shouldTranslate": false
-    },
-    "● %lld": {},
-    "✓ done": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ готово"
-          }
-        }
-      }
     }
   },
   "version": "1.0"
