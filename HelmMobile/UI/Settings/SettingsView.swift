@@ -262,6 +262,7 @@ struct EnvironmentDetailView: View {
 /// Alerts and the Live Activity, delivered by the Volna core when agents need you or finish.
 struct NotificationsSection: View {
     @Bindable private var push = PushService.shared
+    @AppStorage(AppBadge.enabledKey) private var appIconBadge = true
 
     var body: some View {
         Section {
@@ -288,10 +289,18 @@ struct NotificationsSection: View {
                     Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
                 }
             }
+            Toggle(isOn: $appIconBadge) {
+                SettingsRow(String(localized: "Badge on the app icon"), symbol: "app.badge")
+            }
+                .tint(Palette.accent)
+                .onChange(of: appIconBadge) { _, on in
+                    if on { Task { await AppBadge.requestPermissionIfNeeded() } }
+                }
+                .accessibilityIdentifier("appIconBadge")
         } header: {
             Text("Notifications").sectionLabelStyle()
         } footer: {
-            Text("Approvals, questions and finished work.")
+            Text("Approvals, questions and finished work. The badge counts threads waiting on you.")
                 .font(Typography.footnote)
         }
     }

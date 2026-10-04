@@ -87,6 +87,7 @@ struct NewThreadTarget: Equatable {
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @State private var router = Router()
+    @AppStorage(AppBadge.enabledKey) private var appIconBadge = true
 
     var body: some View {
         Group {
@@ -114,6 +115,8 @@ struct RootView: View {
         .environment(router)
         .background(Palette.canvas)
         .task { await pairFromLaunchArguments() }
+        .onChange(of: AppBadge.count(in: model), initial: true) { _, count in AppBadge.update(count: count) }
+        .onChange(of: appIconBadge) { AppBadge.update(count: AppBadge.count(in: model)) }
         // Live Activity taps and other links: helm://threads/<env>/<thread>.
         .onOpenURL { url in
             if url.scheme == ShareInbox.openURL.scheme, url.host() == ShareInbox.openURL.host() {
