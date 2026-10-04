@@ -212,4 +212,49 @@ final class HelmTourTests: XCTestCase {
         sleep(2)
         shot("61-tailscale-login")
     }
+
+    /// Stage 2 screens on the newest thread and the new-thread flow. Opt in with HELM_STAGE2=1.
+    func testStage2Screens() throws {
+        guard ProcessInfo.processInfo.environment["HELM_STAGE2"] != nil else { throw XCTSkip("HELM_STAGE2 not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        shot("70-home")
+        app.buttons["threadRow"].firstMatch.tap()
+        sleep(3)
+        let composer = app.textViews["composer"].exists ? app.textViews["composer"] : app.textFields["composer"]
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        composer.tap()
+        composer.typeText("look at @gre")
+        sleep(2)
+        shot("71-at-suggestions")
+        composer.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
+        composer.typeText("/")
+        sleep(2)
+        shot("72-slash-suggestions")
+        composer.typeText(XCUIKeyboardKey.delete.rawValue)
+        app.buttons["Attach"].firstMatch.tap()
+        sleep(1)
+        shot("73-plus-menu")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        sleep(1)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        sleep(1)
+        app.buttons["newThread"].tap()
+        sleep(2)
+        app.buttons["projectPicker"].tap()
+        sleep(2)
+        shot("74-project-picker")
+        let add = app.navigationBars.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'add' OR label CONTAINS[c] 'доб'")).firstMatch
+        if add.exists {
+            add.tap()
+            sleep(2)
+            shot("75-add-project")
+            let folder = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'folder' OR label CONTAINS[c] 'папк'")).firstMatch
+            if folder.exists {
+                folder.tap()
+                sleep(3)
+                shot("76-folder-browser")
+            }
+        }
+    }
 }
