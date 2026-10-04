@@ -597,5 +597,11 @@
   "From %@ · saved": "С %@ · сохранена",
   "From %@ · %@": "С %@ · %@",
   "Provider": "Провайдер",
-  "Value": "Значение"
+  "Value": "Значение",
+  "Camera": "Камера",
+  "Drag to reorder": "Перетащи, чтобы поменять порядок",
+  "Thread": "Тред",
+  "Couldn't load earlier messages.": "Не удалось загрузить предыдущие сообщения.",
+  "Loading earlier messages…": "Загружаю предыдущие сообщения…",
+  "Load earlier messages": "Показать предыдущие сообщения"
 }

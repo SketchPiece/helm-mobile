@@ -161,4 +161,38 @@ enum QueueOrder {
             return .some(index + 2 < ids.count ? ids[index + 2] : nil)
         }
     }
+
+    /// A queue row's place before the drag started.
+    struct RowFrame: Equatable {
+        var id: String
+        var minY: Double
+        var height: Double
+    }
+
+    /// Where a dragged row would land: before the first other row whose centre is below the
+    /// dragged row's centre, `.some(nil)` past the last one; nil for a row that isn't listed
+    /// (`threadQueueControlPresentation.ts`).
+    static func dragBeforeRunId(_ rows: [RowFrame], moving id: String, translation: Double) -> String?? {
+        guard let source = rows.first(where: { $0.id == id }) else { return nil }
+        let center = source.minY + source.height / 2 + translation
+        return .some(rows.first { $0.id != id && center < $0.minY + $0.height / 2 }?.id)
+    }
+
+    /// The `beforeRunId` to send when the drag ends, or nil when the order wouldn't change.
+    static func dropBeforeRunId(_ rows: [RowFrame], moving id: String, translation: Double) -> String?? {
+        guard let before = dragBeforeRunId(rows, moving: id, translation: translation),
+              let index = rows.firstIndex(where: { $0.id == id })
+        else { return nil }
+        let next = index + 1 < rows.count ? rows[index + 1].id : nil
+        return before == next ? nil : .some(before)
+    }
+
+    /// The queue after moving `id` right before `beforeRunId` (to the end when nil), as the server does it.
+    static func reordered(_ ids: [String], moving id: String, before beforeRunId: String?) -> [String] {
+        guard ids.contains(id) else { return ids }
+        var result = ids.filter { $0 != id }
+        let at = beforeRunId.flatMap { result.firstIndex(of: $0) } ?? result.endIndex
+        result.insert(id, at: at)
+        return result
+    }
 }

@@ -184,6 +184,18 @@ struct HelmHTTP: Sendable {
         return ticket
     }
 
+    /// `GET /api/orchestration/threads/{id}/history?cursor=…`: the page of timeline rows before
+    /// `cursor` (opaque, from the bounded snapshot or the previous page).
+    func threadHistoryPage(threadId: String, cursor: String) async throws -> JSON {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "&=+#?")
+        let escapedCursor = cursor.addingPercentEncoding(withAllowedCharacters: allowed) ?? cursor
+        let escapedThread = threadId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? threadId
+        var request = request("/api/orchestration/threads/\(escapedThread)/history?cursor=\(escapedCursor)")
+        request.timeoutInterval = 20
+        return try await send(request)
+    }
+
     func isAuthenticated() async -> Bool? {
         guard let json = try? await send(request("/api/auth/session")) else { return nil }
         return json["authenticated"]?.bool

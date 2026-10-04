@@ -347,4 +347,128 @@ final class HelmTourTests: XCTestCase {
         sleep(2)
         shot("a4-dragged-to-end")
     }
+
+    /// Answers the notification permission prompt of a freshly installed app, if it is up.
+    private func dismissSystemPrompt() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
+        if deny.waitForExistence(timeout: 3) { deny.tap() }
+    }
+
+    private func openThread(_ title: String) {
+        dismissSystemPrompt()
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        let row = app.buttons.matching(NSPredicate(format: "identifier == 'threadRow' AND label CONTAINS[c] %@", title)).firstMatch
+        if !row.exists { app.buttons["shelf-Snoozed"].firstMatch.tap(); sleep(1) }
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "no thread named \(title)")
+        row.tap()
+        sleep(3)
+    }
+
+    /// A long thread (HELM_HISTORY=<title>) scrolled to the top of its loaded window: tapping
+    /// "Load earlier messages" prepends the previous page without moving what is on screen.
+    /// (`-manualHistory` keeps the top from loading by itself, so the moment can be measured.)
+    func testHistoryPaging() throws {
+        guard let title = ProcessInfo.processInfo.environment["HELM_HISTORY"] else { throw XCTSkip("HELM_HISTORY not set") }
+        if ProcessInfo.processInfo.environment["HELM_HISTORY_AUTO"] != nil {
+            // Scrolling up by hand: the page loads by itself; screenshots per step, checked by eye.
+            openThread(title)
+            let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            for step in 1...8 {
+                start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 120)))
+                shot(String(format: "ha%d-step", step))
+                sleep(2)
+                shot(String(format: "ha%d-step-later", step))
+            }
+            return
+        }
+        app.terminate()
+        app.launchArguments += ["-manualHistory"]
+        app.launch()
+        openThread(title)
+        shot("h0-opened")
+        let loader = app.buttons["loadEarlier"]
+        let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        for _ in 0..<12 where !loader.isHittable {
+            start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 200)))
+        }
+        XCTAssertTrue(loader.isHittable, "never reached the load-earlier row")
+        sleep(1)
+        let window = app.windows.firstMatch.frame
+        let prompts = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Turn '"))
+        func visiblePrompts() -> [(String, CGFloat)] {
+            prompts.allElementsBoundByIndex.filter { $0.exists && window.contains($0.frame) }.map { ($0.label, $0.frame.minY) }
+        }
+        let before = visiblePrompts()
+        shot("h1-top-of-window")
+        loader.tap()
+        sleep(3)
+        let after = visiblePrompts()
+        shot("h2-after-page")
+        print("before \(before.map { "\($0.0.prefix(7))@\(Int($0.1))" }) after \(after.map { "\($0.0.prefix(7))@\(Int($0.1))" })")
+        XCTAssertFalse(before.isEmpty)
+        for (label, y) in before {
+            let moved = try XCTUnwrap(after.first { $0.0 == label }, "\(label) left the screen")
+            XCTAssertEqual(moved.1, y, accuracy: 4, "\(label) jumped")
+        }
+        start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)))
+        sleep(1)
+        shot("h3-older-page")
+        XCTAssertTrue(app.staticTexts["Turn 1. Reply with OK only."].exists)
+    }
+
+    /// Drags the second queued message above the first in the busy thread named by
+    /// HELM_QUEUE_DRAG (prepared by the live test `testPrepareQueueDragThread`), then opens
+    /// the first one's editor.
+    func testQueueDrag() throws {
+        guard let title = ProcessInfo.processInfo.environment["HELM_QUEUE_DRAG"] else { throw XCTSkip("HELM_QUEUE_DRAG not set") }
+        openThread(title)
+        shot("q-opened")
+        let handles = app.descendants(matching: .any).matching(identifier: "queueDragHandle")
+        XCTAssertTrue(handles.element(boundBy: 1).waitForExistence(timeout: 15), "no drag handles")
+        shot("q0-queue")
+        let first = app.staticTexts["First queued: reply A."], second = app.staticTexts["Second queued: reply B."]
+        XCTAssertLessThan(first.frame.minY, second.frame.minY)
+        let from = handles.element(boundBy: 1).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        from.press(forDuration: 0.3, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -45)))
+        sleep(3)
+        shot("q1-dragged")
+        XCTAssertLessThan(second.frame.minY, first.frame.minY, "order didn't change")
+        // The editor of the (now second) first message, with its attachment controls.
+        let menus = app.buttons.matching(NSPredicate(format: "label == 'More' OR label CONTAINS[c] 'ellipsis'"))
+        menus.element(boundBy: menus.count - 1).tap()
+        sleep(1)
+        shot("q2-menu")
+        app.buttons["Edit"].firstMatch.tap()
+        sleep(2)
+        shot("q3-edit-sheet")
+    }
+
+    /// The "+" menu offers the camera (forced on the camera-less simulator with -uiTestCamera).
+    func testCameraMenuEntry() throws {
+        guard ProcessInfo.processInfo.environment["HELM_CAMERA"] != nil else { throw XCTSkip("HELM_CAMERA not set") }
+        app.terminate()
+        app.launchArguments += ["-uiTestCamera"]
+        app.launch()
+        dismissSystemPrompt()
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(1)
+        app.buttons["threadRow"].firstMatch.tap()
+        let attach = app.buttons["attach"]
+        XCTAssertTrue(attach.waitForExistence(timeout: 10))
+        sleep(2)
+        attach.tap()
+        XCTAssertTrue(app.buttons["Camera"].waitForExistence(timeout: 3), "no Camera in the + menu")
+        shot("c0-thread-attach-menu")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        sleep(1)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        sleep(1)
+        app.buttons["newThread"].tap()
+        sleep(2)
+        app.buttons["attach"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Camera"].waitForExistence(timeout: 3), "no Camera in the new-thread + menu")
+        shot("c1-new-thread-attach-menu")
+    }
 }

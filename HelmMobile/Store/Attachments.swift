@@ -74,13 +74,14 @@ enum Drafts {
     }
 }
 
-/// What a composer holds besides its text: attachments (uploaded as soon as they are picked) and
-/// pull requests picked from `#`. Shared by the thread and new-thread composers.
+/// What a composer holds besides its text: attachments (uploaded as soon as they are picked),
+/// pull requests picked from `#` and threads picked from `@`. Shared by the thread and new-thread composers.
 @MainActor
 @Observable
 final class ComposerDraft {
     private(set) var attachments: [DraftAttachment] = []
     private(set) var pullRequests: [PullRequestReference] = []
+    private(set) var threads: [ThreadReference] = []
     /// Why the last attach or paste didn't go through; cleared by the next one.
     var notice: String?
 
@@ -92,22 +93,42 @@ final class ComposerDraft {
     func reset() {
         attachments = []
         pullRequests = []
+        threads = []
         notice = nil
     }
 
+    private var contextCount: Int { attachments.count + pullRequests.count + threads.count }
+
     func addPullRequest(_ reference: PullRequestReference) {
         pullRequests.removeAll { $0.number == reference.number }
-        guard attachments.count + pullRequests.count < AttachmentLimits.maxContextRecords else {
+        guard contextCount < AttachmentLimits.maxContextRecords else {
             notice = String(localized: "Too many attachments and links in one message")
             return
         }
         pullRequests.append(reference)
     }
 
+    /// Returns false when the message already carries too many records to take another.
+    @discardableResult
+    func addThread(_ reference: ThreadReference) -> Bool {
+        guard !threads.contains(where: { $0.threadId == reference.threadId }) else { return true }
+        guard contextCount < AttachmentLimits.maxContextRecords else {
+            notice = String(localized: "Too many attachments and links in one message")
+            return false
+        }
+        threads.append(reference)
+        return true
+    }
+
+    /// Finished uploads with the context id of their record and link.
+    var uploaded: [(contextId: String, attachment: ChatAttachment)] {
+        attachments.compactMap { draft in draft.uploaded.map { (draft.contextId, $0) } }
+    }
+
     /// The text, attachments and context records for one send. Uploads still running or failed are left out.
     func message(text: String, inlineContext: Bool) -> ComposerMessage {
-        let uploaded = attachments.compactMap { draft in draft.uploaded.map { (draft.contextId, $0) } }
-        return ComposerMessage.build(text: text, attachments: uploaded, pullRequests: pullRequests, inlineContext: inlineContext)
+        return ComposerMessage.build(text: text, attachments: uploaded, pullRequests: pullRequests, threads: threads,
+                                     inlineContext: inlineContext)
     }
 
     // MARK: Attaching
@@ -128,13 +149,14 @@ final class ComposerDraft {
         }
     }
 
-    func attach(image: UIImage, environment: EnvironmentSession) {
-        var draft = DraftAttachment(name: "image.jpg")
+    /// A pasted or photographed picture; `name` is the file name's stem.
+    func attach(image: UIImage, environment: EnvironmentSession, name: String = "image") {
+        var draft = DraftAttachment(name: "\(name).jpg")
         draft.preview = image.preparingThumbnail(of: CGSize(width: 160, height: 160))
         guard let id = begin(draft) else { return }
         Task {
             do {
-                finish(id, try await environment.uploadImage(image, name: "image-\(Int(Date().timeIntervalSince1970)).jpg"))
+                finish(id, try await environment.uploadImage(image, name: "\(name)-\(Int(Date().timeIntervalSince1970)).jpg"))
             } catch {
                 update(id) { $0.failed = error.localizedDescription }
             }

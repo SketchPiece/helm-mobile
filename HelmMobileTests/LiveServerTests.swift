@@ -345,24 +345,26 @@ final class LiveServerTests: XCTestCase {
         _ = try await connection.call("orchestration.dispatchCommand", .object(command))
     }
 
-    /// Launches a thread in the "Sandbox" project and deletes it when the test ends.
+    /// Launches a thread in the "Sandbox" project and deletes it when the test ends (unless `keep`).
     @MainActor
-    private func launchSandboxThread(_ connection: RPCConnection, projectId: String) async throws -> String {
+    private func launchSandboxThread(_ connection: RPCConnection, projectId: String, text: String = "Reply with OK only.",
+                                     title: String = "Helm Mobile live test", keep: Bool = false) async throws -> String {
         let threadId = UUID().uuidString.lowercased()
         _ = try await connection.call("orchestration.launchThread", [
             "commandId": .string(UUID().uuidString.lowercased()),
             "creationSource": "mobile",
             "threadId": .string(threadId),
             "projectId": .string(projectId),
-            "title": "Helm Mobile live test",
+            "title": .string(title),
             "modelSelection": ["instanceId": "claudeAgent", "model": "claude-sonnet-5-5"],
             "runtimeMode": "full-access",
             "interactionMode": "default",
             "workspaceStrategy": ["type": "root"],
             "initialMessage": [
-                "messageId": .string(UUID().uuidString.lowercased()), "text": "Reply with OK only.", "attachments": [],
+                "messageId": .string(UUID().uuidString.lowercased()), "text": .string(text), "attachments": [],
             ],
         ], timeout: .seconds(60))
+        if keep { return threadId }
         addTeardownBlock { [http] in
             guard let http else { return }
             let ticket = try await http.webSocketTicket()
@@ -460,6 +462,227 @@ final class LiveServerTests: XCTestCase {
 
         for id in [first, second] { try await Self.dispatch(connection, "thread.delete", ["threadId": .string(id)]) }
         try await watcher.wait("the cleanup") { $0.threads[first] == nil && $0.threads[second] == nil }
+        await connection.close()
+    }
+
+    // MARK: Bounded snapshots and history pages
+
+    private static func projection(_ connection: RPCConnection, _ threadId: String) async throws -> ThreadProjection {
+        let json = try await connection.call("orchestration.getThreadProjection", ["threadId": .string(threadId)])
+        return try XCTUnwrap(ThreadProjection(json: json))
+    }
+
+    private static func poll(_ what: String, timeout: Double = 120, _ done: () async throws -> Bool) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !(try await done()) {
+            guard Date() < deadline else { throw RPCError.defect("Timed out waiting for \(what)") }
+            try await Task.sleep(for: .seconds(1))
+        }
+    }
+
+    private static func queueMessage(_ connection: RPCConnection, _ threadId: String, _ message: ComposerMessage,
+                                     messageId: String = UUID().uuidString.lowercased()) async throws {
+        var fields: [String: JSON] = [
+            "createdBy": "user", "creationSource": "mobile", "threadId": .string(threadId), "messageId": .string(messageId),
+            "text": .string(message.text), "attachments": .array(message.attachments.map(\.json)),
+            "dispatchMode": ["type": "queue_after_active"],
+        ]
+        if let context = message.context { fields["context"] = context }
+        try await dispatch(connection, "message.dispatch", fields)
+    }
+
+    /// A sandbox thread on the cheap model, deleted when the test ends unless `keep`.
+    private func launch(_ connection: RPCConnection, projectId: String, text: String, title: String,
+                        keep: Bool = false) async throws -> String {
+        let threadId = UUID().uuidString.lowercased()
+        _ = try await connection.call("orchestration.launchThread", [
+            "commandId": .string(UUID().uuidString.lowercased()), "creationSource": "mobile", "threadId": .string(threadId),
+            "projectId": .string(projectId), "title": .string(title),
+            "modelSelection": ["instanceId": "claudeAgent", "model": "claude-sonnet-5-5"],
+            "runtimeMode": "full-access", "interactionMode": "default", "workspaceStrategy": ["type": "root"],
+            "initialMessage": ["messageId": .string(UUID().uuidString.lowercased()), "text": .string(text), "attachments": []],
+        ], timeout: .seconds(60))
+        guard !keep else { return threadId }
+        let http: HelmHTTP = self.http
+        addTeardownBlock {
+            let cleanup = RPCConnection(url: await http.webSocketURL(ticket: try await http.webSocketTicket()))
+            await cleanup.start { _ in }
+            _ = try? await cleanup.call("orchestration.dispatchCommand", [
+                "type": "thread.delete", "commandId": .string(UUID().uuidString.lowercased()), "threadId": .string(threadId),
+            ])
+            await cleanup.close()
+        }
+        return threadId
+    }
+
+    /// A thread past the bounded window (more than 10 user turns) arrives as its recent window
+    /// with a cursor; history pages walk back to the first message and merge without duplicates.
+    /// Uses a sandbox thread with 12 one-word turns (kept with HELM_KEEP_HISTORY_THREAD=1, for UI checks).
+    func testBoundedSnapshotAndHistoryPages() async throws {
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let keep = ProcessInfo.processInfo.environment["HELM_KEEP_HISTORY_THREAD"] == "1"
+        let existing = try await shell(connection).threads.values.first { $0.title == "Helm Mobile history test" }
+        let threadId: String
+        if let existing {
+            threadId = existing.id
+        } else {
+            threadId = try await launch(connection, projectId: project.id, text: "Turn 1. Reply with OK only.",
+                                        title: "Helm Mobile history test", keep: keep)
+            for turn in 2...12 {
+                try await Self.queueMessage(connection, threadId, ComposerMessage(
+                    text: "Turn \(turn). Reply with OK only.", attachments: [], context: nil))
+            }
+        }
+        try await Self.poll("12 finished turns", timeout: 300) {
+            let runs = try await Self.projection(connection, threadId).runs.values
+            return runs.count >= 12 && runs.allSatisfy { $0.status == "completed" }
+        }
+
+        let snapshot = try await first(connection.stream("orchestration.subscribeThread", [
+            "threadId": .string(threadId), "acceptBoundedSnapshot": true,
+        ])) { $0["kind"]?.string == "snapshot" }
+        var projection = try XCTUnwrap(snapshot["projection"].flatMap(ThreadProjection.init(json:)))
+        projection.history = ThreadProjection.History(snapshot: snapshot)
+        XCTAssertTrue(projection.history.hasMore)
+        XCTAssertNotNil(projection.history.cursor)
+        let watermark = try XCTUnwrap(projection.history.latestLocalTurnOrdinal)
+        XCTAssertEqual(watermark, projection.rows.map(\.item.ordinal).max())
+        let windowUsers = projection.rows.filter { $0.item.type == "user_message" }.count
+        XCTAssertLessThanOrEqual(windowUsers, 10)
+
+        var pages = 0
+        while projection.history.hasMore, let cursor = projection.history.cursor, pages < 10 {
+            let page = try await http.threadHistoryPage(threadId: threadId, cursor: cursor)
+            XCTAssertNotNil(page["snapshotSequence"]?.int)
+            XCTAssertNotNil(page["hasMoreHistory"]?.bool)
+            let rows = page["items"]?.array ?? []
+            XCTAssertFalse(rows.isEmpty)
+            XCTAssertNotNil(rows.first?["sourceItemId"]?.string)
+            let oldestBefore = try XCTUnwrap(projection.rows.first?.item.ordinal)
+            let before = projection.rows.count
+            projection.mergeOlder(page: page)
+            XCTAssertGreaterThan(projection.rows.count, before)
+            XCTAssertLessThan(try XCTUnwrap(projection.rows.first?.item.ordinal), oldestBefore)
+            pages += 1
+        }
+        XCTAssertGreaterThan(pages, 0)
+        XCTAssertFalse(projection.history.hasMore)
+        let ordinals = projection.rows.filter { $0.visibility == "local" }.map(\.item.ordinal)
+        XCTAssertEqual(ordinals, ordinals.sorted(), "chronological after merging")
+        XCTAssertEqual(Set(projection.rows.map(\.key)).count, projection.rows.count, "no duplicates")
+        let prompts = projection.rows.filter { $0.item.type == "user_message" }.map { $0.item.text }
+        XCTAssertEqual(prompts.first, "Turn 1. Reply with OK only.")
+        XCTAssertEqual(prompts.count, 12)
+        XCTAssertEqual(projection.history.latestLocalTurnOrdinal, watermark)
+        await connection.close()
+    }
+
+    /// A queued follow-up with a file is dragged ahead of another and then edited to carry a
+    /// different file: the edit replaces the attachment list and the file records and links.
+    func testQueuedRunReorderAndEditWithAttachments() async throws {
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let configEvent = try await first(connection.stream("subscribeServerConfig")) { $0["type"]?.string == "snapshot" }
+        let config = try XCTUnwrap(configEvent["config"].flatMap(ServerConfig.init(json:)))
+        let threadId = try await launch(connection, projectId: project.id, text: "Run `sleep 25` in the foreground, then reply OK.",
+                                        title: "Helm Mobile queue test")
+        try await Self.poll("the turn to run", timeout: 60) { try await Self.projection(connection, threadId).isWorking }
+
+        let old = try await uploadFile(connection, Data("old\n".utf8), name: "old.log", mimeType: "text/plain")
+        let firstMessage = ComposerMessage.build(text: "Reply with OK only.", attachments: [("ctx-old", old)],
+                                                 pullRequests: [], inlineContext: config.inlineMessageContext)
+        let firstId = UUID().uuidString.lowercased()
+        try await Self.queueMessage(connection, threadId, firstMessage, messageId: firstId)
+        try await Self.queueMessage(connection, threadId, ComposerMessage(text: "Reply with NO only.", attachments: [], context: nil))
+        var queued: [QueuedMessage] = []
+        try await Self.poll("two queued runs", timeout: 20) {
+            queued = try await Self.projection(connection, threadId).queued
+            return queued.count == 2
+        }
+        let queuedFirst = try XCTUnwrap(queued.first)
+        // The server claims the upload under a new id (and remaps the record to it).
+        XCTAssertEqual(queuedFirst.attachments.map(\.name), ["old.log"])
+
+        // Drag the second row above the first, as the strip computes it.
+        let frames = queued.enumerated().map { QueueOrder.RowFrame(id: $1.id, minY: Double($0) * 34, height: 28) }
+        let before = try XCTUnwrap(QueueOrder.dropBeforeRunId(frames, moving: queued[1].id, translation: -40))
+        XCTAssertEqual(before, queuedFirst.id)
+        try await Self.dispatch(connection, "queued-run.reorder", [
+            "threadId": .string(threadId), "runId": .string(queued[1].id), "beforeRunId": before.map { .string($0) } ?? .null,
+        ])
+        try await Self.poll("the new order", timeout: 20) {
+            try await Self.projection(connection, threadId).queued.map(\.id) == [queued[1].id, queuedFirst.id]
+        }
+
+        // Edit: drop old.log, add new.md.
+        let new = try await uploadFile(connection, Data("# new\n".utf8), name: "new.md", mimeType: "text/markdown")
+        let split = QueuedEdit.split(queuedFirst.text)
+        XCTAssertEqual(split.body, "Reply with OK only.")
+        let payload = QueuedEdit.payload(body: "Reply with OK only, please.", trailing: split.trailing, original: queuedFirst,
+                                         kept: [], added: [("ctx-new", new)], inlineContext: config.inlineMessageContext)
+        var fields: [String: JSON] = [
+            "threadId": .string(threadId), "runId": .string(queuedFirst.id), "text": .string(payload.text),
+            "attachments": .array((payload.attachments ?? []).map(\.json)),
+        ]
+        if let context = payload.context { fields["context"] = context }
+        try await Self.dispatch(connection, "queued-run.edit", fields)
+
+        var edited: JSON?
+        try await Self.poll("the edit", timeout: 20) {
+            edited = try await Self.projection(connection, threadId).messages[firstId]
+            return edited?["text"]?.string == payload.text
+        }
+        let stored = try XCTUnwrap(edited)
+        let storedAttachments = (stored["attachments"]?.array ?? []).compactMap(ChatAttachment.init(json:))
+        XCTAssertEqual(storedAttachments.map(\.name), ["new.md"])
+        if config.inlineMessageContext {
+            XCTAssertEqual(payload.text, "Reply with OK only, please. [new.md](t3-context://v1/file/ctx-new)")
+            let records = stored["context"]?["records"]?.array ?? []
+            XCTAssertEqual(records.compactMap { $0["contextId"]?.string }, ["ctx-new"], "old.log's record is gone")
+            XCTAssertEqual(records.compactMap { $0["attachmentId"]?.string }, storedAttachments.map(\.id))
+        }
+
+        // Leave nothing running: clear the queue, stop the turn (the thread is deleted on teardown).
+        for run in try await Self.projection(connection, threadId).queued {
+            try await Self.dispatch(connection, "queued-run.cancel", ["threadId": .string(threadId), "runId": .string(run.id)])
+        }
+        if let active = try await Self.projection(connection, threadId).activeRun {
+            try? await Self.dispatch(connection, "run.interrupt", ["threadId": .string(threadId), "runId": .string(active.id)])
+        }
+        await connection.close()
+    }
+
+    /// Leaves a sandbox thread busy for a minute and a half with two queued follow-ups, for the queue
+    /// drag UI scenario. Opt in with HELM_PREPARE_QUEUE=1; HELM_CLEANUP=1 deletes it again.
+    func testPrepareQueueDragThread() async throws {
+        guard ProcessInfo.processInfo.environment["HELM_PREPARE_QUEUE"] == "1" else { throw XCTSkip("HELM_PREPARE_QUEUE not set") }
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let threadId = try await launch(connection, projectId: project.id, text: "Run `python3 -c 'import time; time.sleep(90)'` in the foreground and wait for it, then reply OK.",
+                                        title: "Helm Mobile queue drag", keep: true)
+        try await Self.poll("the turn to run", timeout: 60) { try await Self.projection(connection, threadId).isWorking }
+        for text in ["First queued: reply A.", "Second queued: reply B."] {
+            try await Self.queueMessage(connection, threadId, ComposerMessage(text: text, attachments: [], context: nil))
+        }
+        try await Self.poll("two queued runs", timeout: 20) { try await Self.projection(connection, threadId).queued.count == 2 }
+        await connection.close()
+    }
+
+    /// Deletes the threads the opt-in scenarios keep, only in the sandbox project.
+    func testCleanupKeptThreads() async throws {
+        guard ProcessInfo.processInfo.environment["HELM_CLEANUP"] == "1" else { throw XCTSkip("HELM_CLEANUP not set") }
+        let connection = try await connect()
+        let project = try await sandbox(connection)
+        let kept = try await shell(connection).threads.values.filter {
+            $0.projectId == project.id && ["Helm Mobile history test", "Helm Mobile queue drag"].contains($0.title)
+        }
+        for thread in kept {
+            if let active = try await Self.projection(connection, thread.id).activeRun {
+                try? await Self.dispatch(connection, "run.interrupt", ["threadId": .string(thread.id), "runId": .string(active.id)])
+            }
+            try await Self.dispatch(connection, "thread.delete", ["threadId": .string(thread.id)])
+        }
         await connection.close()
     }
 }

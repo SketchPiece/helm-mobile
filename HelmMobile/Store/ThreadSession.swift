@@ -11,6 +11,10 @@ final class ThreadSession {
     private(set) var loadError: String?
     /// Messages sent from this phone that the server hasn't echoed yet.
     private(set) var outbox: [OutgoingMessage] = []
+    /// An older history page is on its way.
+    private(set) var isLoadingHistory = false
+    /// Why the last older page didn't load; cleared by the next try.
+    private(set) var historyError: String?
 
     struct OutgoingMessage: Identifiable, Hashable {
         var id: String  // messageId
@@ -42,7 +46,8 @@ final class ThreadSession {
 
     func subscribe(on connection: RPCConnection) {
         subscription?.cancel()
-        var payload: [String: JSON] = ["threadId": .string(threadId)]
+        // A long thread arrives as its recent window; older pages load on demand.
+        var payload: [String: JSON] = ["threadId": .string(threadId), "acceptBoundedSnapshot": true]
         if environment?.config?.threadResumeCompletionMarker == true { payload["requestCompletionMarker"] = true }
         if projection != nil, lastSequence > 0 { payload["afterSequence"] = .number(Double(lastSequence)) }
         let stream = connection.stream("orchestration.subscribeThread", .object(payload))
@@ -74,9 +79,11 @@ final class ThreadSession {
     private func apply(_ item: JSON) {
         switch item["kind"]?.string {
         case "snapshot":
-            guard let json = item["projection"], let next = ThreadProjection(json: json) else { return }
+            guard let json = item["projection"], var next = ThreadProjection(json: json) else { return }
+            next.history = ThreadProjection.History(snapshot: item)
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
+            historyError = nil
             loadError = nil
             retryDelay = 1
             reconcileOutbox()
@@ -107,6 +114,29 @@ final class ThreadSession {
             projection.messages[pending.id] != nil
                 || projection.items.values.contains { $0.raw["messageId"]?.string == pending.id }
         }
+    }
+
+    // MARK: History
+
+    /// Prepends the next older page of the timeline (`GET …/threads/{id}/history?cursor=`).
+    /// `beforeMerge` lets the view hold the page until it can keep its scroll position. A page
+    /// that comes back after a new snapshot replaced the window is dropped.
+    func loadEarlier(beforeMerge: () async -> Void = {}) async {
+        guard !isLoadingHistory, let environment, let history = projection?.history, history.hasMore,
+              let cursor = history.cursor
+        else { return }
+        isLoadingHistory = true
+        historyError = nil
+        do {
+            let page = try await environment.threadHistoryPage(threadId: threadId, cursor: cursor)
+            await beforeMerge()
+            if projection?.history.cursor == cursor { projection?.mergeOlder(page: page) }
+        } catch {
+            if projection?.history.cursor == cursor {
+                historyError = String(localized: "Couldn't load earlier messages.")
+            }
+        }
+        isLoadingHistory = false
     }
 
     // MARK: Actions
@@ -241,13 +271,15 @@ final class ThreadSession {
         ])
     }
 
-    /// Replaces a queued message's text; its attachments and context stay as they were.
-    func editQueued(_ runId: String, text: String) async throws {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        try await environment?.dispatch("queued-run.edit", [
-            "threadId": .string(threadId), "runId": .string(runId), "text": .string(trimmed),
-        ])
+    /// Rewrites a queued message. Without `attachments` in the payload its attachments and
+    /// context stay as they were.
+    func editQueued(_ runId: String, _ payload: QueuedEdit.Payload) async throws {
+        let text = payload.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        var fields: [String: JSON] = ["threadId": .string(threadId), "runId": .string(runId), "text": .string(text)]
+        if let attachments = payload.attachments { fields["attachments"] = .array(attachments.map(\.json)) }
+        if let context = payload.context { fields["context"] = context }
+        try await environment?.dispatch("queued-run.edit", fields)
     }
 
     /// Moves a queued message right before `beforeRunId`, or to the end of the queue when nil.

@@ -276,6 +276,11 @@ final class EnvironmentSession: Identifiable {
 
     @ObservationIgnored private var cacheOrder: [String] = []
 
+    /// An older page of a thread's timeline (`OrchestrationV2ThreadHistoryPage`), over HTTP.
+    func threadHistoryPage(threadId: String, cursor: String) async throws -> JSON {
+        try await http.threadHistoryPage(threadId: threadId, cursor: cursor)
+    }
+
     /// The live connection, for thread sessions that need to resubscribe on their own.
     var currentConnection: RPCConnection? { status == .live ? connection : nil }
 

@@ -152,6 +152,94 @@ final class ComposerMessageTests: XCTestCase {
         XCTAssertEqual(ContextReference.label("a [b]\nc", kind: "file"), "a b c")
         XCTAssertEqual(ContextReference.label("  ", kind: "file"), "file")
     }
+
+    private let mention = ThreadReference(environmentId: "env-1", threadId: "t-9", title: "Fix [login]\nflow")
+
+    func testThreadMentionBecomesThreadRecordAndLink() {
+        XCTAssertEqual(mention.token, "@Fix login flow")
+        let message = ComposerMessage.build(text: "like in @Fix login flow, and again @Fix login flow", attachments: [],
+                                            pullRequests: [], threads: [mention, mention], inlineContext: true)
+        let link = "[Fix login flow](t3-context://v1/thread/thread_t-9)"
+        XCTAssertEqual(message.text, "like in \(link), and again \(link)")
+        // One record per thread, the same shape as RN's threadComposerContext.
+        XCTAssertEqual(message.context?["records"]?.array, [[
+            "version": 1, "kind": "thread", "contextId": "thread_t-9", "label": "Fix login flow",
+            "environmentId": "env-1", "threadId": "t-9", "title": "Fix login flow",
+        ]])
+        XCTAssertEqual(ContextReference.displayText(message.text), "like in Fix login flow, and again Fix login flow")
+    }
+
+    func testThreadMentionNeedsToStandAlone() {
+        // Deleted from the text, glued to a word, or continued by one: no record.
+        for text in ["never mind", "x@Fix login flow", "@Fix login flows"] {
+            let message = ComposerMessage.build(text: text, attachments: [], pullRequests: [], threads: [mention], inlineContext: true)
+            XCTAssertEqual(message.text, text)
+            XCTAssertNil(message.context)
+        }
+        let legacy = ComposerMessage.build(text: "@Fix login flow", attachments: [], pullRequests: [], threads: [mention],
+                                           inlineContext: false)
+        XCTAssertEqual(legacy.text, "@Fix login flow")
+        XCTAssertNil(legacy.context)
+    }
+}
+
+final class QueuedEditTests: XCTestCase {
+    private let log = ChatAttachment(id: "att_log", type: "file", name: "build.log", mimeType: "text/plain", sizeBytes: 10)
+    private let photo = ChatAttachment(id: "att_img", type: "image", name: "photo.jpg", mimeType: "image/jpeg", sizeBytes: 900)
+    private let notes = ChatAttachment(id: "att_new", type: "file", name: "notes.md", mimeType: "text/markdown", sizeBytes: 5)
+
+    private var queued: QueuedMessage {
+        QueuedMessage(
+            id: "run-1", text: "Check this see [Old](t3-context://v1/thread/thread_t1) [build.log](t3-context://v1/file/c-log)",
+            held: false, attachments: [log, photo],
+            context: ["version": 1, "records": [
+                ["version": 1, "kind": "thread", "contextId": "thread_t1", "label": "Old", "environmentId": "e",
+                 "threadId": "t1", "title": "Old"],
+                ["version": 1, "kind": "file", "contextId": "c-log", "label": "build.log", "attachmentId": "att_log",
+                 "name": "build.log", "mimeType": "text/plain", "sizeBytes": 10],
+            ]]
+        )
+    }
+
+    func testEditorHidesTrailingFileLinksOnly() {
+        let split = QueuedEdit.split(queued.text)
+        XCTAssertEqual(split.body, "Check this see [Old](t3-context://v1/thread/thread_t1)")
+        XCTAssertEqual(split.trailing.map(\.contextId), ["c-log"])
+    }
+
+    func testTextOnlyEditKeepsAttachmentsAndContext() {
+        let split = QueuedEdit.split(queued.text)
+        let payload = QueuedEdit.payload(body: "Now check this", trailing: split.trailing, original: queued,
+                                         kept: [log, photo], added: [], inlineContext: true)
+        XCTAssertEqual(payload, QueuedEdit.Payload(text: "Now check this [build.log](t3-context://v1/file/c-log)",
+                                                   attachments: nil, context: nil))
+    }
+
+    func testRemovingAndAddingAttachmentsReplacesTheListAndRecords() {
+        let split = QueuedEdit.split(queued.text)
+        let payload = QueuedEdit.payload(body: split.body, trailing: split.trailing, original: queued,
+                                         kept: [photo], added: [("c-new", notes)], inlineContext: true)
+        XCTAssertEqual(payload.text, "Check this see [Old](t3-context://v1/thread/thread_t1) [notes.md](t3-context://v1/file/c-new)")
+        XCTAssertEqual(payload.attachments?.map(\.id), ["att_img", "att_new"])
+        let records = payload.context?["records"]?.array ?? []
+        XCTAssertEqual(records.compactMap { $0["contextId"]?.string }, ["thread_t1", "c-new"])
+        XCTAssertEqual(records.last?["attachmentId"], "att_new")
+    }
+
+    func testRemovingTheOnlyRecordedFileClearsItsRecord() {
+        let message = QueuedMessage(id: "run-2", text: "Read [build.log](t3-context://v1/file/c-log) first", held: false,
+                                    attachments: [log], context: ["version": 1, "records": [
+                                        ["kind": "file", "contextId": "c-log", "attachmentId": "att_log"],
+                                    ]])
+        let split = QueuedEdit.split(message.text)
+        XCTAssertTrue(split.trailing.isEmpty)
+        let payload = QueuedEdit.payload(body: split.body, trailing: split.trailing, original: message, kept: [],
+                                         added: [], inlineContext: true)
+        XCTAssertEqual(payload.text, "Read first")
+        XCTAssertEqual(payload.attachments, [])
+        // Sent empty: leaving `context` out would keep the stale record.
+        XCTAssertEqual(payload.context, ["version": 1, "records": []])
+    }
 }
 
 final class ComposerSuggestionTests: XCTestCase {
@@ -214,6 +302,22 @@ final class ComposerSuggestionTests: XCTestCase {
         let items = ComposerSuggestions.skillItems(query: "design", skills: skills)
         XCTAssertEqual(items.map(\.action), [.insert("$design-review "), .insert("$frontend-design "), .insert("$pdf ")])
         XCTAssertEqual(ComposerSuggestions.skillItems(query: "", skills: skills).count, 3)
+    }
+
+    func testThreadMatchesUnderAt() {
+        let threads = [
+            ("t1", "Fix login", "2026-10-01T11:00:00.000Z"), ("t2", "Login page polish", "2026-10-02T11:00:00.000Z"),
+            ("t3", "Unrelated", "2026-10-03T11:00:00.000Z"), ("t4", "login again", "2026-09-01T11:00:00.000Z"),
+        ].compactMap { ThreadSummary(json: Fixtures.thread(id: $0.0, extra: ["title": .string($0.1), "updatedAt": .string($0.2)])) }
+        let items = ComposerSuggestions.threadItems(query: " LOGIN ", threads: threads, environmentId: "env", excluding: "t4")
+        // Title contains the query, the composer's own thread left out, newest first.
+        XCTAssertEqual(items.map(\.title), ["Login page polish", "Fix login"])
+        XCTAssertEqual(items.first?.id, "thread:env:t2")
+        XCTAssertEqual(items.first?.action, .thread(ThreadReference(environmentId: "env", threadId: "t2", title: "Login page polish")))
+        // A bare `@` stays a file picker.
+        XCTAssertTrue(ComposerSuggestions.threadItems(query: "", threads: threads, environmentId: "env", excluding: nil).isEmpty)
+        let many = (0..<8).compactMap { ThreadSummary(json: Fixtures.thread(id: "m\($0)", extra: ["title": "same"])) }
+        XCTAssertEqual(ComposerSuggestions.threadItems(query: "same", threads: many, environmentId: "env", excluding: nil).count, 5)
     }
 
     func testPullRequestMatches() {

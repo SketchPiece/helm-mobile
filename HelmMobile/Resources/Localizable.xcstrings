@@ -1392,6 +1392,16 @@
         }
       }
     },
+    "Camera": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера"
+          }
+        }
+      }
+    },
     "Can't reach the Mac. Is it awake and is Tailscale on? (%@)": {
       "localizations": {
         "ru": {
@@ -1812,6 +1822,16 @@
         }
       }
     },
+    "Couldn't load earlier messages.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось загрузить предыдущие сообщения."
+          }
+        }
+      }
+    },
     "Couldn't load the changes": {
       "localizations": {
         "ru": {
@@ -2128,6 +2148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Черновик"
+          }
+        }
+      }
+    },
+    "Drag to reorder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перетащи, чтобы поменять порядок"
           }
         }
       }
@@ -2834,6 +2864,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Live Activity"
+          }
+        }
+      }
+    },
+    "Load earlier messages": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать предыдущие сообщения"
+          }
+        }
+      }
+    },
+    "Loading earlier messages…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загружаю предыдущие сообщения…"
           }
         }
       }
@@ -5238,6 +5288,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подумал"
+          }
+        }
+      }
+    },
+    "Thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред"
           }
         }
       }
