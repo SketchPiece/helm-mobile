@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Observation
+import SwiftUI
 import UIKit
 
 /// Identifies a thread across environments.
@@ -130,6 +131,7 @@ final class AppModel {
         case settle, unsettle, archive, unarchive, delete, unsnooze, pin, unpin, markUnread, regenerateTitle
         case snooze(Date)
         case rename(String)
+        case autoSettle(Bool)
     }
 
     func perform(_ action: ThreadAction, on ref: ThreadRef) async throws {
@@ -142,7 +144,15 @@ final class AppModel {
         case .unarchive: try await environment.dispatch("thread.unarchive", ["threadId": id])
         case .delete: try await environment.dispatch("thread.delete", ["threadId": id])
         case .unsnooze: try await environment.dispatch("thread.unsnooze", ["threadId": id, "reason": "user"])
-        case .pin: try await environment.dispatch("thread.pin", ["threadId": id])
+        case .pin:
+            var fields: [String: JSON] = ["threadId": id]
+            // A fresh pin lands at the top of the pinned block.
+            if environment.config?.capability("threadPinReorder") == true,
+               let key = OrderKeys.between(nil, pinOrderKeys().values.min())
+            {
+                fields["orderKey"] = .string(key)
+            }
+            try await environment.dispatch("thread.pin", fields)
         case .unpin: try await environment.dispatch("thread.unpin", ["threadId": id])
         case .markUnread: try await environment.dispatch("thread.mark-unread", ["threadId": id])
         case .regenerateTitle:
@@ -151,6 +161,60 @@ final class AppModel {
             try await environment.dispatch("thread.snooze", ["threadId": id, "snoozedUntil": .string(ISODate.string(date))])
         case .rename(let title):
             try await environment.dispatch("thread.metadata.update", ["threadId": id, "title": .string(title)])
+        case .autoSettle(let enabled):
+            try await environment.dispatch("thread.auto-settle.set", ["threadId": id, "enabled": .bool(enabled)])
+        }
+        await UIImpactFeedbackGenerator.light()
+    }
+
+    // MARK: Arranging
+
+    /// Whether this thread's server takes order keys for the pinned (or active) section.
+    func canReorder(_ ref: ThreadRef, pinned: Bool) -> Bool {
+        environment(ref.environmentId)?.config?.capability(pinned ? "threadPinReorder" : "threadActiveReorder") == true
+    }
+
+    /// Every thread's key for one section, across environments (hidden rows' keys are reserved).
+    private func orderKeys(pinned: Bool) -> [ThreadRef: String] {
+        var keys: [ThreadRef: String] = [:]
+        for environment in environments {
+            for thread in environment.shell.threads.values {
+                if let key = pinned ? thread.pinOrderKey : thread.activeOrderKey {
+                    keys[ThreadRef(environmentId: environment.id, threadId: thread.id)] = key
+                }
+            }
+        }
+        return keys
+    }
+
+    private func pinOrderKeys() -> [ThreadRef: String] { orderKeys(pinned: true) }
+
+    /// Move up / Move down within the pinned or active section, `ordered` as displayed. The row
+    /// moves right away; writes go out in order and a failure puts the unsent ones back.
+    func move(_ ref: ThreadRef, _ direction: OrderKeys.Direction, in ordered: [ThreadRef], pinned: Bool) async throws {
+        guard let writes = OrderKeys.planMove(ordered: ordered, keys: orderKeys(pinned: pinned), moved: ref, direction) else { return }
+        guard writes.allSatisfy({ canReorder($0.id, pinned: pinned) }) else {
+            throw RPCError.defect(String(localized: "Helm on this Mac can't arrange threads."))
+        }
+        withAnimation(.snappy(duration: 0.25)) {
+            for write in writes {
+                environment(write.id.environmentId)?.setPendingOrderKey(threadId: write.id.threadId, pinned: pinned, key: write.key)
+            }
+        }
+        for (index, write) in writes.enumerated() {
+            do {
+                try await environment(write.id.environmentId)?.dispatch(
+                    pinned ? "thread.pin.reorder" : "thread.active.reorder",
+                    ["threadId": .string(write.id.threadId), "orderKey": .string(write.key)]
+                )
+            } catch {
+                withAnimation(.snappy(duration: 0.25)) {
+                    for rest in writes[index...] {
+                        environment(rest.id.environmentId)?.revertPendingOrderKey(threadId: rest.id.threadId)
+                    }
+                }
+                throw error
+            }
         }
         await UIImpactFeedbackGenerator.light()
     }

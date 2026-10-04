@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Home: every thread across connected Macs. What needs you comes first, then recent work;
-/// snoozed and settled threads are tucked into sections at the bottom.
+/// Home: every thread across connected Macs. What needs you comes first, then pinned and active
+/// threads in the order the user arranged on any client; snoozed and settled threads are tucked
+/// into sections at the bottom.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
@@ -14,6 +15,7 @@ struct HomeView: View {
     @State private var renaming: ThreadListEntry?
     @State private var renameText = ""
     @State private var deleting: ThreadListEntry?
+    @State private var snoozingCustom: ThreadListEntry?
     @State private var actionError: String?
 
     var body: some View {
@@ -35,11 +37,18 @@ struct HomeView: View {
                     sectionHeader(String(localized: "Needs you"), count: sections.attention.count)
                 }
             }
+            if !sections.pinned.isEmpty {
+                Section {
+                    rows(sections.pinned, arrangedAs: .pinned)
+                } header: {
+                    sectionHeader(String(localized: "Pinned"), count: sections.pinned.count)
+                }
+            }
             if !sections.active.isEmpty {
                 Section {
-                    rows(sections.active)
+                    rows(sections.active, arrangedAs: .active)
                 } header: {
-                    if !sections.attention.isEmpty {
+                    if !sections.attention.isEmpty || !sections.pinned.isEmpty {
                         sectionHeader(String(localized: "Active"), count: sections.active.count)
                     }
                 }
@@ -92,6 +101,9 @@ struct HomeView: View {
         } message: {
             Text("The conversation and its terminal history are removed from the Mac.")
         }
+        .sheet(item: $snoozingCustom) { entry in
+            CustomSnoozeSheet { date in try await model.perform(.snooze(date), on: entry.ref) }
+        }
         .alert("Couldn't do that", isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -139,8 +151,11 @@ struct HomeView: View {
 
     // MARK: Rows
 
+    /// The sections whose order the user can change with Move up / Move down.
+    enum Arrangement { case pinned, active }
+
     @ViewBuilder
-    private func rows(_ entries: [ThreadListEntry]) -> some View {
+    private func rows(_ entries: [ThreadListEntry], arrangedAs arrangement: Arrangement? = nil) -> some View {
         ForEach(entries) { entry in
             Button {
                 router.open(entry.ref)
@@ -155,7 +170,7 @@ struct HomeView: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .swipeActions(edge: .trailing, allowsFullSwipe: true) { trailingSwipe(entry) }
             .swipeActions(edge: .leading) { leadingSwipe(entry) }
-            .contextMenu { contextMenu(entry) }
+            .contextMenu { contextMenu(entry, arrangement: arrangement, in: entries) }
         }
     }
 
@@ -188,7 +203,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func contextMenu(_ entry: ThreadListEntry) -> some View {
+    private func contextMenu(_ entry: ThreadListEntry, arrangement: Arrangement?, in entries: [ThreadListEntry]) -> some View {
         let thread = entry.thread
         if thread.isSettled {
             Button { run(.unsettle, on: entry) } label: { Label("Reopen", systemImage: "tray.and.arrow.up") }
@@ -202,6 +217,7 @@ struct HomeView: View {
                 ForEach(SnoozePreset.allCases) { preset in
                     Button(preset.title) { run(.snooze(preset.date()), on: entry) }
                 }
+                Button("Custom…") { snoozingCustom = entry }
             } label: {
                 Label("Snooze", systemImage: "moon.zzz")
             }
@@ -210,6 +226,14 @@ struct HomeView: View {
             Button { run(.pin, on: entry) } label: { Label("Pin", systemImage: "pin") }
         } else {
             Button { run(.unpin, on: entry) } label: { Label("Unpin", systemImage: "pin.slash") }
+        }
+        if let arrangement, entries.count > 1, model.canReorder(entry.ref, pinned: arrangement == .pinned) {
+            if entries.first?.id != entry.id {
+                Button { move(entry, .up, in: entries, arrangement) } label: { Label("Move up", systemImage: "arrow.up") }
+            }
+            if entries.last?.id != entry.id {
+                Button { move(entry, .down, in: entries, arrangement) } label: { Label("Move down", systemImage: "arrow.down") }
+            }
         }
         Button { run(.markUnread, on: entry) } label: { Label("Mark as unread", systemImage: "circlebadge") }
         Divider()
@@ -230,6 +254,16 @@ struct HomeView: View {
         Task {
             do {
                 try await model.perform(action, on: entry.ref)
+            } catch {
+                actionError = error.localizedDescription
+            }
+        }
+    }
+
+    private func move(_ entry: ThreadListEntry, _ direction: OrderKeys.Direction, in entries: [ThreadListEntry], _ arrangement: Arrangement) {
+        Task {
+            do {
+                try await model.move(entry.ref, direction, in: entries.map(\.ref), pinned: arrangement == .pinned)
             } catch {
                 actionError = error.localizedDescription
             }
@@ -330,6 +364,7 @@ struct HomeView: View {
 /// Splits the list into its sections.
 struct HomeSections {
     var attention: [ThreadListEntry] = []
+    var pinned: [ThreadListEntry] = []
     var active: [ThreadListEntry] = []
     var snoozed: [ThreadListEntry] = []
     var settled: [ThreadListEntry] = []
@@ -343,6 +378,8 @@ struct HomeSections {
                 settled.append(entry)
             } else if thread.isSnoozed(now: now) {
                 snoozed.append(entry)
+            } else if thread.pinnedAt != nil {
+                pinned.append(entry)
             } else {
                 active.append(entry)
             }
@@ -351,12 +388,8 @@ struct HomeSections {
             ($0.thread.updatedAt ?? .distantPast) > ($1.thread.updatedAt ?? .distantPast)
         }
         attention.sort(by: byRecent)
-        // Pinned first, then working, then by latest activity.
-        active.sort { a, b in
-            let pinA = a.thread.pinnedAt != nil, pinB = b.thread.pinnedAt != nil
-            if pinA != pinB { return pinA }
-            return byRecent(a, b)
-        }
+        pinned = pinned.sortedPinned()
+        active = active.sortedActive()
         snoozed.sort { ($0.thread.snoozedUntil ?? .distantFuture) < ($1.thread.snoozedUntil ?? .distantFuture) }
         settled.sort(by: byRecent)
     }
