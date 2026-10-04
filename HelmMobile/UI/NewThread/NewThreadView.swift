@@ -25,6 +25,8 @@ struct NewThreadView: View {
     @State private var sending = false
     @State private var error: String?
     @State private var focused = false
+    /// Shared files waiting for the Mac to be connected before they upload.
+    @State private var sharedFiles: [SharedFile] = []
 
     private var environment: EnvironmentSession? {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
@@ -95,7 +97,12 @@ struct NewThreadView: View {
                 .presentationDetents([.medium, .large])
             }
         }
-        .onAppear(perform: pickDefaults)
+        .onAppear {
+            pickDefaults()
+            takeSeed()
+        }
+        .onChange(of: router.newThreadSeed) { takeSeed() }
+        .onChange(of: environment?.isLive == true && environment?.config != nil) { attachSharedFiles() }
         .onChange(of: projectId) { _, _ in resetForProject() }
         // Uploads belong to the Mac they went to.
         .onChange(of: environmentId) { old, _ in if old != nil { draft.reset() } }
@@ -329,6 +336,24 @@ struct NewThreadView: View {
             }?.id
         }
         resetForProject()
+    }
+
+    /// Shared text goes into the composer after what's there; files upload once the Mac is live.
+    private func takeSeed() {
+        guard let seed = router.newThreadSeed else { return }
+        router.newThreadSeed = nil
+        if !seed.text.isEmpty {
+            let current = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            text = current.isEmpty ? seed.text : current + "\n\n" + seed.text
+        }
+        sharedFiles += seed.files
+        attachSharedFiles()
+    }
+
+    private func attachSharedFiles() {
+        guard !sharedFiles.isEmpty, let environment, environment.isLive, environment.config != nil else { return }
+        draft.attach(shared: sharedFiles, environment: environment)
+        sharedFiles = []
     }
 
     private func resetForProject() {

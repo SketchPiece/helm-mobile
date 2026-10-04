@@ -1,0 +1,26 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "New ${applicationName} task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}, новая задача"
+          }
+        }
+      }
+    },
+    "Start a task in ${applicationName}": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}: новая задача"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

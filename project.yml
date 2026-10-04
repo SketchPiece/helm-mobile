@@ -26,6 +26,7 @@ targets:
       - path: Shared
     dependencies:
       - target: HelmWidgets
+      - target: HelmShare
       # Static library (scripts/build-libtailscale.sh rebuilds it; gitignored, 51 MB).
       - framework: Vendor/libtailscale/Libtailscale.xcframework
         embed: false
@@ -58,6 +59,29 @@ targets:
         PRODUCT_NAME: HelmWidgets
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: HelmWidgets/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+  # "Helm" in the share sheet: hands shared items to the app through the App Group.
+  HelmShare:
+    type: app-extension
+    platform: iOS
+    configFiles:
+      Debug: Base.xcconfig
+      Release: Base.xcconfig
+    sources:
+      - path: HelmShare
+      - path: Shared/ShareInbox.swift
+      - path: HelmMobile/UI/Theme.swift
+      - path: HelmMobile/Resources/Localizable.xcstrings
+      - path: HelmMobile/Resources/Fonts/IBMPlexSans-Regular.ttf
+      - path: HelmMobile/Resources/Fonts/IBMPlexSans-SemiBold.ttf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).sharing
+        PRODUCT_NAME: HelmShare
+        CODE_SIGN_ENTITLEMENTS: HelmShare/HelmShare.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: HelmShare/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
   HelmMobileTests:

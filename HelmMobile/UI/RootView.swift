@@ -8,6 +8,19 @@ final class Router {
     var showNewThread = false
     var showSettings = false
     var showPairing = false
+    /// What New Thread should start with (shared text and files), taken by it when it opens.
+    var newThreadSeed: SharedContent?
+
+    /// New Thread, prefilled with `seed` on top of what it already holds.
+    func startNewThread(with seed: SharedContent) {
+        showSettings = false
+        if !seed.isEmpty {
+            var merged = newThreadSeed ?? SharedContent()
+            merged.append(seed)
+            newThreadSeed = merged
+        }
+        showNewThread = true
+    }
 
     func open(_ ref: ThreadRef) {
         if path.last != ref { path = [ref] }
@@ -50,7 +63,9 @@ struct RootView: View {
         .task { await pairFromLaunchArguments() }
         // Live Activity taps and other links: helm://threads/<env>/<thread>.
         .onOpenURL { url in
-            if let target = HelmLink.thread(from: url) {
+            if url.scheme == ShareInbox.openURL.scheme, url.host() == ShareInbox.openURL.host() {
+                LaunchActions.shared.pickUpShares()
+            } else if let target = HelmLink.thread(from: url) {
                 router.open(ThreadRef(environmentId: target.environmentId, threadId: target.threadId))
             }
         }
@@ -62,6 +77,16 @@ struct RootView: View {
             router.open(ref)
             PushService.shared.pendingThread = nil
         }
+        // Quick action, Shortcuts and shares; held until a Mac is paired.
+        .onChange(of: LaunchActions.shared.pendingNewThread) { routeNewThread() }
+        .onChange(of: model.hasEnvironments) { routeNewThread() }
+        .onAppear(perform: routeNewThread)
+    }
+
+    private func routeNewThread() {
+        guard model.hasEnvironments, let seed = LaunchActions.shared.pendingNewThread else { return }
+        LaunchActions.shared.pendingNewThread = nil
+        router.startNewThread(with: seed)
     }
 
     /// `-pairURL <link>` (or HELM_PAIR_URL) pairs on launch; used by UI tests and simulator runs.

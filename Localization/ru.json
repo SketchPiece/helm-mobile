@@ -392,5 +392,15 @@
   "Worked for %@": "Работал %@",
   "%llds": "%lld с",
   "%lldm %llds": "%lld мин %lld с",
-  "%lldh %lldm": "%lld ч %lld мин"
+  "%lldh %lldm": "%lld ч %lld мин",
+  "Couldn't share to Helm": "Не получилось отправить в Штурвал",
+  "Helm can't save shared items in this build.": "Эта сборка Штурвала не может сохранять то, чем делятся.",
+  "New task": "Новая задача",
+  "Open Helm to start the thread.": "Открой Штурвал, чтобы начать тред.",
+  "Opens a new thread in Helm.": "Открывает новый тред в Штурвале.",
+  "Saved": "Сохранено",
+  "Saving for Helm…": "Сохраняю для Штурвала…",
+  "Start a Helm task": "Новая задача в Штурвале",
+  "Start a task in ${applicationName}": "${applicationName}: новая задача",
+  "There's nothing here Helm can use.": "Тут нет ничего, с чем Штурвал может работать."
 }
