@@ -61,6 +61,48 @@
    "w": 390,
    "h": 844,
    "title": "Tap Settled → its own screen, grouped by day"
+  },
+  "g-as-rows.html": {
+   "x": 0,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "G. Shaped like a thread row: tile, title, one line of detail"
+  },
+  "h-stacks.html": {
+   "x": 470,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "H. Rows with a stack of the projects inside"
+  },
+  "i-peek.html": {
+   "x": 940,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "I. Peek: the next thread to wake, dimmed, then \"5 more\""
+  },
+  "j-tiles.html": {
+   "x": 1410,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "J. Two tiles, like smart lists in Reminders"
+  },
+  "k-pile.html": {
+   "x": 1880,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "K. A pile: each shelf is the top of a stack"
+  },
+  "l-endmark.html": {
+   "x": 2350,
+   "y": 2248,
+   "w": 390,
+   "h": 844,
+   "title": "L. G with a quiet \"put away\" divider above"
   }
  },
  "order": [
@@ -71,33 +113,38 @@
   "c-pills.html",
   "d-footer.html",
   "e-snoozed-screen.html",
-  "f-settled-screen.html"
+  "f-settled-screen.html",
+  "g-as-rows.html",
+  "h-stacks.html",
+  "i-peek.html",
+  "j-tiles.html",
+  "k-pile.html",
+  "l-endmark.html"
  ],
  "notes": {
   "t": {
-   "x": 0,
-   "y": -240,
+   "x": -115,
+   "y": -301,
    "text": "Helm Mobile · Snoozed / Settled shelves on Home",
    "kind": "title1",
    "maxW": 1800
   },
   "r2": {
-   "x": 940,
-   "y": 904,
+   "x": 730,
+   "y": 1421,
    "text": "Where a tap leads (for A–D)",
    "kind": "title2",
    "maxW": 860
+  },
+  "r3": {
+   "x": 0,
+   "y": 2108,
+   "text": "Round 2 · shelves that belong to the list (always at the end of it)",
+   "kind": "title2",
+   "maxW": 2700
   }
  },
  "annotations": [
-  {
-   "id": "claude-1",
-   "x": 1880,
-   "y": 0,
-   "w": 320,
-   "color": "blue",
-   "text": "Recommended: B. Same card as A, but when the list is short it rests just above the bar; when the list is long it simply comes after the last thread (B, long list). Never pinned on top of content."
-  },
   {
    "id": "claude-2",
    "x": 1880,
@@ -105,6 +152,14 @@
    "w": 320,
    "color": "blue",
    "text": "Any variant that moves the shelves down needs tap → push a screen instead of expanding in place: 294 settled rows can't unfold below the fold. Snoozed screen sorts by wake time, Settled groups by day."
+  },
+  {
+   "id": "claude-3",
+   "x": 2820,
+   "y": 2248,
+   "w": 320,
+   "color": "blue",
+   "text": "Recommended: G. The shelves are built like thread rows (44pt tile, title, one line of detail, the same hairline), so they read as part of the list instead of a widget. H adds project stacks if you want a hint of what is inside. J is the most \"designed\" but a different language from the rest of Home."
   }
  ],
  "designSystems": []
