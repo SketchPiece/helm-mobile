@@ -13,9 +13,9 @@ xcodebuild -project HelmMobile.xcodeproj -scheme HelmMobile \
 ```
 
 - iOS 26+, iPhone only. The bundle id comes from `APP_BUNDLE_ID` in `Base.xcconfig`
-  (`com.sketchpiece.helmnative` today, which the wildcard profile signs without capabilities).
+  (`com.sketchpiece.helm`, the push-enabled App ID the old React Native app used).
 - Push and Live Activity updates need a push-enabled App ID: set `APP_BUNDLE_ID`, `HELM_PUSH_ENABLED = YES`
-  and `CODE_SIGN_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements`, and put the Volna core relay URL
+  and `HELM_APP_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements`, and put the Volna core relay URL
   and device token in `Local.xcconfig` (see the example). Without them the app runs with push off.
 - The built-in Tailscale node needs `Vendor/libtailscale/Libtailscale.xcframework` (gitignored, 51 MB):
   `scripts/build-libtailscale.sh` builds it (Go; it pins its toolchain).

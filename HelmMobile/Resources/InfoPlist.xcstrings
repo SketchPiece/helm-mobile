@@ -6,13 +6,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Helm 2"
+            "value": "Helm"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал 2"
+            "value": "Штурвал"
           }
         }
       }

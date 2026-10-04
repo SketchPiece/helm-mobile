@@ -6,10 +6,11 @@ HELM_PUSH_TOKEN =
 
 // The app's identity. Push and Live Activity updates need an App ID with the Push
 // Notifications capability; set APP_BUNDLE_ID to it and HELM_PUSH_ENABLED = YES together with
-// CODE_SIGN_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements.
-APP_BUNDLE_ID = com.sketchpiece.helmnative
-HELM_PUSH_ENABLED = NO
-HELM_APS_ENVIRONMENT = production
-HELM_APS_ENVIRONMENT[config=Debug] = sandbox
+// HELM_APP_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements (app target only).
+APP_BUNDLE_ID = com.sketchpiece.helm
+HELM_PUSH_ENABLED = YES
+HELM_APP_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements
+// Builds are signed with the development profile (Xcode and Sideshelf), so APNs is sandbox.
+HELM_APS_ENVIRONMENT = sandbox
 
 #include? "Local.xcconfig"

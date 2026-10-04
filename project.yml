@@ -37,6 +37,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         PRODUCT_NAME: HelmMobile
+        CODE_SIGN_ENTITLEMENTS: $(HELM_APP_ENTITLEMENTS)
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_FILE: HelmMobile/Info.plist
@@ -68,7 +69,7 @@ targets:
       - target: HelmMobile
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helm.tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/HelmMobile.app/HelmMobile"
         BUNDLE_LOADER: "$(TEST_HOST)"
@@ -81,7 +82,7 @@ targets:
       - target: HelmMobile
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helmnative.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helm.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: HelmMobile
 schemes:
