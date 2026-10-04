@@ -53,7 +53,8 @@ final class HelmIntegrationTests: XCTestCase {
         XCTAssertTrue(action.waitForExistence(timeout: 5))
         shot("40-quick-action")
         action.tap()
-        XCTAssertTrue(app.buttons["startThread"].waitForExistence(timeout: 20))
+        // Empty New Thread shows the microphone, not Start, so wait for the field.
+        XCTAssertTrue(app.descendants(matching: .any)["newThreadText"].waitForExistence(timeout: 20))
         dismissPrompts()
         shot("41-quick-action-new-thread")
     }

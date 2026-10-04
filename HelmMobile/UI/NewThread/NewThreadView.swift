@@ -24,6 +24,8 @@ struct NewThreadView: View {
     @State private var sending = false
     @State private var error: String?
     @State private var focused = false
+    @State private var voice = VoiceInput()
+    @State private var micDrag: CGFloat = 0
     /// "No project" was picked from the long press and its scratch folder is being set up on the Mac.
     @State private var preparingScratch = false
     /// Shared files waiting for the Mac to be connected before they upload.
@@ -176,45 +178,54 @@ struct NewThreadView: View {
     }
 
     private var workspaceChips: some View {
-        HStack(spacing: 8) {
-            if !isScratch {
-                Menu {
-                    Button {
-                        newWorktree = false
-                    } label: {
-                        Label("Current checkout", systemImage: newWorktree ? "" : "checkmark")
-                    }
-                    Button {
-                        newWorktree = true
-                    } label: {
-                        Label("New worktree", systemImage: newWorktree ? "checkmark" : "")
-                    }
-                } label: {
-                    chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
-                              symbol: newWorktree ? "arrow.triangle.branch" : "folder")
-                }
-            }
-            Button {
-                showSettings = true
-            } label: {
-                let mode = RuntimeMode(rawValue: runtimeMode) ?? .fullAccess
-                chipLabel(mode.title, symbol: mode.symbol)
-            }
-            .buttonStyle(.plain)
-            if newWorktree, !isScratch, repo?.isRepo == true {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
                 Button {
-                    showBranches = true
+                    showSettings = true
                 } label: {
-                    let base = baseBranch ?? "main"
-                    chipLabel(originAvailable && startFromOrigin ? "origin/\(base)" : base,
-                              symbol: "point.topleft.down.to.point.bottomright.curvepath", mono: true)
+                    modelChipLabel
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("baseBranch")
+                .accessibilityIdentifier("modelChip")
+                if !isScratch {
+                    Menu {
+                        Button {
+                            newWorktree = false
+                        } label: {
+                            Label("Current checkout", systemImage: newWorktree ? "" : "checkmark")
+                        }
+                        Button {
+                            newWorktree = true
+                        } label: {
+                            Label("New worktree", systemImage: newWorktree ? "checkmark" : "")
+                        }
+                    } label: {
+                        chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
+                                  symbol: newWorktree ? "arrow.triangle.branch" : "folder")
+                    }
+                }
+                Button {
+                    showSettings = true
+                } label: {
+                    let mode = RuntimeMode(rawValue: runtimeMode) ?? .fullAccess
+                    chipLabel(mode.title, symbol: mode.symbol)
+                }
+                .buttonStyle(.plain)
+                if newWorktree, !isScratch, repo?.isRepo == true {
+                    Button {
+                        showBranches = true
+                    } label: {
+                        let base = baseBranch ?? "main"
+                        chipLabel(originAvailable && startFromOrigin ? "origin/\(base)" : base,
+                                  symbol: "point.topleft.down.to.point.bottomright.curvepath", mono: true)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("baseBranch")
+                }
             }
-            Spacer()
+            .padding(.horizontal, 16)
         }
-        .padding(.horizontal, 16)
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .padding(.bottom, 8)
         .sheet(isPresented: $showBranches) {
             if let environment, let project {
@@ -229,6 +240,25 @@ struct NewThreadView: View {
     /// "Start from origin" only means something when the repository has an origin.
     private var originAvailable: Bool { repo?.hasPrimaryRemote == true }
 
+    private var modelChipLabel: some View {
+        HStack(spacing: 6) {
+            if let selection {
+                let provider = environment?.config?.provider(selection.instanceId)
+                ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 14)
+            }
+            Text(environment?.config?.modelLabel(for: selection) ?? String(localized: "Model"))
+                .font(Typography.footnote.weight(.medium)).lineLimit(1)
+            if interactionMode == "plan" {
+                Text("· Plan").font(Typography.footnote).foregroundStyle(Palette.textMuted)
+            }
+            Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+        }
+        .foregroundStyle(Palette.text)
+        .padding(.horizontal, 12)
+        .frame(height: 32)
+        .background(Palette.surface, in: .capsule)
+    }
+
     private func chipLabel(_ title: String, symbol: String, mono: Bool = false) -> some View {
         HStack(spacing: 6) {
             Image(systemName: symbol).font(.system(size: 13))
@@ -241,74 +271,115 @@ struct NewThreadView: View {
         .background(Palette.surface, in: .capsule)
     }
 
+    /// The same pill as in a thread: attach, type, and the microphone until there's something to send.
     private var composer: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
             }
-            ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
-                             minLines: 3, maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
-                             onSubmit: { _ in if canSend && !sending { launch() } }) { images in
-                guard let environment else { return }
-                images.forEach { draft.attach(image: $0, environment: environment) }
-            }
-                .onChange(of: text) { old, value in
-                    if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
-                        text = folded
-                        return
-                    }
-                    Drafts.save(value, for: NewThreadDraft.key)
-                    suggestions.update(text: value, scope: suggestionScope)
-                }
-            HStack(spacing: 6) {
-                AttachMenu(draft: draft, environment: environment, size: 34) {
-                    if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
-                        text += pasted
-                    }
-                    focused = true
-                }
-                Button {
-                    showSettings = true
-                } label: {
-                    HStack(spacing: 5) {
-                        if let selection {
-                            let provider = environment?.config?.provider(selection.instanceId)
-                            ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 16)
+            HStack(alignment: .bottom, spacing: 8) {
+                if voice.state != .idle {
+                    VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
+                } else {
+                    AttachMenu(draft: draft, environment: environment) {
+                        if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                            text += pasted
                         }
-                        Text(environment?.config?.modelLabel(for: selection) ?? String(localized: "Model"))
-                            .font(Typography.subheadline.weight(.medium))
-                        if interactionMode == "plan" {
-                            Text("· Plan").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
-                        }
-                        Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+                        focused = true
                     }
-                    .foregroundStyle(Palette.text)
-                    .padding(.horizontal, 8)
-                    .frame(height: 34)
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("modelChip")
-                Spacer()
-                Button(action: launch) {
-                    Group {
-                        if sending { ProgressView().tint(Palette.accentForeground) } else {
-                            Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold))
-                        }
+                    ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
+                                     maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
+                                     onSubmit: { _ in if canSend && !sending { launch() } }) { images in
+                        guard let environment else { return }
+                        images.forEach { draft.attach(image: $0, environment: environment) }
                     }
-                    .frame(width: 36, height: 36)
-                    .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
-                    .background(canSend ? Palette.accent : Palette.border, in: .circle)
+                        .padding(.vertical, 7)
+                        .onChange(of: text) { old, value in
+                            if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                                text = folded
+                                return
+                            }
+                            Drafts.save(value, for: NewThreadDraft.key)
+                            suggestions.update(text: value, scope: suggestionScope)
+                        }
                 }
-                .disabled(!canSend || sending)
-                .accessibilityLabel("Start thread")
-                .accessibilityIdentifier("startThread")
+                trailingButton
             }
         }
-        .padding(14)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
         .floatingSurface(cornerRadius: 24)
+        .animation(.easeOut(duration: 0.18), value: voice.state)
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
         .onAppear { focused = true }
+        .onDisappear { if voice.isRecording { voice.cancel() } }
+    }
+
+    /// Empty field: microphone (hold to dictate and start, tap for hands-free). With text: start.
+    @ViewBuilder
+    private var trailingButton: some View {
+        let holdRecording = voice.state == .recording(handsFree: false)
+        if (hasContent || sending) && !holdRecording {
+            Button(action: launch) {
+                Group {
+                    if sending { ProgressView().tint(Palette.accentForeground) } else {
+                        Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold))
+                    }
+                }
+                .frame(width: 36, height: 36)
+                .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
+                .background(canSend ? Palette.accent : Palette.border, in: .circle)
+            }
+            .disabled(!canSend || sending)
+            .accessibilityLabel("Start thread")
+            .accessibilityIdentifier("startThread")
+        } else if voice.state == .idle || holdRecording {
+            MicButton(
+                voice: voice,
+                onHoldStart: { Task { await voice.start(handsFree: false) } },
+                onHoldEnd: { cancelled in
+                    if cancelled { voice.cancel() } else { finishDictation(send: true) }
+                },
+                onTap: {
+                    focused = false
+                    Task { await voice.start(handsFree: true) }
+                },
+                dragOffset: $micDrag
+            )
+        }
+    }
+
+    private func finishDictation(send: Bool) {
+        guard let environment else { return }
+        Task {
+            guard let dictated = await voice.finish(environment: environment, threadId: nil) else { return }
+            insert(dictated, thenSend: send)
+        }
+    }
+
+    private func retryDictation() {
+        guard let environment else { return }
+        Task {
+            guard let dictated = await voice.retry(environment: environment, threadId: nil) else { return }
+            insert(dictated, thenSend: false)
+        }
+    }
+
+    private func insert(_ dictated: String, thenSend: Bool) {
+        let current = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        text = current.isEmpty ? dictated : "\(current) \(dictated)"
+        if thenSend && canSend && !sending {
+            launch()
+        } else {
+            focused = true
+        }
+    }
+
+    /// Something typed or attached, so the button is Start rather than the microphone.
+    private var hasContent: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !draft.attachments.isEmpty
     }
 
     private var canSend: Bool {
