@@ -1554,6 +1554,16 @@
         }
       }
     },
+    "Open the agent's thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть тред агента"
+          }
+        }
+      }
+    },
     "Options": {
       "localizations": {
         "ru": {

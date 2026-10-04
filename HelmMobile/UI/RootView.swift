@@ -12,6 +12,11 @@ final class Router {
     func open(_ ref: ThreadRef) {
         if path.last != ref { path = [ref] }
     }
+
+    /// Opens a related thread (a subagent's) on top of the current one, so Back returns.
+    func push(_ ref: ThreadRef) {
+        if path.last != ref { path.append(ref) }
+    }
 }
 
 struct RootView: View {

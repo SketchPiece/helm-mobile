@@ -65,6 +65,7 @@ private struct ThreadContent: View {
             .padding(.top, 12)
             .padding(.bottom, 8)
         }
+        .environment(\.threadEnvironmentId, environment.id)
         .scrollPosition($scroll)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .scrollDismissesKeyboard(.interactively)

@@ -135,6 +135,8 @@ struct WorkGroupView: View {
 struct WorkStepRow: View {
     let item: TurnItem
     @State private var showDetail = false
+    @Environment(Router.self) private var router
+    @Environment(\.threadEnvironmentId) private var environmentId
 
     var body: some View {
         let summary = Timeline.summary(of: item)
@@ -168,6 +170,17 @@ struct WorkStepRow: View {
                         .foregroundStyle(Palette.textMuted)
                         .textSelection(.enabled)
                         .padding(.leading, 24)
+                }
+                if showDetail, item.type == "subagent", let child = item.raw["childThreadId"]?.string, let environmentId {
+                    Button {
+                        router.push(ThreadRef(environmentId: environmentId, threadId: child))
+                    } label: {
+                        Label("Open the agent's thread", systemImage: "arrow.up.right")
+                            .font(Typography.footnote.weight(.medium))
+                            .foregroundStyle(Palette.accentText)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 24)
                 }
             }
             .padding(.vertical, 5)
@@ -425,4 +438,9 @@ enum AttachmentLoader {
         guard let (data, _) = try? await HelmHTTP.session.data(from: environment.http.url(relative)) else { return nil }
         return await Task.detached { UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 300, height: 300)) }.value
     }
+}
+
+extension EnvironmentValues {
+    /// The environment of the thread being shown, for rows that link to related threads.
+    @Entry var threadEnvironmentId: String?
 }
