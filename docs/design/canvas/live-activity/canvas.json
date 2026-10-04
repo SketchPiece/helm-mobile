@@ -1,0 +1,55 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Live Activity redesign",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "Now"
+  },
+  "a-same-card.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 900,
+   "title": "A. Same card, glyphs and fixed slots"
+  },
+  "b-one-focus.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 1280,
+   "h": 900,
+   "title": "B. One thing at a time"
+  },
+  "c-equal-rows.html": {
+   "x": 1360,
+   "y": 1060,
+   "w": 1280,
+   "h": 900,
+   "title": "C. Equal rows"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-same-card.html",
+  "b-one-focus.html",
+  "c-equal-rows.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Live Activity redesign",
+   "kind": "title1",
+   "maxW": 2640
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}

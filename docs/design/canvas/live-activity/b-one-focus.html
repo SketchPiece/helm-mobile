@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><title>B. One thing at a time</title>
+<meta name="board" content="1280x900"><link rel="stylesheet" href="_shared.css"></head>
+<body><svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="mk" viewBox="0 0 67 26"><path d="M0 13Q4 3 8 13Q12 23 16 13Q20 3 24 13Q28 23 32 13L32 0L44 0L44 26L56 26L56 13L67 13" fill="none" stroke="#E8A33D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.4l3.3 3.3L17.2 8.8" fill="none" style="stroke:var(--knock,#161310)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="xmark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M8.3 8.3l7.4 7.4M15.7 8.3l-7.4 7.4" fill="none" style="stroke:var(--knock,#161310)" stroke-width="2.5" stroke-linecap="round"/></symbol>
+<symbol id="hand" viewBox="0 0 24 24"><g fill="currentColor"><rect x="7.2" y="4" width="2.6" height="11" rx="1.3"/><rect x="10.2" y="2" width="2.6" height="12" rx="1.3"/><rect x="13.2" y="3" width="2.6" height="12" rx="1.3"/><rect x="16.2" y="5.5" width="2.6" height="10" rx="1.3"/><rect x="7.2" y="10" width="11.6" height="12" rx="5"/><rect x="3" y="11.5" width="2.6" height="8" rx="1.3" transform="rotate(-35 4.3 15.5)"/></g></symbol>
+<symbol id="ask" viewBox="0 0 24 24"><path d="M4 4.5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-9l-5 4v-4H4a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2z" fill="currentColor"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5" fill="none" style="stroke:var(--knock,#161310)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.6" r="1.1" style="fill:var(--knock,#161310)"/></symbol>
+<symbol id="ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="2.6"/><path d="M12 3a9 9 0 0 1 9 9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5.2l3.2 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="moon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="2 4.2"/></symbol>
+</defs></svg><div class="board"><div class="head"><h1>B. One thing at a time</h1><p>The card is about the one thread that needs you or has been running longest. The rest is a single summary line. The Dynamic Island shows a glyph and a timer, the way Apple's Timer does.</p></div>
+<div class="grid">
+  <div class="col"><span class="cap">Lock screen · needs you</span><div class="wall"><div class="la">
+  <div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--approval) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-approval" style="width:24.200000000000003px;height:24.200000000000003px"><use href="#hand"/></svg></div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:baseline;gap:6px;font-size:13px"><span class="t-approval" style="font-weight:600">Needs approval</span><span class="t-dim">· Volna</span><span class="sp"></span><span class="mono t-dim" style="font-size:13px;width:44px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">2:14</span></div>
+      <div class="htitle" style="margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Set up Gmail API access for the inbox agent</div>
+    </div></div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:14px;align-items:center;font-size:13px">
+    <span style="display:inline-flex;gap:4px;align-items:center" class="t-working"><svg class="ico s14 t-working"><use href="#ring"/></svg><span style="font-weight:600">2</span></span><span class="t-dim" style="margin-left:-8px">working</span>
+    <span style="display:inline-flex;gap:4px;align-items:center" class="t-done"><svg class="ico s14 t-done"><use href="#check"/></svg><span style="font-weight:600">1</span></span><span class="t-dim" style="margin-left:-8px">done</span>
+    <span class="sp"></span><div class="mark" style="width:16px;height:16px;border-radius:3.84px"><svg viewBox="0 0 67 26"><use href="#mk"/></svg></div></div>
+</div></div>
+    <span class="cap" style="margin-top:10px">Always On</span><div class="wall aod"><div class="la" style="filter:saturate(.75) brightness(.85)">
+  <div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--approval) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-approval" style="width:24.200000000000003px;height:24.200000000000003px"><use href="#hand"/></svg></div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:baseline;gap:6px;font-size:13px"><span class="t-approval" style="font-weight:600">Needs approval</span><span class="t-dim">· Volna</span><span class="sp"></span><span class="mono t-dim" style="font-size:13px;width:44px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">2:<span style="opacity:.35">––</span></span></div>
+      <div class="htitle" style="margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Set up Gmail API access for the inbox agent</div>
+    </div></div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:14px;align-items:center;font-size:13px">
+    <span style="display:inline-flex;gap:4px;align-items:center" class="t-working"><svg class="ico s14 t-working"><use href="#ring"/></svg><span style="font-weight:600">2</span></span><span class="t-dim" style="margin-left:-8px">working</span>
+    <span style="display:inline-flex;gap:4px;align-items:center" class="t-done"><svg class="ico s14 t-done"><use href="#check"/></svg><span style="font-weight:600">1</span></span><span class="t-dim" style="margin-left:-8px">done</span>
+    <span class="sp"></span><div class="mark" style="width:16px;height:16px;border-radius:3.84px"><svg viewBox="0 0 67 26"><use href="#mk"/></svg></div></div>
+</div></div></div>
+  <div class="col"><span class="cap">Just working</span><div class="wall"><div class="la">
+  <div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--working) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-working" style="width:24.200000000000003px;height:24.200000000000003px"><use href="#ring"/></svg></div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:baseline;gap:6px;font-size:13px"><span class="t-working" style="font-weight:600">Working</span><span class="t-dim">· t3code</span><span class="sp"></span><span class="mono t-dim" style="font-size:13px;width:44px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">12:41</span></div>
+      <div class="htitle" style="margin-top:2px">Fix the login redirect</div></div></div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:14px;align-items:center;font-size:13px">
+    <span class="t-dim">+1 more working</span><span class="sp"></span><div class="mark" style="width:16px;height:16px;border-radius:3.84px"><svg viewBox="0 0 67 26"><use href="#mk"/></svg></div></div>
+</div></div>
+    <span class="cap" style="margin-top:10px">Done / failed</span><div class="wall" style="display:flex;flex-direction:column;gap:8px"><div class="la"><div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--done) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-done" style="width:24.200000000000003px;height:24.200000000000003px"><use href="#check"/></svg></div>
+    <div style="flex:1;min-width:0"><div style="font-size:13px"><span class="t-done" style="font-weight:600">Done</span><span class="t-dim"> · t3code</span></div>
+    <div class="htitle" style="margin-top:2px">Fix the login redirect</div></div><div class="mark" style="width:16px;height:16px;border-radius:3.84px"><svg viewBox="0 0 67 26"><use href="#mk"/></svg></div></div></div><div class="la"><div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--failed) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-failed" style="width:24.200000000000003px;height:24.200000000000003px"><use href="#xmark"/></svg></div>
+    <div style="flex:1;min-width:0"><div style="font-size:13px"><span class="t-failed" style="font-weight:600">Failed</span><span class="t-dim"> · Rate limited</span></div>
+    <div class="htitle" style="margin-top:2px">Fix the login redirect</div></div><div class="mark" style="width:16px;height:16px;border-radius:3.84px"><svg viewBox="0 0 67 26"><use href="#mk"/></svg></div></div></div></div></div>
+  <div class="note" style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+<div><em>One thing at a time.</em> The card shows the most important thread big: a glyph in a tinted circle, the state and how long it has been in it, and the title. The rest is one line at the bottom: «2 working · 1 done».</div>
+<div><em>Always fits in 160 pt</em> however many threads there are. No list to cut off (4, 11).</div>
+<div><em>The Dynamic Island goes the way Apple's Timer does:</em> the state glyph on the left (instead of the logo) and the timer on the right in a fixed slot. The island never changes width while it ticks (7, 8). When everything is done it's a check with nothing on the right.</div>
+<div><em>The cost:</em> without opening the island you can't see the names of the other threads. If you usually run 3–4 agents at once, that's a loss.</div>
+<div>The «Open» button in the expanded island is optional; tapping the island opens the thread anyway.</div>
+</div>
+</div>
+<div class="grid">
+  <div class="col"><span class="cap">Dynamic Island · compact: glyph + timer / minimal</span><div class="col" style="gap:10px;--knock:#000">
+  <div class="dirow"><div class="island" style="width:250px;--knock:#000"><svg class="ico s20 t-approval"><use href="#hand"/></svg><span class="cam"></span><span class="mono t-approval" style="font-size:12px;width:40px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">2:14</span></div><span class="cap">needs you</span></div>
+  <div class="dirow"><div class="island" style="width:250px;--knock:#000"><svg class="ico s20 t-working"><use href="#ring"/></svg><span class="cam"></span><span class="mono t-working" style="font-size:12px;width:40px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">12:41</span></div><span class="cap">working</span></div>
+  <div class="dirow"><div class="island" style="width:200px;--knock:#000"><svg class="ico s20 t-done"><use href="#check"/></svg><span class="cam"></span><span></span></div><span class="cap">done (narrow)</span></div>
+  <div class="dirow"><div class="minimal"><svg class="ico s20 t-approval"><use href="#hand"/></svg></div><span class="cap">minimal</span></div>
+</div></div>
+  <div class="col"><span class="cap">expanded</span><div class="exp" style="--knock:#000">
+  <div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:50%;background:color-mix(in srgb,var(--approval) 18%,transparent);display:grid;place-items:center;flex-shrink:0;--knock:#2a2318"><svg class="ico t-approval" style="width:22.0px;height:22.0px"><use href="#hand"/></svg></div>
+    <div style="flex:1;min-width:0"><div style="display:flex;gap:6px;font-size:13px"><span class="t-approval" style="font-weight:600">Needs approval</span><span class="t-dim">· Volna</span><span class="sp"></span><span class="mono t-dim" style="font-size:12px;width:40px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums">2:14</span></div>
+    <div class="htitle" style="font-size:15px;margin-top:2px">Set up Gmail API access</div></div></div>
+  <div style="margin-top:12px;display:flex;gap:8px">
+    <div style="flex:1;height:36px;border-radius:18px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:14px;font-weight:600">Open</div></div>
+  <div style="margin-top:10px;display:flex;gap:14px;font-size:12px"><span style="display:inline-flex;gap:4px;align-items:center" class="t-working"><svg class="ico s14 t-working"><use href="#ring"/></svg><span style="font-weight:600">2</span></span><span class="t-dim" style="margin-left:-8px">working</span><span style="display:inline-flex;gap:4px;align-items:center" class="t-done"><svg class="ico s14 t-done"><use href="#check"/></svg><span style="font-weight:600">1</span></span><span class="t-dim" style="margin-left:-8px">done</span></div>
+</div></div>
+</div></div></body></html>
