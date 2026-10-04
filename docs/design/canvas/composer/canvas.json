@@ -40,6 +40,13 @@
    "w": 1720,
    "h": 900,
    "title": "Glass: how it reacts"
+  },
+  "e-morph.html": {
+   "x": 1800,
+   "y": 2000,
+   "w": 1720,
+   "h": 900,
+   "title": "E. Collapsed pill that opens into B"
   }
  },
  "order": [
@@ -47,7 +54,8 @@
   "a-slot.html",
   "b-card.html",
   "c-split.html",
-  "d-glass.html"
+  "d-glass.html",
+  "e-morph.html"
  ],
  "notes": {
   "t": {
@@ -61,11 +69,11 @@
  "annotations": [
   {
    "id": "claude-1",
-   "x": 1800,
+   "x": 3600,
    "y": 2000,
    "w": 420,
    "color": "blue",
-   "text": "My pick: B. It also fixes the jump when the chips slide in on focus, and the model is visible before you type, like in ChatGPT. The glass (board on the left) applies to whichever you pick."
+   "text": "My pick now: E. Collapsed one-row pill at rest (takes the least of the timeline), opens into the B card on focus in one spring. Mic behaviour is the same in A, B and E."
   }
  ],
  "designSystems": []
