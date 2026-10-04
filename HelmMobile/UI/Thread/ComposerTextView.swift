@@ -19,7 +19,10 @@ struct ComposerTextView: UIViewRepresentable {
         view.backgroundColor = .clear
         view.textContainerInset = .zero
         view.textContainer.lineFragmentPadding = 0
-        view.isScrollEnabled = false
+        // Always scrollable: toggling it as the text crosses the line limit made the field jump.
+        // While the text fits, the frame is as tall as the text, so there is nothing to scroll.
+        view.isScrollEnabled = true
+        view.showsVerticalScrollIndicator = false
         view.adjustsFontForContentSizeCategory = true
         view.font = Self.font
         view.textColor = UIColor(Palette.text)
@@ -57,10 +60,6 @@ struct ComposerTextView: UIViewRepresentable {
         let line = view.font?.lineHeight ?? 22
         let fitting = view.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
         let height = min(max(fitting, line * CGFloat(minLines)), line * CGFloat(maxLines))
-        let scrolls = fitting > line * CGFloat(maxLines) + 1
-        if view.isScrollEnabled != scrolls {
-            DispatchQueue.main.async { view.isScrollEnabled = scrolls }
-        }
         return CGSize(width: width, height: ceil(height))
     }
 
@@ -78,6 +77,10 @@ struct ComposerTextView: UIViewRepresentable {
         func textViewDidChange(_ textView: UITextView) {
             (textView as? PastingTextView)?.updatePlaceholder()
             parent.text = textView.text
+            // Keep the caret in view once the text outgrows the field, after the resize lands.
+            DispatchQueue.main.async {
+                textView.scrollRangeToVisible(textView.selectedRange)
+            }
         }
 
         func textViewDidBeginEditing(_ textView: UITextView) {

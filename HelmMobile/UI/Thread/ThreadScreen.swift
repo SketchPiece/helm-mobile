@@ -23,9 +23,15 @@ private struct ThreadContent: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
 
-    @State private var scroll = ScrollPosition(edge: .bottom)
-    @State private var isAtBottom = true
-    @State private var pinnedForKeyboard = false
+    /// Programmatic scrolling goes through the reader's proxy: unlike ScrollPosition it
+    /// materialises the target row of the lazy stack and lands on it reliably.
+    @State private var scrollProxy: ScrollViewProxy?
+    /// The end of the conversation is on screen.
+    @State private var bottomVisible = true
+    /// The view sticks to the newest message: new content, the keyboard and a growing composer
+    /// keep it at the bottom. Only the user's own scrolling turns this off (and shows "↓").
+    @State private var followsBottom = true
+    @State private var scrollPhase = ScrollPhase.idle
     @State private var expandedWork: Set<String> = []
     @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
@@ -52,8 +58,11 @@ private struct ThreadContent: View {
             isWorking: projection?.isWorking ?? false,
             expanded: expandedRuns
         )
+        ScrollViewReader { proxy in
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            // A plain stack: a lazy one guesses the height of rows it hasn't drawn, so "scroll to
+            // the newest message" stopped short or left blank rows. Folded turns keep it small.
+            VStack(alignment: .leading, spacing: 18) {
                 ForEach(blocks) { block in
                     blockView(block, projection: projection)
                         .id(block.id)
@@ -70,29 +79,46 @@ private struct ThreadContent: View {
                 Color.clear
                     .frame(height: 1)
                     .id(Self.bottomId)
-                    .onScrollVisibilityChange(threshold: 0.01) { visible in isAtBottom = visible }
+                    .onScrollVisibilityChange(threshold: 0.01) { visible in
+                        bottomVisible = visible
+                        if visible { followsBottom = true }
+                    }
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
-            .scrollTargetLayout()
+        }
+        .onAppear { scrollProxy = proxy }
         }
         .environment(\.threadEnvironmentId, environment.id)
-        .scrollPosition($scroll)
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .scrollDismissesKeyboard(.interactively)
         // Tapping the conversation puts the keyboard away, also when it is too short to scroll.
         .simultaneousGesture(TapGesture().onEnded {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         })
+        // Only the user's own scrolling decides whether we stop following the bottom: when their
+        // drag (and its deceleration) ends away from the end, "↓" appears.
+        .onScrollPhaseChange { old, phase in
+            scrollPhase = phase
+            if phase == .idle, old == .interacting || old == .decelerating {
+                followsBottom = bottomVisible
+            }
+        }
         .onChange(of: contentSignature(blocks)) {
-            if isAtBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
+            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
         }
         // Above the composer (the overlay keeps to the safe area the composer inset leaves).
         .overlay(alignment: .bottomTrailing) {
-            if !isAtBottom, projection != nil {
+            if !followsBottom, projection != nil {
                 Button {
+                    followsBottom = true
                     withAnimation { scrollToBottom() }
+                    // Lazy rows settle their real heights on the way; land precisely after.
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(250))
+                        scrollToBottom()
+                    }
                 } label: {
                     Image(systemName: "arrow.down")
                         .font(.system(size: 15, weight: .semibold))
@@ -100,6 +126,7 @@ private struct ThreadContent: View {
                 }
                 .buttonStyle(.glass)
                 .buttonBorderShape(.circle)
+                .accessibilityIdentifier("scrollToBottom")
                 .padding(.trailing, 14)
                 .padding(.bottom, 10)
                 .transition(.opacity)
@@ -153,11 +180,8 @@ private struct ThreadContent: View {
             }
         }
         // Keep the latest message in view when the keyboard (or the composer) grows.
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-            pinnedForKeyboard = isAtBottom
-        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
-            if pinnedForKeyboard { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
+            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
         }
         .onAppear {
             session.markVisited()
@@ -263,7 +287,7 @@ private struct ThreadContent: View {
     private static let bottomId = "timeline-bottom"
 
     private func scrollToBottom() {
-        scroll.scrollTo(id: Self.bottomId, anchor: .bottom)
+        scrollProxy?.scrollTo(Self.bottomId, anchor: .bottom)
     }
 
     // MARK: Bottom
@@ -292,8 +316,12 @@ private struct ThreadContent: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 6)
+        // A taller composer (more lines, chips, cards) must not hide the newest message.
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _ in
+            if followsBottom { scrollToBottom() }
+        }
         .animation(.easeOut(duration: 0.2), value: projection?.pendingRequests.count)
-        .animation(.easeOut(duration: 0.2), value: isAtBottom)
+        .animation(.easeOut(duration: 0.2), value: followsBottom)
     }
 
     // MARK: Toolbar

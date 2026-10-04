@@ -307,4 +307,44 @@ final class HelmTourTests: XCTestCase {
         sleep(3)
         shot("92-pasted")
     }
+
+    /// Scroll-to-bottom button and a long draft in the thread named by HELM_THREAD. Opt in with HELM_SCROLL=1.
+    func testScrollButtonAndLongDraft() throws {
+        guard ProcessInfo.processInfo.environment["HELM_SCROLL"] != nil,
+              let title = ProcessInfo.processInfo.environment["HELM_THREAD"] else { throw XCTSkip("HELM_SCROLL not set") }
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        let row = app.buttons.matching(NSPredicate(format: "identifier == 'threadRow' AND label CONTAINS[c] %@", title)).firstMatch
+        if !row.exists { app.buttons["shelf-Snoozed"].firstMatch.tap(); sleep(1) }
+        row.tap()
+        sleep(3)
+        let down = app.buttons["scrollToBottom"]
+        XCTAssertFalse(down.exists, "button shown right after opening")
+        shot("a-opened")
+        let composer = app.textViews["composer"]
+        composer.tap()
+        sleep(2)
+        shot("a0-keyboard")
+        XCTAssertFalse(down.exists, "button shown just because the keyboard opened")
+        composer.typeText(Array(repeating: "Line of a long draft message to see the field grow.", count: 12).joined(separator: "\n"))
+        sleep(1)
+        shot("a1-long-draft")
+        XCTAssertFalse(down.exists, "button shown because the composer grew")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        sleep(1)
+        app.swipeDown(velocity: .fast)
+        app.swipeDown(velocity: .fast)
+        sleep(1)
+        shot("a2-scrolled-up")
+        XCTAssertTrue(down.waitForExistence(timeout: 3), "no button after scrolling up")
+        down.tap()
+        sleep(2)
+        shot("a3-after-tap")
+        XCTAssertFalse(down.exists, "button still there after going to the bottom")
+        app.swipeUp(velocity: .fast)
+        app.swipeUp(velocity: .fast)
+        app.swipeUp(velocity: .fast)
+        sleep(2)
+        shot("a4-dragged-to-end")
+    }
 }
