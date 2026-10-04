@@ -109,7 +109,7 @@ enum HelmLink {
     }
 }
 
-/// Lamp colours per phase (Helm Live Activity, variant A).
+/// Glyph colours per phase (Helm Live Activity).
 enum PhaseTint {
     static func color(_ phase: String, dark: Bool) -> Color {
         let hex: UInt32 = switch phase {
@@ -154,6 +154,7 @@ struct CardModel {
     var working: Int
     var allDone: Bool
     var failed: Bool
+    var stale: Bool
     var link: URL?
 
     init(_ state: LiveActivityAttributes.ContentState, stale: Bool) {
@@ -187,24 +188,18 @@ struct CardModel {
         working = rows.filter { priority($0.phase) == 2 }.count
         allDone = (aggregate?.activeCount ?? 0) == 0
         failed = rows.contains { $0.phase == "failed" }
+        self.stale = stale && rows.contains { $0.phase == "stale" }
         link = (hero ?? ordered.first).flatMap { HelmLink.url(forPath: $0.deepLink) }
     }
 
     var heroPhase: String {
-        hero?.phase ?? (allDone ? (failed ? "failed" : "completed") : "running")
+        hero?.phase ?? (allDone ? (failed ? "failed" : "completed") : stale ? "stale" : "running")
     }
 
-    /// Short enough for the Dynamic Island's trailing slot.
-    var compactLabel: String {
-        if let hero {
-            switch hero.phase {
-            case "waiting_for_approval": return String(localized: "Approval")
-            case "waiting_for_input": return String(localized: "Question")
-            default: return CardModel.label(hero.phase)
-            }
-        }
-        if allDone { return failed ? String(localized: "Failed") : String(localized: "Done") }
-        return "\(working)"
+    /// The phase whose glyph stands for everyone waiting: a question if any thread asks one.
+    var waitingPhase: String {
+        ordered.contains { $0.phase == "waiting_for_input" } && !ordered.contains { $0.phase == "waiting_for_approval" }
+            ? "waiting_for_input" : "waiting_for_approval"
     }
 
     static func label(_ phase: String) -> String {

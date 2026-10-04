@@ -6,6 +6,7 @@ extension ThreadPhase {
         case .approval: String(localized: "Approval")
         case .input: String(localized: "Question")
         case .working: String(localized: "Working")
+        case .waiting: String(localized: "Waiting")
         case .failed: String(localized: "Failed")
         case .limited: String(localized: "Limit")
         case .done: String(localized: "Done")
@@ -18,6 +19,7 @@ extension ThreadPhase {
         case .approval: Palette.accentText
         case .input: Palette.question
         case .working: Palette.working
+        case .waiting: Palette.textMuted
         case .failed: Palette.errorText
         case .limited: Palette.accentText
         case .done: Palette.done
@@ -130,6 +132,9 @@ struct ThreadRow: View {
     private func detailText(thread: ThreadSummary, phase: ThreadPhase) -> (text: String, mono: Bool, isError: Bool)? {
         if phase == .failed || phase == .limited, let error = thread.lastError {
             return (error, false, true)
+        }
+        if phase == .waiting, let title = thread.backgroundTasks.title {
+            return (title, false, false)
         }
         if let text = thread.latestMessageText?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
             return (text.replacingOccurrences(of: "\n", with: " "), false, false)

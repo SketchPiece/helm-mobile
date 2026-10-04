@@ -50,5 +50,17 @@
   "All %lld models": {
     "one": "All %lld model",
     "other": "All %lld models"
+  },
+  "%lld subagents": {
+    "one": "%lld subagent",
+    "other": "%lld subagents"
+  },
+  "%lld monitors": {
+    "one": "%lld monitor",
+    "other": "%lld monitors"
+  },
+  "%lld background tasks": {
+    "one": "%lld background task",
+    "other": "%lld background tasks"
   }
 }

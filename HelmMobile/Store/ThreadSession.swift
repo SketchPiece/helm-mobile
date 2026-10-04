@@ -307,6 +307,16 @@ final class ThreadSession {
         ])
     }
 
+    /// Stops what the thread left running after its turn (subagents, commands, monitors). The
+    /// server accepts an interrupt of the settled latest run while its provider still has such work.
+    func stopBackgroundWork(latestRunId: String?) async throws {
+        let latest = projection?.runs.values.max { $0.ordinal < $1.ordinal }?.id ?? latestRunId
+        guard let environment, let runId = latest else { return }
+        try await environment.dispatch("run.interrupt", [
+            "threadId": .string(threadId), "runId": .string(runId), "holdQueue": true,
+        ])
+    }
+
     func respond(to request: PendingRequest, decision: String) async throws {
         try await environment?.dispatch("runtime-request.respond", [
             "threadId": .string(threadId), "requestId": .string(request.id), "decision": .string(decision),

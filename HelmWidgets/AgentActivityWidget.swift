@@ -10,12 +10,16 @@ struct HelmWidgetsBundle: WidgetBundle {
     }
 }
 
-/// Helm's Live Activity, variant A: whoever waits on you leads; other work is a row each.
+/// The lock screen card's colour; the timer's Always On mask paints over it.
+private let cardBackground = Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x10 / 255)
+
+/// Helm's Live Activity: whoever waits on you leads; other work is a row each. States are glyphs,
+/// timers sit in fixed slots, and the lock screen card stays under iOS's 160 pt.
 struct AgentActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LiveActivityAttributes.self) { context in
             AgentActivityBanner(model: CardModel(context.state, stale: context.isStale))
-                .activityBackgroundTint(Color(red: 0x16 / 255, green: 0x13 / 255, blue: 0x10 / 255))
+                .activityBackgroundTint(cardBackground)
                 .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             let model = CardModel(context.state, stale: context.isStale)
@@ -27,27 +31,17 @@ struct AgentActivityWidget: Widget {
                     Counts(model: model).padding(.trailing, 6).padding(.vertical, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 7) {
-                        if let hero = model.hero { HeroBlock(row: hero, titleSize: 15) }
-                        ForEach(Array(model.rest.prefix(model.hero == nil ? 3 : 2).enumerated()), id: \.offset) { _, row in
-                            RowView(row: row)
-                        }
-                    }
-                    .padding(.vertical, 2)
-                    .padding(.horizontal, 8)
-                    .widgetURL(model.link)
+                    CardBody(model: model, titleSize: 15, timerSize: 12, mask: .black)
+                        .padding(.vertical, 2)
+                        .padding(.horizontal, 8)
+                        .widgetURL(model.link)
                 }
             } compactLeading: {
                 Mark(size: 20)
             } compactTrailing: {
-                HStack(spacing: 5) {
-                    Lamp(phase: model.heroPhase)
-                    Text(model.compactLabel)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(PhaseTint.color(model.heroPhase, dark: true))
-                }
+                Counts(model: model, compact: true)
             } minimal: {
-                Lamp(phase: model.heroPhase, size: 11)
+                PhaseGlyph(phase: model.heroPhase, size: 18)
             }
             .widgetURL(model.link)
         }
@@ -58,34 +52,117 @@ struct AgentActivityBanner: View {
     let model: CardModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Mark(size: 18)
                 Text("Helm").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
                 Spacer(minLength: 6)
                 Counts(model: model)
             }
-            if let hero = model.hero { HeroBlock(row: hero, titleSize: 17) }
-            ForEach(Array(model.rest.prefix(model.hero == nil ? 4 : 3).enumerated()), id: \.offset) { _, row in
-                RowView(row: row)
-            }
+            CardBody(model: model, titleSize: 17, timerSize: 13, mask: cardBackground)
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .widgetURL(model.link)
     }
 }
 
-struct Lamp: View {
+/// The hero and as many rows as fit; "+N more" for the rest.
+struct CardBody: View {
+    let model: CardModel
+    let titleSize: CGFloat
+    let timerSize: CGFloat
+    let mask: Color
+
+    var body: some View {
+        let shown = Array(model.rest.prefix(model.hero == nil ? 3 : 2))
+        let hidden = model.rest.count - shown.count
+        VStack(alignment: .leading, spacing: 8) {
+            if let hero = model.hero {
+                HeroBlock(row: hero, titleSize: titleSize, timerSize: timerSize, lines: shown.isEmpty ? 2 : 1, mask: mask)
+            }
+            if !shown.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(shown.enumerated()), id: \.offset) { _, row in
+                        RowView(row: row, showsProject: model.allDone, timerSize: timerSize, mask: mask)
+                    }
+                }
+            }
+            if hidden > 0 {
+                Text("+\(hidden) more")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, -4)
+            }
+        }
+    }
+}
+
+/// A state as a glyph: a hand for approval, a bubble for a question, a check or a cross when
+/// finished, a ring while working.
+struct PhaseGlyph: View {
     let phase: String
-    var size: CGFloat = 7
+    var size: CGFloat = 14
+
+    var body: some View {
+        let tint = phase == "stale" ? Color.white.opacity(0.45) : PhaseTint.color(phase, dark: true)
+        Group {
+            switch phase {
+            case "waiting_for_approval": symbol("hand.raised.fill")
+            case "waiting_for_input": symbol("questionmark.bubble.fill")
+            case "completed": symbol("checkmark.circle.fill")
+            case "failed": symbol("xmark.circle.fill")
+            default: Ring(lineWidth: max(1.6, size * 0.14)).padding(size * 0.1)
+            }
+        }
+        .foregroundStyle(tint)
+        .frame(width: size, height: size)
+    }
+
+    private func symbol(_ name: String) -> some View {
+        Image(systemName: name).font(.system(size: size * 0.92, weight: .semibold))
+    }
+}
+
+/// A quarter arc over a faint circle: work in progress (Live Activities don't animate it).
+struct Ring: View {
+    let lineWidth: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(.foreground.opacity(0.3), lineWidth: lineWidth)
+            Circle().trim(from: 0, to: 0.28)
+                .stroke(.foreground, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+    }
+}
+
+/// Time since a row entered its phase, right-aligned in a slot that fits "1:02:05". In Always On
+/// the seconds turn into "––" in place, so nothing around the timer moves.
+struct TimerSlot: View {
+    let since: Date
+    var size: CGFloat = 13
+    var tint: Color = .white.opacity(0.6)
+    /// The colour behind the slot: the dashes cover the seconds with it.
+    let mask: Color
     @Environment(\.isLuminanceReduced) private var dimmed
 
     var body: some View {
-        let tint = phase == "stale" || dimmed ? Color.secondary : PhaseTint.color(phase, dark: true)
-        Circle()
-            .fill(tint)
-            .frame(width: size, height: size)
-            .shadow(color: phase == "completed" || phase == "stale" || dimmed ? .clear : tint, radius: 3)
+        let font = Font.system(size: size, design: .monospaced)
+        Text(since, style: .timer)
+            .font(font)
+            .monospacedDigit()
+            .foregroundStyle(tint)
+            .multilineTextAlignment(.trailing)
+            .lineLimit(1)
+            .frame(width: size * 4.5, alignment: .trailing)
+            .overlay(alignment: .trailing) {
+                if dimmed {
+                    Text(verbatim: "––").font(font).foregroundStyle(tint.opacity(0.5)).background(mask)
+                }
+            }
     }
 }
 
@@ -105,76 +182,85 @@ struct Mark: View {
     }
 }
 
+/// Glyph and count for who waits on you and who works; one glyph when all is finished.
 struct Counts: View {
     let model: CardModel
+    var compact = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            if model.allDone {
-                Text(model.failed ? String(localized: "failed") : String(localized: "✓ done"))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(PhaseTint.color(model.failed ? "failed" : "completed", dark: true))
+        HStack(spacing: 8) {
+            if model.stale {
+                Image(systemName: "clock")
+                if !compact { Text("Out of date") }
+            } else if model.allDone {
+                PhaseGlyph(phase: model.failed ? "failed" : "completed", size: compact ? 18 : 20)
             } else {
-                if model.waiting > 0 {
-                    Text("● \(model.waiting)")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(PhaseTint.color("waiting_for_approval", dark: true))
-                }
-                if model.working > 0 {
-                    Text("● \(model.working)")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(PhaseTint.color("running", dark: true))
-                }
+                if model.waiting > 0 { count(model.waiting, phase: model.waitingPhase) }
+                if model.working > 0 { count(model.working, phase: "running") }
             }
         }
+        .font(.system(size: 12, weight: .medium))
+        .foregroundStyle(.white.opacity(0.6))
+    }
+
+    private func count(_ value: Int, phase: String) -> some View {
+        HStack(spacing: 4) {
+            PhaseGlyph(phase: phase, size: 14)
+            Text(verbatim: "\(value)").font(.system(size: 12, weight: .semibold)).monospacedDigit()
+        }
+        .foregroundStyle(PhaseTint.color(phase, dark: true))
     }
 }
 
 struct HeroBlock: View {
     let row: AgentAggregate.Row
     let titleSize: CGFloat
+    let timerSize: CGFloat
+    let lines: Int
+    let mask: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 7) {
-                Lamp(phase: row.phase)
-                Text("\(CardModel.label(row.phase).uppercased()) · \(row.projectTitle.uppercased())")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .kerning(1.2)
-                    .foregroundStyle(PhaseTint.color(row.phase, dark: true))
+        let tint = PhaseTint.color(row.phase, dark: true)
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                PhaseGlyph(phase: row.phase, size: 14)
+                (Text(CardModel.label(row.phase)).fontWeight(.semibold).foregroundStyle(tint)
+                    + Text(verbatim: " · \(row.projectTitle)").foregroundStyle(.white.opacity(0.6)))
+                    .font(.system(size: 13))
                     .lineLimit(1)
+                Spacer(minLength: 6)
+                if row.phase != "failed", let date = ISO8601DateFormatter.helmDate(row.updatedAt) {
+                    TimerSlot(since: date, size: timerSize, tint: tint, mask: mask)
+                }
             }
             Text(row.threadTitle)
                 .font(.system(size: titleSize, weight: .semibold))
                 .foregroundStyle(.white)
-                .lineLimit(2)
-            let detail = row.phase == "failed" ? row.status : row.modelTitle
-            if !detail.isEmpty {
-                Text(detail).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
-            }
+                .lineLimit(lines)
         }
     }
 }
 
 struct RowView: View {
     let row: AgentAggregate.Row
+    /// A finished card names the project where a running row has its timer.
+    let showsProject: Bool
+    let timerSize: CGFloat
+    let mask: Color
 
     var body: some View {
+        let finished = row.phase == "completed"
         HStack(alignment: .center, spacing: 9) {
-            Lamp(phase: row.phase)
-            Text(row.threadTitle).font(.system(size: 14)).foregroundStyle(.white).lineLimit(1)
+            PhaseGlyph(phase: row.phase, size: 14)
+            Text(row.threadTitle)
+                .font(.system(size: 14))
+                .foregroundStyle(.white.opacity(finished && !showsProject ? 0.6 : 1))
+                .lineLimit(1)
             Spacer(minLength: 8)
             if ["running", "starting"].contains(row.phase), let date = ISO8601DateFormatter.helmDate(row.updatedAt) {
-                Text(date, style: .timer)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 64, alignment: .trailing)
-                    .layoutPriority(1)
-            } else {
-                Text(CardModel.label(row.phase).lowercased())
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(PhaseTint.color(row.phase, dark: true))
+                TimerSlot(since: date, size: timerSize, mask: mask).layoutPriority(1)
+            } else if showsProject {
+                Text(row.projectTitle).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
             }
         }
     }

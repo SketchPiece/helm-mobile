@@ -306,8 +306,6 @@
   "Needs input": "Ждёт ответа",
   "Starting": "Запускается",
   "Out of date": "Устарело",
-  "failed": "ошибка",
-  "✓ done": "✓ готово",
   "Add project": "Добавить проект",
   "Add this folder": "Добавить эту папку",
   "An empty folder with a README and a first commit": "Пустая папка с README и первым коммитом",
@@ -610,5 +608,40 @@
   "Couldn't load earlier messages.": "Не удалось загрузить предыдущие сообщения.",
   "Loading earlier messages…": "Загружаю предыдущие сообщения…",
   "Load earlier messages": "Показать предыдущие сообщения",
-  "Couldn't read the video": "Не удалось прочитать видео"
+  "Couldn't read the video": "Не удалось прочитать видео",
+  "Waiting": "Ждёт",
+  "Waiting on subagent %@": "Ждёт субагента %@",
+  "Waiting on monitor %@": "Ждёт монитор %@",
+  "Waiting on %@": "Ждёт: %@",
+  "Running: %@": "Выполняется: %@",
+  "Running %@": "Выполняется: %@",
+  "Waiting on a subagent": "Ждёт субагента",
+  "Waiting on a monitor": "Ждёт монитор",
+  "Waiting on a background task": "Ждёт фоновую задачу",
+  "Running a command": "Выполняется команда",
+  "%lld subagents": {
+    "one": "%lld субагент",
+    "few": "%lld субагента",
+    "many": "%lld субагентов",
+    "other": "%lld субагента"
+  },
+  "%lld monitors": {
+    "one": "%lld монитор",
+    "few": "%lld монитора",
+    "many": "%lld мониторов",
+    "other": "%lld монитора"
+  },
+  "%lld background tasks": {
+    "one": "%lld фоновая задача",
+    "few": "%lld фоновые задачи",
+    "many": "%lld фоновых задач",
+    "other": "%lld фоновой задачи"
+  },
+  "Stop": "Остановить",
+  "Stop background work": "Остановить фоновую работу",
+  "+%lld more": "ещё %lld",
+  "Open subagent %@": "Открыть субагента %@",
+  "Command": "Команда",
+  "Monitor": "Монитор",
+  "Background task": "Фоновая задача"
 }

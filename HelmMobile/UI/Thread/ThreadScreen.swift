@@ -364,6 +364,11 @@ private struct ThreadContent: View {
                 if projection.isWorking, let run = projection.activeRun, projection.pendingRequests.isEmpty {
                     WorkingPill(since: run.workingSince ?? Date())
                 }
+                if !projection.isWorking, let summary, !summary.backgroundTasks.isEmpty {
+                    BackgroundWorkBanner(tasks: summary.backgroundTasks, environmentId: environment.id) {
+                        try await session.stopBackgroundWork(latestRunId: summary.latestRunId)
+                    }
+                }
             }
             ThreadComposer(environment: environment, session: session) {
                 withAnimation { scrollToBottom() }
@@ -376,6 +381,7 @@ private struct ThreadContent: View {
             if followsBottom { scrollToBottom() }
         }
         .animation(.easeOut(duration: 0.2), value: projection?.pendingRequests.count)
+        .animation(.easeOut(duration: 0.2), value: summary?.backgroundTasks)
         .animation(.easeOut(duration: 0.2), value: followsBottom)
     }
 

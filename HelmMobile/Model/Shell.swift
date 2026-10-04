@@ -66,7 +66,7 @@ struct Project: Identifiable, Hashable, Sendable {
 }
 
 enum ThreadPhase: String, Sendable {
-    case approval, input, working, failed, limited, done, idle
+    case approval, input, working, waiting, failed, limited, done, idle
 }
 
 /// One row of the thread list (`OrchestrationV2ThreadShell`).
@@ -108,6 +108,8 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
     var relationshipToParent: String?
     var pullRequestNumber: Int?
     var pullRequestState: String?
+    /// What the thread left running after its turn: subagents, commands, monitors.
+    var backgroundTasks: [BackgroundTask]
 
     init?(json: JSON) {
         guard let id = json["id"]?.string else { return nil }
@@ -150,6 +152,7 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
         let pr = json["branchPullRequest"]?.nonNull ?? json["linkedPullRequest"]?.nonNull
         pullRequestNumber = pr?["number"]?.int
         pullRequestState = pr?["state"]?.string
+        backgroundTasks = (json["pendingBackgroundTasks"]?.array ?? []).compactMap(BackgroundTask.init(json:))
     }
 
     var isWorking: Bool {
@@ -162,6 +165,7 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
         }
         if hasActionableProposedPlan { return .input }
         if isWorking { return .working }
+        if isWaitingOnBackgroundWork { return .waiting }
         if status == "failed" {
             return lastErrorClass == "usage_limit" ? .limited : .failed
         }
@@ -176,6 +180,10 @@ struct ThreadSummary: Identifiable, Hashable, Sendable {
         guard let visited = lastVisitedAt else { return false }
         return completed > visited
     }
+
+    /// The turn ended, but a subagent or monitor it started will wake the agent again.
+    /// A failed run outranks it, so the failure stays visible.
+    var isWaitingOnBackgroundWork: Bool { backgroundTasks.holdsCompletion && status != "failed" }
 
     var needsAttention: Bool { phase == .approval || phase == .input }
 

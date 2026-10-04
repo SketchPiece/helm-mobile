@@ -149,6 +149,9 @@
         }
       }
     },
+    "%@%@%@": {
+      "shouldTranslate": false
+    },
     "%@× the raw cost": {
       "localizations": {
         "ru": {
@@ -259,6 +262,58 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld разрешения"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld background tasks": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld background task"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld background tasks"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld фоновые задачи"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld фоновых задач"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld фоновая задача"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld фоновой задачи"
                 }
               }
             }
@@ -456,6 +511,58 @@
         }
       }
     },
+    "%lld monitors": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld monitor"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld monitors"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld монитора"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld мониторов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld монитор"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld монитора"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld pt": {
       "localizations": {
         "ru": {
@@ -570,7 +677,7 @@
         }
       }
     },
-    "%lld threads": {
+    "%lld subagents": {
       "localizations": {
         "en": {
           "variations": {
@@ -578,13 +685,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld thread"
+                  "value": "%lld subagent"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld threads"
+                  "value": "%lld subagents"
                 }
               }
             }
@@ -593,28 +700,28 @@
         "ru": {
           "variations": {
             "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld тред"
-                }
-              },
               "few": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld треда"
+                  "value": "%lld субагента"
                 }
               },
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld тредов"
+                  "value": "%lld субагентов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld субагент"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld треда"
+                  "value": "%lld субагента"
                 }
               }
             }
@@ -622,6 +729,7 @@
         }
       }
     },
+    "%lld threads": {},
     "%lld tools": {
       "localizations": {
         "en": {
@@ -762,6 +870,16 @@
     },
     "+%lld": {
       "shouldTranslate": false
+    },
+    "+%lld more": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "и ещё %lld"
+          }
+        }
+      }
     },
     "1 file changed": {
       "localizations": {
@@ -1344,6 +1462,16 @@
         }
       }
     },
+    "Background task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фоновая задача"
+          }
+        }
+      }
+    },
     "Base branch": {
       "localizations": {
         "ru": {
@@ -1650,6 +1778,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Диффы всегда листаются вбок."
+          }
+        }
+      }
+    },
+    "Command": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Команда"
           }
         }
       }
@@ -2244,16 +2382,7 @@
         }
       }
     },
-    "Earlier": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Раньше"
-          }
-        }
-      }
-    },
+    "Earlier": {},
     "Edit": {
       "localizations": {
         "ru": {
@@ -2910,16 +3039,7 @@
         }
       }
     },
-    "Later": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Позже"
-          }
-        }
-      }
-    },
+    "Later": {},
     "Light": {
       "localizations": {
         "ru": {
@@ -3176,6 +3296,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Модель и доступ"
+          }
+        }
+      }
+    },
+    "Monitor": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Монитор"
           }
         }
       }
@@ -3664,26 +3794,8 @@
         }
       }
     },
-    "Nothing settled": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ничего не завершено"
-          }
-        }
-      }
-    },
-    "Nothing snoozed": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ничего не отложено"
-          }
-        }
-      }
-    },
+    "Nothing settled": {},
+    "Nothing snoozed": {},
     "Nothing to paste": {
       "localizations": {
         "ru": {
@@ -3810,6 +3922,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть вход ещё раз"
+          }
+        }
+      }
+    },
+    "Open subagent %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть субагента %@"
           }
         }
       }
@@ -4544,6 +4666,36 @@
         }
       }
     },
+    "Running %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выполняется: %@"
+          }
+        }
+      }
+    },
+    "Running a command": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выполняется команда"
+          }
+        }
+      }
+    },
+    "Running: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выполняется: %@"
+          }
+        }
+      }
+    },
     "Runs on": {
       "localizations": {
         "ru": {
@@ -4664,16 +4816,7 @@
         }
       }
     },
-    "Search settled": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Поиск в завершённых"
-          }
-        }
-      }
-    },
+    "Search settled": {},
     "Searching…": {
       "localizations": {
         "ru": {
@@ -5010,6 +5153,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вмешательство"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановить"
+          }
+        }
+      }
+    },
+    "Stop background work": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановить фоновую работу"
           }
         }
       }
@@ -5454,16 +5617,7 @@
         }
       }
     },
-    "This week": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На этой неделе"
-          }
-        }
-      }
-    },
+    "This week": {},
     "Thought": {
       "localizations": {
         "ru": {
@@ -5574,16 +5728,7 @@
         }
       }
     },
-    "Today": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сегодня"
-          }
-        }
-      }
-    },
+    "Today": {},
     "Tokens": {
       "localizations": {
         "ru": {
@@ -5804,12 +5949,82 @@
         }
       }
     },
+    "Waiting": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт"
+          }
+        }
+      }
+    },
     "Waiting for connection…": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Жду подключения…"
+          }
+        }
+      }
+    },
+    "Waiting on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт: %@"
+          }
+        }
+      }
+    },
+    "Waiting on a background task": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт фоновую задачу"
+          }
+        }
+      }
+    },
+    "Waiting on a monitor": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт монитор"
+          }
+        }
+      }
+    },
+    "Waiting on a subagent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт субагента"
+          }
+        }
+      }
+    },
+    "Waiting on monitor %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт монитор %@"
+          }
+        }
+      }
+    },
+    "Waiting on subagent %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт субагента %@"
           }
         }
       }
@@ -5964,16 +6179,7 @@
         }
       }
     },
-    "Yesterday": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вчера"
-          }
-        }
-      }
-    },
+    "Yesterday": {},
     "Your coding agents, from your pocket.": {
       "localizations": {
         "ru": {
@@ -6084,16 +6290,7 @@
         }
       }
     },
-    "next wakes %@": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "первый вернётся %@"
-          }
-        }
-      }
-    },
+    "next wakes %@": {},
     "no known rates · %@ tokens": {
       "localizations": {
         "ru": {
