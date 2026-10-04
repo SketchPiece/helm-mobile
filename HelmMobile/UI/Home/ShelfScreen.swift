@@ -174,6 +174,9 @@ struct ShelfScreen: View {
             .contextMenu {
                 bringBack(entry)
                 Button { run(.archive, on: entry) } label: { Label("Archive", systemImage: "archivebox") }
+            } preview: {
+                ThreadPreviewCard(entry: entry, environment: model.environment(entry.ref.environmentId),
+                                  showsComputer: model.environments.count > 1)
             }
         }
     }

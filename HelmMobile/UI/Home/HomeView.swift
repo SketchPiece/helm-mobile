@@ -230,7 +230,12 @@ struct HomeView: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .swipeActions(edge: .trailing, allowsFullSwipe: true) { trailingSwipe(entry) }
             .swipeActions(edge: .leading) { leadingSwipe(entry) }
-            .contextMenu { contextMenu(entry, arrangement: arrangement, in: entries) }
+            .contextMenu {
+                contextMenu(entry, arrangement: arrangement, in: entries)
+            } preview: {
+                ThreadPreviewCard(entry: entry, environment: model.environment(entry.ref.environmentId),
+                                  showsComputer: model.environments.count > 1)
+            }
         }
     }
 

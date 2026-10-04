@@ -222,7 +222,7 @@ final class ComposerSuggestions {
         }
     }
 
-    private static func stateLabel(_ state: String) -> String {
+    static func stateLabel(_ state: String) -> String {
         switch state {
         case "merged": String(localized: "Merged")
         case "closed": String(localized: "Closed")
