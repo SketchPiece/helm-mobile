@@ -643,5 +643,9 @@
   "Open subagent %@": "Открыть субагента %@",
   "Command": "Команда",
   "Monitor": "Монитор",
-  "Background task": "Фоновая задача"
+  "Background task": "Фоновая задача",
+  "More options": "Другие настройки",
+  "Works in the project folder": "Работает в папке проекта",
+  "Its own folder and branch": "Своя папка и своя ветка",
+  "Access: %@": "Доступ: %@"
 }

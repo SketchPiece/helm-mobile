@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The composer pill: attach, type, send. While the agent works, an empty composer's button
+/// The composer: a narrow glass pill at rest that opens into a two-row card (text on top; attach,
+/// model, access mode and the amber action below) while you write. While the agent works, an empty composer's button
 /// stops it; with text, the message queues or steers per Settings → Follow-ups (long-press for
 /// the other one).
 /// Typing `/`, `@`, `$` or `#` opens suggestions above it.
@@ -30,6 +31,7 @@ struct ThreadComposer: View {
     private var thread: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
     private var isWorking: Bool { session.projection?.isWorking ?? thread?.isWorking ?? false }
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var hasContent: Bool { !trimmed.isEmpty || draft.hasUploaded || draft.isUploading }
     private var canSend: Bool {
         (!trimmed.isEmpty || draft.hasUploaded) && !draft.isUploading && environment.isLive
     }
@@ -49,57 +51,77 @@ struct ThreadComposer: View {
         .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
+    /// Opens into the two-row card while there is something to edit; at rest it is one narrow row.
+    private var expanded: Bool {
+        focused || !trimmed.isEmpty || !draft.attachments.isEmpty || draft.notice != nil
+    }
+
     private var pill: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
             }
-            if focused || !trimmed.isEmpty {
-                settingsChips
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-            HStack(alignment: .bottom, spacing: 8) {
+            // The text view keeps its place in this row in both shapes, so it never loses focus.
+            HStack(alignment: .bottom, spacing: 6) {
+                if !expanded && voice.state == .idle { attachMenu }
                 if voice.state != .idle {
                     VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
                                onDone: { finishDictation(send: false) }, onRetry: retryDictation)
                 } else {
-                    editor
+                    editor.padding(.leading, expanded ? 6 : 0)
                 }
-                trailingButtons
+                if !expanded { trailingButtons }
+            }
+            if expanded {
+                HStack(spacing: 6) {
+                    attachMenu
+                    settingsChips.layoutPriority(1)
+                    Spacer(minLength: 0)
+                    trailingButtons
+                }
+                .transition(.opacity.combined(with: .offset(y: -8)))
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.leading, 6)
+        .padding(.trailing, 6)
         .padding(.vertical, 6)
-        .floatingSurface(cornerRadius: 24)
-        .animation(.easeOut(duration: 0.18), value: focused || !trimmed.isEmpty)
-        .animation(.easeOut(duration: 0.18), value: voice.state)
+        .contentShape(.rect)
+        .onTapGesture { if voice.state == .idle { focused = true } }
+        .composerGlass(cornerRadius: expanded ? 26 : 25)
+        // At rest the pill floats inset from the edges and stretches out to them when it opens.
+        .padding(.horizontal, expanded ? 0 : 14)
+        .animation(.composer, value: expanded)
+        .animation(.composer, value: voice.state)
+        .animation(.composer, value: hasContent)
+        .animation(.composer, value: isWorking)
     }
 
-    @ViewBuilder
-    private var editor: some View {
-                AttachMenu(draft: draft, environment: environment) {
-                    if let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
-                        text += pasted
-                    }
-                    focused = true
-                }
+    private var attachMenu: some View {
+        AttachMenu(draft: draft, environment: environment, size: 34) {
+            if let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                text += pasted
+            }
+            focused = true
+        }
+    }
 
-                ComposerTextView(text: $text, isFocused: $focused, placeholder: placeholder,
-                                 accessibilityIdentifier: "composer", returnKey: returnKey,
-                                 onSubmit: { alternate in
-                                     send(followUp: alternate ? followUpBehavior.other.followUp : followUpBehavior.followUp)
-                                 }) { images in
-                    images.forEach { draft.attach(image: $0, environment: environment) }
+    private var editor: some View {
+        ComposerTextView(text: $text, isFocused: $focused, placeholder: placeholder,
+                         accessibilityIdentifier: "composer", returnKey: returnKey,
+                         onSubmit: { alternate in
+                             send(followUp: alternate ? followUpBehavior.other.followUp : followUpBehavior.followUp)
+                         }) { images in
+            images.forEach { draft.attach(image: $0, environment: environment) }
+        }
+            .padding(.vertical, 7)
+            .onChange(of: text) { old, value in
+                if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                    text = folded
+                    return
                 }
-                    .padding(.vertical, 7)
-                    .onChange(of: text) { old, value in
-                        if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
-                            text = folded
-                            return
-                        }
-                        Drafts.save(value, for: session.threadId)
-                        suggestions.update(text: value, scope: suggestionScope)
-                    }
+                Drafts.save(value, for: session.threadId)
+                suggestions.update(text: value, scope: suggestionScope)
+            }
     }
 
     private var suggestionScope: ComposerSuggestions.Scope {
@@ -133,13 +155,13 @@ struct ThreadComposer: View {
         UISelectionFeedbackGenerator().selectionChanged()
     }
 
-    /// Empty field: microphone (and stop while working). With text: send.
+    /// The amber slot holds what happens next: the microphone on an empty field, send once there is
+    /// something to send, stop while the agent works. Otherwise the microphone waits beside it as an
+    /// icon. It is always the first view here, so a hold survives send or stop appearing next to it.
     @ViewBuilder
     private var trailingButtons: some View {
         let holdRecording = voice.state == .recording(handsFree: false)
-        if canSend && !holdRecording {
-            sendButton
-        } else if voice.state == .idle || holdRecording {
+        if voice.state == .idle || holdRecording {
             MicButton(
                 voice: voice,
                 onHoldStart: { Task { await voice.start(handsFree: false) } },
@@ -150,9 +172,14 @@ struct ThreadComposer: View {
                     focused = false
                     Task { await voice.start(handsFree: true) }
                 },
-                dragOffset: $micDrag
+                dragOffset: $micDrag,
+                prominent: !hasContent && !isWorking
             )
-            if isWorking && !holdRecording { stopButton }
+        }
+        if hasContent && !holdRecording {
+            sendButton
+        } else if isWorking && voice.state == .idle {
+            stopButton
         }
     }
 
@@ -197,7 +224,7 @@ struct ThreadComposer: View {
                         Image(systemName: "stop.fill").font(.system(size: 13, weight: .bold))
                     }
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 40, height: 40)
                 .foregroundStyle(.white)
                 .background(Palette.error, in: .circle)
             }
@@ -210,7 +237,7 @@ struct ThreadComposer: View {
             } label: {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 16, weight: .bold))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 40, height: 40)
                     .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
                     .background(canSend ? Palette.accent : Palette.border, in: .circle)
             }
@@ -235,35 +262,27 @@ struct ThreadComposer: View {
     }
 
     private var settingsChips: some View {
-        let config = environment.config
-        let mode = RuntimeMode(rawValue: thread?.runtimeMode ?? "") ?? .fullAccess
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                let provider = thread?.modelSelection.flatMap { config?.provider($0.instanceId) }
-                chip(config?.modelLabel(for: thread?.modelSelection) ?? String(localized: "Model")) {
-                    ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 14)
-                }
-                chip(mode.title) { Image(systemName: mode.symbol) }
-                if thread?.interactionMode == "plan" {
-                    chip(String(localized: "Plan")) { Image(systemName: "list.bullet.clipboard") }
-                }
-            }
-            .padding(.horizontal, 4)
-        }
+        ComposerSettingsChips(
+            config: environment.config, selection: thread?.modelSelection,
+            runtimeMode: thread?.runtimeMode ?? RuntimeMode.fullAccess.rawValue,
+            interactionMode: thread?.interactionMode ?? "default",
+            onSelection: { selection in apply { try await session.setModel(selection) } },
+            onRuntimeMode: { mode in apply { try await session.setRuntimeMode(mode) } },
+            onInteractionMode: { mode in apply { try await session.setInteractionMode(mode) } },
+            onMore: { showSettings = true }
+        )
     }
 
-    private func chip(_ title: String, @ViewBuilder icon: () -> some View) -> some View {
-        Button {
-            showSettings = true
-        } label: {
-            Label { Text(title) } icon: { icon() }
-                .font(Typography.footnote.weight(.medium))
-                .foregroundStyle(Palette.textMuted)
-                .padding(.horizontal, 10)
-                .frame(height: 28)
-                .background(Palette.surface.opacity(0.7), in: .capsule)
+    /// A settings change from a chip menu applies right away, as in Thread settings.
+    private func apply(_ work: @escaping () async throws -> Void) {
+        Task {
+            do {
+                try await work()
+                UISelectionFeedbackGenerator().selectionChanged()
+            } catch {
+                draft.notice = error.localizedDescription
+            }
         }
-        .buttonStyle(.plain)
     }
 
     private func send(followUp: ThreadSession.FollowUp) {

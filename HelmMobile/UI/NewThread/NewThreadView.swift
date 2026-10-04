@@ -57,7 +57,6 @@ struct NewThreadView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 8)
             }
-            workspaceChips
             if focused && suggestions.isVisible {
                 SuggestionPanel(suggestions: suggestions, onPick: pick)
                     .padding(.horizontal, 12)
@@ -177,56 +176,50 @@ struct NewThreadView: View {
         return project.map { "\($0.title)?" } ?? String(localized: "which project?")
     }
 
-    private var workspaceChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+    /// The card's top row: where the agent works. A new worktree is tinted, since it is the choice to
+    /// notice before starting.
+    private var whereRow: some View {
+        HStack(spacing: 6) {
+            Menu {
                 Button {
-                    showSettings = true
+                    newWorktree = false
                 } label: {
-                    modelChipLabel
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("modelChip")
-                if !isScratch {
-                    Menu {
-                        Button {
-                            newWorktree = false
-                        } label: {
-                            Label("Current checkout", systemImage: newWorktree ? "" : "checkmark")
-                        }
-                        Button {
-                            newWorktree = true
-                        } label: {
-                            Label("New worktree", systemImage: newWorktree ? "checkmark" : "")
-                        }
-                    } label: {
-                        chipLabel(newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
-                                  symbol: newWorktree ? "arrow.triangle.branch" : "folder")
-                    }
+                    Image(systemName: newWorktree ? "folder" : "checkmark")
+                    Text("Current checkout")
+                    Text("Works in the project folder")
                 }
                 Button {
-                    showSettings = true
+                    newWorktree = true
                 } label: {
-                    let mode = RuntimeMode(rawValue: runtimeMode) ?? .fullAccess
-                    chipLabel(mode.title, symbol: mode.symbol)
+                    Image(systemName: newWorktree ? "checkmark" : "arrow.triangle.branch")
+                    Text("New worktree")
+                    Text("Its own folder and branch")
                 }
-                .buttonStyle(.plain)
-                if newWorktree, !isScratch, repo?.isRepo == true {
-                    Button {
-                        showBranches = true
-                    } label: {
-                        let base = baseBranch ?? "main"
-                        chipLabel(originAvailable && startFromOrigin ? "origin/\(base)" : base,
-                                  symbol: "point.topleft.down.to.point.bottomright.curvepath", mono: true)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("baseBranch")
+            } label: {
+                ComposerChipLabel(title: newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
+                                  highlighted: newWorktree) {
+                    Image(systemName: newWorktree ? "arrow.triangle.branch" : "folder").font(.system(size: 13))
                 }
             }
-            .padding(.horizontal, 16)
+            .buttonStyle(.plain)
+            if newWorktree, repo?.isRepo == true {
+                Button {
+                    showBranches = true
+                } label: {
+                    let base = baseBranch ?? "main"
+                    ComposerChipLabel(title: originAvailable && startFromOrigin ? "from origin/\(base)" : "from \(base)",
+                                      mono: true) { EmptyView() }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("baseBranch")
+            }
+            Spacer(minLength: 0)
         }
-        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .padding(.bottom, 8)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Palette.text.opacity(0.07)).frame(height: 1)
+        }
+        .padding(.bottom, 4)
         .sheet(isPresented: $showBranches) {
             if let environment, let project {
                 BranchPicker(
@@ -240,102 +233,75 @@ struct NewThreadView: View {
     /// "Start from origin" only means something when the repository has an origin.
     private var originAvailable: Bool { repo?.hasPrimaryRemote == true }
 
-    private var modelChipLabel: some View {
-        HStack(spacing: 6) {
-            if let selection {
-                let provider = environment?.config?.provider(selection.instanceId)
-                ProviderIcon(driver: provider?.driver, iconUrl: provider?.iconUrl, size: 14)
-            }
-            Text(environment?.config?.modelLabel(for: selection) ?? String(localized: "Model"))
-                .font(Typography.footnote.weight(.medium)).lineLimit(1)
-            if interactionMode == "plan" {
-                Text("· Plan").font(Typography.footnote).foregroundStyle(Palette.textMuted)
-            }
-            Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
-        }
-        .foregroundStyle(Palette.text)
-        .padding(.horizontal, 12)
-        .frame(height: 32)
-        .background(Palette.surface, in: .capsule)
-    }
-
-    private func chipLabel(_ title: String, symbol: String, mono: Bool = false) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: symbol).font(.system(size: 13))
-            Text(title).font(mono ? Typography.mono(13) : Typography.footnote.weight(.medium)).lineLimit(1)
-            Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
-        }
-        .foregroundStyle(Palette.text)
-        .padding(.horizontal, 12)
-        .frame(height: 32)
-        .background(Palette.surface, in: .capsule)
-    }
-
-    /// The same pill as in a thread: attach, type, and the microphone until there's something to send.
+    /// The thread's composer card, opened, with one more row on top: where the agent works.
     private var composer: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
+            if !isScratch && project != nil {
+                whereRow
+            }
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
             }
-            HStack(alignment: .bottom, spacing: 8) {
-                if voice.state != .idle {
-                    VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
-                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
-                } else {
-                    AttachMenu(draft: draft, environment: environment) {
-                        if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
-                            text += pasted
-                        }
-                        focused = true
-                    }
-                    ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
-                                     maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
-                                     onSubmit: { _ in if canSend && !sending { launch() } }) { images in
-                        guard let environment else { return }
-                        images.forEach { draft.attach(image: $0, environment: environment) }
-                    }
-                        .padding(.vertical, 7)
-                        .onChange(of: text) { old, value in
-                            if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
-                                text = folded
-                                return
-                            }
-                            Drafts.save(value, for: NewThreadDraft.key)
-                            suggestions.update(text: value, scope: suggestionScope)
-                        }
+            if voice.state != .idle {
+                VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                           onDone: { finishDictation(send: false) }, onRetry: retryDictation)
+            } else {
+                ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
+                                 maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
+                                 onSubmit: { _ in if canSend && !sending { launch() } }) { images in
+                    guard let environment else { return }
+                    images.forEach { draft.attach(image: $0, environment: environment) }
                 }
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 6)
+                    .onChange(of: text) { old, value in
+                        if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                            text = folded
+                            return
+                        }
+                        Drafts.save(value, for: NewThreadDraft.key)
+                        suggestions.update(text: value, scope: suggestionScope)
+                    }
+            }
+            HStack(spacing: 6) {
+                AttachMenu(draft: draft, environment: environment, size: 34) {
+                    if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                        text += pasted
+                    }
+                    focused = true
+                }
+                ComposerSettingsChips(
+                    config: environment?.config, selection: selection, runtimeMode: runtimeMode,
+                    interactionMode: interactionMode,
+                    onSelection: { selection = $0 },
+                    onRuntimeMode: { runtimeMode = $0 },
+                    onInteractionMode: { interactionMode = $0 },
+                    onMore: { showSettings = true }
+                )
+                .layoutPriority(1)
+                Spacer(minLength: 0)
                 trailingButton
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .floatingSurface(cornerRadius: 24)
-        .animation(.easeOut(duration: 0.18), value: voice.state)
+        .padding(6)
+        .contentShape(.rect)
+        .onTapGesture { if voice.state == .idle { focused = true } }
+        .composerGlass()
+        .animation(.composer, value: voice.state)
+        .animation(.composer, value: hasContent)
+        .animation(.composer, value: newWorktree)
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
         .onAppear { focused = true }
         .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
-    /// Empty field: microphone (hold to dictate and start, tap for hands-free). With text: start.
+    /// Empty field: the amber microphone (hold to dictate and start, tap for hands-free). With text:
+    /// start takes the amber slot and the microphone waits beside it.
     @ViewBuilder
     private var trailingButton: some View {
         let holdRecording = voice.state == .recording(handsFree: false)
-        if (hasContent || sending) && !holdRecording {
-            Button(action: launch) {
-                Group {
-                    if sending { ProgressView().tint(Palette.accentForeground) } else {
-                        Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold))
-                    }
-                }
-                .frame(width: 36, height: 36)
-                .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
-                .background(canSend ? Palette.accent : Palette.border, in: .circle)
-            }
-            .disabled(!canSend || sending)
-            .accessibilityLabel("Start thread")
-            .accessibilityIdentifier("startThread")
-        } else if voice.state == .idle || holdRecording {
+        if voice.state == .idle || holdRecording {
             MicButton(
                 voice: voice,
                 onHoldStart: { Task { await voice.start(handsFree: false) } },
@@ -346,8 +312,24 @@ struct NewThreadView: View {
                     focused = false
                     Task { await voice.start(handsFree: true) }
                 },
-                dragOffset: $micDrag
+                dragOffset: $micDrag,
+                prominent: !(hasContent || sending)
             )
+        }
+        if (hasContent || sending) && !holdRecording {
+            Button(action: launch) {
+                Group {
+                    if sending { ProgressView().tint(Palette.accentForeground) } else {
+                        Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold))
+                    }
+                }
+                .frame(width: 40, height: 40)
+                .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
+                .background(canSend ? Palette.accent : Palette.border, in: .circle)
+            }
+            .disabled(!canSend || sending)
+            .accessibilityLabel("Start thread")
+            .accessibilityIdentifier("startThread")
         }
     }
 

@@ -978,6 +978,16 @@
         }
       }
     },
+    "Access: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ: %@"
+          }
+        }
+      }
+    },
     "Across %lld sessions": {
       "localizations": {
         "en": {
@@ -2989,6 +2999,16 @@
         }
       }
     },
+    "Its own folder and branch": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Своя папка и своя ветка"
+          }
+        }
+      }
+    },
     "Keep editing": {
       "localizations": {
         "ru": {
@@ -3306,6 +3326,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Монитор"
+          }
+        }
+      }
+    },
+    "More options": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другие настройки"
           }
         }
       }
@@ -6145,6 +6175,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Работает"
+          }
+        }
+      }
+    },
+    "Works in the project folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работает в папке проекта"
           }
         }
       }

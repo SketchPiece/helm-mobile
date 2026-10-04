@@ -9,6 +9,9 @@ struct MicButton: View {
     let onHoldEnd: (_ cancelled: Bool) -> Void
     let onTap: () -> Void
     @Binding var dragOffset: CGFloat
+    /// Amber, in the action slot while there is nothing to send. Otherwise a quiet icon beside
+    /// send or stop, so dictation is still one tap away.
+    var prominent = true
 
     @State private var pressedAt: Date?
     @State private var holding = false
@@ -16,13 +19,11 @@ struct MicButton: View {
 
     var body: some View {
         let recordingHold = voice.state == .recording(handsFree: false)
-        Image(systemName: "mic.fill")
-            .font(.system(size: 16, weight: .semibold))
-            .frame(width: 36, height: 36)
-            .foregroundStyle(recordingHold ? .white : Palette.text)
-            // Its own round button, like send, so it reads as tappable.
-            .background(recordingHold ? Palette.error : Palette.message, in: .circle)
-            .overlay(Circle().stroke(recordingHold ? .clear : Palette.border, lineWidth: 1))
+        Image(systemName: prominent || recordingHold ? "mic.fill" : "mic")
+            .font(.system(size: prominent ? 17 : 16, weight: .semibold))
+            .frame(width: prominent ? 40 : 34, height: prominent ? 40 : 34)
+            .foregroundStyle(recordingHold ? .white : prominent ? Palette.accentForeground : Palette.textMuted)
+            .background(recordingHold ? Palette.error : prominent ? Palette.accent : .clear, in: .circle)
             .scaleEffect(recordingHold ? 1.25 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
             .contentShape(.circle)
