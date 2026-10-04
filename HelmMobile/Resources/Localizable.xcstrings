@@ -1872,6 +1872,16 @@
         }
       }
     },
+    "Couldn't read the video": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать видео"
+          }
+        }
+      }
+    },
     "Couldn't save. It may have already started.": {
       "localizations": {
         "ru": {

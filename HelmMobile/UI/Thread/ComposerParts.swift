@@ -1,7 +1,7 @@
 import PhotosUI
 import SwiftUI
 
-/// The composer's "+": a new photo from the camera, photos, files from the Files app, or
+/// The composer's "+": a new photo from the camera, photos and videos, files from the Files app, or
 /// whatever is on the clipboard.
 struct AttachMenu: View {
     let draft: ComposerDraft
@@ -39,7 +39,9 @@ struct AttachMenu: View {
         .foregroundStyle(Palette.text)
         .accessibilityLabel("Attach")
         .accessibilityIdentifier("attach")
-        .photosPicker(isPresented: $showPhotos, selection: $photoItems, maxSelectionCount: 6, matching: .images)
+        // Videos go up as files, so only when the server takes files.
+        .photosPicker(isPresented: $showPhotos, selection: $photoItems, maxSelectionCount: 6,
+                      matching: environment?.config?.maxFileBytes != nil ? .any(of: [.images, .videos]) : .images)
         .fileImporter(isPresented: $showFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             guard let environment, case .success(let urls) = result else { return }
             draft.attach(fileURLs: urls, environment: environment)
@@ -176,7 +178,8 @@ struct AttachmentStrip: View {
                 } else if attachment.failed != nil {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Palette.errorText)
                 } else {
-                    Image(systemName: attachment.uploaded?.source == "pasted-text" ? "doc.plaintext" : "doc")
+                    Image(systemName: attachment.uploaded?.source == "pasted-text" ? "doc.plaintext"
+                          : attachment.uploaded?.mimeType.hasPrefix("video/") == true ? "film" : "doc")
                         .foregroundStyle(Palette.textMuted)
                 }
             }

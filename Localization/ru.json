@@ -603,5 +603,6 @@
   "Thread": "Тред",
   "Couldn't load earlier messages.": "Не удалось загрузить предыдущие сообщения.",
   "Loading earlier messages…": "Загружаю предыдущие сообщения…",
-  "Load earlier messages": "Показать предыдущие сообщения"
+  "Load earlier messages": "Показать предыдущие сообщения",
+  "Couldn't read the video": "Не удалось прочитать видео"
 }

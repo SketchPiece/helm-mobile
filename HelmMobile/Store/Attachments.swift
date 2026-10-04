@@ -162,6 +162,10 @@ final class ComposerDraft {
     // MARK: Attaching
 
     func attach(_ item: PhotosPickerItem, environment: EnvironmentSession) {
+        if item.supportedContentTypes.contains(where: { $0.conforms(to: .movie) }) {
+            attach(video: item, environment: environment)
+            return
+        }
         guard let id = begin(DraftAttachment(name: "photo.jpg")) else { return }
         Task {
             do {
@@ -173,6 +177,20 @@ final class ComposerDraft {
                 finish(id, uploaded)
             } catch {
                 update(id) { $0.failed = error.localizedDescription }
+            }
+        }
+    }
+
+    /// A video from the photo library goes up as a file (copied out of Photos first).
+    private func attach(video item: PhotosPickerItem, environment: EnvironmentSession) {
+        Task {
+            do {
+                guard let movie = try await item.loadTransferable(type: PickedMovie.self) else {
+                    throw RPCError.defect(String(localized: "Couldn't read the video"))
+                }
+                attach(fileURLs: [movie.url], environment: environment)
+            } catch {
+                notice = error.localizedDescription
             }
         }
     }
@@ -368,5 +386,22 @@ final class ComposerDraft {
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             return try Data(contentsOf: url, options: .mappedIfSafe)
         }.value
+    }
+}
+
+/// A video handed over by the photo picker, copied into a temporary folder of its own (the
+/// picker's copy goes away once the import returns).
+struct PickedMovie: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(importedContentType: .movie) { received in
+            let folder = FileManager.default.temporaryDirectory
+                .appending(path: "picked-videos/\(UUID().uuidString)", directoryHint: .isDirectory)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let url = folder.appending(path: received.file.lastPathComponent)
+            try FileManager.default.copyItem(at: received.file, to: url)
+            return PickedMovie(url: url)
+        }
     }
 }
