@@ -149,6 +149,33 @@ struct PullRequestReference: Hashable, Sendable {
     }
 }
 
+/// A thread picked from the `@` menu, kept until send. The composer shows `@<title>`; the send
+/// turns it into the `thread` record and link the T3 clients attach (`threadComposerContext`).
+struct ThreadReference: Hashable, Sendable {
+    var environmentId: String
+    var threadId: String
+    /// The title as a link label: one line, no brackets, at most 200 characters.
+    var label: String
+
+    init(environmentId: String, threadId: String, title: String) {
+        self.environmentId = environmentId
+        self.threadId = threadId
+        label = ContextReference.label(title, kind: "thread")
+    }
+
+    /// One record per thread, so mentioning it twice reuses it.
+    var contextId: String { "thread_\(threadId)" }
+    var token: String { "@\(label)" }
+    var link: String { ContextReference.link(kind: "thread", contextId: contextId, label: label) }
+
+    var record: JSON {
+        [
+            "version": 1, "kind": "thread", "contextId": .string(contextId), "label": .string(label),
+            "environmentId": .string(environmentId), "threadId": .string(threadId), "title": .string(label),
+        ]
+    }
+}
+
 /// What `message.dispatch` / `launchThread.initialMessage` carries for one composer send.
 struct ComposerMessage: Equatable {
     var text: String
@@ -156,15 +183,27 @@ struct ComposerMessage: Equatable {
     var context: JSON?
 
     /// Files get an inline `[name](t3-context://v1/file/<contextId>)` link after the typed text
-    /// plus a `file` record; a `#42` the user kept becomes a `review-comment` link and record.
-    /// Without `inlineMessageContext` the server can't read records, so files go as a bare list
-    /// and `#42` stays plain text.
+    /// plus a `file` record; a `#42` the user kept becomes a `review-comment` link and record, and
+    /// an `@title` of a picked thread a `thread` link and record. Without `inlineMessageContext`
+    /// the server can't read records, so files go as a bare list and mentions stay plain text.
     static func build(text: String, attachments: [(contextId: String, attachment: ChatAttachment)],
-                      pullRequests: [PullRequestReference], inlineContext: Bool) -> ComposerMessage {
+                      pullRequests: [PullRequestReference], threads: [ThreadReference] = [],
+                      inlineContext: Bool) -> ComposerMessage {
         let uploaded = attachments.map(\.attachment)
         guard inlineContext else { return ComposerMessage(text: text, attachments: uploaded, context: nil) }
         var body = text
         var records: [JSON] = []
+        var seenThreads = Set<String>()
+        for reference in threads where !seenThreads.contains(reference.threadId) {
+            var replaced = false
+            while let range = mentionRange(of: reference.token, in: body) {
+                body = (body as NSString).replacingCharacters(in: range, with: reference.link)
+                replaced = true
+            }
+            guard replaced else { continue }
+            seenThreads.insert(reference.threadId)
+            records.append(reference.record)
+        }
         var seen = Set<Int>()
         for reference in pullRequests where !seen.contains(reference.number) {
             guard let range = tokenRange(of: reference.token, in: body) else { continue }
@@ -205,7 +244,101 @@ struct ComposerMessage: Equatable {
         }
     }
 
+    /// The first `@title` after whitespace or the text start, ending at whitespace,
+    /// punctuation or the text end (titles have spaces, so `tokenRange` won't do).
+    static func mentionRange(of token: String, in text: String) -> NSRange? {
+        let ns = text as NSString
+        var search = NSRange(location: 0, length: ns.length)
+        while true {
+            let found = ns.range(of: token, range: search)
+            guard found.location != NSNotFound else { return nil }
+            let before = found.location == 0 || isSpace(ns.character(at: found.location - 1))
+            let end = found.location + found.length
+            let after = end == ns.length || !isWordUnit(ns.character(at: end))
+            if before && after { return found }
+            search = NSRange(location: end, length: ns.length - end)
+        }
+    }
+
     static func isSpace(_ unit: unichar) -> Bool { unit == 0x20 || unit == 0x0A || unit == 0x09 || unit == 0x0D }
+
+    private static func isWordUnit(_ unit: unichar) -> Bool {
+        guard let scalar = Unicode.Scalar(unit) else { return true }  // half of a surrogate pair
+        return CharacterSet.alphanumerics.contains(scalar) || scalar == "_"
+    }
+}
+
+/// `queued-run.edit` for a message waiting in the queue (RN `queued-run-edit.ts`). Attachments
+/// replace the message's list wholesale, so kept ones are resent with the new uploads; records
+/// and links of removed attachments go, new files get theirs as on a fresh send.
+enum QueuedEdit {
+    struct Payload: Equatable {
+        var text: String
+        /// Nil leaves the message's attachments (and context) as they are.
+        var attachments: [ChatAttachment]?
+        var context: JSON?
+    }
+
+    /// A `t3-context://` link in message text.
+    struct Link: Equatable {
+        var source: String
+        var kind: String
+        var contextId: String
+    }
+
+    static func links(in text: String) -> [(range: Range<String.Index>, link: Link)] {
+        text.matches(of: /!?\[[^\]\n]{0,512}\]\(t3-context:\/\/v1\/([a-z][a-z0-9-]{0,39})\/([A-Za-z0-9_-]{1,128})\)/).map {
+            ($0.range, Link(source: String($0.output.0), kind: String($0.output.1), contextId: String($0.output.2)))
+        }
+    }
+
+    /// What the editor shows: the text without the file and image links the composer appended at
+    /// its end. They are put back on save (minus removed attachments).
+    static func split(_ text: String) -> (body: String, trailing: [Link]) {
+        var body = text
+        var trailing: [Link] = []
+        while let last = links(in: body).last, ["file", "image"].contains(last.link.kind) {
+            let end = body.endIndex
+            let tail = body[last.range.upperBound..<end]
+            guard tail.allSatisfy(\.isWhitespace) else { break }
+            trailing.insert(last.link, at: 0)
+            body = String(body[..<last.range.lowerBound])
+        }
+        return (body.trimmingCharacters(in: .whitespacesAndNewlines), trailing)
+    }
+
+    static func payload(body: String, trailing: [Link], original: QueuedMessage, kept: [ChatAttachment],
+                        added: [(contextId: String, attachment: ChatAttachment)], inlineContext: Bool) -> Payload {
+        let records = original.context?["records"]?.array ?? []
+        let live = Set(kept.map(\.id) + added.map(\.attachment.id))
+        let removed = Set(records.compactMap { record -> String? in
+            guard let attachmentId = record["attachmentId"]?.string, !live.contains(attachmentId) else { return nil }
+            return record["contextId"]?.string
+        })
+        // Links of removed attachments go wherever they are; kept trailing ones come back at the end.
+        var text = body
+        for (range, link) in links(in: body).reversed() where removed.contains(link.contextId) {
+            // Take one space before the link with it, so no double space is left behind.
+            let start = range.lowerBound > text.startIndex && text[text.index(before: range.lowerBound)] == " "
+                ? text.index(before: range.lowerBound) : range.lowerBound
+            text.removeSubrange(start..<range.upperBound)
+        }
+        text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let keptLinks = trailing.filter { !removed.contains($0.contextId) }.map(\.source)
+        if !keptLinks.isEmpty {
+            text = ([text].filter { !$0.isEmpty } + keptLinks).joined(separator: " ")
+        }
+        let unchanged = added.isEmpty && kept.map(\.id) == original.attachments.map(\.id)
+        if unchanged { return Payload(text: text, attachments: nil, context: nil) }
+
+        let fresh = ComposerMessage.build(text: text, attachments: added, pullRequests: [], inlineContext: inlineContext)
+        let remaining = records.filter { record in
+            record["attachmentId"]?.string.map(live.contains) ?? true
+        } + (fresh.context?["records"]?.array ?? [])
+        // An empty list clears the old records; leaving `context` out would keep them.
+        let context: JSON? = remaining.isEmpty && records.isEmpty ? nil : ["version": 1, "records": .array(remaining)]
+        return Payload(text: fresh.text, attachments: kept + added.map(\.attachment), context: context)
+    }
 }
 
 /// A `/command`, `@path`, `$skill` or `#pr` being typed. The composer has no caret, so the cursor

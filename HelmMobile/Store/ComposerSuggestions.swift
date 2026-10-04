@@ -2,8 +2,8 @@ import Foundation
 import Observation
 
 /// The menu above a composer while a `/command`, `@path`, `$skill` or `#pr` is being typed.
-/// Commands and skills come from the server config; paths and pull requests are searched on the
-/// Mac, debounced.
+/// Commands and skills come from the server config, `@` thread matches from the shell; paths and
+/// pull requests are searched on the Mac, debounced.
 @MainActor
 @Observable
 final class ComposerSuggestions {
@@ -17,6 +17,8 @@ final class ComposerSuggestions {
             case modelSettings
             /// Replace the token with `#42 ` and keep the pull request for the send.
             case pullRequest(PullRequestReference)
+            /// Replace the token with `@title ` and keep the thread for the send.
+            case thread(ThreadReference)
         }
 
         var id: String
@@ -33,6 +35,8 @@ final class ComposerSuggestions {
         var cwd: String?
         var projectId: String?
         var repositoryName: String?
+        /// The composer's own thread, never offered under `@`.
+        var threadId: String?
         var hasThread: Bool
         var hasConversation: Bool
         var canChangeInteractionMode: Bool
@@ -99,14 +103,16 @@ final class ComposerSuggestions {
             refreshWorkspace(provider: provider, scope: scope)
         case .path:
             let query = String(trigger.query.trimmingCharacters(in: .whitespaces).prefix(256))
+            let threads = Self.threadItems(query: query, threads: Array(scope.environment.shell.threads.values),
+                                           environmentId: scope.environment.id, excluding: scope.threadId)
             guard !query.isEmpty, let cwd = scope.cwd else {
                 stopSearch()
-                items = []
+                items = threads
                 message = nil
                 return
             }
-            runSearch(key: "path|\(cwd)|\(query)", delay: .milliseconds(150)) {
-                try await Self.searchPaths(query: query, cwd: cwd, environment: scope.environment)
+            runSearch(key: "path|\(cwd)|\(query)", delay: .milliseconds(150), leading: threads) {
+                threads + (try await Self.searchPaths(query: query, cwd: cwd, environment: scope.environment))
             }
         case .pullRequest:
             guard config?.capability("pullRequests") == true, let projectId = scope.projectId,
@@ -133,12 +139,15 @@ final class ComposerSuggestions {
         isLoading = false
     }
 
-    private func runSearch(key: String, delay: Duration, _ work: @escaping @MainActor () async throws -> [Item]) {
+    /// `leading` rows are known without the search and show while it runs.
+    private func runSearch(key: String, delay: Duration, leading: [Item] = [],
+                           _ work: @escaping @MainActor () async throws -> [Item]) {
         guard key != searchKey else { return }
         search?.cancel()
         searchKey = key
         isLoading = true
         message = nil
+        if !leading.isEmpty { items = leading }
         search = Task { [weak self] in
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
@@ -149,9 +158,9 @@ final class ComposerSuggestions {
                 isLoading = false
             } catch {
                 guard !Task.isCancelled, let self else { return }
-                items = []
+                items = leading
                 isLoading = false
-                message = error.localizedDescription
+                if leading.isEmpty { message = error.localizedDescription }
             }
         }
     }
@@ -222,6 +231,24 @@ final class ComposerSuggestions {
     }
 
     // MARK: Pure rules (tested)
+
+    /// Threads offered under `@` before the files (`composerThreadItems.ts`): this Mac's active
+    /// threads (the shell holds no archived ones) whose title contains the query, not the composer's own, newest first, at most 5.
+    /// A bare `@` stays a file picker.
+    nonisolated static func threadItems(query rawQuery: String, threads: [ThreadSummary], environmentId: String,
+                                        excluding threadId: String?) -> [Item] {
+        let query = rawQuery.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return [] }
+        return threads
+            .filter { $0.id != threadId && $0.title.lowercased().contains(query) }
+            .sorted { ($0.updatedAt ?? .distantPast) > ($1.updatedAt ?? .distantPast) }
+            .prefix(5)
+            .map { thread in
+                Item(id: "thread:\(environmentId):\(thread.id)", title: thread.title, detail: String(localized: "Thread"),
+                     symbol: "text.bubble",
+                     action: .thread(ThreadReference(environmentId: environmentId, threadId: thread.id, title: thread.title)))
+            }
+    }
 
     /// `/` items: `/model` always, `/plan` and `/default` when the mode can change, then the
     /// provider's commands (only at the very start of the message) and its skills.

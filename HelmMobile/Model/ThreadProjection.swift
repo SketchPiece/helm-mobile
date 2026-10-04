@@ -259,6 +259,9 @@ struct QueuedMessage: Identifiable, Hashable, Sendable {
     var id: String  // run id
     var text: String
     var held: Bool
+    var attachments: [ChatAttachment] = []
+    /// The message's `OrchestrationMessageContext`, for edits that change its attachments.
+    var context: JSON?
 }
 
 /// Thread detail state (`OrchestrationV2ThreadProjection`) with the reducer from
@@ -418,10 +421,13 @@ struct ThreadProjection: Sendable {
             }
             .sorted { ($0.queuePosition ?? $0.ordinal, $0.ordinal) < ($1.queuePosition ?? $1.ordinal, $1.ordinal) }
             .map { run in
-                QueuedMessage(
+                let message = run.userMessageId.flatMap { messages[$0] }
+                return QueuedMessage(
                     id: run.id,
-                    text: run.userMessageId.flatMap { messages[$0]?["text"]?.string } ?? "",
-                    held: run.queueHeld
+                    text: message?["text"]?.string ?? "",
+                    held: run.queueHeld,
+                    attachments: (message?["attachments"]?.array ?? []).compactMap(ChatAttachment.init(json:)),
+                    context: message?["context"]?.nonNull
                 )
             }
     }

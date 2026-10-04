@@ -428,7 +428,8 @@ private struct QuestionsCard: View {
     }
 }
 
-/// Messages waiting for the current turn to finish.
+/// Messages waiting for the current turn to finish. With two or more and a provider that takes
+/// queued messages, the grip drags a message to a new place (Move up/down stay in its menu).
 struct QueueStrip: View {
     let queued: [QueuedMessage]
     let session: ThreadSession
@@ -437,6 +438,27 @@ struct QueueStrip: View {
     let canReorder: Bool
     @State private var editing: QueuedMessage?
     @State private var error: String?
+    /// Row frames in the list's own space, measured before any drag offset.
+    @State private var frames: [String: CGRect] = [:]
+    @State private var dragging: String?
+    @State private var dragOffset: CGFloat = 0
+    /// The order just sent, shown until the server's run updates replace it.
+    @State private var pendingOrder: [String]?
+
+    private static let rowSpacing: CGFloat = 6
+
+    private var canDrag: Bool { canReorder && queued.count > 1 }
+
+    private var displayed: [QueuedMessage] {
+        guard let pendingOrder, Set(pendingOrder) == Set(queued.map(\.id)) else { return queued }
+        return pendingOrder.compactMap { id in queued.first { $0.id == id } }
+    }
+
+    private var rowFrames: [QueueOrder.RowFrame] {
+        displayed.compactMap { message in
+            frames[message.id].map { QueueOrder.RowFrame(id: message.id, minY: $0.minY, height: $0.height) }
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -450,45 +472,16 @@ struct QueueStrip: View {
                         .foregroundStyle(Palette.accentText)
                 }
             }
-            ForEach(queued) { message in
-                HStack(spacing: 8) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.textMuted)
-                    Text(message.text)
-                        .font(Typography.subheadline)
-                        .foregroundStyle(Palette.text)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Menu {
-                        if canSteer {
-                            Button {
-                                Task { try? await session.steerQueued(message.id) }
-                            } label: { Label("Send now", systemImage: "arrow.turn.down.right") }
-                        }
-                        Button {
-                            editing = message
-                        } label: { Label("Edit", systemImage: "pencil") }
-                        if canReorder, queued.count > 1 {
-                            let ids = queued.map(\.id)
-                            if let before = QueueOrder.beforeRunId(ids, moving: message.id, .up) {
-                                Button { reorder(message, before: before) } label: { Label("Move up", systemImage: "arrow.up") }
-                            }
-                            if let before = QueueOrder.beforeRunId(ids, moving: message.id, .down) {
-                                Button { reorder(message, before: before) } label: { Label("Move down", systemImage: "arrow.down") }
-                            }
-                        }
-                        Button(role: .destructive) {
-                            Task { try? await session.cancelQueued(message.id) }
-                        } label: { Label("Remove", systemImage: "xmark") }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .frame(width: 28, height: 28)
-                            .contentShape(.rect)
-                    }
-                    .foregroundStyle(Palette.textMuted)
+            VStack(alignment: .leading, spacing: Self.rowSpacing) {
+                ForEach(displayed) { message in
+                    row(message)
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .named("queue")) } action: { frames[message.id] = $0 }
+                        .offset(y: dragging == message.id ? dragOffset : shift(for: message.id))
+                        .zIndex(dragging == message.id ? 1 : 0)
+                        .animation(.snappy(duration: 0.2), value: dragging == message.id ? 0 : shift(for: message.id))
                 }
             }
+            .coordinateSpace(.named("queue"))
             if let error {
                 Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
             }
@@ -496,30 +489,132 @@ struct QueueStrip: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .floatingSurface(cornerRadius: 18)
+        .onChange(of: queued.map(\.id)) { pendingOrder = nil }
         .sheet(item: $editing) { message in
             QueuedMessageEditor(message: message, session: session)
         }
     }
 
-    private func reorder(_ message: QueuedMessage, before: String?) {
+    private func row(_ message: QueuedMessage) -> some View {
+        HStack(spacing: 8) {
+            if canDrag {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(dragging == message.id ? Palette.text : Palette.textMuted)
+                    .frame(width: 28, height: 28)
+                    .contentShape(.rect)
+                    .gesture(dragGesture(message))
+                    .accessibilityLabel("Drag to reorder")
+                    .accessibilityIdentifier("queueDragHandle")
+            } else {
+                Image(systemName: "clock")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.textMuted)
+            }
+            if !message.attachments.isEmpty {
+                Image(systemName: "paperclip")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.textMuted)
+            }
+            Text(ContextReference.displayText(message.text))
+                .font(Typography.subheadline)
+                .foregroundStyle(Palette.text)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            menu(message)
+        }
+        .background(dragging == message.id ? Palette.surfaceRaised : .clear, in: .rect(cornerRadius: 10))
+        .scaleEffect(dragging == message.id ? 1.02 : 1)
+        .accessibilityIdentifier("queuedMessage")
+    }
+
+    private func menu(_ message: QueuedMessage) -> some View {
+        Menu {
+            if canSteer {
+                Button {
+                    Task { try? await session.steerQueued(message.id) }
+                } label: { Label("Send now", systemImage: "arrow.turn.down.right") }
+            }
+            Button {
+                editing = message
+            } label: { Label("Edit", systemImage: "pencil") }
+            if canDrag {
+                let ids = displayed.map(\.id)
+                if let before = QueueOrder.beforeRunId(ids, moving: message.id, .up) {
+                    Button { reorder(message.id, before: before) } label: { Label("Move up", systemImage: "arrow.up") }
+                }
+                if let before = QueueOrder.beforeRunId(ids, moving: message.id, .down) {
+                    Button { reorder(message.id, before: before) } label: { Label("Move down", systemImage: "arrow.down") }
+                }
+            }
+            Button(role: .destructive) {
+                Task { try? await session.cancelQueued(message.id) }
+            } label: { Label("Remove", systemImage: "xmark") }
+        } label: {
+            Image(systemName: "ellipsis")
+                .frame(width: 28, height: 28)
+                .contentShape(.rect)
+        }
+        .foregroundStyle(Palette.textMuted)
+    }
+
+    private func dragGesture(_ message: QueuedMessage) -> some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { value in
+                if dragging == nil { UISelectionFeedbackGenerator().selectionChanged() }
+                dragging = message.id
+                dragOffset = value.translation.height
+            }
+            .onEnded { value in
+                let drop = QueueOrder.dropBeforeRunId(rowFrames, moving: message.id, translation: value.translation.height)
+                withAnimation(.snappy(duration: 0.2)) {
+                    if let before = drop {
+                        pendingOrder = QueueOrder.reordered(displayed.map(\.id), moving: message.id, before: before)
+                    }
+                    dragging = nil
+                    dragOffset = 0
+                }
+                if let before = drop { reorder(message.id, before: before) }
+            }
+    }
+
+    /// How far another row moves aside while one is dragged over it.
+    private func shift(for id: String) -> CGFloat {
+        guard let dragging, dragging != id, let source = frames[dragging],
+              let before = QueueOrder.dragBeforeRunId(rowFrames, moving: dragging, translation: dragOffset)
+        else { return 0 }
+        let ids = displayed.map(\.id)
+        let target = QueueOrder.reordered(ids, moving: dragging, before: before)
+        guard let from = ids.firstIndex(of: id), let to = target.firstIndex(of: id) else { return 0 }
+        return CGFloat(to - from) * (source.height + Self.rowSpacing)
+    }
+
+    private func reorder(_ runId: String, before: String?) {
         Task {
             do {
-                try await session.reorderQueued(message.id, before: before)
+                try await session.reorderQueued(runId, before: before)
                 error = nil
                 UISelectionFeedbackGenerator().selectionChanged()
             } catch {
+                pendingOrder = nil
                 self.error = error.localizedDescription
             }
         }
     }
 }
 
-/// Rewrites a queued message before it is sent. Its attachments stay as they are.
+/// Rewrites a queued message before it is sent: its text, and which attachments go with it
+/// (remove ones it has, add photos and files like in the composer).
 private struct QueuedMessageEditor: View {
     let message: QueuedMessage
     let session: ThreadSession
     @Environment(\.dismiss) private var dismiss
+    /// File links the composer appended; hidden here, put back on save.
+    private let trailing: [QueuedEdit.Link]
+    private let initialText: String
     @State private var text: String
+    @State private var kept: [ChatAttachment]
+    @State private var draft = ComposerDraft()
     @State private var saving = false
     @State private var error: String?
     @FocusState private var focused: Bool
@@ -527,10 +622,32 @@ private struct QueuedMessageEditor: View {
     init(message: QueuedMessage, session: ThreadSession) {
         self.message = message
         self.session = session
-        _text = State(initialValue: message.text)
+        let split = QueuedEdit.split(message.text)
+        trailing = split.trailing
+        initialText = split.body
+        _text = State(initialValue: split.body)
+        _kept = State(initialValue: message.attachments)
     }
 
-    private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var environment: EnvironmentSession? { session.environment }
+
+    private var payload: QueuedEdit.Payload {
+        QueuedEdit.payload(
+            body: text.trimmingCharacters(in: .whitespacesAndNewlines), trailing: trailing, original: message,
+            kept: kept, added: draft.uploaded, inlineContext: environment?.config?.inlineMessageContext ?? false
+        )
+    }
+
+    private var changed: Bool {
+        text.trimmingCharacters(in: .whitespacesAndNewlines) != initialText
+            || kept.map(\.id) != message.attachments.map(\.id) || draft.hasUploaded
+    }
+
+    private var canSave: Bool {
+        changed && !saving && !draft.isUploading
+            && !payload.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && kept.count + draft.attachments.count <= AttachmentLimits.maxPerMessage
+    }
 
     var body: some View {
         NavigationStack {
@@ -543,6 +660,31 @@ private struct QueuedMessageEditor: View {
                     .padding(10)
                     .background(Palette.surface, in: .rect(cornerRadius: 14, style: .continuous))
                     .accessibilityIdentifier("queuedEditor")
+                HStack(alignment: .center, spacing: 8) {
+                    AttachMenu(draft: draft, environment: environment) {
+                        if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                            text += pasted
+                        }
+                    }
+                    .background(Palette.surface, in: .circle)
+                    if !kept.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(kept) { attachment in
+                                    KeptAttachmentTile(attachment: attachment, environment: environment) {
+                                        kept.removeAll { $0.id == attachment.id }
+                                    }
+                                }
+                            }
+                            .padding(.top, 6)
+                            .padding(.trailing, 6)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                if !draft.attachments.isEmpty || draft.notice != nil {
+                    AttachmentStrip(draft: draft)
+                }
                 if let error {
                     Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
                 }
@@ -561,7 +703,8 @@ private struct QueuedMessageEditor: View {
                     } label: {
                         if saving { ProgressView() } else { Text("Save") }
                     }
-                    .disabled(trimmed.isEmpty || trimmed == message.text || saving)
+                    .disabled(!canSave)
+                    .accessibilityIdentifier("queuedEditorSave")
                 }
             }
             .onAppear { focused = true }
@@ -572,15 +715,61 @@ private struct QueuedMessageEditor: View {
     private func save() {
         saving = true
         error = nil
+        let payload = payload
         Task {
             do {
-                try await session.editQueued(message.id, text: trimmed)
+                try await session.editQueued(message.id, payload)
                 dismiss()
             } catch {
                 // The run most likely left the queue meanwhile.
                 self.error = String(localized: "Couldn't save. It may have already started.")
             }
             saving = false
+        }
+    }
+}
+
+/// An attachment the queued message already has: a picture tile or a file chip, removable.
+private struct KeptAttachmentTile: View {
+    let attachment: ChatAttachment
+    let environment: EnvironmentSession?
+    let onRemove: () -> Void
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if attachment.isImage {
+                ZStack {
+                    Palette.surface
+                    if let image { Image(uiImage: image).resizable().scaledToFill() }
+                }
+                .frame(width: 52, height: 52)
+                .clipShape(.rect(cornerRadius: 12, style: .continuous))
+            } else {
+                Label(attachment.name, systemImage: "doc")
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.text)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: 160)
+                    .padding(.horizontal, 10)
+                    .frame(height: 52)
+                    .background(Palette.surface, in: .rect(cornerRadius: 12, style: .continuous))
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .black.opacity(0.6))
+                    .font(.system(size: 18))
+            }
+            .accessibilityLabel("Remove \(attachment.name)")
+            .offset(x: 5, y: -5)
+        }
+        .task(id: attachment.id) {
+            guard attachment.isImage, image == nil, let environment else { return }
+            image = await AttachmentLoader.image(attachment, environment: environment)
         }
     }
 }

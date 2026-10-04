@@ -154,6 +154,37 @@ final class QueueOrderTests: XCTestCase {
         XCTAssertNil(QueueOrder.beforeRunId(ids, moving: "C", .down))
         XCTAssertNil(QueueOrder.beforeRunId(ids, moving: "X", .up))
     }
+
+    /// Three 40 pt rows 6 pt apart, as the queue strip lays them out.
+    private let rows = ["A", "B", "C"].enumerated().map { QueueOrder.RowFrame(id: $1, minY: Double($0) * 46, height: 40) }
+
+    func testDragLandsBeforeTheFirstRowBelowTheDraggedCentre() {
+        // C dragged up past A's centre goes first.
+        XCTAssertEqual(QueueOrder.dropBeforeRunId(rows, moving: "C", translation: -100), .some("A"))
+        // C dragged up past B's centre only: before B.
+        XCTAssertEqual(QueueOrder.dropBeforeRunId(rows, moving: "C", translation: -50), .some("B"))
+        // A dragged below C's centre goes to the end: beforeRunId is null.
+        XCTAssertEqual(QueueOrder.dropBeforeRunId(rows, moving: "A", translation: 100), .some(nil))
+        // A dragged below B but not C: before C.
+        XCTAssertEqual(QueueOrder.dropBeforeRunId(rows, moving: "A", translation: 50), .some("C"))
+    }
+
+    func testDragThatDoesNotChangeTheOrderSendsNothing() {
+        XCTAssertNil(QueueOrder.dropBeforeRunId(rows, moving: "B", translation: 10))
+        XCTAssertNil(QueueOrder.dropBeforeRunId(rows, moving: "B", translation: -15))
+        XCTAssertNil(QueueOrder.dropBeforeRunId(rows, moving: "C", translation: 200))
+        XCTAssertNil(QueueOrder.dropBeforeRunId(rows, moving: "X", translation: -80))
+        // The live preview still reports where the row is.
+        XCTAssertEqual(QueueOrder.dragBeforeRunId(rows, moving: "B", translation: 10), .some("C"))
+    }
+
+    func testReorderedMatchesTheServer() {
+        let ids = ["A", "B", "C"]
+        XCTAssertEqual(QueueOrder.reordered(ids, moving: "C", before: "A"), ["C", "A", "B"])
+        XCTAssertEqual(QueueOrder.reordered(ids, moving: "A", before: nil), ["B", "C", "A"])
+        XCTAssertEqual(QueueOrder.reordered(ids, moving: "A", before: "C"), ["B", "A", "C"])
+        XCTAssertEqual(QueueOrder.reordered(ids, moving: "X", before: "A"), ids)
+    }
 }
 
 final class PendingOrderKeyTests: XCTestCase {

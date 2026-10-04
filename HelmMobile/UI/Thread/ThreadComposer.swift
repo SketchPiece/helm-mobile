@@ -101,7 +101,7 @@ struct ThreadComposer: View {
         return ComposerSuggestions.Scope(
             environment: environment, providerInstanceId: thread?.modelSelection?.instanceId,
             cwd: thread?.worktreePath ?? project?.workspaceRoot, projectId: thread?.projectId,
-            repositoryName: project?.repositoryName, hasThread: true,
+            repositoryName: project?.repositoryName, threadId: session.threadId, hasThread: true,
             hasConversation: !(session.projection?.messages.isEmpty ?? true), canChangeInteractionMode: true
         )
     }
@@ -120,6 +120,9 @@ struct ThreadComposer: View {
         case .pullRequest(let reference):
             text = trigger.replacing(in: text, with: "\(reference.token) ")
             draft.addPullRequest(reference)
+        case .thread(let reference):
+            guard draft.addThread(reference) else { return }
+            text = trigger.replacing(in: text, with: "\(reference.token) ")
         }
         UISelectionFeedbackGenerator().selectionChanged()
     }

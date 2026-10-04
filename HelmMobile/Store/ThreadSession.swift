@@ -241,13 +241,15 @@ final class ThreadSession {
         ])
     }
 
-    /// Replaces a queued message's text; its attachments and context stay as they were.
-    func editQueued(_ runId: String, text: String) async throws {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        try await environment?.dispatch("queued-run.edit", [
-            "threadId": .string(threadId), "runId": .string(runId), "text": .string(trimmed),
-        ])
+    /// Rewrites a queued message. Without `attachments` in the payload its attachments and
+    /// context stay as they were.
+    func editQueued(_ runId: String, _ payload: QueuedEdit.Payload) async throws {
+        let text = payload.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        var fields: [String: JSON] = ["threadId": .string(threadId), "runId": .string(runId), "text": .string(text)]
+        if let attachments = payload.attachments { fields["attachments"] = .array(attachments.map(\.json)) }
+        if let context = payload.context { fields["context"] = context }
+        try await environment?.dispatch("queued-run.edit", fields)
     }
 
     /// Moves a queued message right before `beforeRunId`, or to the end of the queue when nil.

@@ -1,7 +1,8 @@
 import PhotosUI
 import SwiftUI
 
-/// The composer's "+": photos, files from the Files app, or whatever is on the clipboard.
+/// The composer's "+": a new photo from the camera, photos, files from the Files app, or
+/// whatever is on the clipboard.
 struct AttachMenu: View {
     let draft: ComposerDraft
     let environment: EnvironmentSession?
@@ -9,11 +10,17 @@ struct AttachMenu: View {
     let onPaste: () -> Void
 
     @State private var showPhotos = false
+    @State private var showCamera = false
     @State private var showFiles = false
     @State private var photoItems: [PhotosPickerItem] = []
 
     var body: some View {
         Menu {
+            if CameraPicker.isAvailable {
+                Button {
+                    showCamera = true
+                } label: { Label("Camera", systemImage: "camera") }
+            }
             Button {
                 showPhotos = true
             } label: { Label("Photos", systemImage: "photo.on.rectangle") }
@@ -37,10 +44,62 @@ struct AttachMenu: View {
             guard let environment, case .success(let urls) = result else { return }
             draft.attach(fileURLs: urls, environment: environment)
         }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { image in
+                guard let environment else { return }
+                draft.attach(image: image, environment: environment, name: "photo")
+            }
+            .ignoresSafeArea()
+        }
         .onChange(of: photoItems) { _, items in
             guard !items.isEmpty, let environment else { return }
             photoItems = []
             for item in items { draft.attach(item, environment: environment) }
+        }
+    }
+}
+
+/// The system camera (`UIImagePickerController`), handing back the photo taken. Dismisses itself.
+struct CameraPicker: UIViewControllerRepresentable {
+    let onCapture: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    /// False on the simulator and on devices without a camera, where the menu leaves it out
+    /// (UI tests show it anyway with `-uiTestCamera`).
+    static var isAvailable: Bool {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTestCamera") { return true }
+        #endif
+        return UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        // Only a forced entry on a camera-less simulator gets here without one.
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            picker.sourceType = .camera
+            picker.cameraCaptureMode = .photo
+        }
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ picker: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPicker
+        init(_ parent: CameraPicker) { self.parent = parent }
+
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage { parent.onCapture(image) }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }

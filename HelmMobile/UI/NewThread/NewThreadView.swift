@@ -293,7 +293,7 @@ struct NewThreadView: View {
         guard let environment else { return nil }
         return ComposerSuggestions.Scope(
             environment: environment, providerInstanceId: selection?.instanceId, cwd: project?.workspaceRoot,
-            projectId: project?.id, repositoryName: project?.repositoryName, hasThread: false,
+            projectId: project?.id, repositoryName: project?.repositoryName, threadId: nil, hasThread: false,
             hasConversation: false, canChangeInteractionMode: true
         )
     }
@@ -312,6 +312,9 @@ struct NewThreadView: View {
         case .pullRequest(let reference):
             text = trigger.replacing(in: text, with: "\(reference.token) ")
             draft.addPullRequest(reference)
+        case .thread(let reference):
+            guard draft.addThread(reference) else { return }
+            text = trigger.replacing(in: text, with: "\(reference.token) ")
         }
         UISelectionFeedbackGenerator().selectionChanged()
     }
