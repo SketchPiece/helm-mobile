@@ -57,6 +57,8 @@ struct Provider: Hashable, Sendable, Identifiable {
     var instanceId: String
     var driver: String
     var displayName: String
+    /// The driver's own icon (`ServerProvider.iconUrl`); ProviderIcon only trusts ACP Registry CDN URLs.
+    var iconUrl: String?
     var isUsable: Bool
     var supportedRuntimeModes: [String]
     var showInteractionModeToggle: Bool
@@ -88,6 +90,7 @@ struct Provider: Hashable, Sendable, Identifiable {
         self.instanceId = instanceId
         driver = json["driver"]?.string ?? instanceId
         displayName = json["displayName"]?.string ?? Self.defaultName(driver)
+        iconUrl = json["iconUrl"]?.string
         let enabled = json["enabled"]?.bool ?? true
         let installed = json["installed"]?.bool ?? true
         let available = json["availability"]?.string != "unavailable"

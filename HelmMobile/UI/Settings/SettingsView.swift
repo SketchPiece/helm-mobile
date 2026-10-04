@@ -143,7 +143,8 @@ struct EnvironmentDetailView: View {
                 Section {
                     ForEach(config.providers) { provider in
                         HStack(spacing: 10) {
-                            ProviderGlyph(driver: provider.driver)
+                            ProviderIcon(driver: provider.driver, iconUrl: provider.iconUrl, size: 18)
+                                .frame(width: 22)
                             Text(provider.displayName)
                             Spacer()
                             Text(provider.isUsable ? String(localized: "Ready") : String(localized: "Unavailable"))
