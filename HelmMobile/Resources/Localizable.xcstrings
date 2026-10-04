@@ -938,32 +938,12 @@
         }
       }
     },
-    "A native client for Helm, built on T3 Code's open protocol.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Нативный клиент Штурвала на открытом протоколе T3 Code."
-          }
-        }
-      }
-    },
     "A tool needs your input": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Инструменту нужен ответ"
-          }
-        }
-      }
-    },
-    "About": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "О приложении"
           }
         }
       }
@@ -1298,6 +1278,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нужно разрешение"
+          }
+        }
+      }
+    },
+    "Approvals, questions and finished work.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запросы, вопросы и готовая работа."
           }
         }
       }
@@ -2809,6 +2799,16 @@
         }
       }
     },
+    "Helm %@ · built on T3 Code's open protocol": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал %@ · на открытом протоколе T3 Code"
+          }
+        }
+      }
+    },
     "Helm answered with something unexpected.": {
       "localizations": {
         "ru": {
@@ -2835,16 +2835,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Штурвал не ответил вовремя."
-          }
-        }
-      }
-    },
-    "Helm follows the phone's language and Dynamic Type text size.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Язык и размер текста берутся из настроек телефона."
           }
         }
       }
@@ -3396,6 +3386,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ждут тебя"
+          }
+        }
+      }
+    },
+    "Network": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сеть"
           }
         }
       }
@@ -5959,16 +5959,6 @@
         }
       }
     },
-    "Version %@": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Версия %@"
-          }
-        }
-      }
-    },
     "Waiting": {
       "localizations": {
         "ru": {
@@ -6119,22 +6109,22 @@
         }
       }
     },
-    "When an agent asks for approval, has a question, finishes or fails. The Live Activity shows work in progress on the lock screen and in the Dynamic Island.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Когда агент просит разрешения, задаёт вопрос, заканчивает или падает. Live Activity показывает работу на экране блокировки и в Dynamic Island."
-          }
-        }
-      }
-    },
     "While the agent is working": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Пока агент работает"
+          }
+        }
+      }
+    },
+    "Work": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работа"
           }
         }
       }

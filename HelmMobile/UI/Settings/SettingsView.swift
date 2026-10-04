@@ -20,35 +20,17 @@ struct SettingsView: View {
                         NavigationLink {
                             EnvironmentDetailView(environment: environment)
                         } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "laptopcomputer")
-                                    .foregroundStyle(Palette.textMuted)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(environment.label).font(Typography.body)
-                                    Text(environment.statusText)
-                                        .font(Typography.footnote)
-                                        .foregroundStyle(environment.isLive ? Palette.done : Palette.textMuted)
-                                }
+                            SettingsRow(environment.label, symbol: "laptopcomputer") {
+                                StatusValue(text: environment.statusText, isOn: environment.isLive)
                             }
                         }
                     }
                     Button {
                         router.showPairing = true
                     } label: {
-                        Label("Connect a computer", systemImage: "plus")
+                        SettingsRow(String(localized: "Connect a computer"), symbol: "plus")
+                            .foregroundStyle(Palette.accentText)
                     }
-                    NavigationLink {
-                        TailscaleSettingsView()
-                    } label: {
-                        HStack {
-                            Label("Tailscale", systemImage: "network")
-                            Spacer()
-                            Text(model.tailscale.isRunning ? String(localized: "Built-in") : String(localized: "VPN app"))
-                                .font(Typography.footnote)
-                                .foregroundStyle(Palette.textMuted)
-                        }
-                    }
-                    .accessibilityIdentifier("tailscaleSettings")
                 } header: {
                     Text("Computers").sectionLabelStyle()
                 }
@@ -57,27 +39,22 @@ struct SettingsView: View {
                     NavigationLink {
                         ArchivedThreadsView()
                     } label: {
-                        Label("Archived threads", systemImage: "archivebox")
+                        SettingsRow(String(localized: "Archived threads"), symbol: "archivebox")
                     }
-                } header: {
-                    Text("Threads").sectionLabelStyle()
-                }
-
-                Section {
                     NavigationLink {
                         ScheduledTasksView()
                     } label: {
-                        Label("Scheduled tasks", systemImage: "calendar.badge.clock")
+                        SettingsRow(String(localized: "Scheduled tasks"), symbol: "calendar")
                     }
                     .accessibilityIdentifier("scheduledTasks")
                     NavigationLink {
                         UsageView()
                     } label: {
-                        Label("Usage", systemImage: "chart.bar")
+                        SettingsRow(String(localized: "Usage"), symbol: "chart.bar")
                     }
                     .accessibilityIdentifier("usage")
                 } header: {
-                    Text("Agents").sectionLabelStyle()
+                    Text("Work").sectionLabelStyle()
                 }
 
                 NotificationsSection()
@@ -105,35 +82,36 @@ struct SettingsView: View {
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     } label: {
-                        HStack {
-                            Text("Language and text size").foregroundStyle(Palette.text)
-                            Spacer()
+                        SettingsRow(String(localized: "Language and text size"), symbol: "textformat.size") {
                             Image(systemName: "arrow.up.forward.app").foregroundStyle(Palette.textMuted)
                         }
                     }
                 } header: {
                     Text("This phone").sectionLabelStyle()
-                } footer: {
-                    Text("Helm follows the phone's language and Dynamic Type text size.")
-                        .font(Typography.footnote)
                 }
 
                 Section {
-                    HStack(spacing: 12) {
-                        HelmMark(size: 40)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Helm").font(Typography.wordmark)
-                            Text("Version \(version)")
+                    NavigationLink {
+                        TailscaleSettingsView()
+                    } label: {
+                        SettingsRow(String(localized: "Tailscale"), symbol: "network") {
+                            Text(model.tailscale.isRunning ? String(localized: "Built-in") : String(localized: "VPN app"))
                                 .font(Typography.footnote)
                                 .foregroundStyle(Palette.textMuted)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .accessibilityIdentifier("tailscaleSettings")
                 } header: {
-                    Text("About").sectionLabelStyle()
+                    Text("Network").sectionLabelStyle()
                 } footer: {
-                    Text("A native client for Helm, built on T3 Code's open protocol.")
-                        .font(Typography.footnote)
+                    HStack(spacing: 8) {
+                        HelmMark(size: 18)
+                        Text("Helm \(version) · built on T3 Code's open protocol")
+                            .font(Typography.footnote)
+                            .foregroundStyle(Palette.textMuted)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 20)
                 }
             }
             .font(Typography.body)
@@ -156,9 +134,7 @@ struct SettingsView: View {
 
     private func valueLink(_ title: String, value: String, symbol: String, @ViewBuilder destination: () -> some View) -> some View {
         NavigationLink(destination: destination) {
-            HStack {
-                Label(title, systemImage: symbol)
-                Spacer()
+            SettingsRow(title, symbol: symbol) {
                 Text(value)
                     .font(Typography.footnote)
                     .foregroundStyle(Palette.textMuted)
@@ -170,6 +146,48 @@ struct SettingsView: View {
         let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
         return "\(short) (\(build))"
+    }
+}
+
+/// One settings row: an icon in a fixed column so every title starts at the same x, the title,
+/// and an optional trailing value.
+struct SettingsRow<Trailing: View>: View {
+    let title: String
+    let symbol: String
+    let trailing: Trailing
+
+    init(_ title: String, symbol: String, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
+        self.title = title
+        self.symbol = symbol
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .regular))
+                .frame(width: 26)
+            Text(title)
+            Spacer(minLength: 8)
+            trailing
+        }
+    }
+}
+
+/// A status as a dot and a grey word, the same for computers and notifications.
+struct StatusValue: View {
+    let text: String
+    let isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(isOn ? Palette.done : Palette.textMuted)
+                .frame(width: 7, height: 7)
+            Text(text)
+                .font(Typography.footnote)
+                .foregroundStyle(Palette.textMuted)
+        }
     }
 }
 
@@ -251,19 +269,20 @@ struct NotificationsSection: View {
                 Text("This build can't receive notifications.")
                     .foregroundStyle(Palette.textMuted)
             } else {
-                HStack {
-                    Text("Notifications")
-                    Spacer()
-                    Text(statusText)
-                        .font(Typography.footnote)
-                        .foregroundStyle(push.registered && push.authorization == .authorized ? Palette.done : Palette.textMuted)
+                SettingsRow(String(localized: "Notifications"), symbol: "bell") {
+                    StatusValue(text: statusText, isOn: push.registered && push.authorization == .authorized)
                 }
                 if push.authorization == .denied {
-                    Button("Allow in iOS Settings") {
+                    Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    } label: {
+                        SettingsRow(String(localized: "Allow in iOS Settings"), symbol: "arrow.up.forward.app")
+                            .foregroundStyle(Palette.accentText)
                     }
                 }
-                Toggle("Live Activity", isOn: $push.liveActivitiesEnabled)
+                Toggle(isOn: $push.liveActivitiesEnabled) {
+                    SettingsRow(String(localized: "Live Activity"), symbol: "capsule")
+                }
                     .tint(Palette.accent)
                 if let error = push.lastError {
                     Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
@@ -272,7 +291,7 @@ struct NotificationsSection: View {
         } header: {
             Text("Notifications").sectionLabelStyle()
         } footer: {
-            Text("When an agent asks for approval, has a question, finishes or fails. The Live Activity shows work in progress on the lock screen and in the Dynamic Island.")
+            Text("Approvals, questions and finished work.")
                 .font(Typography.footnote)
         }
     }
