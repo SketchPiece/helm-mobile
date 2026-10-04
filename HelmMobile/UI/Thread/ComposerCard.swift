@@ -112,13 +112,12 @@ struct RuntimeModeChip: View {
     var body: some View {
         Menu {
             let supported = provider?.supportedRuntimeModes ?? RuntimeMode.allCases.map(\.rawValue)
+            // Toggles, so the menu marks the current mode itself and every row keeps the icon the chip
+            // shows, plus a line on what the mode does.
             Section {
                 ForEach(RuntimeMode.allCases.filter { supported.contains($0.rawValue) }) { option in
-                    Button {
-                        onRuntimeMode(option.rawValue)
-                    } label: {
-                        // Menus read an image, a title and a subtitle from the label.
-                        Image(systemName: option == mode ? "checkmark" : option.symbol)
+                    Toggle(isOn: Binding(get: { option == mode }, set: { if $0 { onRuntimeMode(option.rawValue) } })) {
+                        Image(systemName: option.symbol)
                         Text(option.title)
                         Text(option.detail)
                     }

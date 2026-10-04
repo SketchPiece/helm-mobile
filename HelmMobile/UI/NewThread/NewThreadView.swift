@@ -181,17 +181,14 @@ struct NewThreadView: View {
     private var whereRow: some View {
         HStack(spacing: 6) {
             Menu {
-                Button {
-                    newWorktree = false
-                } label: {
-                    Image(systemName: newWorktree ? "folder" : "checkmark")
+                // Toggles: the menu marks the choice itself and each row keeps the chip's icon.
+                Toggle(isOn: Binding(get: { !newWorktree }, set: { if $0 { newWorktree = false } })) {
+                    Image(systemName: "folder")
                     Text("Current checkout")
                     Text("Works in the project folder")
                 }
-                Button {
-                    newWorktree = true
-                } label: {
-                    Image(systemName: newWorktree ? "checkmark" : "arrow.triangle.branch")
+                Toggle(isOn: Binding(get: { newWorktree }, set: { if $0 { newWorktree = true } })) {
+                    Image(systemName: "arrow.triangle.branch")
                     Text("New worktree")
                     Text("Its own folder and branch")
                 }
