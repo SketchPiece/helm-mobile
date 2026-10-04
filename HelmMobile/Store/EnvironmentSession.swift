@@ -269,13 +269,7 @@ final class EnvironmentSession: Identifiable {
 
     /// An older page of a thread's timeline (`OrchestrationV2ThreadHistoryPage`), over HTTP.
     func threadHistoryPage(threadId: String, cursor: String) async throws -> JSON {
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "&=+#?")
-        let escapedCursor = cursor.addingPercentEncoding(withAllowedCharacters: allowed) ?? cursor
-        let escapedThread = threadId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? threadId
-        var request = http.request("/api/orchestration/threads/\(escapedThread)/history?cursor=\(escapedCursor)")
-        request.timeoutInterval = 20
-        return try await http.send(request)
+        try await http.threadHistoryPage(threadId: threadId, cursor: cursor)
     }
 
     /// The live connection, for thread sessions that need to resubscribe on their own.

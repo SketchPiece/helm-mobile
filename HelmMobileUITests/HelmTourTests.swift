@@ -347,4 +347,124 @@ final class HelmTourTests: XCTestCase {
         sleep(2)
         shot("a4-dragged-to-end")
     }
+
+    private func openThread(_ title: String) {
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(2)
+        let row = app.buttons.matching(NSPredicate(format: "identifier == 'threadRow' AND label CONTAINS[c] %@", title)).firstMatch
+        if !row.exists { app.buttons["shelf-Snoozed"].firstMatch.tap(); sleep(1) }
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "no thread named \(title)")
+        row.tap()
+        sleep(3)
+    }
+
+    /// Scrolls a long thread (HELM_HISTORY=<title>) to its top: the previous page loads and the
+    /// message that was on screen stays where it was.
+    func testHistoryPaging() throws {
+        guard let title = ProcessInfo.processInfo.environment["HELM_HISTORY"] else { throw XCTSkip("HELM_HISTORY not set") }
+        openThread(title)
+        shot("h0-opened")
+        let loader = app.buttons["loadEarlier"]
+        var swipes = 0
+        while !loader.isHittable, swipes < 30 {
+            app.swipeDown(velocity: .slow)
+            swipes += 1
+        }
+        // The swipe that revealed the loader started the load; find a message still on screen.
+        let turns = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Turn '"))
+        let window = app.windows.firstMatch.frame
+        let visible = turns.allElementsBoundByIndex.filter { $0.exists && window.contains($0.frame) }
+        let anchor = try XCTUnwrap(visible.first, "no message on screen")
+        let label = anchor.label
+        let before = anchor.frame.minY
+        shot("h1-at-top")
+        sleep(4)
+        shot("h2-after-page")
+        let after = app.staticTexts[label].frame.minY
+        XCTAssertEqual(after, before, accuracy: 4, "\(label) moved from \(before) to \(after)")
+        // Had the view jumped to the top of the new page, the first prompt would be on screen.
+        let firstPrompt = app.staticTexts["Turn 1. Reply with OK only."]
+        XCTAssertFalse(firstPrompt.exists && window.contains(firstPrompt.frame), "jumped to the oldest message")
+        app.swipeDown(velocity: .slow)
+        sleep(1)
+        shot("h3-scrolled-into-older")
+    }
+
+    /// Drags the second queued message above the first in a working sandbox thread.
+    /// Opt in with HELM_QUEUE_DRAG=<project title>.
+    func testQueueDrag() throws {
+        guard let projectTitle = ProcessInfo.processInfo.environment["HELM_QUEUE_DRAG"] else {
+            throw XCTSkip("HELM_QUEUE_DRAG not set")
+        }
+        XCTAssertTrue(app.buttons["newThread"].waitForExistence(timeout: 20))
+        sleep(2)
+        app.buttons["newThread"].tap()
+        let picker = app.buttons["projectPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        picker.tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText(projectTitle)
+        sleep(1)
+        app.buttons.matching(identifier: "projectOption").firstMatch.tap()
+        sleep(1)
+        let field = app.textViews["newThreadText"].exists ? app.textViews["newThreadText"] : app.textFields["newThreadText"]
+        field.tap()
+        field.typeText("UI drag test: run `sleep 45` in the foreground, then reply OK.")
+        app.buttons["startThread"].tap()
+        let composer = app.textViews["composer"]
+        XCTAssertTrue(composer.waitForExistence(timeout: 20))
+        sleep(6)
+        for text in ["First queued: reply A.", "Second queued: reply B."] {
+            composer.tap()
+            composer.typeText(text)
+            app.buttons["send"].tap()
+            sleep(2)
+        }
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        let handles = app.descendants(matching: .any).matching(identifier: "queueDragHandle")
+        XCTAssertTrue(handles.element(boundBy: 1).waitForExistence(timeout: 15), "no drag handles")
+        shot("q0-queue")
+        let first = app.staticTexts["First queued: reply A."], second = app.staticTexts["Second queued: reply B."]
+        XCTAssertLessThan(first.frame.minY, second.frame.minY)
+        let from = handles.element(boundBy: 1).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        from.press(forDuration: 0.2, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -45)))
+        sleep(3)
+        shot("q1-dragged")
+        XCTAssertLessThan(second.frame.minY, first.frame.minY, "order didn't change")
+        // Edit sheet with attachment controls.
+        app.buttons.matching(NSPredicate(format: "label == 'More' OR label CONTAINS 'ellipsis'")).firstMatch.tap()
+        sleep(1)
+        shot("q2-menu")
+        app.buttons["Edit"].firstMatch.tap()
+        sleep(2)
+        shot("q3-edit-sheet")
+    }
+
+    /// The "+" menu offers the camera (forced on the camera-less simulator with -uiTestCamera).
+    func testCameraMenuEntry() throws {
+        guard ProcessInfo.processInfo.environment["HELM_CAMERA"] != nil else { throw XCTSkip("HELM_CAMERA not set") }
+        app.terminate()
+        app.launchArguments += ["-uiTestCamera"]
+        app.launch()
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20))
+        sleep(1)
+        app.buttons["threadRow"].firstMatch.tap()
+        let attach = app.buttons["attach"]
+        XCTAssertTrue(attach.waitForExistence(timeout: 10))
+        sleep(2)
+        attach.tap()
+        XCTAssertTrue(app.buttons["Camera"].waitForExistence(timeout: 3), "no Camera in the + menu")
+        shot("c0-thread-attach-menu")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        sleep(1)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        sleep(1)
+        app.buttons["newThread"].tap()
+        sleep(2)
+        app.buttons["attach"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Camera"].waitForExistence(timeout: 3), "no Camera in the new-thread + menu")
+        shot("c1-new-thread-attach-menu")
+    }
 }
