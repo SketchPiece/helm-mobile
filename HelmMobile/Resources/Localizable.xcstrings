@@ -734,6 +734,16 @@
         }
       }
     },
+    "Archived threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Архив тредов"
+          }
+        }
+      }
+    },
     "Ask Helm to allow this phone": {
       "localizations": {
         "ru": {
@@ -1464,6 +1474,16 @@
         }
       }
     },
+    "No archived threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В архиве пусто"
+          }
+        }
+      }
+    },
     "No file changes": {
       "localizations": {
         "ru": {
@@ -1840,6 +1860,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сброс %@"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернуть"
           }
         }
       }
@@ -2340,6 +2370,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Настройки треда"
+          }
+        }
+      }
+    },
+    "Threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Треды"
           }
         }
       }

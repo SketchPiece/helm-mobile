@@ -103,4 +103,13 @@ final class LiveServerTests: XCTestCase {
         }
         await connection.close()
     }
+
+    func testArchivedSnapshotDecodes() async throws {
+        let connection = try await connect()
+        let snapshot = try await connection.call("orchestration.getArchivedShellSnapshot", [:])
+        XCTAssertNotNil(snapshot["threads"]?.array)
+        let threads = (snapshot["threads"]?.array ?? []).compactMap(ThreadSummary.init(json:))
+        XCTAssertEqual(threads.count, snapshot["threads"]?.array?.count)
+        await connection.close()
+    }
 }

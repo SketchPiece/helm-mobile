@@ -122,7 +122,7 @@ final class AppModel {
     // MARK: Thread actions
 
     enum ThreadAction {
-        case settle, unsettle, archive, delete, unsnooze, pin, unpin, markUnread, regenerateTitle
+        case settle, unsettle, archive, unarchive, delete, unsnooze, pin, unpin, markUnread, regenerateTitle
         case snooze(Date)
         case rename(String)
     }
@@ -134,6 +134,7 @@ final class AppModel {
         case .settle: try await environment.dispatch("thread.settle", ["threadId": id])
         case .unsettle: try await environment.dispatch("thread.unsettle", ["threadId": id, "reason": "user"])
         case .archive: try await environment.dispatch("thread.archive", ["threadId": id])
+        case .unarchive: try await environment.dispatch("thread.unarchive", ["threadId": id])
         case .delete: try await environment.dispatch("thread.delete", ["threadId": id])
         case .unsnooze: try await environment.dispatch("thread.unsnooze", ["threadId": id, "reason": "user"])
         case .pin: try await environment.dispatch("thread.pin", ["threadId": id])

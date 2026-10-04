@@ -263,5 +263,9 @@
   "Helm on the Mac asks you to allow this phone. No code needed.": "Штурвал на Mac спросит, пустить ли этот телефон. Код не нужен.",
   "Not connected to Helm.": "Нет связи со Штурвалом.",
   "The request was interrupted.": "Запрос прерван.",
-  "Helm did not answer in time.": "Штурвал не ответил вовремя."
+  "Helm did not answer in time.": "Штурвал не ответил вовремя.",
+  "Archived threads": "Архив тредов",
+  "No archived threads": "В архиве пусто",
+  "Restore": "Вернуть",
+  "Threads": "Треды"
 }

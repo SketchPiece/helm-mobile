@@ -37,6 +37,16 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        ArchivedThreadsView()
+                    } label: {
+                        Label("Archived threads", systemImage: "archivebox")
+                    }
+                } header: {
+                    Text("Threads").sectionLabelStyle()
+                }
+
+                Section {
                     Picker("Appearance", selection: $appearance) {
                         ForEach(Appearance.allCases) { option in
                             Text(option.title).tag(option)
