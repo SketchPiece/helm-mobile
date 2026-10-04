@@ -1,0 +1,63 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · the bar at the bottom of Home",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · one merged glass pill"
+  },
+  "a-split.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "A. Split: Search + New thread"
+  },
+  "b-compose.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "B. The bottom bar starts a thread"
+  },
+  "c-classic.html": {
+   "x": 0,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "C. Search in the list, a + button"
+  },
+  "d-corners.html": {
+   "x": 470,
+   "y": 1004,
+   "w": 390,
+   "h": 844,
+   "title": "D. Two buttons in the corners"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-split.html",
+  "b-compose.html",
+  "c-classic.html",
+  "d-corners.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · the bar at the bottom of Home",
+   "kind": "title1",
+   "maxW": 1330
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
