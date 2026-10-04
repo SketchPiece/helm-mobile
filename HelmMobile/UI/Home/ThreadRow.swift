@@ -85,6 +85,14 @@ struct ThreadRow: View {
                     .font(Typography.footnote.weight(.medium))
                     .foregroundStyle(phase.color)
             }
+        } else if thread.isSnoozed(), let wake = thread.snoozedUntil {
+            // A snoozed row shows when it comes back, not when it was last touched.
+            Label(Snooze.wakeLabel(until: wake), systemImage: "moon.zzz")
+                .labelStyle(.titleAndIcon)
+                .font(Typography.footnote)
+                .foregroundStyle(Palette.question)
+                .monospacedDigit()
+                .accessibilityLabel(Text("Wakes \(Snooze.wakeDescription(until: wake))"))
         } else if let date = thread.updatedAt {
             Text(RelativeTime.short(date))
                 .font(Typography.footnote)

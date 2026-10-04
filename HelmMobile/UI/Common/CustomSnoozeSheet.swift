@@ -1,11 +1,19 @@
 import SwiftUI
 
-/// "Snooze → Custom…": pick a day and time. Stays open with the server's reason if Helm refuses
-/// (a thread waiting on you or with queued messages can't be snoozed).
+/// "Snooze → Custom…", like the desktop's custom snooze dialog: a date and time, or a duration
+/// from now. Stays open with the server's reason if Helm refuses (a thread waiting on you or
+/// with queued messages can't be snoozed).
 struct CustomSnoozeSheet: View {
     let snooze: (Date) async throws -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var date = SnoozePreset.tomorrowMorning.date()
+
+    private enum Mode: Hashable { case date, duration }
+
+    @State private var mode = Mode.date
+    @State private var day = Date().addingTimeInterval(3600)
+    @State private var time = Date().addingTimeInterval(3600)
+    @State private var amount = "2"
+    @State private var unit = Snooze.DurationUnit.hours
     @State private var sending = false
     @State private var error: String?
 
@@ -13,19 +21,59 @@ struct CustomSnoozeSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    DatePicker("Wake at", selection: $date, in: Date().addingTimeInterval(60)..., displayedComponents: [.date, .hourAndMinute])
-                        .datePickerStyle(.graphical)
-                        .tint(Palette.accent)
+                    Picker("Schedule type", selection: $mode) {
+                        Text("Date and time").tag(Mode.date)
+                        Text("Duration").tag(Mode.duration)
+                    }
+                    .pickerStyle(.segmented)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                }
+                Section {
+                    if mode == .date {
+                        DatePicker("Date", selection: $day, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
+                        DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                    } else {
+                        HStack {
+                            Text("Snooze for")
+                            Spacer()
+                            TextField("2", text: $amount)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(maxWidth: 80)
+                                .accessibilityIdentifier("snoozeAmount")
+                            Stepper("Snooze for", value: Binding(
+                                get: { Double(amount.replacingOccurrences(of: ",", with: ".")) ?? 0 },
+                                set: { amount = $0.formatted(.number.grouping(.never)) }
+                            ), in: 1...999, step: 1)
+                            .labelsHidden()
+                        }
+                        Picker("Unit", selection: $unit) {
+                            ForEach(Snooze.DurationUnit.allCases) { Text($0.title).tag($0) }
+                        }
+                    }
+                } header: {
+                    Text("Choose when the thread comes back to your list.")
+                        .font(Typography.footnote)
+                        .textCase(nil)
                 } footer: {
                     if let error {
                         Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+                    } else if let wake {
+                        Text("Wakes \(Snooze.wakeDescription(until: wake))").font(Typography.footnote)
                     }
                 }
             }
+            .tint(Palette.accent)
+            .font(Typography.body)
             .scrollContentBackground(.hidden)
             .background(Palette.canvas)
-            .navigationTitle("Snooze until")
+            .navigationTitle("Custom snooze")
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: mode) { error = nil }
+            .onChange(of: amount) { error = nil }
+            .onChange(of: day) { error = nil }
+            .onChange(of: time) { error = nil }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close) { dismiss() }
@@ -41,24 +89,55 @@ struct CustomSnoozeSheet: View {
                 }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium, .large])
     }
 
+    private var input: Snooze.CustomInput {
+        mode == .date ? .date(day: day, time: time) : .duration(amount: amount, unit: unit)
+    }
+
+    private var wake: Date? { Snooze.resolveCustom(input) }
+
     private func submit() {
-        guard date > Date() else {
-            error = String(localized: "Pick a time in the future.")
+        guard let wake else {
+            error = mode == .date
+                ? String(localized: "Choose a valid date and time in the future.")
+                : String(localized: "Enter a positive duration.")
             return
         }
         sending = true
         error = nil
         Task {
             do {
-                try await snooze(date)
+                try await snooze(wake)
                 dismiss()
             } catch {
                 self.error = error.localizedDescription
             }
             sending = false
+        }
+    }
+}
+
+/// The "Snooze" submenu: the shared presets, each with its wake time, then "Custom…".
+/// Presets are computed when the menu opens, so "This evening" disappears on time.
+struct SnoozeMenu: View {
+    let snooze: (Date) -> Void
+    let custom: () -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(Snooze.presets()) { preset in
+                Button {
+                    snooze(preset.date)
+                } label: {
+                    Text(preset.title)
+                    Text(preset.whenLabel)
+                }
+            }
+            Button("Custom…", action: custom)
+        } label: {
+            Label("Snooze", systemImage: "moon.zzz")
         }
     }
 }

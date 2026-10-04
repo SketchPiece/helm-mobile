@@ -345,12 +345,14 @@ private struct ThreadContent: View {
                     } else {
                         Button { perform(.settle) } label: { Label("Settle", systemImage: "checkmark.circle") }
                     }
-                    Menu {
-                        ForEach(SnoozePreset.allCases) { preset in
-                            Button(preset.title) { perform(.snooze(preset.date())) }
+                    if summary.isSnoozed(), let wake = summary.snoozedUntil {
+                        Button { perform(.unsnooze) } label: {
+                            Label("Wake now", systemImage: "sun.max")
+                            Text("Snoozed until \(Snooze.wakeDescription(until: wake))")
                         }
-                        Button("Custom…") { snoozingCustom = true }
-                    } label: { Label("Snooze", systemImage: "moon.zzz") }
+                    } else {
+                        SnoozeMenu { perform(.snooze($0)) } custom: { snoozingCustom = true }
+                    }
                     if environment.config?.capability("threadAutoSettleOptOut") == true {
                         Toggle(isOn: Binding(
                             get: { summary.autoSettleDisabledAt == nil },
