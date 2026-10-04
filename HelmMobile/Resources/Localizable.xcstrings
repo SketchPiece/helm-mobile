@@ -4634,6 +4634,16 @@
         }
       }
     },
+    "Search settled": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск в завершённых"
+          }
+        }
+      }
+    },
     "Searching…": {
       "localizations": {
         "ru": {

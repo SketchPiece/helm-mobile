@@ -159,16 +159,7 @@ struct HomeView: View {
     private var filteredEntries: [ThreadListEntry] {
         var entries = model.allThreads()
         if let projectFilter { entries = entries.filter { $0.project?.id == projectFilter } }
-        let query = search.trimmingCharacters(in: .whitespaces)
-        if !query.isEmpty {
-            entries = entries.filter {
-                $0.thread.title.localizedCaseInsensitiveContains(query)
-                    || ($0.project?.title.localizedCaseInsensitiveContains(query) ?? false)
-                    || ($0.thread.branch?.localizedCaseInsensitiveContains(query) ?? false)
-                    || ($0.thread.latestMessageText?.localizedCaseInsensitiveContains(query) ?? false)
-            }
-        }
-        return entries
+        return entries.matching(search)
     }
 
     // MARK: Rows
@@ -416,6 +407,20 @@ struct HomeView: View {
                         .foregroundStyle(Palette.accentForeground)
                 }
             }
+        }
+    }
+}
+
+extension [ThreadListEntry] {
+    /// The threads a search finds: by title, project, branch or the latest message.
+    func matching(_ search: String) -> [ThreadListEntry] {
+        let query = search.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return self }
+        return filter {
+            $0.thread.title.localizedCaseInsensitiveContains(query)
+                || ($0.project?.title.localizedCaseInsensitiveContains(query) ?? false)
+                || ($0.thread.branch?.localizedCaseInsensitiveContains(query) ?? false)
+                || ($0.thread.latestMessageText?.localizedCaseInsensitiveContains(query) ?? false)
         }
     }
 }

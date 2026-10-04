@@ -60,6 +60,7 @@ struct ShelfRow: View {
 }
 
 /// Snoozed or Settled threads on their own screen: snoozed by when they wake, settled by day.
+/// Settled keeps growing, so it has its own search; snoozed threads are few enough to see at once.
 struct ShelfScreen: View {
     let shelf: Router.Shelf
     /// Home's project filter when the shelf was opened.
@@ -68,6 +69,7 @@ struct ShelfScreen: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
     @State private var limit = 40
+    @State private var search = ""
     @State private var actionError: String?
 
     var body: some View {
@@ -94,11 +96,16 @@ struct ShelfScreen: View {
         .background(Palette.canvas)
         .overlay {
             if entries.isEmpty {
-                ContentUnavailableView(shelf == .snoozed ? "Nothing snoozed" : "Nothing settled", systemImage: shelf.symbol)
+                if !search.isEmpty {
+                    ContentUnavailableView.search(text: search)
+                } else {
+                    ContentUnavailableView(shelf == .snoozed ? "Nothing snoozed" : "Nothing settled", systemImage: shelf.symbol)
+                }
             }
         }
         .navigationTitle(shelf.title)
         .toolbarTitleDisplayMode(.inlineLarge)
+        .modifier(SettledSearch(isOn: shelf == .settled, text: $search))
         .alert("Couldn't do that", isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -110,7 +117,7 @@ struct ShelfScreen: View {
         var entries = model.allThreads()
         if let projectId { entries = entries.filter { $0.project?.id == projectId } }
         let sections = HomeSections(entries: entries)
-        return shelf == .snoozed ? sections.snoozed : sections.settled
+        return shelf == .snoozed ? sections.snoozed : sections.settled.matching(search)
     }
 
     @ViewBuilder
@@ -152,6 +159,22 @@ struct ShelfScreen: View {
                 try await model.perform(action, on: entry.ref)
             } catch {
                 actionError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Search in the bottom bar, as on Home; only Settled has it.
+    private struct SettledSearch: ViewModifier {
+        let isOn: Bool
+        @Binding var text: String
+
+        func body(content: Content) -> some View {
+            if isOn {
+                content
+                    .searchable(text: $text, prompt: Text("Search settled"))
+                    .toolbar { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
+            } else {
+                content
             }
         }
     }
