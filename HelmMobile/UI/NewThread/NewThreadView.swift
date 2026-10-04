@@ -25,6 +25,7 @@ struct NewThreadView: View {
     @State private var sending = false
     @State private var error: String?
     @State private var focused = false
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
 
     private var environment: EnvironmentSession? {
         environmentId.flatMap { model.environment($0) } ?? model.environments.first(where: \.isLive) ?? model.environments.first
@@ -225,7 +226,8 @@ struct NewThreadView: View {
                 AttachmentStrip(draft: draft)
             }
             ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
-                             minLines: 3, maxLines: 10, accessibilityIdentifier: "newThreadText") { images in
+                             minLines: 3, maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
+                             onSubmit: { _ in if canSend && !sending { launch() } }) { images in
                 guard let environment else { return }
                 images.forEach { draft.attach(image: $0, environment: environment) }
             }

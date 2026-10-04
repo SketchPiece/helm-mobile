@@ -122,6 +122,7 @@ enum MarkdownInline {
 private struct MarkdownCodeBlock: View {
     let language: String?
     let code: String
+    @Environment(\.codeAppearance) private var appearance
     @State private var copied = false
 
     var body: some View {
@@ -147,12 +148,12 @@ private struct MarkdownCodeBlock: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(copied ? "Copied" : "Copy code")
             }
-            ScrollView(.horizontal, showsIndicators: false) {
-                Text(verbatim: code)
-                    .font(Typography.code)
-                    .foregroundStyle(Palette.codeText)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: true, vertical: true)
+            if appearance.wordWrap {
+                codeText.fixedSize(horizontal: false, vertical: true)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    codeText.fixedSize(horizontal: true, vertical: true)
+                }
             }
         }
         .padding(12)
@@ -164,6 +165,13 @@ private struct MarkdownCodeBlock: View {
             try? await Task.sleep(for: .seconds(1.5))
             copied = false
         }
+    }
+
+    private var codeText: some View {
+        Text(verbatim: code)
+            .font(appearance.font())
+            .foregroundStyle(Palette.codeText)
+            .lineSpacing(2)
     }
 }
 

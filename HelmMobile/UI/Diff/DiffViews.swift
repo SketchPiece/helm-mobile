@@ -121,9 +121,15 @@ private extension DiffFile.Status {
 struct DiffFileView: View {
     let file: DiffFile
 
-    // IBM Plex Mono advances 0.6em, so 12pt is 7.2pt per column; scales with Dynamic Type.
-    @ScaledMetric(relativeTo: .footnote) private var columnWidth: CGFloat = 7.2
-    @ScaledMetric(relativeTo: .footnote) private var rowHeight: CGFloat = 18
+    // IBM Plex Mono advances 0.6em, so 12pt is 7.2pt per column; scales with Dynamic Type
+    // unless Settings → Code and diffs fixes the size.
+    @ScaledMetric(relativeTo: .footnote) private var scaledColumnWidth: CGFloat = 7.2
+    @ScaledMetric(relativeTo: .footnote) private var scaledRowHeight: CGFloat = 18
+    @Environment(\.codeAppearance) private var appearance
+
+    private var columnWidth: CGFloat { appearance.fontSize.map { $0 * 0.6 } ?? scaledColumnWidth }
+    private var rowHeight: CGFloat { appearance.fontSize.map { $0 * 1.5 } ?? scaledRowHeight }
+    private var font: Font { appearance.font(automatic: 12) }
 
     var body: some View {
         Group {
@@ -147,12 +153,13 @@ struct DiffFileView: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(file.hunks.indices, id: \.self) { hunkIndex in
                         let hunk = file.hunks[hunkIndex]
-                        DiffHunkHeader(header: hunk.header, height: rowHeight)
+                        DiffHunkHeader(header: hunk.header, height: rowHeight, font: font)
                         ForEach(hunk.lines.indices, id: \.self) { lineIndex in
                             DiffLineRow(
                                 line: hunk.lines[lineIndex],
                                 gutterWidth: gutterWidth,
-                                height: rowHeight
+                                height: rowHeight,
+                                font: font
                             )
                         }
                     }
@@ -194,10 +201,11 @@ struct DiffFileView: View {
 private struct DiffHunkHeader: View {
     let header: String
     let height: CGFloat
+    let font: Font
 
     var body: some View {
         Text(verbatim: header)
-            .font(Typography.mono(12))
+            .font(font)
             .foregroundStyle(Palette.textMuted)
             .lineLimit(1)
             .fixedSize()
@@ -211,6 +219,7 @@ private struct DiffLineRow: View {
     let line: DiffLine
     let gutterWidth: CGFloat
     let height: CGFloat
+    let font: Font
 
     var body: some View {
         HStack(spacing: 0) {
@@ -226,7 +235,7 @@ private struct DiffLineRow: View {
                 .fixedSize()
                 .padding(.trailing, 12)
         }
-        .font(Typography.mono(12))
+        .font(font)
         .frame(maxWidth: .infinity, minHeight: height, alignment: .leading)
         .background(background)
     }
