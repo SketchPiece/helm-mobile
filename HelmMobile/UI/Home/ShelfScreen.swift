@@ -118,6 +118,7 @@ struct ShelfScreen: View {
                 }
             }
         }
+        .undoToast()
         .navigationTitle(shelf.title)
         .toolbarTitleDisplayMode(.inlineLarge)
         .modifier(SettledSearch(isOn: shelf == .settled, text: $search))

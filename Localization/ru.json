@@ -1,6 +1,7 @@
 {
   " · ": " · ",
   "%@ wants to continue": "%@ просит разрешения",
+  "%@. Undo is available.": "%@. Можно отменить.",
   "%lld agents": {
     "one": "%lld агент",
     "few": "%lld агента",
@@ -36,6 +37,30 @@
     "few": "%lld поиска",
     "many": "%lld поисков",
     "other": "%lld поиска"
+  },
+  "%lld threads archived": {
+    "one": "%lld тред в архиве",
+    "few": "%lld треда в архиве",
+    "many": "%lld тредов в архиве",
+    "other": "%lld треда в архиве"
+  },
+  "%lld threads settled": {
+    "one": "%lld тред завершён",
+    "few": "%lld треда завершены",
+    "many": "%lld тредов завершены",
+    "other": "%lld треда завершены"
+  },
+  "%lld threads snoozed": {
+    "one": "%lld тред отложен",
+    "few": "%lld треда отложены",
+    "many": "%lld тредов отложены",
+    "other": "%lld треда отложены"
+  },
+  "%lld threads unpinned": {
+    "one": "%lld тред откреплён",
+    "few": "%lld треда откреплены",
+    "many": "%lld тредов откреплены",
+    "other": "%lld треда откреплены"
   },
   "%lld tools": {
     "one": "%lld инструмент",
@@ -101,6 +126,7 @@
   "Couldn't open the thread": "Не удалось открыть тред",
   "Couldn't reach Helm on that address.": "Штурвал по этому адресу не отвечает.",
   "Couldn't read the photo": "Не удалось прочитать фото",
+  "Couldn't undo": "Не получилось отменить",
   "Current checkout": "Текущая копия",
   "Dark": "Тёмное",
   "Decline": "Отклонить",
@@ -220,8 +246,12 @@
   "This thread opens once the Mac is reachable.": "Тред откроется, когда Mac снова будет на связи.",
   "Thought": "Подумал",
   "Thread actions": "Действия с тредом",
+  "Thread archived": "Тред в архиве",
   "Thread deleted": "Тред удалён",
   "Thread settings": "Настройки треда",
+  "Thread settled": "Тред завершён",
+  "Thread snoozed": "Тред отложен",
+  "Thread unpinned": "Тред откреплён",
   "Threads as of %@": "Треды по состоянию на %@",
   "Title": "Название",
   "To-do": "Задачи",
@@ -229,6 +259,7 @@
   "Tomorrow morning": "Завтра утром",
   "Tool": "Инструмент",
   "Unavailable": "Недоступен",
+  "Undo": "Отменить",
   "Unpin": "Открепить",
   "Unsent draft": "Неотправленный черновик",
   "Up next": "Дальше в очереди",

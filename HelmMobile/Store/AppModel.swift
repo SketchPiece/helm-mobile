@@ -164,6 +164,8 @@ final class AppModel {
 
     func perform(_ action: ThreadAction, on ref: ThreadRef) async throws {
         guard let environment = environment(ref.environmentId) else { return }
+        // What the thread looked like before, for Undo.
+        let before = environment.thread(ref.threadId)
         // A row that changes section moves out right away, animated, not when the server's echo lands.
         let shelfMove: ShellState.ShelfMove? = switch action {
         case .settle: .settle
@@ -183,6 +185,123 @@ final class AppModel {
             }
             throw error
         }
+        if let before { offerUndo(for: action, on: ref, before: before) }
+        await UIImpactFeedbackGenerator.light()
+    }
+
+    // MARK: Undo
+
+    /// "Settled · Undo" for five seconds after a settle, snooze, unpin or archive. Actions of the
+    /// same kind in a row join one notice and are undone together.
+    struct UndoNotice: Identifiable, Equatable {
+        enum Kind { case settled, snoozed, unpinned, archived }
+
+        let id = UUID()
+        var kind: Kind
+        var count: Int
+        fileprivate var steps: [@MainActor () async throws -> Void]
+
+        var title: String {
+            switch kind {
+            case .settled: count == 1 ? String(localized: "Thread settled") : String(localized: "\(count) threads settled")
+            case .snoozed: count == 1 ? String(localized: "Thread snoozed") : String(localized: "\(count) threads snoozed")
+            case .unpinned: count == 1 ? String(localized: "Thread unpinned") : String(localized: "\(count) threads unpinned")
+            case .archived: count == 1 ? String(localized: "Thread archived") : String(localized: "\(count) threads archived")
+            }
+        }
+
+        static func == (lhs: UndoNotice, rhs: UndoNotice) -> Bool { lhs.id == rhs.id && lhs.count == rhs.count }
+    }
+
+    private(set) var undoNotice: UndoNotice?
+    @ObservationIgnored private var undoExpiry: Task<Void, Never>?
+
+    static let undoWindow: Duration = .seconds(5)
+
+    private func offerUndo(for action: ThreadAction, on ref: ThreadRef, before: ThreadSummary) {
+        let kind: UndoNotice.Kind
+        let step: @MainActor () async throws -> Void
+        let id: JSON = .string(ref.threadId)
+        // Undo talks to the server directly (not through `perform`), so it offers no Undo of its own.
+        let send: @MainActor (String, [String: JSON], ShellState.ShelfMove?) async throws -> Void = { [weak self] type, fields, move in
+            guard let environment = self?.environment(ref.environmentId) else { return }
+            if let move {
+                withAnimation(.snappy(duration: 0.3)) { environment.setPendingShelfMove(threadId: ref.threadId, move) }
+            }
+            do {
+                try await environment.dispatch(type, fields)
+            } catch {
+                if move != nil {
+                    withAnimation(.snappy(duration: 0.3)) { environment.revertPendingShelfMove(threadId: ref.threadId) }
+                }
+                throw error
+            }
+        }
+        let wasSnoozedUntil = before.isSnoozed() ? before.snoozedUntil : nil
+        let repin: @MainActor () async throws -> Void = { [weak self] in
+            var fields: [String: JSON] = ["threadId": id]
+            if let key = before.pinOrderKey, self?.canReorder(ref, pinned: true) == true { fields["orderKey"] = .string(key) }
+            try await send("thread.pin", fields, nil)
+        }
+        switch action {
+        case .settle:
+            kind = .settled
+            // Settling drops the pin and the snooze on the server, so Undo puts those back too.
+            step = {
+                try await send("thread.unsettle", ["threadId": id, "reason": "user"], .unsettle)
+                if before.pinnedAt != nil { try await repin() }
+                if let wasSnoozedUntil {
+                    try await send("thread.snooze", ["threadId": id, "snoozedUntil": .string(ISODate.string(wasSnoozedUntil))],
+                                   .snooze(wasSnoozedUntil))
+                }
+            }
+        case .snooze:
+            kind = .snoozed
+            step = {
+                if let wasSnoozedUntil {
+                    try await send("thread.snooze", ["threadId": id, "snoozedUntil": .string(ISODate.string(wasSnoozedUntil))],
+                                   .snooze(wasSnoozedUntil))
+                } else {
+                    try await send("thread.unsnooze", ["threadId": id, "reason": "user"], .unsnooze)
+                }
+            }
+        case .unpin:
+            guard before.pinnedAt != nil else { return }
+            kind = .unpinned
+            step = repin
+        case .archive:
+            kind = .archived
+            step = { try await send("thread.unarchive", ["threadId": id], nil) }
+        default:
+            return
+        }
+        withAnimation(.snappy(duration: 0.25)) {
+            if var notice = undoNotice, notice.kind == kind {
+                notice.count += 1
+                notice.steps.append(step)
+                undoNotice = notice
+            } else {
+                undoNotice = UndoNotice(kind: kind, count: 1, steps: [step])
+            }
+        }
+        undoExpiry?.cancel()
+        undoExpiry = Task { [weak self] in
+            try? await Task.sleep(for: Self.undoWindow)
+            guard !Task.isCancelled else { return }
+            self?.dismissUndo()
+        }
+    }
+
+    func dismissUndo() {
+        undoExpiry?.cancel()
+        withAnimation(.snappy(duration: 0.25)) { undoNotice = nil }
+    }
+
+    /// Runs the notice's undo steps (newest first) and clears it.
+    func undo() async throws {
+        guard let notice = undoNotice else { return }
+        dismissUndo()
+        for step in notice.steps.reversed() { try await step() }
         await UIImpactFeedbackGenerator.light()
     }
 

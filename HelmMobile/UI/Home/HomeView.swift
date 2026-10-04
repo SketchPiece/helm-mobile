@@ -92,6 +92,7 @@ struct HomeView: View {
         .scrollContentBackground(.hidden)
         .background(Palette.canvas)
         .overlay { emptyState(entries: entries) }
+        .undoToast()
         .overlay { NewThreadFan(state: fan) }
         .navigationTitle(navigationTitle)
         .toolbarTitleDisplayMode(.inlineLarge)
