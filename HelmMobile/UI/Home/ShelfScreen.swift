@@ -61,20 +61,35 @@ struct ShelfRow: View {
 
 /// Snoozed or Settled threads on their own screen: snoozed by when they wake, settled by day.
 /// Settled keeps growing, so it has its own search; snoozed threads are few enough to see at once.
+/// Project chips filter the shelf on its own; they start from Home's filter and don't change it.
 struct ShelfScreen: View {
     let shelf: Router.Shelf
-    /// Home's project filter when the shelf was opened.
-    let projectId: String?
 
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
+    @State private var projectFilter: String?
     @State private var limit = 40
     @State private var search = ""
     @State private var actionError: String?
 
+    /// `projectId` is Home's project filter when the shelf was opened.
+    init(shelf: Router.Shelf, projectId: String?) {
+        self.shelf = shelf
+        _projectFilter = State(initialValue: projectId)
+    }
+
     var body: some View {
-        let entries = self.entries
+        let shelfEntries = self.shelfEntries
+        let chips = Self.chips(shelfEntries, model: model)
+        let entries = filtered(shelfEntries)
         List {
+            // One project has nothing to choose between, unless the filter came from Home and needs "All".
+            if chips.count > 1 || (projectFilter != nil && chips.map(\.id) != [projectFilter]) {
+                ProjectChips(chips: chips, selection: $projectFilter)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
             ForEach(Self.groups(Array(entries.prefix(limit)), shelf: shelf), id: \.title) { group in
                 Section {
                     rows(group.entries)
@@ -113,11 +128,31 @@ struct ShelfScreen: View {
         }
     }
 
-    private var entries: [ThreadListEntry] {
-        var entries = model.allThreads()
-        if let projectId { entries = entries.filter { $0.project?.id == projectId } }
-        let sections = HomeSections(entries: entries)
-        return shelf == .snoozed ? sections.snoozed : sections.settled.matching(search)
+    /// Every thread on this shelf, in its order, before the project filter and search.
+    private var shelfEntries: [ThreadListEntry] {
+        let sections = HomeSections(entries: model.allThreads())
+        return shelf == .snoozed ? sections.snoozed : sections.settled
+    }
+
+    private func filtered(_ entries: [ThreadListEntry]) -> [ThreadListEntry] {
+        var entries = entries
+        if let projectFilter { entries = entries.filter { $0.project?.id == projectFilter } }
+        return shelf == .settled ? entries.matching(search) : entries
+    }
+
+    /// Projects with threads on this shelf, most recently touched first, counted on this shelf.
+    private static func chips(_ entries: [ThreadListEntry], model: AppModel) -> [ProjectChips.Chip] {
+        var counts: [String: Int] = [:]
+        var latest: [String: Date] = [:]
+        for entry in entries {
+            guard let project = entry.project else { continue }
+            counts[project.id, default: 0] += 1
+            latest[project.id] = max(latest[project.id] ?? .distantPast, entry.thread.updatedAt ?? .distantPast)
+        }
+        return model.allProjects()
+            .filter { counts[$0.project.id] != nil }
+            .sorted { (latest[$0.project.id] ?? .distantPast) > (latest[$1.project.id] ?? .distantPast) }
+            .map { ProjectChips.Chip(project: $0.project, environment: $0.environment, count: counts[$0.project.id] ?? 0) }
     }
 
     @ViewBuilder
@@ -127,7 +162,7 @@ struct ShelfScreen: View {
                 router.push(entry.ref)
             } label: {
                 ThreadRow(entry: entry, environment: model.environment(entry.ref.environmentId),
-                          showsProject: projectId == nil)
+                          showsProject: projectFilter == nil)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("threadRow")
