@@ -1,0 +1,55 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Settings: why it feels off and three ways out",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1720,
+   "h": 1000,
+   "title": "Now"
+  },
+  "a-tidy.html": {
+   "x": 1800,
+   "y": 0,
+   "w": 1720,
+   "h": 1000,
+   "title": "A. Same list, tidied"
+  },
+  "b-cards.html": {
+   "x": 0,
+   "y": 1160,
+   "w": 1720,
+   "h": 1000,
+   "title": "B. Computers first"
+  },
+  "c-short.html": {
+   "x": 1800,
+   "y": 1160,
+   "w": 1720,
+   "h": 1000,
+   "title": "C. Four doors"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-tidy.html",
+  "b-cards.html",
+  "c-short.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Settings: why it feels off and three ways out",
+   "kind": "title1",
+   "maxW": 3520
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
