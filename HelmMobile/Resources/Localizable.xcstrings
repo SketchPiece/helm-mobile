@@ -97,6 +97,16 @@
     "%@ · %@": {
       "shouldTranslate": false
     },
+    "%@ · %@ / %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ / %@"
+          }
+        }
+      }
+    },
     "%@ · %lld sessions": {
       "localizations": {
         "en": {
@@ -149,8 +159,28 @@
         }
       }
     },
+    "%@ → %@ tokens": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ → %@ токенов"
+          }
+        }
+      }
+    },
     "%@%@%@": {
       "shouldTranslate": false
+    },
+    "%@. Undo is available.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@. Можно отменить."
+          }
+        }
+      }
     },
     "%@× the raw cost": {
       "localizations": {
@@ -563,6 +593,16 @@
         }
       }
     },
+    "%lld of %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld из %lld"
+          }
+        }
+      }
+    },
     "%lld pt": {
       "localizations": {
         "ru": {
@@ -730,6 +770,142 @@
       }
     },
     "%lld threads": {},
+    "%lld threads archived": {
+      "localizations": {
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда в архиве"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тредов в архиве"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тред в архиве"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда в архиве"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld threads settled": {
+      "localizations": {
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда завершены"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тредов завершены"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тред завершён"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда завершены"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld threads snoozed": {
+      "localizations": {
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда отложены"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тредов отложены"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тред отложен"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда отложены"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld threads unpinned": {
+      "localizations": {
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда откреплены"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тредов откреплены"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld тред откреплён"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld треда откреплены"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld tools": {
       "localizations": {
         "en": {
@@ -934,6 +1110,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "90 д"
+          }
+        }
+      }
+    },
+    "A path inside %@.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь внутри %@."
           }
         }
       }
@@ -1182,16 +1368,7 @@
         }
       }
     },
-    "Allow it in Helm on the computer": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разреши в Штурвале на компьютере"
-          }
-        }
-      }
-    },
+    "Allow it in Helm on the computer": {},
     "Allow once": {
       "localizations": {
         "ru": {
@@ -1218,6 +1395,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пустая папка с README и первым коммитом"
+          }
+        }
+      }
+    },
+    "Answer the agent first.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала ответь агенту."
           }
         }
       }
@@ -1282,12 +1469,12 @@
         }
       }
     },
-    "Approvals, questions and finished work.": {
+    "Approvals, questions and finished work. The badge counts threads waiting on you.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Запросы, вопросы и готовая работа."
+            "value": "Разрешения, вопросы и законченная работа. Бейдж считает треды, которые ждут тебя."
           }
         }
       }
@@ -1472,6 +1659,16 @@
         }
       }
     },
+    "Badge on the app icon": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бейдж на иконке"
+          }
+        }
+      }
+    },
     "Base branch": {
       "localizations": {
         "ru": {
@@ -1592,16 +1789,7 @@
         }
       }
     },
-    "Can't reach the computer. Is it awake and is Tailscale on? (%@)": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Компьютер не отвечает. Он не спит и Tailscale включён? (%@)"
-          }
-        }
-      }
-    },
+    "Can't reach the computer. Is it awake and is Tailscale on? (%@)": {},
     "Cancel": {
       "localizations": {
         "ru": {
@@ -1662,16 +1850,7 @@
         }
       }
     },
-    "Choose a project on this computer.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выбери проект на этом компьютере."
-          }
-        }
-      }
-    },
+    "Choose a project on this computer.": {},
     "Choose a valid date and time in the future.": {
       "localizations": {
         "ru": {
@@ -1752,6 +1931,16 @@
         }
       }
     },
+    "Close": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        }
+      }
+    },
     "Closed": {
       "localizations": {
         "ru": {
@@ -1792,6 +1981,16 @@
         }
       }
     },
+    "Compact context": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжать контекст"
+          }
+        }
+      }
+    },
     "Compacted the conversation": {
       "localizations": {
         "ru": {
@@ -1802,16 +2001,17 @@
         }
       }
     },
-    "Computer": {
+    "Compacting context": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Компьютер"
+            "value": "Сжимаю контекст"
           }
         }
       }
     },
+    "Computer": {},
     "Computers": {
       "localizations": {
         "ru": {
@@ -1822,16 +2022,7 @@
         }
       }
     },
-    "Computers publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Компьютеры публикуют темы из папки themes Штурвала. Тема для тёмного режима не меняет светлый."
-          }
-        }
-      }
-    },
+    "Computers publish themes from Helm's themes folder. A theme made for dark mode leaves light mode as it was.": {},
     "Connect": {
       "localizations": {
         "ru": {
@@ -1842,46 +2033,10 @@
         }
       }
     },
-    "Connect a computer": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключить компьютер"
-          }
-        }
-      }
-    },
-    "Connect a computer to see and create scheduled tasks.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключи компьютер, чтобы видеть и создавать задачи."
-          }
-        }
-      }
-    },
-    "Connect a computer to see usage.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключи компьютер, чтобы видеть расход."
-          }
-        }
-      }
-    },
-    "Connect another computer": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключить ещё компьютер"
-          }
-        }
-      }
-    },
+    "Connect a computer": {},
+    "Connect a computer to see and create scheduled tasks.": {},
+    "Connect a computer to see usage.": {},
+    "Connect another computer": {},
     "Connect to Helm": {
       "localizations": {
         "ru": {
@@ -1892,16 +2047,7 @@
         }
       }
     },
-    "Connect to this computer to add a project.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключись к этому компьютеру, чтобы добавить проект."
-          }
-        }
-      }
-    },
+    "Connect to this computer to add a project.": {},
     "Connected": {
       "localizations": {
         "ru": {
@@ -1962,6 +2108,36 @@
         }
       }
     },
+    "Context compacted": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекст сжат"
+          }
+        }
+      }
+    },
+    "Context window": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекстное окно"
+          }
+        }
+      }
+    },
+    "Context window %@ used": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекст заполнен на %@"
+          }
+        }
+      }
+    },
     "Continue": {
       "localizations": {
         "ru": {
@@ -2002,6 +2178,26 @@
         }
       }
     },
+    "Copy as Markdown": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать как Markdown"
+          }
+        }
+      }
+    },
+    "Copy as plain text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать текстом"
+          }
+        }
+      }
+    },
     "Copy code": {
       "localizations": {
         "ru": {
@@ -2032,6 +2228,16 @@
         }
       }
     },
+    "Couldn't compact the context": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сжать контекст"
+          }
+        }
+      }
+    },
     "Couldn't do that": {
       "localizations": {
         "ru": {
@@ -2058,6 +2264,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось загрузить изменения"
+          }
+        }
+      }
+    },
+    "Couldn't load the image": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось загрузить картинку"
           }
         }
       }
@@ -2102,6 +2318,16 @@
         }
       }
     },
+    "Couldn't save the plan": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сохранить план"
+          }
+        }
+      }
+    },
     "Couldn't save. It may have already started.": {
       "localizations": {
         "ru": {
@@ -2128,6 +2354,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось распознать запись."
+          }
+        }
+      }
+    },
+    "Couldn't undo": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не получилось отменить"
           }
         }
       }
@@ -2583,16 +2819,7 @@
         }
       }
     },
-    "Folder on the computer": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Папка на компьютере"
-          }
-        }
-      }
-    },
+    "Folder on the computer": {},
     "Follow-ups": {
       "localizations": {
         "ru": {
@@ -2609,6 +2836,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Размер шрифта"
+          }
+        }
+      }
+    },
+    "Forked": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ответвление"
+          }
+        }
+      }
+    },
+    "Forked from": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ответвлён от"
+          }
+        }
+      }
+    },
+    "Forked here": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отсюда ответвился тред"
           }
         }
       }
@@ -2799,16 +3056,7 @@
         }
       }
     },
-    "Helm %@ · built on T3 Code's open protocol": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Штурвал %@ · на открытом протоколе T3 Code"
-          }
-        }
-      }
-    },
+    "Helm %@ · built on T3 Code's open protocol": {},
     "Helm answered with something unexpected.": {
       "localizations": {
         "ru": {
@@ -2849,36 +3097,9 @@
         }
       }
     },
-    "Helm on the computer asks you to allow this phone. No code needed.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Штурвал на компьютере спросит, пустить ли этот телефон. Код не нужен."
-          }
-        }
-      }
-    },
-    "Helm on the computer said no.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Штурвал на компьютере отказал."
-          }
-        }
-      }
-    },
-    "Helm on this computer can't arrange threads.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Штурвал на этом компьютере не умеет менять порядок тредов."
-          }
-        }
-      }
-    },
+    "Helm on the computer asks you to allow this phone. No code needed.": {},
+    "Helm on the computer said no.": {},
+    "Helm on this computer can't arrange threads.": {},
     "Helm version": {
       "localizations": {
         "ru": {
@@ -2889,16 +3110,7 @@
         }
       }
     },
-    "Helm will reach your computers only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Штурвал будет доставать до компьютеров только через приложение Tailscale VPN. Если телефон больше не нужен в tailnet, удали его в консоли Tailscale."
-          }
-        }
-      }
-    },
+    "Helm will reach your computers only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {},
     "Helm's default · Light · Dark": {
       "localizations": {
         "ru": {
@@ -3140,16 +3352,7 @@
         }
       }
     },
-    "Log in once and Helm reaches your computers by itself, even with the Tailscale VPN off or another VPN on.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Войди один раз — и Штурвал сам достанет до твоих компьютеров, даже с выключенным Tailscale VPN или другим VPN."
-          }
-        }
-      }
-    },
+    "Log in once and Helm reaches your computers by itself, even with the Tailscale VPN off or another VPN on.": {},
     "Log in to Tailscale": {
       "localizations": {
         "ru": {
@@ -3390,16 +3593,7 @@
         }
       }
     },
-    "Network": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сеть"
-          }
-        }
-      }
-    },
+    "Network": {},
     "Never asks": {
       "localizations": {
         "ru": {
@@ -3734,16 +3928,7 @@
         }
       }
     },
-    "No provider on this computer reports subscription limits.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ни один агент на этом компьютере не сообщает лимиты подписки."
-          }
-        }
-      }
-    },
+    "No provider on this computer reports subscription limits.": {},
     "No scheduled tasks yet.": {
       "localizations": {
         "ru": {
@@ -3764,16 +3949,7 @@
         }
       }
     },
-    "Nobody answered on the computer. Try again.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На компьютере никто не ответил. Попробуй ещё раз."
-          }
-        }
-      }
-    },
+    "Nobody answered on the computer. Try again.": {},
     "Not asked yet": {
       "localizations": {
         "ru": {
@@ -3876,26 +4052,8 @@
         }
       }
     },
-    "On the computer, turn on Helm → Settings → Connections → Network access.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На компьютере включи Штурвал → Settings → Connections → Network access."
-          }
-        }
-      }
-    },
-    "On the computer: Helm → Settings → Connections → Pair a device.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На компьютере: Штурвал → Settings → Connections → Pair a device."
-          }
-        }
-      }
-    },
+    "On the computer, turn on Helm → Settings → Connections → Network access.": {},
+    "On the computer: Helm → Settings → Connections → Pair a device.": {},
     "Open": {
       "localizations": {
         "ru": {
@@ -3906,16 +4064,17 @@
         }
       }
     },
-    "Open Helm on your computer.": {
+    "Open %@": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Открой Штурвал на компьютере."
+            "value": "Открыть %@"
           }
         }
       }
     },
+    "Open Helm on your computer.": {},
     "Open Helm to load usage.": {
       "localizations": {
         "ru": {
@@ -3972,6 +4131,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открывает новый тред в Штурвале."
+          }
+        }
+      }
+    },
+    "Opens the thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывает тред"
           }
         }
       }
@@ -4126,22 +4295,23 @@
         }
       }
     },
-    "Paste a pairing link into the address field, or leave the code empty to approve this phone on the computer (Tailscale, same account).": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вставь ссылку привязки в поле адреса или оставь код пустым — тогда телефон можно будет разрешить на компьютере (Tailscale, тот же аккаунт)."
-          }
-        }
-      }
-    },
+    "Paste a pairing link into the address field, or leave the code empty to approve this phone on the computer (Tailscale, same account).": {},
     "Paste pairing link": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Вставить ссылку привязки"
+          }
+        }
+      }
+    },
+    "Path": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь"
           }
         }
       }
@@ -4232,6 +4402,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "План"
+          }
+        }
+      }
+    },
+    "Plan actions": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действия с планом"
           }
         }
       }
@@ -4486,16 +4666,7 @@
         }
       }
     },
-    "Remove this computer": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Убрать этот компьютер"
-          }
-        }
-      }
-    },
+    "Remove this computer": {},
     "Rename": {
       "localizations": {
         "ru": {
@@ -4746,12 +4917,42 @@
         }
       }
     },
+    "Save plan to project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить план в проект"
+          }
+        }
+      }
+    },
+    "Save to project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить в проект"
+          }
+        }
+      }
+    },
     "Saved": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Сохранено"
+          }
+        }
+      }
+    },
+    "Saved to %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранено в %@"
           }
         }
       }
@@ -4947,6 +5148,26 @@
         }
       }
     },
+    "Share": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поделиться"
+          }
+        }
+      }
+    },
+    "Share as file": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поделиться файлом"
+          }
+        }
+      }
+    },
     "Show": {
       "localizations": {
         "ru": {
@@ -5087,16 +5308,7 @@
         }
       }
     },
-    "Start one and your agent gets to work on the computer.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Начни тред — и агент возьмётся за работу на компьютере."
-          }
-        }
-      }
-    },
+    "Start one and your agent gets to work on the computer.": {},
     "Start thread": {
       "localizations": {
         "ru": {
@@ -5237,6 +5449,16 @@
         }
       }
     },
+    "Subagent of": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Субагент треда"
+          }
+        }
+      }
+    },
     "Subscription limits left and the past day's cost.": {
       "localizations": {
         "ru": {
@@ -5367,6 +5589,16 @@
         }
       }
     },
+    "The agent compacts the conversation by itself when the window fills up.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Агент сам сожмёт разговор, когда окно заполнится."
+          }
+        }
+      }
+    },
     "The agent decides what needs approval": {
       "localizations": {
         "ru": {
@@ -5407,16 +5639,17 @@
         }
       }
     },
-    "The conversation and its terminal history are removed from the computer.": {
+    "The computer is offline.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Переписка и история терминала удалятся с компьютера."
+            "value": "Компьютер не в сети."
           }
         }
       }
     },
+    "The conversation and its terminal history are removed from the computer.": {},
     "The file is empty": {
       "localizations": {
         "ru": {
@@ -5537,16 +5770,7 @@
         }
       }
     },
-    "This app is older than Helm on the computer; update it to see usage.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Приложение старше Штурвала на компьютере — обнови его, чтобы видеть расход."
-          }
-        }
-      }
-    },
+    "This app is older than Helm on the computer; update it to see usage.": {},
     "This build can't receive notifications.": {
       "localizations": {
         "ru": {
@@ -5557,36 +5781,9 @@
         }
       }
     },
-    "This computer doesn't take files": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Этот компьютер не принимает файлы"
-          }
-        }
-      }
-    },
-    "This computer isn't connected": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Этот компьютер не подключён"
-          }
-        }
-      }
-    },
-    "This computer runs an older Helm; update it to see usage.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На этом компьютере старый Штурвал — обнови его, чтобы видеть расход."
-          }
-        }
-      }
-    },
+    "This computer doesn't take files": {},
+    "This computer isn't connected": {},
+    "This computer runs an older Helm; update it to see usage.": {},
     "This evening": {
       "localizations": {
         "ru": {
@@ -5607,16 +5804,7 @@
         }
       }
     },
-    "This phone forgets the computer. Threads stay on the computer.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Телефон забудет этот компьютер. Треды останутся на нём."
-          }
-        }
-      }
-    },
+    "This phone forgets the computer. Threads stay on the computer.": {},
     "This phone's access expired or was removed. Pair it again.": {
       "localizations": {
         "ru": {
@@ -5627,16 +5815,7 @@
         }
       }
     },
-    "This thread opens once the computer is reachable.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Тред откроется, когда компьютер снова будет на связи."
-          }
-        }
-      }
-    },
+    "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {
       "localizations": {
@@ -5668,6 +5847,16 @@
         }
       }
     },
+    "Thread archived": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред в архиве"
+          }
+        }
+      }
+    },
     "Thread deleted": {
       "localizations": {
         "ru": {
@@ -5688,12 +5877,32 @@
         }
       }
     },
-    "Threads": {
+    "Thread settled": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Треды"
+            "value": "Тред завершён"
+          }
+        }
+      }
+    },
+    "Thread snoozed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред отложен"
+          }
+        }
+      }
+    },
+    "Thread unpinned": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред откреплён"
           }
         }
       }
@@ -5718,16 +5927,7 @@
         }
       }
     },
-    "Time uses the computer's time zone, which may differ from your phone's.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Время по часовому поясу компьютера — он может отличаться от телефона."
-          }
-        }
-      }
-    },
+    "Time uses the computer's time zone, which may differ from your phone's.": {},
     "Title": {
       "localizations": {
         "ru": {
@@ -5748,7 +5948,16 @@
         }
       }
     },
-    "Today": {},
+    "Today": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сегодня"
+          }
+        }
+      }
+    },
     "Tokens": {
       "localizations": {
         "ru": {
@@ -5869,6 +6078,16 @@
         }
       }
     },
+    "Undo": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отменить"
+          }
+        }
+      }
+    },
     "Unit": {
       "localizations": {
         "ru": {
@@ -5895,6 +6114,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Без цены"
+          }
+        }
+      }
+    },
+    "Unsent draft": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Неотправленный черновик"
           }
         }
       }
@@ -5955,6 +6184,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Значение"
+          }
+        }
+      }
+    },
+    "Wait for the agent to finish its turn.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дождись, пока агент закончит ход."
           }
         }
       }
@@ -6119,16 +6358,17 @@
         }
       }
     },
-    "Work": {
+    "Woke": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Работа"
+            "value": "Вернулся"
           }
         }
       }
     },
+    "Work": {},
     "Worked": {
       "localizations": {
         "ru": {
@@ -6199,7 +6439,16 @@
         }
       }
     },
-    "Yesterday": {},
+    "Yesterday": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вчера"
+          }
+        }
+      }
+    },
     "Your coding agents, from your pocket.": {
       "localizations": {
         "ru": {
@@ -6236,6 +6485,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Несохранённые изменения пропадут."
+          }
+        }
+      }
+    },
+    "another model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "другую модель"
+          }
+        }
+      }
+    },
+    "continues in %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "продолжение в «%@»"
           }
         }
       }
@@ -6341,6 +6610,16 @@
         }
       }
     },
+    "the parent thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "родительского треда"
+          }
+        }
+      }
+    },
     "tomorrow %@": {
       "localizations": {
         "ru": {
@@ -6377,6 +6656,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "без проекта?"
+          }
+        }
+      }
+    },
+    "worktree": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "worktree"
           }
         }
       }
