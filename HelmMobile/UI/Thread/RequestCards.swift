@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 /// What the agent is waiting on: an approval (command, edit, permission) or questions.
@@ -166,6 +167,8 @@ private struct QuestionsCard: View {
     @State private var index = 0
     @State private var selections: [String: Set<String>] = [:]
     @State private var custom: [String: String] = [:]
+    @State private var attachments: [String: [QuestionAttachment]] = [:]
+    @State private var pickerItems: [PhotosPickerItem] = []
     @State private var collapsed = false
     @State private var sending = false
     @State private var error: String?
@@ -226,8 +229,103 @@ private struct QuestionsCard: View {
                 .lineLimit(1...4)
                 .padding(12)
                 .background(Palette.surface, in: .rect(cornerRadius: 12))
+                if canAttach {
+                    attachmentRow(question)
+                }
             }
         }
+    }
+
+    // MARK: Attachments
+
+    struct QuestionAttachment: Identifiable {
+        let id = UUID()
+        var preview: UIImage?
+        var uploaded: ChatAttachment?
+        var failed: String?
+    }
+
+    private var canAttach: Bool { session.environment?.config?.capability("questionAttachments") == true }
+
+    private var isUploading: Bool {
+        attachments.values.joined().contains { $0.uploaded == nil && $0.failed == nil }
+    }
+
+    private func attachmentRow(_ question: UserQuestion) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
+                    Label("Attach photos", systemImage: "photo.badge.plus")
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 17, weight: .medium))
+                        .frame(width: 52, height: 52)
+                        .background(Palette.surface, in: .rect(cornerRadius: 12))
+                }
+                .foregroundStyle(Palette.text)
+                .onChange(of: pickerItems) { _, items in
+                    guard !items.isEmpty else { return }
+                    items.forEach { attach($0, to: question.id) }
+                    pickerItems = []
+                }
+                ForEach(attachments[question.id] ?? []) { attachment in
+                    thumbnail(attachment, questionId: question.id)
+                }
+            }
+        }
+    }
+
+    private func thumbnail(_ attachment: QuestionAttachment, questionId: String) -> some View {
+        ZStack {
+            Palette.surface
+            if let preview = attachment.preview {
+                Image(uiImage: preview).resizable().scaledToFill()
+            }
+            if attachment.failed != nil {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Palette.errorText)
+            } else if attachment.uploaded == nil {
+                ProgressView()
+            }
+        }
+        .frame(width: 52, height: 52)
+        .clipShape(.rect(cornerRadius: 12))
+        .overlay(alignment: .topTrailing) {
+            Button {
+                attachments[questionId]?.removeAll { $0.id == attachment.id }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(Palette.text, Palette.surfaceRaised)
+                    .font(.system(size: 18))
+            }
+            .accessibilityLabel("Remove")
+            .offset(x: 5, y: -5)
+        }
+        .padding(.top, 5)
+        .padding(.trailing, 5)
+    }
+
+    private func attach(_ item: PhotosPickerItem, to questionId: String) {
+        let draft = QuestionAttachment()
+        attachments[questionId, default: []].append(draft)
+        Task {
+            do {
+                guard let environment = session.environment else { throw RPCError.disconnected }
+                guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else {
+                    throw RPCError.defect(String(localized: "Couldn't read the photo"))
+                }
+                let preview = image.preparingThumbnail(of: CGSize(width: 120, height: 120))
+                update(draft.id, in: questionId) { $0.preview = preview }
+                let uploaded = try await environment.uploadImage(image, name: "photo-\(Int(Date().timeIntervalSince1970)).jpg")
+                update(draft.id, in: questionId) { $0.uploaded = uploaded }
+            } catch {
+                update(draft.id, in: questionId) { $0.failed = error.localizedDescription }
+            }
+        }
+    }
+
+    private func update(_ id: UUID, in questionId: String, _ change: (inout QuestionAttachment) -> Void) {
+        guard let index = attachments[questionId]?.firstIndex(where: { $0.id == id }) else { return }
+        change(&attachments[questionId]![index])
     }
 
     private func optionButton(_ option: UserQuestion.Option, question: UserQuestion) -> some View {
@@ -287,7 +385,7 @@ private struct QuestionsCard: View {
                 .buttonStyle(.glassProminent)
                 .tint(Palette.accent)
                 .foregroundStyle(Palette.accentForeground)
-                .disabled(!request.canRespond || sending)
+                .disabled(!request.canRespond || sending || (isLast && isUploading))
                 .accessibilityIdentifier(isLast ? "requestPrimary" : "requestNext")
             }
             if dismissible {
@@ -318,7 +416,9 @@ private struct QuestionsCard: View {
         sending = true
         Task {
             do {
-                try await session.answer(request, answers: answers)
+                try await session.answer(request, answers: answers, attachmentsByQuestionId: attachments.mapValues {
+                    $0.compactMap(\.uploaded)
+                })
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } catch {
                 self.error = error.localizedDescription
@@ -333,6 +433,10 @@ struct QueueStrip: View {
     let queued: [QueuedMessage]
     let session: ThreadSession
     let canSteer: Bool
+    /// The provider session takes queued messages, so their order can change.
+    let canReorder: Bool
+    @State private var editing: QueuedMessage?
+    @State private var error: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -362,6 +466,18 @@ struct QueueStrip: View {
                                 Task { try? await session.steerQueued(message.id) }
                             } label: { Label("Send now", systemImage: "arrow.turn.down.right") }
                         }
+                        Button {
+                            editing = message
+                        } label: { Label("Edit", systemImage: "pencil") }
+                        if canReorder, queued.count > 1 {
+                            let ids = queued.map(\.id)
+                            if let before = QueueOrder.beforeRunId(ids, moving: message.id, .up) {
+                                Button { reorder(message, before: before) } label: { Label("Move up", systemImage: "arrow.up") }
+                            }
+                            if let before = QueueOrder.beforeRunId(ids, moving: message.id, .down) {
+                                Button { reorder(message, before: before) } label: { Label("Move down", systemImage: "arrow.down") }
+                            }
+                        }
                         Button(role: .destructive) {
                             Task { try? await session.cancelQueued(message.id) }
                         } label: { Label("Remove", systemImage: "xmark") }
@@ -373,9 +489,98 @@ struct QueueStrip: View {
                     .foregroundStyle(Palette.textMuted)
                 }
             }
+            if let error {
+                Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .floatingSurface(cornerRadius: 18)
+        .sheet(item: $editing) { message in
+            QueuedMessageEditor(message: message, session: session)
+        }
+    }
+
+    private func reorder(_ message: QueuedMessage, before: String?) {
+        Task {
+            do {
+                try await session.reorderQueued(message.id, before: before)
+                error = nil
+                UISelectionFeedbackGenerator().selectionChanged()
+            } catch {
+                self.error = error.localizedDescription
+            }
+        }
+    }
+}
+
+/// Rewrites a queued message before it is sent. Its attachments stay as they are.
+private struct QueuedMessageEditor: View {
+    let message: QueuedMessage
+    let session: ThreadSession
+    @Environment(\.dismiss) private var dismiss
+    @State private var text: String
+    @State private var saving = false
+    @State private var error: String?
+    @FocusState private var focused: Bool
+
+    init(message: QueuedMessage, session: ThreadSession) {
+        self.message = message
+        self.session = session
+        _text = State(initialValue: message.text)
+    }
+
+    private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 10) {
+                TextEditor(text: $text)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.text)
+                    .scrollContentBackground(.hidden)
+                    .focused($focused)
+                    .padding(10)
+                    .background(Palette.surface, in: .rect(cornerRadius: 14, style: .continuous))
+                    .accessibilityIdentifier("queuedEditor")
+                if let error {
+                    Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+                }
+            }
+            .padding(16)
+            .background(Palette.canvas)
+            .navigationTitle("Edit queued message")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        save()
+                    } label: {
+                        if saving { ProgressView() } else { Text("Save") }
+                    }
+                    .disabled(trimmed.isEmpty || trimmed == message.text || saving)
+                }
+            }
+            .onAppear { focused = true }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func save() {
+        saving = true
+        error = nil
+        Task {
+            do {
+                try await session.editQueued(message.id, text: trimmed)
+                dismiss()
+            } catch {
+                // The run most likely left the queue meanwhile.
+                self.error = String(localized: "Couldn't save. It may have already started.")
+            }
+            saving = false
+        }
     }
 }

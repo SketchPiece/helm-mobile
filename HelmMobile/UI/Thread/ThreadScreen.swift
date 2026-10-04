@@ -29,6 +29,7 @@ private struct ThreadContent: View {
     @State private var expandedWork: Set<String> = []
     @State private var showSettings = false
     @State private var reviewing: Checkpoint?
+    @State private var snoozingCustom = false
     @State private var actionError: String?
 
     init(environment: EnvironmentSession, session: ThreadSession) {
@@ -104,6 +105,11 @@ private struct ThreadContent: View {
         }
         .sheet(item: $reviewing) { checkpoint in
             ChangesSheet(session: session, checkpoint: checkpoint)
+        }
+        .sheet(isPresented: $snoozingCustom) {
+            CustomSnoozeSheet { date in
+                try await model.perform(.snooze(date), on: ThreadRef(environmentId: environment.id, threadId: session.threadId))
+            }
         }
         .alert("Couldn't do that", isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -226,7 +232,11 @@ private struct ThreadContent: View {
                     PendingRequestCard(request: request, session: session)
                 }
                 if !projection.queued.isEmpty {
-                    QueueStrip(queued: projection.queued, session: session, canSteer: projection.isWorking)
+                    QueueStrip(queued: projection.queued, session: session, canSteer: projection.isWorking,
+                               canReorder: projection.activeSession?.supportsQueuedMessages == true)
+                }
+                if let recovery = summary?.usageLimitRecovery, !projection.isWorking {
+                    UsageLimitCard(state: recovery, session: session)
                 }
                 if projection.isWorking, let run = projection.activeRun, projection.pendingRequests.isEmpty {
                     WorkingPill(since: run.workingSince ?? Date())
@@ -283,7 +293,16 @@ private struct ThreadContent: View {
                         ForEach(SnoozePreset.allCases) { preset in
                             Button(preset.title) { perform(.snooze(preset.date())) }
                         }
+                        Button("Custom…") { snoozingCustom = true }
                     } label: { Label("Snooze", systemImage: "moon.zzz") }
+                    if environment.config?.capability("threadAutoSettleOptOut") == true {
+                        Toggle(isOn: Binding(
+                            get: { summary.autoSettleDisabledAt == nil },
+                            set: { perform(.autoSettle($0)) }
+                        )) {
+                            Label("Auto-settle", systemImage: "clock.badge.checkmark")
+                        }
+                    }
                     Button {
                         UIPasteboard.general.string = summary.id
                     } label: { Label("Copy thread ID", systemImage: "number") }
