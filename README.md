@@ -59,6 +59,9 @@ regenerates `Localizable.xcstrings` and lists anything untranslated.
   http/ws URLs at its loopback forwarders once this phone has logged in to it.
 - `Store/PushService`: device registration with the Volna core, notification taps, the Live Activity.
 - `Shared/` + `HelmWidgets/`: the Live Activity type (wire-compatible with the core's content-state) and its UI.
+- `HelmShare/` + `Shared/ShareInbox`: "Helm" in the share sheet. It copies what was shared into the App Group
+  (`group.com.sketchpiece.helm`) and opens the app, which starts a new thread with it.
+  `App/LaunchActions` routes shares, the "New task" quick action and the Shortcuts intent to New Thread.
 - `UI/`: SwiftUI screens in Helm's "Bakelite and lamp" palette with IBM Plex and Dynamic Type.
 
 `docs/protocol.md` and `docs/transport.md` are the wire reference this was built from;
