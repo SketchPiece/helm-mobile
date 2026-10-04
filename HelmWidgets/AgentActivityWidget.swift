@@ -98,7 +98,7 @@ struct CardBody: View {
 }
 
 /// A state as a glyph: a hand for approval, a bubble for a question, a check or a cross when
-/// finished, a ring while working.
+/// finished, play while working: one filled-circle family from start to end.
 struct PhaseGlyph: View {
     let phase: String
     var size: CGFloat = 14
@@ -111,7 +111,7 @@ struct PhaseGlyph: View {
             case "waiting_for_input": symbol("questionmark.bubble.fill")
             case "completed": symbol("checkmark.circle.fill")
             case "failed": symbol("xmark.circle.fill")
-            default: Ring(lineWidth: max(1.6, size * 0.14)).padding(size * 0.1)
+            default: symbol("play.circle.fill")
             }
         }
         .foregroundStyle(tint)
@@ -120,20 +120,6 @@ struct PhaseGlyph: View {
 
     private func symbol(_ name: String) -> some View {
         Image(systemName: name).font(.system(size: size * 0.92, weight: .semibold))
-    }
-}
-
-/// A quarter arc over a faint circle: work in progress (Live Activities don't animate it).
-struct Ring: View {
-    let lineWidth: CGFloat
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(.foreground.opacity(0.3), lineWidth: lineWidth)
-            Circle().trim(from: 0, to: 0.28)
-                .stroke(.foreground, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-        }
     }
 }
 
