@@ -316,6 +316,12 @@ struct HomeView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        // Connections and Settings are separate buttons up top; the bottom is only Search and the
+        // amber New thread, each in its own glass.
+        ToolbarItem(placement: .topBarTrailing) {
+            EnvironmentStatusButton()
+        }
+        ToolbarSpacer(.fixed, placement: .topBarTrailing)
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 router.showSettings = true
@@ -325,16 +331,17 @@ struct HomeView: View {
             .accessibilityLabel("Settings")
             .accessibilityIdentifier("settings")
         }
-        ToolbarItem(placement: .bottomBar) {
-            EnvironmentStatusButton()
-        }
         DefaultToolbarItem(kind: .search, placement: .bottomBar)
+        ToolbarSpacer(.fixed, placement: .bottomBar)
         ToolbarItem(placement: .bottomBar) {
             Button {
                 router.startNewThread()
             } label: {
                 Image(systemName: "square.and.pencil")
             }
+            .buttonStyle(.glassProminent)
+            .tint(Palette.accent)
+            .foregroundStyle(Palette.accentForeground)
             .accessibilityLabel("New thread")
             .accessibilityIdentifier("newThread")
         }
@@ -397,6 +404,8 @@ struct HomeView: View {
                 } actions: {
                     Button("New thread") { router.startNewThread() }
                         .buttonStyle(.glassProminent)
+                        .tint(Palette.accent)
+                        .foregroundStyle(Palette.accentForeground)
                 }
             }
         }
