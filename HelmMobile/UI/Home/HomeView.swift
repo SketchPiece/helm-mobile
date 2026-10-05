@@ -357,12 +357,13 @@ struct HomeView: View {
             Button {
                 if !fan.justClosed { router.startNewThread() }
             } label: {
+                // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
                 Image(systemName: "plus")
                     .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Palette.accentForeground)
             }
             .buttonStyle(.glassProminent)
             .tint(Palette.accent)
-            .foregroundStyle(Palette.accentForeground)
             .newThreadFan($fan) {
                 NewThreadFanItem.recent(in: model)
             } onPick: { item in
