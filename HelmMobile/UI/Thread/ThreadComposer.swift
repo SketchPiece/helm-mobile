@@ -18,6 +18,8 @@ struct ThreadComposer: View {
     @State private var voice = VoiceInput()
     @State private var micDrag: CGFloat = 0
     @State private var focused = false
+    /// Lets the attach button and the trailing buttons fly between the two rows as the card opens.
+    @Namespace private var shape
     @AppStorage(PhonePreferences.followUpKey) private var followUpBehavior = FollowUpBehavior.queue
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
 
@@ -64,21 +66,21 @@ struct ThreadComposer: View {
             // The text view keeps its place in this row in both shapes, so it never loses focus.
             // One centred row at rest; opened, the last line of text lines up with the bottom.
             HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
-                if !expanded && voice.state == .idle { attachMenu }
+                if !expanded && voice.state == .idle { movingAttach }
                 if voice.state != .idle {
                     VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
                                onDone: { finishDictation(send: false) }, onRetry: retryDictation)
                 } else {
                     editor.padding(.leading, expanded ? 6 : 0)
                 }
-                if !expanded { trailingButtons }
+                if !expanded { movingTrailing }
             }
             if expanded {
                 HStack(spacing: 6) {
-                    attachMenu
+                    movingAttach
                     settingsChips.layoutPriority(1)
                     Spacer(minLength: 0)
-                    trailingButtons
+                    movingTrailing
                 }
                 .transition(.opacity.combined(with: .offset(y: -8)))
             }
@@ -95,6 +97,15 @@ struct ThreadComposer: View {
         .animation(.composer, value: voice.state)
         .animation(.composer, value: hasContent)
         .animation(.composer, value: isWorking)
+    }
+
+    private var movingAttach: some View {
+        attachMenu.matchedGeometryEffect(id: "attach", in: shape)
+    }
+
+    private var movingTrailing: some View {
+        HStack(spacing: 6) { trailingButtons }
+            .matchedGeometryEffect(id: "trailing", in: shape)
     }
 
     private var attachMenu: some View {

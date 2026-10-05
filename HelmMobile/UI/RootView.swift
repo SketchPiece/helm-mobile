@@ -113,7 +113,8 @@ struct RootView: View {
             NavigationStack { PairingView() }
         }
         .environment(router)
-        .background(Palette.canvas)
+        // Under the keyboard too: as it slides away the window would show white in the light theme.
+        .background { Palette.canvas.ignoresSafeArea() }
         .task { await pairFromLaunchArguments() }
         .onChange(of: AppBadge.count(in: model), initial: true) { _, count in AppBadge.update(count: count) }
         .onChange(of: appIconBadge) { AppBadge.update(count: AppBadge.count(in: model)) }

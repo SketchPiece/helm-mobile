@@ -179,7 +179,8 @@ private struct ThreadContent: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             bottomStack(projection: projection)
         }
-        .background(Palette.canvas)
+        // Under the keyboard too: as it slides away the window would show white in the light theme.
+        .background { Palette.canvas.ignoresSafeArea() }
         .navigationTitle(summary?.displayTitle ?? "")
         .navigationSubtitle(subtitle)
         .navigationBarTitleDisplayMode(.inline)

@@ -66,7 +66,8 @@ struct NewThreadView: View {
             composer
         }
         .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
-        .background(Palette.canvas)
+        // Under the keyboard too: as it slides away the window would show white in the light theme.
+        .background { Palette.canvas.ignoresSafeArea() }
         .navigationTitle("New thread")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showProjects) {
