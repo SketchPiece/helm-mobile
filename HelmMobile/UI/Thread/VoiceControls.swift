@@ -29,7 +29,8 @@ struct MicButton: View {
         let recordingHold = voice.state == .recording(handsFree: false)
         let cancelling = recordingHold && dragOffset < Self.cancelThreshold
         Image(systemName: cancelling ? "xmark" : prominent || recordingHold ? "mic.fill" : "mic")
-            .contentTransition(.symbolEffect(.replace))
+            // A crossfade: .replace shrinks the old symbol to a dot before the new one grows.
+            .contentTransition(.opacity)
             .font(.system(size: prominent ? 17 : 16, weight: .semibold))
             .frame(width: prominent ? 40 : 34, height: prominent ? 40 : 34)
             .foregroundStyle(recordingHold ? .white : prominent ? Palette.accentForeground : Palette.textMuted)
@@ -235,8 +236,8 @@ extension View {
     /// the window: removing it would resign first responder and drop the keyboard.
     func voiceCollapsed(_ collapsed: Bool) -> some View {
         // Height and clipping only: opacity 0 or allowsHitTesting(false) make UIKit resign the
-        // text view, and the keyboard drops.
-        frame(width: collapsed ? 0 : nil, height: collapsed ? 0 : nil)
+        // text view, and the keyboard drops. Width stays, or the text reflows as it folds.
+        frame(height: collapsed ? 0 : nil)
             .clipped()
             .accessibilityHidden(collapsed)
     }

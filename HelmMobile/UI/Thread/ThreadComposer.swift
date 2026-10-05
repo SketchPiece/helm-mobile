@@ -69,13 +69,20 @@ struct ThreadComposer: View {
             // The text view keeps its place in this row in both shapes, so it never loses focus.
             // One centred row at rest; opened, the last line of text lines up with the bottom.
             HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
-                if !expanded {
-                    if dictating { voiceStrip } else { movingAttach }
+                // At rest the recording fades in over the attach button and the empty field rather
+                // than pushing them aside, so nothing slides across it. Nothing is focused at rest,
+                // so hiding the text view this way can't drop the keyboard.
+                HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
+                    if !expanded { movingAttach }
+                    // Opened, the text view folds away while dictating rather than leaving the window,
+                    // so the keyboard stays up. With a draft, the draft stays in view above the strip.
+                    editor.padding(.leading, expanded ? 6 : 0)
+                        .voiceCollapsed(editorFolded)
                 }
-                // While dictating the text view folds away rather than leaving the window, so the
-                // keyboard stays up. Opened with a draft, the draft stays in view above the strip.
-                editor.padding(.leading, expanded ? 6 : 0)
-                    .voiceCollapsed(editorFolded)
+                .opacity(dictatingAtRest ? 0 : 1)
+                .overlay {
+                    if dictatingAtRest { voiceStrip.transition(.opacity) }
+                }
                 if !expanded { movingTrailing }
             }
             if expanded {
@@ -110,8 +117,9 @@ struct ThreadComposer: View {
     }
 
     private var dictating: Bool { voice.state != .idle }
-    /// The text view folds away while dictating, unless the card is open with a draft to show.
-    private var editorFolded: Bool { dictating && (!expanded || trimmed.isEmpty) }
+    private var dictatingAtRest: Bool { dictating && !expanded }
+    /// In the opened card the text view folds away while dictating, unless there is a draft to show.
+    private var editorFolded: Bool { dictating && expanded && trimmed.isEmpty }
 
     private var voiceStrip: some View {
         VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
