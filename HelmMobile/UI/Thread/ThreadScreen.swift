@@ -236,12 +236,12 @@ private struct ThreadContent: View {
     }
 
     /// Started from New Thread with "Start another" or "Back to threads": once the agent is seen at work,
-    /// a moment to take it in, then on. If it hasn't started within a few seconds, stay here.
+    /// on right away, only letting the push into the thread settle. If it hasn't started within a few seconds, stay here.
     private func moveOnAfterStart() async {
         let ref = ThreadRef(environmentId: environment.id, threadId: session.threadId)
         guard router.afterStart?.ref == ref else { return }
         let working = session.projection?.isWorking == true
-        try? await Task.sleep(for: working ? .seconds(1.5) : .seconds(10))
+        try? await Task.sleep(for: working ? .seconds(0.3) : .seconds(10))
         guard !Task.isCancelled else { return }
         if working {
             router.finishAfterStart(ref)
