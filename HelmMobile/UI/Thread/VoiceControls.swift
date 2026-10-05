@@ -20,9 +20,6 @@ struct MicButton: View {
 
     @State private var pressedAt: Date?
     @State private var holding = false
-    /// True while a finger is down. Unlike `onEnded`, it also resets when the system cancels the
-    /// touch (another gesture takes over), so a hold can never be left recording with no finger.
-    @GestureState private var touching = false
     static let cancelThreshold: CGFloat = -72
 
     var body: some View {
@@ -43,38 +40,37 @@ struct MicButton: View {
             .sensoryFeedback(.impact(weight: .light), trigger: cancelling)
             .animation(.easeOut(duration: 0.1), value: pressedAt != nil)
             .contentShape(.circle)
-            // Ahead of the glass card's own touch handling around it.
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 0)
-                    .updating($touching) { _, touching, _ in touching = true }
-                    .onChanged { value in
-                        if pressedAt == nil {
-                            pressedAt = Date()
-                            onPress()
-                            let started = pressedAt
-                            Task {
-                                try? await Task.sleep(for: .milliseconds(300))
-                                if pressedAt == started, pressedAt != nil {
-                                    holding = true
-                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                }
-                            }
-                        }
-                        dragOffset = min(0, value.translation.width)
-                    }
-                    .onEnded { _ in release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: true) }
-            )
-            // The touch went away without onEnded: the system cancelled it. End the hold as a
-            // release (sending what was said), but don't count it as a tap.
-            .onChange(of: touching) { _, touching in
-                if !touching, pressedAt != nil { release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: false) }
-            }
+            // A UIKit recognizer, not a SwiftUI gesture: by the home indicator SwiftUI held the
+            // touch ~0.8 s for the system's swipe home, where UIKit has it within a frame or two.
+            .gesture(MicPressGesture(
+                onBegan: press,
+                onMoved: { dragOffset = min(0, $0) },
+                // A touch the system took away (another gesture won) ends the hold as a release,
+                // sending what was said, but doesn't count as a tap.
+                onEnded: { cancelledBySystem in
+                    release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: !cancelledBySystem)
+                }
+            ))
             .onDisappear {
                 if pressedAt != nil { release(cancelledByUser: false, tapped: false) }
             }
             .accessibilityLabel("Dictate")
             .accessibilityHint("Hold to talk, release to send")
             .accessibilityAction { onPress(); onTap() }
+    }
+
+    private func press() {
+        guard pressedAt == nil else { return }
+        pressedAt = Date()
+        onPress()
+        let started = pressedAt
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            if pressedAt == started, pressedAt != nil {
+                holding = true
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
+        }
     }
 
     private func release(cancelledByUser: Bool, tapped: Bool) {
@@ -89,6 +85,76 @@ struct MicButton: View {
             onTap()
         } else {
             onAbandon()
+        }
+    }
+}
+
+/// One finger on the microphone, reported straight from the touches: the press as it lands, the
+/// horizontal slide, and the lift (or the system taking the touch away).
+private struct MicPressGesture: UIGestureRecognizerRepresentable {
+    let onBegan: () -> Void
+    let onMoved: (CGFloat) -> Void
+    let onEnded: (_ cancelledBySystem: Bool) -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> MicPressRecognizer { MicPressRecognizer() }
+
+    func updateUIGestureRecognizer(_ recognizer: MicPressRecognizer, context: Context) {
+        recognizer.onBegan = onBegan
+        recognizer.onMoved = onMoved
+        recognizer.onEnded = onEnded
+    }
+}
+
+private final class MicPressRecognizer: UIGestureRecognizer {
+    var onBegan: () -> Void = {}
+    var onMoved: (CGFloat) -> Void = { _ in }
+    var onEnded: (Bool) -> Void = { _ in }
+    private var touch: UITouch?
+    private var startX: CGFloat = 0
+
+    override init(target: Any?, action: Selector?) {
+        super.init(target: target, action: action)
+        delaysTouchesBegan = false
+    }
+
+    // The callbacks run from the touches themselves: a state change can wait on other recognizers
+    // (the system's among them), the touches don't.
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard self.touch == nil, let touch = touches.first else {
+            touches.forEach { ignore($0, for: event) }
+            return
+        }
+        self.touch = touch
+        startX = touch.location(in: nil).x
+        state = .began
+        onBegan()
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard let touch, touches.contains(touch) else { return }
+        onMoved(touch.location(in: nil).x - startX)
+        state = .changed
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard let touch, touches.contains(touch) else { return }
+        self.touch = nil
+        state = .ended
+        onEnded(false)
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard let touch, touches.contains(touch) else { return }
+        self.touch = nil
+        state = .cancelled
+        onEnded(true)
+    }
+
+    override func reset() {
+        super.reset()
+        if touch != nil {
+            touch = nil
+            onEnded(true)
         }
     }
 }
