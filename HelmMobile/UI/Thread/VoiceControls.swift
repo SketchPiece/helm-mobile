@@ -26,7 +26,9 @@ struct MicButton: View {
 
     var body: some View {
         let recordingHold = voice.state == .recording(handsFree: false)
-        Image(systemName: prominent || recordingHold ? "mic.fill" : "mic")
+        let cancelling = recordingHold && dragOffset < Self.cancelThreshold
+        Image(systemName: cancelling ? "xmark" : prominent || recordingHold ? "mic.fill" : "mic")
+            .contentTransition(.symbolEffect(.replace))
             .font(.system(size: prominent ? 17 : 16, weight: .semibold))
             .frame(width: prominent ? 40 : 34, height: prominent ? 40 : 34)
             .foregroundStyle(recordingHold ? .white : prominent ? Palette.accentForeground : Palette.textMuted)
@@ -35,6 +37,8 @@ struct MicButton: View {
             // Answers the touch at once (a press-in), before recording shows.
             .scaleEffect(recordingHold ? 1.1 : pressedAt != nil ? 0.9 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
+            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: cancelling)
+            .sensoryFeedback(.impact(weight: .light), trigger: cancelling)
             .animation(.easeOut(duration: 0.1), value: pressedAt != nil)
             .contentShape(.circle)
             // Ahead of the glass card's own touch handling around it.
@@ -116,28 +120,43 @@ struct VoiceStrip: View {
                         .foregroundStyle(Palette.text)
                         .monospacedDigit()
                 }
-                if cancelling {
-                    Text("Release to cancel")
+                // How far the slide to cancel has gone, 0...1. Everything eases with it: the bars
+                // fade, the hint follows the finger and reddens, then "Release to cancel" takes over.
+                let progress = min(1, max(0, dragOffset / MicButton.cancelThreshold))
+                ZStack(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        LevelBars(levels: voice.levels)
+                            .opacity(1 - progress * 0.75)
+                            .padding(.trailing, 10)
+                        if !handsFree {
+                            Label("Cancel", systemImage: "chevron.left")
+                                .labelStyle(.titleAndIcon)
+                                .font(Typography.footnote)
+                                .foregroundStyle(Palette.textMuted.mix(with: Palette.errorText, by: progress))
+                                .lineLimit(1)
+                                .fixedSize()
+                            // Room opening behind the hint as it follows the finger: the bars
+                            // narrow instead of being covered.
+                            Color.clear.frame(width: min(-dragOffset * 0.5, 48), height: 0)
+                        }
+                    }
+                    .opacity(cancelling ? 0 : 1)
+                    .blur(radius: cancelling ? 4 : 0)
+                    Label("Release to cancel", systemImage: "xmark")
+                        .labelStyle(.titleAndIcon)
                         .font(Typography.footnote.weight(.medium))
                         .foregroundStyle(Palette.errorText)
                         .lineLimit(1)
-                    Spacer(minLength: 0)
-                } else {
-                    LevelBars(levels: voice.levels)
-                    if !handsFree {
-                        // Follows the finger a little, like the slide it asks for.
-                        Label("Cancel", systemImage: "chevron.left")
-                            .labelStyle(.titleAndIcon)
-                            .font(Typography.footnote)
-                            .foregroundStyle(Palette.textMuted)
-                            .lineLimit(1)
-                            .fixedSize()
-                            .offset(x: max(dragOffset * 0.4, -30))
-                    }
+                        .opacity(cancelling ? 1 : 0)
+                        .blur(radius: cancelling ? 0 : 4)
+                        .offset(x: cancelling ? 0 : 16)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(.spring(response: 0.3, dampingFraction: 0.85), value: cancelling)
             case .transcribing:
                 // The spinner is in the amber slot; one is enough.
                 Text("Transcribing…").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
+                    .padding(.leading, 6)
                 Spacer(minLength: 0)
             case .failed(let message):
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Palette.errorText)
