@@ -173,10 +173,10 @@ extension View {
     /// Folds the composer's text view away while the voice strip shows, without taking it out of
     /// the window: removing it would resign first responder and drop the keyboard.
     func voiceCollapsed(_ collapsed: Bool) -> some View {
+        // Height and clipping only: opacity 0 or allowsHitTesting(false) make UIKit resign the
+        // text view, and the keyboard drops.
         frame(height: collapsed ? 0 : nil)
             .clipped()
-            .opacity(collapsed ? 0 : 1)
-            .allowsHitTesting(!collapsed)
             .accessibilityHidden(collapsed)
     }
 }
