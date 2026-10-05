@@ -11,6 +11,17 @@ struct FollowUpSettingsView: View {
     }
 }
 
+/// Settings → New threads: open each thread once it starts, or stay to start the next one.
+struct AfterStartSettingsView: View {
+    @AppStorage(PhonePreferences.afterStartKey) private var behavior = AfterStartBehavior.open
+
+    var body: some View {
+        ChoiceForm(title: String(localized: "New threads"), header: String(localized: "After starting a thread"),
+                   options: AfterStartBehavior.allCases, selection: $behavior, label: \.title, detail: \.detail,
+                   footer: String(localized: "With Start another, tap Open in the notice on top to go to the thread that just started."))
+    }
+}
+
 /// Settings → Keyboard: Return sends or inserts a new line.
 struct KeyboardSettingsView: View {
     @AppStorage(PhonePreferences.returnKeyKey) private var behavior = ReturnKeyBehavior.newline

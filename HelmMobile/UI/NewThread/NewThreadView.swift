@@ -31,6 +31,9 @@ struct NewThreadView: View {
     /// Shared files waiting for the Mac to be connected before they upload.
     @State private var sharedFiles: [SharedFile] = []
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
+    /// The thread just started while staying here for the next one; the notice on top opens it.
+    @State private var started: ThreadRef?
 
     private var draft: ComposerDraft { router.newThreadComposer }
 
@@ -66,6 +69,21 @@ struct NewThreadView: View {
             composer
         }
         .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
+        .overlay(alignment: .top) {
+            if let started {
+                startedNotice(started)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .id(started)
+            }
+        }
+        .animation(.snappy(duration: 0.3), value: started)
+        .task(id: started) {
+            guard started != nil else { return }
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            started = nil
+        }
         // Under the keyboard too: as it slides away the window would show white in the light theme.
         .background { Palette.canvas.ignoresSafeArea() }
         .navigationTitle("New thread")
@@ -170,6 +188,32 @@ struct NewThreadView: View {
             }
         }
         .padding(.horizontal, 24)
+    }
+
+    /// "Thread started · Open" after a start that stayed here for the next task.
+    private func startedNotice(_ ref: ThreadRef) -> some View {
+        HStack(spacing: 14) {
+            Text("Thread started")
+                .font(Typography.subheadline.weight(.medium))
+                .foregroundStyle(Palette.text)
+            Button {
+                started = nil
+                router.open(ref)
+            } label: {
+                Text("Open")
+                    .font(Typography.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.accentText)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("openStartedThread")
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 16)
+        .frame(minHeight: 44)
+        .glassEffect(.regular, in: .capsule)
+        .gesture(DragGesture(minimumDistance: 12).onEnded { value in
+            if value.translation.height < -10 { started = nil }
+        })
     }
 
     private var projectQuestion: String {
@@ -533,8 +577,17 @@ struct NewThreadView: View {
                 let ref = try await model.launch(request)
                 router.discardNewThreadDraft()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                // The thread takes New Thread's place, so Back goes to Home.
-                router.open(ref)
+                if afterStart == .another {
+                    // Ready for the next task: same project, model and workspace, empty field.
+                    text = ""
+                    sending = false
+                    started = ref
+                    focused = true
+                    AccessibilityNotification.Announcement(String(localized: "Thread started")).post()
+                } else {
+                    // The thread takes New Thread's place, so Back goes to Home.
+                    router.open(ref)
+                }
             } catch {
                 self.error = error.localizedDescription
                 sending = false

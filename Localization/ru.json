@@ -727,5 +727,13 @@
   "Connection log": "Журнал подключения",
   "Nothing logged yet.": "Пока ничего не записано.",
   "Clear the connection log?": "Очистить журнал подключения?",
-  "Clear": "Очистить"
+  "Clear": "Очистить",
+  "New threads": "Новые треды",
+  "After starting a thread": "После запуска треда",
+  "Open the thread": "Открыть тред",
+  "Start another": "Начать следующий",
+  "The new thread opens, so you can follow the agent.": "Новый тред открывается, и можно следить за агентом.",
+  "New Thread clears and stays in the same project, ready for the next task.": "Экран нового треда очищается и остаётся в том же проекте, готовый к следующей задаче.",
+  "Thread started": "Тред запущен",
+  "With Start another, tap Open in the notice on top to go to the thread that just started.": "Если выбрано «Начать следующий», нажмите «Открыть» в уведомлении сверху, чтобы перейти к только что запущенному треду."
 }

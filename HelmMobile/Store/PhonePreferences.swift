@@ -5,6 +5,7 @@ import SwiftUI
 enum PhonePreferences {
     static let followUpKey = "followUpBehavior"
     static let returnKeyKey = "composerReturnKey"
+    static let afterStartKey = "newThreadAfterStart"
     /// 0 means automatic: code follows Dynamic Type.
     static let codeFontSizeKey = "codeFontSize"
     static let codeWordWrapKey = "codeWordWrap"
@@ -35,6 +36,26 @@ enum FollowUpBehavior: String, CaseIterable, Identifiable {
         switch self {
         case .queue: String(localized: "Your message waits and runs after the current turn finishes.")
         case .steer: String(localized: "Your message reaches the agent right away, changing what it is working on.")
+        }
+    }
+}
+
+/// What New Thread does once a thread starts: open it, or stay for the next task in the same project.
+enum AfterStartBehavior: String, CaseIterable, Identifiable {
+    case open, another
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .open: String(localized: "Open the thread")
+        case .another: String(localized: "Start another")
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .open: String(localized: "The new thread opens, so you can follow the agent.")
+        case .another: String(localized: "New Thread clears and stays in the same project, ready for the next task.")
         }
     }
 }

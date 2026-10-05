@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage(PhonePreferences.followUpKey) private var followUp = FollowUpBehavior.queue
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
 
@@ -69,6 +70,10 @@ struct SettingsView: View {
                         FollowUpSettingsView()
                     }
                     .accessibilityIdentifier("followUpSettings")
+                    valueLink(String(localized: "New threads"), value: afterStart.title, symbol: "square.and.pencil") {
+                        AfterStartSettingsView()
+                    }
+                    .accessibilityIdentifier("afterStartSettings")
                     valueLink(String(localized: "Keyboard"), value: returnKey == .send ? String(localized: "Return sends") : String(localized: "Return adds a line"),
                               symbol: "keyboard") {
                         KeyboardSettingsView()

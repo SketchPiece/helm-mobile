@@ -1286,6 +1286,16 @@
         }
       }
     },
+    "After starting a thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "После запуска треда"
+          }
+        }
+      }
+    },
     "Agents": {
       "localizations": {
         "ru": {
@@ -3663,6 +3673,16 @@
         }
       }
     },
+    "New Thread clears and stays in the same project, ready for the next task.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экран нового треда очищается и остаётся в том же проекте, готовый к следующей задаче."
+          }
+        }
+      }
+    },
     "New project": {
       "localizations": {
         "ru": {
@@ -3699,6 +3719,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новый тред"
+          }
+        }
+      }
+    },
+    "New threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новые треды"
           }
         }
       }
@@ -4210,6 +4240,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть тред агента"
+          }
+        }
+      }
+    },
+    "Open the thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть тред"
           }
         }
       }
@@ -5377,6 +5417,16 @@
         }
       }
     },
+    "Start another": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать следующий"
+          }
+        }
+      }
+    },
     "Start from origin": {
       "localizations": {
         "ru": {
@@ -5749,6 +5799,16 @@
         }
       }
     },
+    "The new thread opens, so you can follow the agent.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред открывается, и можно следить за агентом."
+          }
+        }
+      }
+    },
     "The pairing code was rejected. Codes work once and expire after 5 minutes.": {
       "localizations": {
         "ru": {
@@ -5962,6 +6022,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тред отложен"
+          }
+        }
+      }
+    },
+    "Thread started": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред запущен"
           }
         }
       }
@@ -6413,6 +6483,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пока агент работает"
+          }
+        }
+      }
+    },
+    "With Start another, tap Open in the notice on top to go to the thread that just started.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если выбрано «Начать следующий», нажмите «Открыть» в уведомлении сверху, чтобы перейти к только что запущенному треду."
           }
         }
       }
