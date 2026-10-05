@@ -181,25 +181,8 @@ struct NewThreadView: View {
     /// notice before starting.
     private var whereRow: some View {
         HStack(spacing: 6) {
-            Menu {
-                // Toggles: the menu marks the choice itself and each row keeps the chip's icon.
-                Toggle(isOn: Binding(get: { !newWorktree }, set: { if $0 { newWorktree = false } })) {
-                    Image(systemName: "folder")
-                    Text("Current checkout")
-                    Text("Works in the project folder")
-                }
-                Toggle(isOn: Binding(get: { newWorktree }, set: { if $0 { newWorktree = true } })) {
-                    Image(systemName: "arrow.triangle.branch")
-                    Text("New worktree")
-                    Text("Its own folder and branch")
-                }
-            } label: {
-                ComposerChipLabel(title: newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
-                                  highlighted: newWorktree) {
-                    Image(systemName: newWorktree ? "arrow.triangle.branch" : "folder").font(.system(size: 13))
-                }
-            }
-            .buttonStyle(.plain)
+            WorkspaceMenu(newWorktree: newWorktree) { newWorktree = $0 }
+                .equatable()
             if newWorktree, repo?.isRepo == true {
                 Button {
                     showBranches = true
@@ -545,6 +528,38 @@ struct NewThreadView: View {
                 router.refreshNewThreadDraft()
             }
         }
+    }
+}
+
+/// The "where" chip: current checkout or a new worktree. Equatable on the choice alone: the screen
+/// redraws on every update from the Mac, and an open menu rebuilt under the finger dropped the tap
+/// on its row for a second or two.
+private struct WorkspaceMenu: View, Equatable {
+    let newWorktree: Bool
+    let onChange: (Bool) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.newWorktree == rhs.newWorktree }
+
+    var body: some View {
+        Menu {
+            // Toggles: the menu marks the choice itself and each row keeps the chip's icon.
+            Toggle(isOn: Binding(get: { !newWorktree }, set: { if $0 { onChange(false) } })) {
+                Image(systemName: "folder")
+                Text("Current checkout")
+                Text("Works in the project folder")
+            }
+            Toggle(isOn: Binding(get: { newWorktree }, set: { if $0 { onChange(true) } })) {
+                Image(systemName: "arrow.triangle.branch")
+                Text("New worktree")
+                Text("Its own folder and branch")
+            }
+        } label: {
+            ComposerChipLabel(title: newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
+                              highlighted: newWorktree) {
+                Image(systemName: newWorktree ? "arrow.triangle.branch" : "folder").font(.system(size: 13))
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
