@@ -282,6 +282,7 @@ struct ThreadComposer: View {
             config: environment.config, selection: thread?.modelSelection,
             runtimeMode: thread?.runtimeMode ?? RuntimeMode.fullAccess.rawValue,
             interactionMode: thread?.interactionMode ?? "default",
+            foldMode: hasContent || isWorking,
             onSelection: { selection in apply { try await session.setModel(selection) } },
             onRuntimeMode: { mode in apply { try await session.setRuntimeMode(mode) } },
             onInteractionMode: { mode in apply { try await session.setInteractionMode(mode) } },

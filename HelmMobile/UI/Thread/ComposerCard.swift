@@ -142,32 +142,29 @@ struct RuntimeModeChip: View {
     }
 }
 
-/// Model and mode side by side; the mode folds to its icon when the row has no room for both.
+/// Model and mode side by side. The mode folds to its icon when the row also holds send or stop
+/// beside the microphone; a long model name then truncates rather than pushing them out.
+/// (Decided here rather than measured with ViewThatFits: inside the interactive glass that kept
+/// re-measuring and hung the app.)
 struct ComposerSettingsChips: View {
     let config: ServerConfig?
     let selection: ModelSelection?
     let runtimeMode: String
     let interactionMode: String
+    var foldMode = false
     let onSelection: (ModelSelection) -> Void
     let onRuntimeMode: (String) -> Void
     let onInteractionMode: (String) -> Void
     let onMore: () -> Void
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            row(folded: false)
-            row(folded: true)
-        }
-    }
-
-    private func row(folded: Bool) -> some View {
         HStack(spacing: 6) {
             ModelChip(config: config, selection: selection, interactionMode: interactionMode,
                       onSelection: onSelection, onMore: onMore)
             RuntimeModeChip(config: config, selection: selection, runtimeMode: runtimeMode,
-                            interactionMode: interactionMode, folded: folded,
+                            interactionMode: interactionMode, folded: foldMode,
                             onRuntimeMode: onRuntimeMode, onInteractionMode: onInteractionMode)
+                .fixedSize()
         }
-        .fixedSize()
     }
 }

@@ -274,6 +274,7 @@ struct NewThreadView: View {
                 ComposerSettingsChips(
                     config: environment?.config, selection: selection, runtimeMode: runtimeMode,
                     interactionMode: interactionMode,
+                    foldMode: hasContent || sending,
                     onSelection: { selection = $0 },
                     onRuntimeMode: { runtimeMode = $0 },
                     onInteractionMode: { interactionMode = $0 },
