@@ -27,7 +27,8 @@ struct MicButton: View {
             .frame(width: prominent ? 40 : 34, height: prominent ? 40 : 34)
             .foregroundStyle(recordingHold ? .white : prominent ? Palette.accentForeground : Palette.textMuted)
             .background(recordingHold ? Palette.error : prominent ? Palette.accent : .clear, in: .circle)
-            .scaleEffect(recordingHold ? 1.25 : 1)
+            // Swells a little under the finger, staying inside the card.
+            .scaleEffect(recordingHold ? 1.1 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
             .contentShape(.circle)
             // Ahead of the glass card's own touch handling around it.
@@ -146,6 +147,7 @@ struct VoiceStrip: View {
         }
         .frame(minHeight: 40)
         .padding(.leading, 6)
+        .padding(.trailing, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

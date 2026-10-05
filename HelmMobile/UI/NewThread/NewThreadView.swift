@@ -217,7 +217,7 @@ struct NewThreadView: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Palette.text.opacity(0.07)).frame(height: 1)
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, 8)
         .sheet(isPresented: $showBranches) {
             if let environment, let project {
                 BranchPicker(
@@ -231,14 +231,21 @@ struct NewThreadView: View {
     /// "Start from origin" only means something when the repository has an origin.
     private var originAvailable: Bool { repo?.hasPrimaryRemote == true }
 
+    /// The text view folds away while dictating into an empty field.
+    private var editorFolded: Bool {
+        voice.state != .idle && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// The thread's composer card, opened, with one more row on top: where the agent works.
     private var composer: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        // Spacing is per row: a folded text view must not leave a gap above the recording.
+        VStack(alignment: .leading, spacing: 0) {
             if !isScratch && project != nil {
                 whereRow
             }
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
+                    .padding(.bottom, 4)
             }
             // While dictating the text view folds away rather than leaving the window, so the keyboard
             // stays up; a draft stays in view above the recording.
@@ -258,7 +265,7 @@ struct NewThreadView: View {
                     Drafts.save(value, for: NewThreadDraft.key)
                     suggestions.update(text: value, scope: suggestionScope)
                 }
-                .voiceCollapsed(voice.state != .idle && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .voiceCollapsed(editorFolded)
             HStack(spacing: 6) {
                 if voice.state != .idle {
                     VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
@@ -284,6 +291,7 @@ struct NewThreadView: View {
                 }
                 trailingButton
             }
+            .padding(.top, editorFolded ? 0 : 4)
         }
         .padding(6)
         .contentShape(.rect)

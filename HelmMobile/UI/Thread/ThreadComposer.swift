@@ -59,9 +59,11 @@ struct ThreadComposer: View {
     }
 
     private var pill: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        // Spacing is per row: a folded text view must not leave a gap above the recording.
+        VStack(alignment: .leading, spacing: 0) {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
+                    .padding(.bottom, 4)
             }
             // The text view keeps its place in this row in both shapes, so it never loses focus.
             // One centred row at rest; opened, the last line of text lines up with the bottom.
@@ -72,7 +74,7 @@ struct ThreadComposer: View {
                 // While dictating the text view folds away rather than leaving the window, so the
                 // keyboard stays up. Opened with a draft, the draft stays in view above the strip.
                 editor.padding(.leading, expanded ? 6 : 0)
-                    .voiceCollapsed(dictating && (!expanded || trimmed.isEmpty))
+                    .voiceCollapsed(editorFolded)
                 if !expanded { movingTrailing }
             }
             if expanded {
@@ -88,6 +90,7 @@ struct ThreadComposer: View {
                     }
                     movingTrailing
                 }
+                .padding(.top, editorFolded ? 0 : 4)
                 .transition(.opacity.combined(with: .offset(y: -8)))
             }
         }
@@ -106,6 +109,8 @@ struct ThreadComposer: View {
     }
 
     private var dictating: Bool { voice.state != .idle }
+    /// The text view folds away while dictating, unless the card is open with a draft to show.
+    private var editorFolded: Bool { dictating && (!expanded || trimmed.isEmpty) }
 
     private var voiceStrip: some View {
         VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
