@@ -98,7 +98,7 @@ struct HomeView: View {
         .toolbarTitleDisplayMode(.inlineLarge)
         .searchable(text: $search, prompt: Text("Search"))
         .toolbar { toolbarContent }
-        .refreshable { model.environments.forEach { $0.reconnectNow() } }
+        .refreshable { model.environments.forEach { $0.reconnectNow(reason: "pull to refresh") } }
         .task(id: nextWake) {
             guard let nextWake else { return }
             try? await Task.sleep(for: .seconds(max(0, nextWake.timeIntervalSinceNow) + 0.5))

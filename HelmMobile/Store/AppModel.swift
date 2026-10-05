@@ -32,27 +32,44 @@ final class AppModel {
         // attaches to a quiet main thread.
         guard !Self.isUnitTestHost else { return }
         environments.forEach(adopt)
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        ConnectionLog.shared.log("app", "launch \(version) (\(build)), \(environments.count) computer(s), built-in Tailscale \(TailnetNode.shared.hasState ? "set up" : "not set up")")
         tailscale.startIfConfigured()
         tailscale.onRunning = { [weak self] in
-            self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow() }
+            self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow(reason: "Tailscale node running") }
         }
         environments.forEach { $0.start() }
         // A new network path (Wi-Fi ↔ cellular, Tailscale toggled) is the moment a dropped
         // connection can come back; don't wait for the backoff timer.
         pathMonitor.pathUpdateHandler = { [weak self] path in
+            ConnectionLog.shared.log("network", Self.describe(path))
             guard path.status == .satisfied else { return }
             Task { @MainActor in
                 // Live sockets may be bound to the old interface: probe them; wake the rest.
                 for environment in self?.environments ?? [] {
-                    if environment.isLive {
-                        Task { await environment.refreshAfterForeground() }
-                    } else {
-                        environment.reconnectNow()
-                    }
+                    Task { await environment.refreshAfterForeground(reason: "network changed") }
                 }
             }
         }
         pathMonitor.start(queue: DispatchQueue(label: "helm.path"))
+    }
+
+    nonisolated private static func describe(_ path: NWPath) -> String {
+        let status = switch path.status {
+        case .satisfied: "online"
+        case .unsatisfied: "offline"
+        case .requiresConnection: "needs a connection"
+        @unknown default: "unknown"
+        }
+        let kinds: [(NWInterface.InterfaceType, String)] = [
+            (.wifi, "wifi"), (.cellular, "cellular"), (.wiredEthernet, "ethernet"), (.other, "other/VPN"),
+        ]
+        let using = kinds.filter { path.usesInterfaceType($0.0) }.map(\.1)
+        var text = "path \(status)" + (using.isEmpty ? "" : " via \(using.joined(separator: "+"))")
+        if path.isExpensive { text += ", expensive" }
+        if path.isConstrained { text += ", low data mode" }
+        return text
     }
 
     nonisolated static let isUnitTestHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -105,6 +122,7 @@ final class AppModel {
     }
 
     func foregrounded() {
+        ConnectionLog.shared.log("app", "foreground: " + environments.map { "\($0.label) \($0.logStatus)" }.joined(separator: ", "))
         for environment in environments {
             Task { await environment.refreshAfterForeground() }
         }
@@ -114,6 +132,7 @@ final class AppModel {
     /// On the way to the background: what is on screen goes to disk, so the next cold start
     /// (or a dead connection) still shows it.
     func backgrounded() {
+        ConnectionLog.shared.log("app", "background")
         environments.forEach { $0.saveToDisk() }
         let task = UIApplication.shared.beginBackgroundTask(withName: "helm.local-cache")
         guard task != .invalid else { return }

@@ -133,15 +133,25 @@ struct HelmHTTP: Sendable {
         do {
             (data, response) = try await Self.session.data(for: request)
         } catch {
+            ConnectionLog.shared.log(Self.logScope(baseURL), "\(request.httpMethod ?? "GET") \(request.url?.path ?? "?") via \(Self.logHost(request.url)) failed: \(ConnectionLog.describe(error))")
             throw HelmHTTPError.unreachable(error.localizedDescription)
         }
         guard let http = response as? HTTPURLResponse else { throw HelmHTTPError.invalidResponse }
         let json = (try? JSON.parse(data)) ?? .null
         guard (200..<300).contains(http.statusCode) else {
             let message = json["reason"]?.string ?? json["message"]?.string ?? String(decoding: data.prefix(200), as: UTF8.self)
+            ConnectionLog.shared.log(Self.logScope(baseURL), "\(request.httpMethod ?? "GET") \(request.url?.path ?? "?") → HTTP \(http.statusCode): \(message.prefix(200))")
             throw HelmHTTPError.status(http.statusCode, message)
         }
         return json
+    }
+
+    static func logScope(_ url: URL) -> String { url.host ?? url.absoluteString }
+
+    /// Where a request really went: `127.0.0.1:port` means through the built-in Tailscale node.
+    static func logHost(_ url: URL?) -> String {
+        guard let url, let host = url.host else { return "?" }
+        return url.port.map { "\(host):\($0)" } ?? host
     }
 
     func descriptor() async throws -> EnvironmentDescriptor {

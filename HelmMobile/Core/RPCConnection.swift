@@ -53,6 +53,8 @@ actor RPCConnection {
     private var closed = false
     private var missedPongs = 0
     private var onClose: (@Sendable (Error?) -> Void)?
+    /// Why the socket closed, for the connection log: the WebSocket close code and reason, if any.
+    private(set) var closeDetail = ""
 
     init(url: URL, session: URLSession = .shared) {
         task = session.webSocketTask(with: url)
@@ -187,6 +189,7 @@ actor RPCConnection {
             guard !closed else { return }
             missedPongs += 1
             if missedPongs > 3 {
+                closeDetail = "no frames for \(missedPongs * 5) s"
                 task.cancel(with: .goingAway, reason: nil)
                 finish(with: RPCError.timedOut)
                 return
@@ -234,6 +237,13 @@ actor RPCConnection {
     private func finish(with error: Error?) {
         guard !closed else { return }
         closed = true
+        if closeDetail.isEmpty, task.closeCode != .invalid {
+            let reason = task.closeReason.map { String(decoding: $0, as: UTF8.self) } ?? ""
+            closeDetail = "close code \(task.closeCode.rawValue)" + (reason.isEmpty ? "" : " \(reason)")
+        }
+        if let response = task.response as? HTTPURLResponse, response.statusCode != 101 {
+            closeDetail += (closeDetail.isEmpty ? "" : ", ") + "handshake HTTP \(response.statusCode)"
+        }
         task.cancel(with: .goingAway, reason: nil)
         let failure: RPCError = (error as? RPCError) ?? .disconnected
         for (_, entry) in pending {

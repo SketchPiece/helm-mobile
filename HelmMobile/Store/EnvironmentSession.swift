@@ -54,15 +54,26 @@ final class EnvironmentSession: Identifiable {
     var http: HelmHTTP { HelmHTTP(baseURL: saved.baseURL, token: Keychain.token(for: saved.id)) }
     var isLive: Bool { status == .live }
 
+    var logStatus: String {
+        switch status {
+        case .connecting: "connecting"
+        case .live: "live"
+        case .offline(let reason): "offline (\(reason))"
+        case .unauthorized: "unauthorized"
+        }
+    }
+
     // MARK: Lifecycle
 
     func start() {
         guard supervisor == nil else { return }
+        log("start, address \(saved.baseURL.absoluteString)")
         restoreShell()
         supervisor = Task { [weak self] in await self?.superviseLoop() }
     }
 
     func stop() {
+        log("stop")
         supervisor?.cancel()
         supervisor = nil
         saveShell()
@@ -73,22 +84,33 @@ final class EnvironmentSession: Identifiable {
 
     /// Called when the app comes back to the foreground: sockets rarely survive suspension, so
     /// check quickly and reconnect instead of waiting for missed pongs.
-    func refreshAfterForeground() async {
+    func refreshAfterForeground(reason: String = "foreground") async {
         guard let connection, status == .live else {
-            wakeSupervisor()
+            reconnectNow(reason: reason)
             return
         }
+        let started = ContinuousClock.now
         do {
             // `server.probe` only exists on servers that advertise it.
             let method = config?.capability("connectionProbe") == true ? "server.probe" : "server.getConfig"
             _ = try await connection.call(method, [:], timeout: .seconds(4))
         } catch {
+            log("\(reason): live socket did not answer (\(ConnectionLog.describe(error)), \(Self.elapsed(since: started))), reconnecting")
             await connection.close()
         }
     }
 
-    func reconnectNow() {
+    func reconnectNow(reason: String = "retry") {
         if case .unauthorized = status { return }
+        if wake == nil, status != .live {
+            // An attempt is under way: don't let the request vanish. If it fails, the next one
+            // starts right away instead of after the backoff.
+            log("\(reason): attempt already in progress, will retry at once if it fails")
+            wakeRequested = true
+        } else if wake != nil {
+            log("\(reason): retrying now")
+        }
+        backoff = 1
         wakeSupervisor()
     }
 
@@ -100,34 +122,63 @@ final class EnvironmentSession: Identifiable {
     }
 
     @ObservationIgnored private var wakeTimer: Task<Void, Never>?
+    /// A retry was asked for while an attempt was running.
+    @ObservationIgnored private var wakeRequested = false
+    @ObservationIgnored private var backoff: Double = 1
+    @ObservationIgnored private var attempt = 0
+
+    private func log(_ message: String) { ConnectionLog.shared.log(label, message) }
+
+    private static func elapsed(since start: ContinuousClock.Instant) -> String {
+        let duration = ContinuousClock.now - start
+        let ms = duration.components.seconds * 1000 + duration.components.attoseconds / 1_000_000_000_000_000
+        return ms < 10_000 ? "\(ms) ms" : "\(ms / 1000) s"
+    }
 
     private func superviseLoop() async {
-        var delay: Double = 1
         while !Task.isCancelled {
             status = .connecting
+            attempt += 1
+            wakeRequested = false
+            let started = ContinuousClock.now
+            log("attempt \(attempt) → \(saved.baseURL.absoluteString)")
             do {
                 try await connectOnce()
-                delay = 1
+                backoff = 1
                 status = .live
+                log("connected (attempt \(attempt), \(Self.elapsed(since: started)))")
                 lastConnectedAt = Date()
                 if shell.isFromServer { shellSavedAt = nil }
                 onLive?()
+                let liveSince = ContinuousClock.now
                 await waitForClose()
                 wentOffline()
+                let detail = await connection?.closeDetail ?? ""
+                log("connection lost after \(Self.elapsed(since: liveSince))" + (detail.isEmpty ? "" : " (\(detail))"))
                 teardown()
                 if Task.isCancelled { return }
                 status = .offline(String(localized: "Connection lost"))
             } catch HelmHTTPError.status(401, _) {
+                log("attempt \(attempt): not authorized (401), pairing needed")
                 teardown()
                 status = .unauthorized
                 return
             } catch {
+                let detail = await connection?.closeDetail ?? ""
+                log("attempt \(attempt) failed after \(Self.elapsed(since: started)): \(ConnectionLog.describe(error))"
+                    + (detail.isEmpty ? "" : " (\(detail))"))
                 teardown()
                 status = .offline(error.localizedDescription)
             }
+            if Task.isCancelled { return }
+            if wakeRequested {
+                wakeRequested = false
+                continue
+            }
             // Back off with jitter, but wake early on foreground or an explicit retry.
-            let wait = delay * Double.random(in: 0.8...1.2)
-            delay = min(delay * 2, 10)
+            let wait = backoff * Double.random(in: 0.8...1.2)
+            backoff = min(backoff * 2, 10)
+            log(String(format: "next attempt in %.1f s", wait))
             await sleepOrWake(seconds: wait)
         }
     }
@@ -174,41 +225,53 @@ final class EnvironmentSession: Identifiable {
     private func connectOnce() async throws {
         let http = self.http
         guard http.token != nil else { throw HelmHTTPError.status(401, "missing token") }
+        if TailnetRouting.usesNode(saved.baseURL), !TailnetNode.shared.isRunning() {
+            // Just launched: the built-in Tailscale node is still coming up and would refuse
+            // the connection. Wait for it rather than fail into the backoff.
+            let waitStarted = ContinuousClock.now
+            log("waiting for the built-in Tailscale node")
+            let running = await TailnetRouting.waitForNode(timeout: .seconds(12))
+            log(running ? "Tailscale node ready after \(Self.elapsed(since: waitStarted))"
+                        : "Tailscale node still not running after \(Self.elapsed(since: waitStarted)), trying anyway")
+        }
+        var step = ContinuousClock.now
         let ticket = try await http.webSocketTicket()
         let url = await http.webSocketURL(ticket: ticket)
+        log("ticket in \(Self.elapsed(since: step)), opening socket via \(HelmHTTP.logHost(url))"
+            + (TailnetRouting.usesNode(saved.baseURL) ? " (built-in Tailscale)" : ""))
+        step = ContinuousClock.now
         let connection = RPCConnection(url: url)
         self.connection = connection
         connectionClosed = false
-        await connection.start { [weak self] _ in
-            Task { @MainActor in self?.markClosed(connection) }
+        configTimedOut = false
+        await connection.start { [weak self] error in
+            Task { @MainActor in
+                if let error, let self, connection === self.connection, self.status == .live {
+                    self.log("socket closed: \(ConnectionLog.describe(error))")
+                }
+                self?.markClosed(connection)
+            }
         }
+        // A socket that opens but never answers would otherwise hang here until the pings give up.
+        let watchdog = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(15))
+            guard !Task.isCancelled, let self, self.connection === connection, self.status == .connecting else { return }
+            self.log("no server config 15 s after opening the socket, giving up on this attempt")
+            self.configTimedOut = true
+            await connection.close()
+        }
+        defer { watchdog.cancel() }
 
         // The config snapshot comes first; everything else depends on it.
         // Opting in to themes adds `environmentThemesUpdated` events (decoded below).
         let configStream = connection.stream("subscribeServerConfig", ["environmentThemes": true])
-        let config: ServerConfig = try await withCheckedThrowingContinuation { continuation in
-            streams.append(Task { [weak self] in
-                var resumed = false
-                do {
-                    for try await event in configStream {
-                        if !resumed {
-                            resumed = true
-                            if let snapshot = event["config"], let config = ServerConfig(json: snapshot) {
-                                continuation.resume(returning: config)
-                            } else {
-                                continuation.resume(throwing: RPCError.defect("No server config"))
-                            }
-                            continue
-                        }
-                        self?.applyConfigEvent(event)
-                    }
-                    if !resumed { continuation.resume(throwing: RPCError.disconnected) }
-                } catch {
-                    if !resumed { continuation.resume(throwing: error) }
-                }
-                await self?.streamEnded(on: connection)
-            })
+        let config: ServerConfig
+        do {
+            config = try await firstConfig(configStream, on: connection)
+        } catch {
+            throw configTimedOut ? RPCError.timedOut : error
         }
+        log("server config in \(Self.elapsed(since: step)) (Helm \(config.serverVersion ?? "?"))")
         guard config.environmentId == saved.id else {
             throw RPCError.defect(String(localized: "This address now belongs to a different Helm server."))
         }
@@ -241,6 +304,35 @@ final class EnvironmentSession: Identifiable {
             }
         }
     }
+
+    /// Waits for the config snapshot; the rest of the stream keeps applying updates.
+    private func firstConfig(_ configStream: AsyncThrowingStream<JSON, Error>, on connection: RPCConnection) async throws -> ServerConfig {
+        try await withCheckedThrowingContinuation { continuation in
+            streams.append(Task { [weak self] in
+                var resumed = false
+                do {
+                    for try await event in configStream {
+                        if !resumed {
+                            resumed = true
+                            if let snapshot = event["config"], let config = ServerConfig(json: snapshot) {
+                                continuation.resume(returning: config)
+                            } else {
+                                continuation.resume(throwing: RPCError.defect("No server config"))
+                            }
+                            continue
+                        }
+                        self?.applyConfigEvent(event)
+                    }
+                    if !resumed { continuation.resume(throwing: RPCError.disconnected) }
+                } catch {
+                    if !resumed { continuation.resume(throwing: error) }
+                }
+                await self?.streamEnded(on: connection)
+            })
+        }
+    }
+
+    @ObservationIgnored private var configTimedOut = false
 
     /// The config and shell streams live as long as the socket. If one ends while the socket
     /// is still up (a server-side failure), reconnect rather than show frozen data as "live".
@@ -372,7 +464,7 @@ final class EnvironmentSession: Identifiable {
     /// Throws `RPCError.disconnected` when it doesn't within `timeout` or pairing was revoked.
     func waitUntilLive(timeout: Duration = .seconds(15)) async throws {
         if status == .live { return }
-        reconnectNow()
+        reconnectNow(reason: "a request is waiting for the connection")
         let deadline = ContinuousClock.now + timeout
         while status != .live {
             if status == .unauthorized || ContinuousClock.now >= deadline { throw RPCError.disconnected }

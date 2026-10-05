@@ -30,10 +30,35 @@ enum TailnetRouting {
               let host = components.host, isTailnetHost(host)
         else { return url }
         let port = components.port ?? 80
-        guard let local = try? TailnetNode.shared.forward(host: host, port: port) else { return url }
+        let local: Int
+        do {
+            local = try TailnetNode.shared.forward(host: host, port: port)
+        } catch {
+            ConnectionLog.shared.log("tailscale", "no loopback forwarder for \(host):\(port), going direct: \(error.localizedDescription)")
+            return url
+        }
         components.host = "127.0.0.1"
         components.port = local
         return components.url ?? url
+    }
+
+    /// True when requests to this address go through the built-in node.
+    static func usesNode(_ url: URL) -> Bool {
+        guard isEnabled, let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "ws",
+              let host = url.host
+        else { return false }
+        return isTailnetHost(host)
+    }
+
+    /// Right after launch the node needs a few seconds to come up; a connection tried before
+    /// that is refused. Waits up to `timeout` and returns whether it is running.
+    static func waitForNode(timeout: Duration) async -> Bool {
+        let deadline = ContinuousClock.now + timeout
+        while true {
+            if await Task.detached(operation: { TailnetNode.shared.isRunning() }).value { return true }
+            if ContinuousClock.now >= deadline || Task.isCancelled { return false }
+            try? await Task.sleep(for: .milliseconds(250))
+        }
     }
 }
 
@@ -57,9 +82,24 @@ final class TailscaleService {
         case needsLogin(URL?)
         case running(tailnet: String, phone: String, address: String)
         case failed(String)
+
+        var logLabel: String {
+            switch self {
+            case .off: "off"
+            case .starting: "starting"
+            case .needsLogin: "needs login"
+            case .running(let tailnet, _, let address): "running (\(tailnet), \(address))"
+            case .failed(let message): "failed: \(message)"
+            }
+        }
     }
 
-    private(set) var state = State.off
+    private(set) var state = State.off {
+        didSet {
+            guard state.logLabel != oldValue.logLabel else { return }
+            ConnectionLog.shared.log("tailscale", "node \(state.logLabel)")
+        }
+    }
     private(set) var peers: [TailnetPeer] = []
     /// Called once the node reaches Running, so dropped connections retry immediately.
     var onRunning: (() -> Void)?

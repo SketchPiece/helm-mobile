@@ -107,10 +107,14 @@ final class TailnetNode: @unchecked Sendable {
 
   /// tsnet's dial waits for login, so a logged-out node would hang every
   /// request; refuse instead and let the client report the connection error.
-  private func isRunning() -> Bool {
+  func isRunning() -> Bool {
     // Every new connection asks; screens with many images open many sockets at once.
+    // "Not running" is kept only briefly: right after launch the node comes up within
+    // seconds, and a stale "no" would fail the first connection attempt.
     runningLock.lock()
-    if let checked = runningCheckedAt, Date().timeIntervalSince(checked) < 2 {
+    if let checked = runningCheckedAt,
+      Date().timeIntervalSince(checked) < (runningCached ? 2 : 0.25)
+    {
       defer { runningLock.unlock() }
       return runningCached
     }
@@ -132,12 +136,23 @@ final class TailnetNode: @unchecked Sendable {
 
   private func dial(target: String) -> Int32 {
     let node = queue.sync { handle }
-    if node < 0 || !isRunning() { return -1 }
+    if node < 0 || !isRunning() {
+      ConnectionLog.shared.log(
+        "tailscale", "refused \(target): node \(node < 0 ? "not started" : "not running yet")")
+      return -1
+    }
     var connection: Int32 = -1
+    let started = Date()
     let result = "tcp".withCString { network in
       target.withCString { address in tailscale_dial(node, network, address, &connection) }
     }
-    return result == 0 ? connection : -1
+    if result != 0 {
+      ConnectionLog.shared.log(
+        "tailscale",
+        "dial \(target) failed after \(Int(Date().timeIntervalSince(started) * 1000)) ms: \(Self.errorMessage(node))")
+      return -1
+    }
+    return connection
   }
 
   private func rebindForwarders() {

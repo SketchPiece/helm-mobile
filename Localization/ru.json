@@ -723,5 +723,9 @@
   "Its own folder and branch": "Своя папка и своя ветка",
   "Access: %@": "Доступ: %@",
   "Cancel dictation": "Отменить диктовку",
-  "Done dictating": "Закончить диктовку"
+  "Done dictating": "Закончить диктовку",
+  "Connection log": "Журнал подключения",
+  "Nothing logged yet.": "Пока ничего не записано.",
+  "Clear the connection log?": "Очистить журнал подключения?",
+  "Clear": "Очистить"
 }

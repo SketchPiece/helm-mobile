@@ -1920,6 +1920,26 @@
         }
       }
     },
+    "Clear": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить"
+          }
+        }
+      }
+    },
+    "Clear the connection log?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить журнал подключения?"
+          }
+        }
+      }
+    },
     "Clone": {
       "localizations": {
         "ru": {
@@ -2093,6 +2113,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подключаюсь…"
+          }
+        }
+      }
+    },
+    "Connection log": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Журнал подключения"
           }
         }
       }
@@ -4019,6 +4049,16 @@
         }
       }
     },
+    "Nothing logged yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока ничего не записано."
+          }
+        }
+      }
+    },
     "Nothing settled": {},
     "Nothing snoozed": {},
     "Nothing to paste": {
@@ -4671,16 +4711,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отпусти — отменю"
-          }
-        }
-      }
-    },
-    "Release to send · slide left to cancel": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Отпусти — отправлю · влево — отмена"
           }
         }
       }

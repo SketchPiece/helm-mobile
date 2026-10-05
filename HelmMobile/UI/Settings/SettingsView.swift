@@ -101,6 +101,11 @@ struct SettingsView: View {
                         }
                     }
                     .accessibilityIdentifier("tailscaleSettings")
+                    NavigationLink {
+                        ConnectionLogView()
+                    } label: {
+                        SettingsRow(String(localized: "Connection log"), symbol: "list.bullet.rectangle")
+                    }
                 } header: {
                     Text("Network").sectionLabelStyle()
                 } footer: {
@@ -226,7 +231,8 @@ struct EnvironmentDetailView: View {
                 }
             }
             Section {
-                Button("Reconnect") { environment.reconnectNow() }
+                Button("Reconnect") { environment.reconnectNow(reason: "Reconnect button") }
+                NavigationLink("Connection log") { ConnectionLogView() }
                 Button("Pair again") { router.showPairing = true }
                 Button("Remove this computer", role: .destructive) { confirmRemove = true }
             }

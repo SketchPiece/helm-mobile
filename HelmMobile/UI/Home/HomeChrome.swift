@@ -62,7 +62,7 @@ struct EnvironmentStatusButton: View {
         Menu {
             ForEach(model.environments) { environment in
                 Button {
-                    environment.reconnectNow()
+                    environment.reconnectNow(reason: "connections menu")
                 } label: {
                     Label {
                         Text(environment.label)
@@ -146,7 +146,7 @@ struct ConnectionBanner: View {
             } else if environment.status == .connecting {
                 ProgressView()
             } else {
-                Button("Retry") { environment.reconnectNow() }
+                Button("Retry") { environment.reconnectNow(reason: "Retry button") }
                     .buttonStyle(.glass)
             }
         }
