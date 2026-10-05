@@ -67,11 +67,15 @@ struct ThreadComposer: View {
             // One centred row at rest; opened, the last line of text lines up with the bottom.
             HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
                 if !expanded && voice.state == .idle { movingAttach }
-                if voice.state != .idle {
-                    VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
-                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
-                } else {
+                // The strip covers the text view instead of replacing it: the view stays in the window,
+                // so the keyboard stays up and the card doesn't jump out from under a held finger.
+                ZStack {
                     editor.padding(.leading, expanded ? 6 : 0)
+                        .voiceCollapsed(voice.state != .idle)
+                    if voice.state != .idle {
+                        VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                                   onDone: { finishDictation(send: false) }, onRetry: retryDictation)
+                    }
                 }
                 if !expanded { movingTrailing }
             }

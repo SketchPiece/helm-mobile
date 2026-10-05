@@ -240,10 +240,8 @@ struct NewThreadView: View {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
             }
-            if voice.state != .idle {
-                VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
-                           onDone: { finishDictation(send: false) }, onRetry: retryDictation)
-            } else {
+            // The strip covers the text view instead of replacing it, so the keyboard stays up.
+            ZStack {
                 ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
                                  maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
                                  onSubmit: { _ in if canSend && !sending { launch() } }) { images in
@@ -260,6 +258,11 @@ struct NewThreadView: View {
                         Drafts.save(value, for: NewThreadDraft.key)
                         suggestions.update(text: value, scope: suggestionScope)
                     }
+                    .voiceCollapsed(voice.state != .idle)
+                if voice.state != .idle {
+                    VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
+                }
             }
             HStack(spacing: 6) {
                 AttachMenu(draft: draft, environment: environment, size: 34) {
