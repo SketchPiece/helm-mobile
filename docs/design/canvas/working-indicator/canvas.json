@@ -1,0 +1,111 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Our own working indicator instead of the iOS spinner",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "Now. The system spinner"
+  },
+  "1-all.html": {
+   "x": 1800,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "All side by side"
+  },
+  "a-dots.html": {
+   "x": 3600,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "A. Three dots, a soft wave"
+  },
+  "b-comet.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "B. Comet on a ring"
+  },
+  "c-shimmer.html": {
+   "x": 1800,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "C. No icon, the words shimmer"
+  },
+  "d-helm.html": {
+   "x": 3600,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "D. The helm, steering"
+  },
+  "e-braille.html": {
+   "x": 0,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "E. Braille, like the CLI"
+  },
+  "f-lamp.html": {
+   "x": 1800,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "F. A lamp breathing"
+  },
+  "g-vu.html": {
+   "x": 3600,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "G. VU meter"
+  },
+  "h-dial.html": {
+   "x": 0,
+   "y": 3180,
+   "w": 1720,
+   "h": 900,
+   "title": "H. Radio dial"
+  },
+  "i-orbit.html": {
+   "x": 1800,
+   "y": 3180,
+   "w": 1720,
+   "h": 900,
+   "title": "I. Orbit"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "1-all.html",
+  "a-dots.html",
+  "b-comet.html",
+  "c-shimmer.html",
+  "d-helm.html",
+  "e-braille.html",
+  "f-lamp.html",
+  "g-vu.html",
+  "h-dial.html",
+  "i-orbit.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Our own working indicator instead of the iOS spinner",
+   "kind": "title1",
+   "maxW": 5320
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}

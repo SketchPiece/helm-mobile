@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{--canvas:#161310;--surface:#1F1B18;--raised:#26211D;--message:#221E1A;--text:#EFE7D6;--muted:#A3968A;--ph:#8F8376;--border:#2A2420;--accent:#E8A33D;--accentText:#F2B550;--error:#B8321F;--working:#6CC4B8;--code:#100E0C;--page:#0d0c0b;--label:#8a8178}
+.light{--canvas:#E7E0D2;--surface:#FBF6EC;--raised:#FBF6EC;--message:#DDD5C6;--text:#26211D;--muted:#5E554B;--border:#CFC6B6;--accentText:#9C7A45;--working:#2E8C80;--code:#1F1B18}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1720px;height:900px;overflow:hidden;background:var(--page);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.board{padding:28px 36px;height:100%;display:flex;flex-direction:column;gap:18px}
+.head h1{font-size:22px;font-weight:600;letter-spacing:-.2px}
+.head p{font-size:14px;color:var(--label);margin-top:4px;max-width:1500px;line-height:1.45}
+.row4{display:flex;gap:24px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:8px;width:390px}
+.cap{font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:var(--label)}
+
+/* specimen */
+.spec{width:390px;height:640px;border-radius:28px;border:1px solid #221d19;background:var(--canvas);display:flex;flex-direction:column;overflow:hidden}
+.stage{flex:1;display:grid;place-items:center;color:var(--muted)}
+.stage .ind{font-size:96px}
+.sizes{display:flex;flex-direction:column;gap:0}
+.sizes>div{padding:16px 22px;display:flex;flex-direction:column;gap:10px;background:var(--canvas);color:var(--text)}
+.sizes>div+div{border-top:1px solid var(--border)}
+
+/* phone crop */
+.phone{position:relative;width:390px;height:640px;overflow:hidden;background:var(--canvas);border-radius:28px;border:1px solid #221d19}
+.tl{position:absolute;left:0;right:0;top:0;padding:18px 18px 0;font-size:16px;line-height:1.5;color:var(--text)}
+.tl p{margin-bottom:12px}
+.tl code{font:13.5px 'IBM Plex Mono',monospace;background:var(--code);padding:1px 5px;border-radius:5px}
+.tl .user{margin:0 0 16px auto;max-width:78%;background:var(--message);border-radius:20px;padding:10px 14px}
+.bottom{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:8px;font-size:13px;padding:7px 12px;background:var(--raised);border:1px solid var(--border);border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--working)}
+.pill .t{font-variant-numeric:tabular-nums}
+.dock{align-self:stretch;padding:0 12px}
+.solid{display:flex;align-items:center;gap:6px;background:var(--raised);border:1px solid var(--border);border-radius:24px;box-shadow:0 4px 14px rgba(0,0,0,.10);padding:6px 8px}
+.solid .f{flex:1;font-size:17px;color:var(--ph)}
+.solid .ib{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.solid .stop{background:var(--error)}
+.home{height:22px;align-self:stretch;display:flex;justify-content:center;align-items:flex-end;padding-bottom:7px}
+.home i{width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.85}
+
+/* timeline rows, as in TimelineViews.swift */
+.row{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted);padding:4px 0;white-space:nowrap}
+.row .tx{overflow:hidden;text-overflow:ellipsis}
+.row .chev{width:13px;font-size:11px;text-align:center}
+.steps{margin:4px 0 12px 4px;border-left:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.step{display:flex;align-items:baseline;gap:8px;padding:5px 0 5px 10px}
+.step .sym{width:16px;flex:0 0 16px;color:var(--muted);display:flex;justify-content:center;align-self:center}
+.step .sym svg{width:12px;height:12px}
+.step .tx{flex:1;font-size:13px;color:color-mix(in srgb,var(--text) 85%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step .tx.mono{font:13px 'IBM Plex Mono',monospace}
+.step .dt{font:12px 'IBM Plex Mono',monospace;color:var(--muted)}
+.step .ri{align-self:center;color:var(--muted);display:flex}
+
+/* gallery */
+.grid{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0}
+.cell{background:var(--canvas);border:1px solid #221d19;border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+.cell .big{height:120px;flex:0 0 120px;display:grid;place-items:center;color:var(--muted);border-bottom:1px solid var(--border)}
+.cell .big .ind{font-size:44px}
+.cell .mini{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell .nm{font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:var(--label);margin-bottom:8px}
+.cell .nm b{color:var(--text);font-weight:500}
+.cell .steps{margin:2px 0 0 4px}
+
+/* ===== indicators: 1em = the box of a .mini ProgressView (14px) ===== */
+.ind{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;flex:0 0 auto;font-size:14px;line-height:1;position:relative}
+.row .ind{font-size:14px}.step .ind{font-size:13px}
+
+/* now: UIActivityIndicatorView, 8 spokes */
+.ind-now i{position:absolute;left:calc(50% - .045em);top:.06em;width:.09em;height:.26em;border-radius:.05em;background:currentColor;transform-origin:50% .44em;animation:spoke .8s steps(1) infinite}
+.ind-now i:nth-child(1){transform:rotate(0deg);animation-delay:-.7s}
+.ind-now i:nth-child(2){transform:rotate(45deg);animation-delay:-.6s}
+.ind-now i:nth-child(3){transform:rotate(90deg);animation-delay:-.5s}
+.ind-now i:nth-child(4){transform:rotate(135deg);animation-delay:-.4s}
+.ind-now i:nth-child(5){transform:rotate(180deg);animation-delay:-.3s}
+.ind-now i:nth-child(6){transform:rotate(225deg);animation-delay:-.2s}
+.ind-now i:nth-child(7){transform:rotate(270deg);animation-delay:-.1s}
+.ind-now i:nth-child(8){transform:rotate(315deg);animation-delay:0s}
+@keyframes spoke{0%{opacity:1}12.5%{opacity:.82}25%{opacity:.65}37.5%{opacity:.5}50%{opacity:.38}62.5%{opacity:.28}75%{opacity:.22}87.5%{opacity:.2}}
+
+/* A: three dots, a soft wave */
+.ind-a{gap:.13em;width:1.1em}
+.ind-a i{width:.22em;height:.22em;border-radius:50%;background:currentColor;animation:wave 1.2s ease-in-out infinite}
+.ind-a i:nth-child(2){animation-delay:.15s}.ind-a i:nth-child(3){animation-delay:.3s}
+@keyframes wave{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-.14em)}}
+
+/* B: comet on a faint ring */
+.ind-b::before{content:"";position:absolute;inset:.08em;border-radius:50%;border:.11em solid currentColor;opacity:.18}
+.ind-b::after{content:"";position:absolute;inset:.08em;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0deg,transparent 150deg,var(--working) 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - .11em),#000 calc(100% - .1em));mask:radial-gradient(farthest-side,transparent calc(100% - .11em),#000 calc(100% - .1em));
+  animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* C: no icon, the words shimmer */
+.ind-c{display:none}
+.stage .ind.ind-c,.cell .big .ind.ind-c{display:inline-block;width:auto;height:auto;font-size:40px;line-height:1.3}
+.cell .big .ind.ind-c{font-size:24px}
+.shim{background:linear-gradient(100deg,var(--muted) 0%,var(--muted) 38%,var(--text) 50%,var(--muted) 62%,var(--muted) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:shim 2s linear infinite}
+@keyframes shim{from{background-position:100% 0}to{background-position:-150% 0}}
+
+/* D: the helm, steering */
+.ind-d svg{width:1em;height:1em;animation:steer 2.6s cubic-bezier(.45,0,.25,1) infinite;color:var(--working)}
+@keyframes steer{0%{transform:rotate(0)}38%{transform:rotate(135deg)}50%{transform:rotate(135deg)}86%{transform:rotate(-30deg)}100%{transform:rotate(0)}}
+
+/* E: braille, like the CLI */
+.ind-e{overflow:hidden;color:var(--working);font-family:'IBM Plex Mono',ui-monospace,monospace}
+.ind-e span{position:absolute;top:0;left:0;width:1em;display:flex;flex-direction:column;animation:braille .8s steps(10) infinite}
+.ind-e span b{display:block;height:1em;line-height:1em;text-align:center;font-weight:400;font-size:1.05em}
+@keyframes braille{to{transform:translateY(-10em)}}
+
+/* F: a lamp breathing, the pill's dot */
+.ind-f i{width:.46em;height:.46em;border-radius:50%;background:var(--working);animation:lamp 1.8s ease-in-out infinite}
+@keyframes lamp{0%,100%{opacity:.45;transform:scale(.8);box-shadow:0 0 0 0 color-mix(in srgb,var(--working) 0%,transparent)}50%{opacity:1;transform:scale(1);box-shadow:0 0 .35em .08em color-mix(in srgb,var(--working) 55%,transparent)}}
+
+/* G: VU meter bars */
+.ind-g{gap:.1em;align-items:flex-end;height:.8em}
+.ind-g i{width:.14em;height:100%;border-radius:.07em;background:var(--working);transform-origin:bottom;animation:vu .9s ease-in-out infinite}
+.ind-g i:nth-child(2){animation-duration:1.15s;animation-delay:-.4s}.ind-g i:nth-child(3){animation-duration:.75s;animation-delay:-.2s}
+@keyframes vu{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+
+/* H: radio dial, a needle sweeping the ticks */
+.ind-h{width:1.3em}
+.ind-h::before{content:"";position:absolute;left:0;right:0;top:.3em;height:.4em;
+  background:repeating-linear-gradient(90deg,currentColor 0 .06em,transparent .06em .3em);opacity:.35}
+.ind-h::after{content:"";position:absolute;top:.15em;bottom:.15em;width:.1em;border-radius:.05em;background:var(--accent);left:0;animation:dial 1.8s cubic-bezier(.5,0,.5,1) infinite alternate;box-shadow:0 0 .25em color-mix(in srgb,var(--accent) 60%,transparent)}
+@keyframes dial{from{left:0}to{left:calc(100% - .1em)}}
+
+/* I: orbit, two dots chasing round a centre */
+.ind-i i{position:absolute;inset:0;animation:spin 1.1s cubic-bezier(.6,.1,.4,.9) infinite}
+.ind-i i::before{content:"";position:absolute;left:calc(50% - .11em);top:.04em;width:.22em;height:.22em;border-radius:50%;background:var(--working)}
+.ind-i i:nth-child(2){animation-delay:-.18s;opacity:.45}
+.ind-i b{width:.18em;height:.18em;border-radius:50%;background:currentColor;opacity:.4}
