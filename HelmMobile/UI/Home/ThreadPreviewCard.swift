@@ -82,7 +82,10 @@ struct ThreadPreviewCard: View {
         }
         .padding(16)
         .frame(width: 320, alignment: .leading)
-        .background(Palette.canvas)
+        // The preview's container can come out taller than the card (its own insets); the fill
+        // follows the container, while the card's ideal size stays its content.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Palette.canvas, ignoresSafeAreaEdges: .all)
     }
 
     private var location: String {
