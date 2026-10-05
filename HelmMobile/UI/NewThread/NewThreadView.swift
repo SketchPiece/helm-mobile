@@ -638,11 +638,7 @@ struct ProjectPicker: View {
             pickScratch(on: environment)
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: "text.bubble")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Palette.textMuted)
-                    .frame(width: 32, height: 32)
-                    .background(Palette.canvas, in: .rect(cornerRadius: 8))
+                ScratchIcon(size: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("No project — just a task").font(Typography.body).foregroundStyle(Palette.text)
                     if scratchEnvironments.count > 1 {

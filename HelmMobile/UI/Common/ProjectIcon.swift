@@ -12,6 +12,14 @@ struct ProjectIcon: View {
     @State private var image: UIImage?
 
     var body: some View {
+        if let project, environment?.config?.isScratch(project) == true {
+            ScratchIcon(size: size)
+        } else {
+            tile
+        }
+    }
+
+    private var tile: some View {
         ZStack {
             if let image {
                 Image(uiImage: image)
@@ -80,6 +88,19 @@ struct ProjectIcon: View {
             await IconCache.shared.store(rendered, for: key)
             image = rendered
         }
+    }
+}
+
+/// The tile for "No project" threads: a chat bubble with text lines, the same everywhere.
+struct ScratchIcon: View {
+    var size: CGFloat = 36
+
+    var body: some View {
+        Image(systemName: "text.bubble")
+            .font(.system(size: size * 0.4))
+            .foregroundStyle(Palette.textMuted)
+            .frame(width: size, height: size)
+            .background(Palette.surfaceRaised, in: .rect(cornerRadius: size * 0.25, style: .continuous))
     }
 }
 

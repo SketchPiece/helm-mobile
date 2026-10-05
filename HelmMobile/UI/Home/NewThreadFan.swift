@@ -117,11 +117,7 @@ struct NewThreadFan: View {
         if let project = item.project {
             ProjectIcon(project: project, environment: item.environment, size: size)
         } else {
-            Image(systemName: "text.bubble")
-                .font(.system(size: 21))
-                .foregroundStyle(Palette.textMuted)
-                .frame(width: size, height: size)
-                .background(Palette.surfaceRaised, in: .rect(cornerRadius: size * 0.25, style: .continuous))
+            ScratchIcon(size: size)
         }
     }
 }
