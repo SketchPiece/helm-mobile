@@ -382,6 +382,21 @@ final class TimelineTests: XCTestCase {
         if case .work(_, _, let live) = blocks[1] { XCTAssertTrue(live) } else { XCTFail("expected work") }
     }
 
+    func testThoughtCutOffBySteerIsNotLive() {
+        let blocks = Timeline.blocks(from: items([
+            Fixtures.item("u", type: "user_message", ordinal: 1, extra: ["text": "go"]),
+            Fixtures.item("r", type: "reasoning", ordinal: 2, extra: ["text": "", "status": "running"]),
+            Fixtures.item("s", type: "user_message", ordinal: 3, extra: ["text": "also this"]),
+            Fixtures.item("c", type: "command_execution", ordinal: 4, extra: ["input": "ls", "status": "running"]),
+        ]), liveRunId: "r1")
+        XCTAssertEqual(blocks.map(\.id), ["u", "work:r", "s", "work:c"])
+        if case .work(_, let work, let live) = blocks[1] {
+            XCTAssertFalse(live)
+            XCTAssertFalse(work[0].isRunning)
+        } else { XCTFail("expected work") }
+        if case .work(_, _, let live) = blocks[3] { XCTAssertTrue(live) } else { XCTFail("expected work") }
+    }
+
     func testOnlyLatestTodoListIsShown() {
         let blocks = Timeline.blocks(from: items([
             Fixtures.item("t1", type: "todo_list", ordinal: 1, extra: ["steps": []]),

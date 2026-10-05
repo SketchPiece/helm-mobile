@@ -55,6 +55,14 @@ enum Timeline {
 
     /// Folds visible rows into blocks. `liveRunId` marks the work block of the running turn as live.
     static func blocks(from items: [TurnItem], liveRunId: String?) -> [TimelineBlock] {
+        // A reasoning step can be left "running" when a steer cuts the model off mid-thought; once
+        // anything comes after it the thought is over, or the timeline shows two live "Thinking" lines.
+        var items = items
+        if let lastTopLevel = items.lastIndex(where: { $0.parentItemId == nil }) {
+            for index in items.indices where index < lastTopLevel && items[index].type == "reasoning" && items[index].isRunning {
+                items[index].status = "completed"
+            }
+        }
         var blocks: [TimelineBlock] = []
         var pendingWork: [TurnItem] = []
 
