@@ -431,7 +431,10 @@ private struct ThreadContent: View {
                 if let recovery = summary?.usageLimitRecovery, !projection.isWorking {
                     UsageLimitCard(state: recovery, session: session)
                 }
-                if projection.isWorking, let run = projection.activeRun, projection.pendingRequests.isEmpty {
+                // Offline, the saved copy can't say whether the turn is still running; the
+                // connection notice stands in for the pill until the Mac answers again.
+                if environment.isLive, projection.isWorking, let run = projection.activeRun,
+                   projection.pendingRequests.isEmpty {
                     WorkingPill(since: run.workingSince ?? Date())
                 }
                 if !projection.isWorking, let summary, !summary.backgroundTasks.isEmpty {
