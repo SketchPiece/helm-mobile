@@ -310,10 +310,7 @@ struct NewThreadView: View {
                 onHoldEnd: { cancelled in
                     if cancelled { voice.cancel() } else { finishDictation(send: true) }
                 },
-                onTap: {
-                    focused = false
-                    Task { await voice.start(handsFree: true) }
-                },
+                onTap: { Task { await voice.start(handsFree: true) } },
                 dragOffset: $micDrag,
                 prominent: !(hasContent || sending)
             )
