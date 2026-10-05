@@ -50,6 +50,7 @@ struct ThreadComposer: View {
         .sheet(isPresented: $showSettings) {
             ThreadSettingsSheet(environment: environment, session: session)
         }
+        .onAppear { voice.warmUp() }
         .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
@@ -194,13 +195,12 @@ struct ThreadComposer: View {
         if voice.state == .idle || holdRecording {
             MicButton(
                 voice: voice,
-                onHoldStart: { Task { await voice.start(handsFree: false) } },
                 onHoldEnd: { cancelled in
                     if cancelled { voice.cancel() } else { finishDictation(send: true) }
                 },
-                onTap: { Task { await voice.start(handsFree: true) } },
-                onPress: { voice.prepare() },
-                onAbandon: { voice.discardPrepared() },
+                onPress: { voice.begin() },
+                onTap: { voice.keepHandsFree() },
+                onAbandon: { voice.cancel() },
                 dragOffset: $micDrag,
                 prominent: !hasContent && !isWorking
             )

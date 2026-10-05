@@ -1,17 +1,18 @@
 import SwiftUI
 
 /// The microphone that sits where "send" goes while the field is empty.
-/// Hold (≥0.3 s): record, release to send, slide left past the threshold to cancel.
-/// Tap: hands-free dictation that ends with ✓ and lands in the field for editing.
+/// Recording starts and shows at touch-down. Hold (≥0.3 s): release to send, slide left past the
+/// threshold to cancel. Tap: the same recording goes on hands-free, ends with ✓ and lands in the
+/// field for editing.
 struct MicButton: View {
     let voice: VoiceInput
-    let onHoldStart: () -> Void
     let onHoldEnd: (_ cancelled: Bool) -> Void
+    /// Touch-down, before hold or tap is known: start recording so nothing waits.
+    let onPress: () -> Void
+    /// Released before it became a hold: keep recording hands-free.
     let onTap: () -> Void
-    /// Touch-down, before hold or tap is known: start the microphone so nothing waits.
-    var onPress: () -> Void = {}
     /// The touch ended as neither (the system cancelled it early): drop what onPress started.
-    var onAbandon: () -> Void = {}
+    let onAbandon: () -> Void
     @Binding var dragOffset: CGFloat
     /// Amber, in the action slot while there is nothing to send. Otherwise a quiet icon beside
     /// send or stop, so dictation is still one tap away.
@@ -55,7 +56,6 @@ struct MicButton: View {
                                 if pressedAt == started, pressedAt != nil {
                                     holding = true
                                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                    onHoldStart()
                                 }
                             }
                         }
@@ -73,7 +73,7 @@ struct MicButton: View {
             }
             .accessibilityLabel("Dictate")
             .accessibilityHint("Hold to talk, release to send")
-            .accessibilityAction { onTap() }
+            .accessibilityAction { onPress(); onTap() }
     }
 
     private func release(cancelledByUser: Bool, tapped: Bool) {

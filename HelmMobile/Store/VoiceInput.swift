@@ -24,82 +24,89 @@ final class VoiceInput {
     private(set) var levels: [Double] = []
 
     @ObservationIgnored private var recorder: AVAudioRecorder?
-    @ObservationIgnored private var preparing: Task<Bool, Never>?
+    /// The microphone opening behind a recording that already shows.
+    @ObservationIgnored private var opening: Task<Void, Never>?
+    /// Bumped by every begin and cancel, so a microphone that opens late for a take that is
+    /// already gone gets closed instead of picked up.
+    @ObservationIgnored private var take = 0
+    @ObservationIgnored private var closing: Task<Void, Never>?
     @ObservationIgnored private var meter: Task<Void, Never>?
     @ObservationIgnored private var lastRecording: URL?
     @ObservationIgnored private var lastDuration: TimeInterval = 0
     static let maxDuration: TimeInterval = 5 * 60
+    /// How long the audio session stays up after a recording, so the next one starts warm.
+    static let sessionLinger: Duration = .seconds(6)
 
     var isRecording: Bool { if case .recording = state { true } else { false } }
 
-    /// Starts the microphone at touch-down, before the button knows whether it's a hold or a tap
-    /// (both end up recording), so nothing waits on the decision and the first words aren't cut.
-    /// `start` then only sets the mode; `discardPrepared` drops it if the touch led nowhere.
-    func prepare() {
-        guard !isRecording, recorder == nil, preparing == nil else { return }
-        preparing = Task { await startRecorder() }
+    /// Sets the audio category ahead of time (cheap, and other audio keeps playing), so the first
+    /// touch only has to activate the session.
+    func warmUp() {
+        Task { await MicrophoneSession.shared.configure() }
     }
 
-    func start(handsFree: Bool) async {
-        guard !isRecording else { return }
-        let started: Bool
-        if let preparing {
-            started = await preparing.value
-            self.preparing = nil
-        } else {
-            started = recorder != nil ? true : await startRecorder()
-        }
-        guard started, !isRecording else { return }
+    /// Touch-down, before the button knows whether it's a hold or a tap: the recording shows at
+    /// once and the microphone opens behind it, so neither the eye nor the first words wait.
+    /// A tap then turns it hands-free with `keepHandsFree`.
+    func begin(handsFree: Bool = false) {
+        guard state == .idle, opening == nil, recorder == nil else { return }
+        take += 1
+        let take = take
+        closing?.cancel()
+        closing = nil
         state = .recording(handsFree: handsFree)
+        startedAt = Date()
+        level = 0
+        levels = []
+        UIApplication.shared.isIdleTimerDisabled = true
+        opening = Task { await open(take: take) }
     }
 
-    func discardPrepared() {
-        Task {
-            if let preparing {
-                _ = await preparing.value
-                self.preparing = nil
+    func keepHandsFree() {
+        if state == .recording(handsFree: false) { state = .recording(handsFree: true) }
+    }
+
+    private func open(take: Int) async {
+        let url = FileManager.default.temporaryDirectory.appending(path: "dictation-\(UUID().uuidString).m4a")
+        let opened: Result<RecorderBox, Error>
+        var allowed = AVAudioApplication.shared.recordPermission == .granted
+        if !allowed { allowed = await AVAudioApplication.requestRecordPermission() }
+        if allowed {
+            do {
+                opened = .success(try await MicrophoneSession.shared.open(url: url, maxDuration: Self.maxDuration))
+            } catch {
+                opened = .failure(error)
             }
-            guard !isRecording, recorder != nil else { return }
-            stopRecorder()
-            if let lastRecording { try? FileManager.default.removeItem(at: lastRecording) }
-            lastRecording = nil
+        } else {
+            opened = .failure(VoiceError.denied)
         }
-    }
-
-    /// Opens the audio session and starts recording, without touching `state` (unless it fails).
-    private func startRecorder() async -> Bool {
-        guard await AVAudioApplication.requestRecordPermission() else {
-            state = .failed(String(localized: "Microphone access is off. Turn it on in Settings."))
-            return false
+        guard take == self.take, isRecording else {
+            // Released or cancelled while the microphone was opening.
+            if case .success(let box) = opened {
+                box.recorder.stop()
+                try? FileManager.default.removeItem(at: url)
+                closeLater()
+            }
+            return
         }
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
-            try session.setActive(true)
-            let url = FileManager.default.temporaryDirectory.appending(path: "dictation-\(UUID().uuidString).m4a")
-            let recorder = try AVAudioRecorder(url: url, settings: [
-                AVFormatIDKey: kAudioFormatMPEG4AAC,
-                AVSampleRateKey: 44_100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
-            ])
-            recorder.isMeteringEnabled = true
-            guard recorder.record(forDuration: Self.maxDuration) else { throw VoiceError.recorderFailed }
-            self.recorder = recorder
+        opening = nil
+        switch opened {
+        case .success(let box):
+            recorder = box.recorder
             lastRecording = url
-            startedAt = Date()
-            levels = []
-            UIApplication.shared.isIdleTimerDisabled = true
             meter = Task { [weak self] in
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(80))
                     self?.sample()
                 }
             }
-            return true
-        } catch {
+        case .failure(VoiceError.denied):
+            UIApplication.shared.isIdleTimerDisabled = false
+            state = .failed(String(localized: "Microphone access is off. Turn it on in Settings."))
+        case .failure(let error):
+            UIApplication.shared.isIdleTimerDisabled = false
+            closeLater()
             state = .failed(error.localizedDescription)
-            return false
         }
     }
 
@@ -116,15 +123,19 @@ final class VoiceInput {
     }
 
     func cancel() {
+        take += 1
+        opening = nil
         stopRecorder()
         if let lastRecording { try? FileManager.default.removeItem(at: lastRecording) }
         lastRecording = nil
-        state = .idle
+        if isRecording { state = .idle }
     }
 
     /// Stops recording and returns the text, or nil when cancelled / failed (state says why).
     func finish(environment: EnvironmentSession, threadId: String?) async -> String? {
         guard isRecording else { return nil }
+        if let opening { await opening.value }
+        guard isRecording, recorder != nil else { return nil }
         // currentTime reads 0 once the recorder stopped itself at the cap; use the wall clock.
         let elapsed = Date().timeIntervalSince(startedAt ?? Date())
         lastDuration = min(Self.maxDuration, (recorder?.isRecording == true ? recorder?.currentTime : nil) ?? elapsed)
@@ -157,7 +168,18 @@ final class VoiceInput {
         recorder?.stop()
         recorder = nil
         UIApplication.shared.isIdleTimerDisabled = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        closeLater()
+    }
+
+    /// Lets the session go a little after the recording, unless the next one starts first.
+    private func closeLater() {
+        closing?.cancel()
+        closing = Task {
+            try? await Task.sleep(for: Self.sessionLinger)
+            guard !Task.isCancelled, recorder == nil, opening == nil else { return }
+            closing = nil
+            await MicrophoneSession.shared.close()
+        }
     }
 
     private func transcribe(environment: EnvironmentSession, threadId: String?) async -> String? {
@@ -226,7 +248,45 @@ final class VoiceInput {
         return text
     }
 
-    enum VoiceError: Error { case recorderFailed, unavailable }
+    enum VoiceError: Error { case recorderFailed, unavailable, denied }
+}
+
+/// Owns the audio session off the main thread: activating it takes a noticeable moment, and on
+/// the main actor that moment froze the button under the finger. Being an actor also keeps a
+/// late close from landing after the next open.
+private actor MicrophoneSession {
+    static let shared = MicrophoneSession()
+
+    func configure() {
+        let session = AVAudioSession.sharedInstance()
+        let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothHFP]
+        guard session.category != .playAndRecord || session.mode != .measurement || session.categoryOptions != options
+        else { return }
+        try? session.setCategory(.playAndRecord, mode: .measurement, options: options)
+    }
+
+    func open(url: URL, maxDuration: TimeInterval) throws -> RecorderBox {
+        configure()
+        try AVAudioSession.sharedInstance().setActive(true)
+        let recorder = try AVAudioRecorder(url: url, settings: [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: 44_100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+        ])
+        recorder.isMeteringEnabled = true
+        guard recorder.record(forDuration: maxDuration) else { throw VoiceInput.VoiceError.recorderFailed }
+        return RecorderBox(recorder: recorder)
+    }
+
+    func close() {
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+}
+
+/// Hands a freshly started recorder over to the main actor, which owns it from then on.
+private struct RecorderBox: @unchecked Sendable {
+    let recorder: AVAudioRecorder
 }
 
 /// Lets exactly one of several racing callbacks resume a continuation.

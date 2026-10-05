@@ -302,7 +302,10 @@ struct NewThreadView: View {
         .animation(.composer, value: newWorktree)
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            voice.warmUp()
+        }
         .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
@@ -314,13 +317,12 @@ struct NewThreadView: View {
         if voice.state == .idle || holdRecording {
             MicButton(
                 voice: voice,
-                onHoldStart: { Task { await voice.start(handsFree: false) } },
                 onHoldEnd: { cancelled in
                     if cancelled { voice.cancel() } else { finishDictation(send: true) }
                 },
-                onTap: { Task { await voice.start(handsFree: true) } },
-                onPress: { voice.prepare() },
-                onAbandon: { voice.discardPrepared() },
+                onPress: { voice.begin() },
+                onTap: { voice.keepHandsFree() },
+                onAbandon: { voice.cancel() },
                 dragOffset: $micDrag,
                 prominent: !(hasContent || sending)
             )
