@@ -219,7 +219,9 @@ final class VoiceInput {
 
     private func deviceTranscription(url: URL) async throws -> String {
         let status = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0) }
+            // @Sendable: these callbacks arrive off the main thread, and a closure written in this
+            // main-actor class would otherwise be assumed main-actor and trap there.
+            SFSpeechRecognizer.requestAuthorization { @Sendable status in continuation.resume(returning: status) }
         }
         guard status == .authorized, let recognizer = SFSpeechRecognizer(locale: Locale.current) ?? SFSpeechRecognizer(),
               recognizer.isAvailable
@@ -229,7 +231,7 @@ final class VoiceInput {
         request.addsPunctuation = true
         let gate = OnceGate()
         let text = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-                let task = recognizer.recognitionTask(with: request) { result, error in
+                let task = recognizer.recognitionTask(with: request) { @Sendable result, error in
                     if let error {
                         if gate.claim() { continuation.resume(throwing: error) }
                     } else if let result, result.isFinal {
