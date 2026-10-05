@@ -181,8 +181,25 @@ struct NewThreadView: View {
     /// notice before starting.
     private var whereRow: some View {
         HStack(spacing: 6) {
-            WorkspaceMenu(newWorktree: newWorktree) { newWorktree = $0 }
-                .equatable()
+            Menu {
+                // Toggles: the menu marks the choice itself and each row keeps the chip's icon.
+                Toggle(isOn: Binding(get: { !newWorktree }, set: { if $0 { newWorktree = false } })) {
+                    Image(systemName: "folder")
+                    Text("Current checkout")
+                    Text("Works in the project folder")
+                }
+                Toggle(isOn: Binding(get: { newWorktree }, set: { if $0 { newWorktree = true } })) {
+                    Image(systemName: "arrow.triangle.branch")
+                    Text("New worktree")
+                    Text("Its own folder and branch")
+                }
+            } label: {
+                ComposerChipLabel(title: newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
+                                  highlighted: newWorktree) {
+                    Image(systemName: newWorktree ? "arrow.triangle.branch" : "folder").font(.system(size: 13))
+                }
+            }
+            .buttonStyle(.plain)
             if newWorktree, repo?.isRepo == true {
                 Button {
                     showBranches = true
@@ -277,13 +294,8 @@ struct NewThreadView: View {
             .padding(.top, editorFolded ? 0 : 4)
         }
         .padding(6)
-        // A tap on the card's empty space focuses the field. Behind the content rather than over it,
-        // so it doesn't compete with the chips' menus and swallow their first tap.
-        .background {
-            Color.clear
-                .contentShape(.rect)
-                .onTapGesture { if voice.state == .idle { focused = true } }
-        }
+        .contentShape(.rect)
+        .onTapGesture { if voice.state == .idle { focused = true } }
         .composerGlass()
         .animation(.composer, value: voice.state)
         .animation(.composer, value: hasContent)
@@ -528,38 +540,6 @@ struct NewThreadView: View {
                 router.refreshNewThreadDraft()
             }
         }
-    }
-}
-
-/// The "where" chip: current checkout or a new worktree. Equatable on the choice alone: the screen
-/// redraws on every update from the Mac, and an open menu rebuilt under the finger dropped the tap
-/// on its row for a second or two.
-private struct WorkspaceMenu: View, @MainActor Equatable {
-    let newWorktree: Bool
-    let onChange: (Bool) -> Void
-
-    static func == (lhs: Self, rhs: Self) -> Bool { lhs.newWorktree == rhs.newWorktree }
-
-    var body: some View {
-        Menu {
-            // Toggles: the menu marks the choice itself and each row keeps the chip's icon.
-            Toggle(isOn: Binding(get: { !newWorktree }, set: { if $0 { onChange(false) } })) {
-                Image(systemName: "folder")
-                Text("Current checkout")
-                Text("Works in the project folder")
-            }
-            Toggle(isOn: Binding(get: { newWorktree }, set: { if $0 { onChange(true) } })) {
-                Image(systemName: "arrow.triangle.branch")
-                Text("New worktree")
-                Text("Its own folder and branch")
-            }
-        } label: {
-            ComposerChipLabel(title: newWorktree ? String(localized: "New worktree") : String(localized: "Current checkout"),
-                              highlighted: newWorktree) {
-                Image(systemName: newWorktree ? "arrow.triangle.branch" : "folder").font(.system(size: 13))
-            }
-        }
-        .buttonStyle(.plain)
     }
 }
 
