@@ -240,48 +240,48 @@ struct NewThreadView: View {
             if !draft.attachments.isEmpty || draft.notice != nil {
                 AttachmentStrip(draft: draft, environment: environment)
             }
-            // The strip covers the text view instead of replacing it, so the keyboard stays up.
-            ZStack {
-                ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
-                                 maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
-                                 onSubmit: { _ in if canSend && !sending { launch() } }) { images in
-                    guard let environment else { return }
-                    images.forEach { draft.attach(image: $0, environment: environment) }
-                }
-                    .padding(.vertical, 7)
-                    .padding(.horizontal, 6)
-                    .onChange(of: text) { old, value in
-                        if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
-                            text = folded
-                            return
-                        }
-                        Drafts.save(value, for: NewThreadDraft.key)
-                        suggestions.update(text: value, scope: suggestionScope)
+            // While dictating the text view folds away rather than leaving the window, so the keyboard
+            // stays up; a draft stays in view above the recording.
+            ComposerTextView(text: $text, isFocused: $focused, placeholder: String(localized: "Ask anything…"),
+                             maxLines: 10, accessibilityIdentifier: "newThreadText", returnKey: returnKey,
+                             onSubmit: { _ in if canSend && !sending { launch() } }) { images in
+                guard let environment else { return }
+                images.forEach { draft.attach(image: $0, environment: environment) }
+            }
+                .padding(.vertical, 7)
+                .padding(.horizontal, 6)
+                .onChange(of: text) { old, value in
+                    if let folded = draft.foldPaste(old: old, new: value, environment: environment) {
+                        text = folded
+                        return
                     }
-                    .voiceCollapsed(voice.state != .idle)
+                    Drafts.save(value, for: NewThreadDraft.key)
+                    suggestions.update(text: value, scope: suggestionScope)
+                }
+                .voiceCollapsed(voice.state != .idle && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            HStack(spacing: 6) {
                 if voice.state != .idle {
                     VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
-                               onDone: { finishDictation(send: false) }, onRetry: retryDictation)
-                }
-            }
-            HStack(spacing: 6) {
-                AttachMenu(draft: draft, environment: environment, size: 34) {
-                    if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
-                        text += pasted
+                               onRetry: retryDictation)
+                } else {
+                    AttachMenu(draft: draft, environment: environment, size: 34) {
+                        if let environment, let pasted = draft.paste(environment: environment, draftLength: text.utf16.count) {
+                            text += pasted
+                        }
+                        focused = true
                     }
-                    focused = true
+                    ComposerSettingsChips(
+                        config: environment?.config, selection: selection, runtimeMode: runtimeMode,
+                        interactionMode: interactionMode,
+                        foldMode: hasContent || sending,
+                        onSelection: { selection = $0 },
+                        onRuntimeMode: { runtimeMode = $0 },
+                        onInteractionMode: { interactionMode = $0 },
+                        onMore: { showSettings = true }
+                    )
+                    .layoutPriority(1)
+                    Spacer(minLength: 0)
                 }
-                ComposerSettingsChips(
-                    config: environment?.config, selection: selection, runtimeMode: runtimeMode,
-                    interactionMode: interactionMode,
-                    foldMode: hasContent || sending,
-                    onSelection: { selection = $0 },
-                    onRuntimeMode: { runtimeMode = $0 },
-                    onInteractionMode: { interactionMode = $0 },
-                    onMore: { showSettings = true }
-                )
-                .layoutPriority(1)
-                Spacer(minLength: 0)
                 trailingButton
             }
         }
@@ -315,7 +315,10 @@ struct NewThreadView: View {
                 prominent: !(hasContent || sending)
             )
         }
-        if (hasContent || sending) && !holdRecording {
+        if voice.state != .idle {
+            // Only the recording's own action while dictating: no start beside ✓.
+            VoiceSlotButton(voice: voice) { finishDictation(send: false) }
+        } else if hasContent || sending {
             Button(action: launch) {
                 Group {
                     if sending { ProgressView().tint(Palette.accentForeground) } else {

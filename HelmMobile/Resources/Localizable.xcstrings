@@ -1800,6 +1800,16 @@
         }
       }
     },
+    "Cancel dictation": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отменить диктовку"
+          }
+        }
+      }
+    },
     "Changes": {
       "localizations": {
         "ru": {
@@ -2604,6 +2614,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Готово"
+          }
+        }
+      }
+    },
+    "Done dictating": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закончить диктовку"
           }
         }
       }

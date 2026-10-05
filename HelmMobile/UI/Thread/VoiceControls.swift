@@ -78,12 +78,13 @@ struct MicButton: View {
     }
 }
 
-/// Replaces the text field while recording, transcribing, or after a failed transcription.
+/// Takes the place of the composer's controls row while dictating: the card shows the recording
+/// and nothing else. The action for it (the held microphone, or ✓ when hands-free) stays in the
+/// amber slot beside it, so nothing moves under the finger.
 struct VoiceStrip: View {
     let voice: VoiceInput
     let dragOffset: CGFloat
     let onCancel: () -> Void
-    let onDone: () -> Void
     let onRetry: () -> Void
 
     var body: some View {
@@ -96,6 +97,7 @@ struct VoiceStrip: View {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .semibold)).frame(width: 32, height: 32)
                     }
                     .foregroundStyle(Palette.textMuted)
+                    .accessibilityLabel("Cancel dictation")
                 }
                 Circle().fill(Palette.error).frame(width: 8, height: 8)
                 if let startedAt = voice.startedAt {
@@ -104,23 +106,24 @@ struct VoiceStrip: View {
                         .foregroundStyle(Palette.text)
                         .monospacedDigit()
                 }
-                if handsFree {
-                    LevelBars(levels: voice.levels)
-                    Button(action: onDone) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 15, weight: .bold))
-                            .frame(width: 36, height: 36)
-                            .foregroundStyle(Palette.accentForeground)
-                            .background(Palette.accent, in: .circle)
-                    }
-                } else {
-                    Text(cancelling ? String(localized: "Release to cancel") : String(localized: "Release to send · slide left to cancel"))
-                        .font(Typography.footnote)
-                        .foregroundStyle(cancelling ? Palette.errorText : Palette.textMuted)
+                if cancelling {
+                    Text("Release to cancel")
+                        .font(Typography.footnote.weight(.medium))
+                        .foregroundStyle(Palette.errorText)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .offset(x: max(dragOffset * 0.4, -40))
                     Spacer(minLength: 0)
+                } else {
+                    LevelBars(levels: voice.levels)
+                    if !handsFree {
+                        // Follows the finger a little, like the slide it asks for.
+                        Label("Cancel", systemImage: "chevron.left")
+                            .labelStyle(.titleAndIcon)
+                            .font(Typography.footnote)
+                            .foregroundStyle(Palette.textMuted)
+                            .lineLimit(1)
+                            .fixedSize()
+                            .offset(x: max(dragOffset * 0.4, -30))
+                    }
                 }
             case .transcribing:
                 ProgressView().controlSize(.small)
@@ -141,8 +144,36 @@ struct VoiceStrip: View {
                 EmptyView()
             }
         }
-        .frame(minHeight: 36)
+        .frame(minHeight: 40)
         .padding(.leading, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// The amber slot while dictating hands-free (✓ puts the text in the field) or transcribing.
+struct VoiceSlotButton: View {
+    let voice: VoiceInput
+    let onDone: () -> Void
+
+    var body: some View {
+        switch voice.state {
+        case .recording(handsFree: true):
+            Button(action: onDone) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 16, weight: .bold))
+                    .frame(width: 40, height: 40)
+                    .foregroundStyle(Palette.accentForeground)
+                    .background(Palette.accent, in: .circle)
+            }
+            .accessibilityLabel("Done dictating")
+        case .transcribing:
+            ProgressView()
+                .tint(Palette.accentForeground)
+                .frame(width: 40, height: 40)
+                .background(Palette.accent.opacity(0.6), in: .circle)
+        default:
+            EmptyView()
+        }
     }
 }
 
@@ -175,7 +206,7 @@ extension View {
     func voiceCollapsed(_ collapsed: Bool) -> some View {
         // Height and clipping only: opacity 0 or allowsHitTesting(false) make UIKit resign the
         // text view, and the keyboard drops.
-        frame(height: collapsed ? 0 : nil)
+        frame(width: collapsed ? 0 : nil, height: collapsed ? 0 : nil)
             .clipped()
             .accessibilityHidden(collapsed)
     }

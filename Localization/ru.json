@@ -721,5 +721,7 @@
   "More options": "Другие настройки",
   "Works in the project folder": "Работает в папке проекта",
   "Its own folder and branch": "Своя папка и своя ветка",
-  "Access: %@": "Доступ: %@"
+  "Access: %@": "Доступ: %@",
+  "Cancel dictation": "Отменить диктовку",
+  "Done dictating": "Закончить диктовку"
 }

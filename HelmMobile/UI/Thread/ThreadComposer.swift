@@ -66,24 +66,26 @@ struct ThreadComposer: View {
             // The text view keeps its place in this row in both shapes, so it never loses focus.
             // One centred row at rest; opened, the last line of text lines up with the bottom.
             HStack(alignment: expanded ? .bottom : .center, spacing: 6) {
-                if !expanded && voice.state == .idle { movingAttach }
-                // The strip covers the text view instead of replacing it: the view stays in the window,
-                // so the keyboard stays up and the card doesn't jump out from under a held finger.
-                ZStack {
-                    editor.padding(.leading, expanded ? 6 : 0)
-                        .voiceCollapsed(voice.state != .idle)
-                    if voice.state != .idle {
-                        VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
-                                   onDone: { finishDictation(send: false) }, onRetry: retryDictation)
-                    }
+                if !expanded {
+                    if dictating { voiceStrip } else { movingAttach }
                 }
+                // While dictating the text view folds away rather than leaving the window, so the
+                // keyboard stays up. Opened with a draft, the draft stays in view above the strip.
+                editor.padding(.leading, expanded ? 6 : 0)
+                    .voiceCollapsed(dictating && (!expanded || trimmed.isEmpty))
                 if !expanded { movingTrailing }
             }
             if expanded {
+                // The controls row: attach, model and mode, or the recording while dictating. The amber
+                // slot stays put either way, so a held microphone doesn't move under the finger.
                 HStack(spacing: 6) {
-                    movingAttach
-                    settingsChips.layoutPriority(1)
-                    Spacer(minLength: 0)
+                    if dictating {
+                        voiceStrip
+                    } else {
+                        movingAttach
+                        settingsChips.layoutPriority(1)
+                        Spacer(minLength: 0)
+                    }
                     movingTrailing
                 }
                 .transition(.opacity.combined(with: .offset(y: -8)))
@@ -101,6 +103,13 @@ struct ThreadComposer: View {
         .animation(.composer, value: voice.state)
         .animation(.composer, value: hasContent)
         .animation(.composer, value: isWorking)
+    }
+
+    private var dictating: Bool { voice.state != .idle }
+
+    private var voiceStrip: some View {
+        VoiceStrip(voice: voice, dragOffset: micDrag, onCancel: { voice.cancel(); voice.dismissError() },
+                   onRetry: retryDictation)
     }
 
     private var movingAttach: some View {
@@ -189,9 +198,12 @@ struct ThreadComposer: View {
                 prominent: !hasContent && !isWorking
             )
         }
-        if hasContent && !holdRecording {
+        if voice.state != .idle {
+            // Only the recording's own action while dictating: no send beside ✓.
+            VoiceSlotButton(voice: voice) { finishDictation(send: false) }
+        } else if hasContent {
             sendButton
-        } else if isWorking && voice.state == .idle {
+        } else if isWorking {
             stopButton
         }
     }
