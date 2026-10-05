@@ -115,7 +115,7 @@ struct WorkGroupView: View {
             } label: {
                 HStack(spacing: 8) {
                     if isLive {
-                        ProgressView().controlSize(.mini)
+                        WorkingDots()
                     } else {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 11, weight: .semibold))
@@ -185,7 +185,7 @@ struct WorkStepRow: View {
                         .multilineTextAlignment(.leading)
                     Spacer(minLength: 0)
                     if item.isRunning {
-                        ProgressView().controlSize(.mini)
+                        WorkingDots()
                     } else if let detail = summary.detail {
                         Text(detail)
                             .font(Typography.mono(12))
@@ -246,11 +246,44 @@ struct WorkStepRow: View {
     }
 }
 
+/// Helm's in-progress mark in the timeline: three dots rising in turn, in the surrounding text colour.
+/// Stands where a mini ProgressView would; holds still when Reduce Motion is on.
+struct WorkingDots: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let period = 1.2
+    private let stagger = 0.15
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { context in
+            let time = context.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 1.8) {
+                ForEach(0..<3, id: \.self) { index in
+                    let lift = reduceMotion ? 0 : lift(at: time - Double(index) * stagger)
+                    Circle()
+                        .frame(width: 3.2, height: 3.2)
+                        .opacity(reduceMotion ? 0.6 : 0.3 + 0.7 * lift)
+                        .offset(y: -2 * lift)
+                }
+            }
+        }
+        .frame(width: 15, height: 14)
+        .accessibilityHidden(true)
+    }
+
+    /// 0 at rest, 1 at the top: each dot rises and falls in the first half of the cycle, then waits.
+    private func lift(at time: Double) -> Double {
+        let phase = time.truncatingRemainder(dividingBy: period) / period
+        guard phase < 0.6 else { return 0 }
+        return sin(.pi * phase / 0.6)
+    }
+}
+
 /// While the agent has started but produced nothing visible yet.
 struct ThinkingRow: View {
     var body: some View {
         HStack(spacing: 8) {
-            ProgressView().controlSize(.mini)
+            WorkingDots()
             Text("Thinking").font(Typography.subheadline)
         }
         .foregroundStyle(Palette.textMuted)
@@ -542,7 +575,7 @@ struct TimelineDivider: View {
             line
             HStack(spacing: 5) {
                 if isRunning {
-                    ProgressView().controlSize(.mini)
+                    WorkingDots()
                 } else if let symbol {
                     Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
                 }
