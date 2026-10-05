@@ -8,6 +8,10 @@ struct MicButton: View {
     let onHoldStart: () -> Void
     let onHoldEnd: (_ cancelled: Bool) -> Void
     let onTap: () -> Void
+    /// Touch-down, before hold or tap is known: start the microphone so nothing waits.
+    var onPress: () -> Void = {}
+    /// The touch ended as neither (the system cancelled it early): drop what onPress started.
+    var onAbandon: () -> Void = {}
     @Binding var dragOffset: CGFloat
     /// Amber, in the action slot while there is nothing to send. Otherwise a quiet icon beside
     /// send or stop, so dictation is still one tap away.
@@ -28,8 +32,10 @@ struct MicButton: View {
             .foregroundStyle(recordingHold ? .white : prominent ? Palette.accentForeground : Palette.textMuted)
             .background(recordingHold ? Palette.error : prominent ? Palette.accent : .clear, in: .circle)
             // Swells a little under the finger, staying inside the card.
-            .scaleEffect(recordingHold ? 1.1 : 1)
+            // Answers the touch at once (a press-in), before recording shows.
+            .scaleEffect(recordingHold ? 1.1 : pressedAt != nil ? 0.9 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
+            .animation(.easeOut(duration: 0.1), value: pressedAt != nil)
             .contentShape(.circle)
             // Ahead of the glass card's own touch handling around it.
             .highPriorityGesture(
@@ -38,6 +44,7 @@ struct MicButton: View {
                     .onChanged { value in
                         if pressedAt == nil {
                             pressedAt = Date()
+                            onPress()
                             let started = pressedAt
                             Task {
                                 try? await Task.sleep(for: .milliseconds(300))
@@ -75,6 +82,8 @@ struct MicButton: View {
             onHoldEnd(cancelledByUser)
         } else if tapped {
             onTap()
+        } else {
+            onAbandon()
         }
     }
 }
@@ -127,7 +136,7 @@ struct VoiceStrip: View {
                     }
                 }
             case .transcribing:
-                ProgressView().controlSize(.small)
+                // The spinner is in the amber slot; one is enough.
                 Text("Transcribing…").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
                 Spacer(minLength: 0)
             case .failed(let message):

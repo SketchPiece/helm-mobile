@@ -24,6 +24,7 @@ final class VoiceInput {
     private(set) var levels: [Double] = []
 
     @ObservationIgnored private var recorder: AVAudioRecorder?
+    @ObservationIgnored private var preparing: Task<Bool, Never>?
     @ObservationIgnored private var meter: Task<Void, Never>?
     @ObservationIgnored private var lastRecording: URL?
     @ObservationIgnored private var lastDuration: TimeInterval = 0
@@ -31,11 +32,45 @@ final class VoiceInput {
 
     var isRecording: Bool { if case .recording = state { true } else { false } }
 
+    /// Starts the microphone at touch-down, before the button knows whether it's a hold or a tap
+    /// (both end up recording), so nothing waits on the decision and the first words aren't cut.
+    /// `start` then only sets the mode; `discardPrepared` drops it if the touch led nowhere.
+    func prepare() {
+        guard !isRecording, recorder == nil, preparing == nil else { return }
+        preparing = Task { await startRecorder() }
+    }
+
     func start(handsFree: Bool) async {
         guard !isRecording else { return }
+        let started: Bool
+        if let preparing {
+            started = await preparing.value
+            self.preparing = nil
+        } else {
+            started = recorder != nil ? true : await startRecorder()
+        }
+        guard started, !isRecording else { return }
+        state = .recording(handsFree: handsFree)
+    }
+
+    func discardPrepared() {
+        Task {
+            if let preparing {
+                _ = await preparing.value
+                self.preparing = nil
+            }
+            guard !isRecording, recorder != nil else { return }
+            stopRecorder()
+            if let lastRecording { try? FileManager.default.removeItem(at: lastRecording) }
+            lastRecording = nil
+        }
+    }
+
+    /// Opens the audio session and starts recording, without touching `state` (unless it fails).
+    private func startRecorder() async -> Bool {
         guard await AVAudioApplication.requestRecordPermission() else {
             state = .failed(String(localized: "Microphone access is off. Turn it on in Settings."))
-            return
+            return false
         }
         do {
             let session = AVAudioSession.sharedInstance()
@@ -54,7 +89,6 @@ final class VoiceInput {
             lastRecording = url
             startedAt = Date()
             levels = []
-            state = .recording(handsFree: handsFree)
             UIApplication.shared.isIdleTimerDisabled = true
             meter = Task { [weak self] in
                 while !Task.isCancelled {
@@ -62,8 +96,10 @@ final class VoiceInput {
                     self?.sample()
                 }
             }
+            return true
         } catch {
             state = .failed(error.localizedDescription)
+            return false
         }
     }
 

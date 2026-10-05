@@ -199,6 +199,8 @@ struct ThreadComposer: View {
                     if cancelled { voice.cancel() } else { finishDictation(send: true) }
                 },
                 onTap: { Task { await voice.start(handsFree: true) } },
+                onPress: { voice.prepare() },
+                onAbandon: { voice.discardPrepared() },
                 dragOffset: $micDrag,
                 prominent: !hasContent && !isWorking
             )
