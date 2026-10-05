@@ -534,7 +534,7 @@ struct NewThreadView: View {
 /// The "where" chip: current checkout or a new worktree. Equatable on the choice alone: the screen
 /// redraws on every update from the Mac, and an open menu rebuilt under the finger dropped the tap
 /// on its row for a second or two.
-private struct WorkspaceMenu: View, Equatable {
+private struct WorkspaceMenu: View, @MainActor Equatable {
     let newWorktree: Bool
     let onChange: (Bool) -> Void
 
