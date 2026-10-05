@@ -257,9 +257,12 @@ final class VoiceInput {
 private actor MicrophoneSession {
     static let shared = MicrophoneSession()
 
+    /// Records from the phone's own microphone and leaves other audio alone: music keeps playing,
+    /// and Bluetooth headphones or a car stay on A2DP instead of dropping to call-quality HFP.
+    /// The phone is held at the mouth anyway, and its microphone beats theirs.
     func configure() {
         let session = AVAudioSession.sharedInstance()
-        let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothHFP]
+        let options: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
         guard session.category != .playAndRecord || session.mode != .measurement || session.categoryOptions != options
         else { return }
         try? session.setCategory(.playAndRecord, mode: .measurement, options: options)
@@ -267,7 +270,13 @@ private actor MicrophoneSession {
 
     func open(url: URL, maxDuration: TimeInterval) throws -> RecorderBox {
         configure()
-        try AVAudioSession.sharedInstance().setActive(true)
+        let session = AVAudioSession.sharedInstance()
+        try session.setActive(true)
+        // A wired headset or CarPlay could still offer its own microphone; ask for the phone's.
+        if session.currentRoute.inputs.first?.portType != .builtInMic,
+           let builtIn = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
+            try? session.setPreferredInput(builtIn)
+        }
         let recorder = try AVAudioRecorder(url: url, settings: [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
             AVSampleRateKey: 44_100,
