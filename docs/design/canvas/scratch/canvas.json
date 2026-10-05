@@ -1,0 +1,92 @@
+{
+ "v": 3,
+ "title": "Helm · “No project” becomes Scratch, Sketchpad moves into it",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "1-phone-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 900,
+   "h": 900,
+   "title": "Now · phone"
+  },
+  "2-phone-after.html": {
+   "x": 1580,
+   "y": 0,
+   "w": 900,
+   "h": 900,
+   "title": "After · phone"
+  },
+  "3-mac-now.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 1500,
+   "h": 900,
+   "title": "Now · Helm on the Mac"
+  },
+  "4-mac-after.html": {
+   "x": 1580,
+   "y": 1060,
+   "w": 1500,
+   "h": 900,
+   "title": "After · Helm on the Mac"
+  },
+  "5-move.mmd": {
+   "x": 0,
+   "y": 2120,
+   "w": 1500,
+   "h": 800,
+   "title": "What moves where"
+  }
+ },
+ "order": [
+  "1-phone-now.html",
+  "2-phone-after.html",
+  "3-mac-now.html",
+  "4-mac-after.html",
+  "5-move.mmd"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm · “No project” becomes Scratch, Sketchpad moves into it",
+   "kind": "title1",
+   "maxW": 4660
+  },
+  "h1": {
+   "x": 0,
+   "y": -90,
+   "text": "Now",
+   "kind": "title2"
+  },
+  "h2": {
+   "x": 1580,
+   "y": -90,
+   "text": "After",
+   "kind": "title2"
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 3160,
+   "y": 0,
+   "w": 340,
+   "color": "blue",
+   "text": "Russian locale: keep “Scratch” as a name, or translate to «Черновик»? The subtitle would be «Разовые задачи без проекта»."
+  },
+  {
+   "id": "claude-2",
+   "x": 1580,
+   "y": 2120,
+   "w": 360,
+   "color": "blue",
+   "text": "Helm has no “move thread to another project”, so the move is done in the database with Helm quit, after a backup."
+  }
+ ],
+ "designSystems": []
+}

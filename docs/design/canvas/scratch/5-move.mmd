@@ -1,0 +1,17 @@
+---
+title: What moves where
+board: 1500x800
+---
+flowchart LR
+  sk[Sketchpad project<br>13 threads]:::del
+  old[(~/.t3/scratch<br>15 folders with files)]:::del
+  ses[(Claude sessions<br>~/.claude/projects/-Users-…-.t3-scratch-…)]:::ext
+  sc[Scratch<br>was “No project”, 1 thread]:::hl
+  new[(~/.helm/scratch<br>all 16 folders)]:::add
+  ses2[(Claude sessions<br>re-keyed to ~/.helm/scratch paths)]:::add
+  bak[(Backup of statev2.sqlite<br>before anything changes)]:::ext
+  bak -.-> sk
+  sk ==>|1. threads switch project| sc
+  old ==>|2. folders move, thread paths updated| new
+  ses ==>|3. sessions follow, so old threads can continue| ses2
+  sc --- new
