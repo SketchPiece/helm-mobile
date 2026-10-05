@@ -294,8 +294,13 @@ struct NewThreadView: View {
             .padding(.top, editorFolded ? 0 : 4)
         }
         .padding(6)
-        .contentShape(.rect)
-        .onTapGesture { if voice.state == .idle { focused = true } }
+        // A tap on the card's empty space focuses the field. Behind the content rather than over it,
+        // so it doesn't compete with the chips' menus and swallow their first tap.
+        .background {
+            Color.clear
+                .contentShape(.rect)
+                .onTapGesture { if voice.state == .idle { focused = true } }
+        }
         .composerGlass()
         .animation(.composer, value: voice.state)
         .animation(.composer, value: hasContent)
