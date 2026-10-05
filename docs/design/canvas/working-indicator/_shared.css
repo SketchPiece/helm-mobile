@@ -128,3 +128,59 @@ html,body{width:1720px;height:900px;overflow:hidden;background:var(--page);color
 .ind-i i::before{content:"";position:absolute;left:calc(50% - .11em);top:.04em;width:.22em;height:.22em;border-radius:50%;background:var(--working)}
 .ind-i i:nth-child(2){animation-delay:-.18s;opacity:.45}
 .ind-i b{width:.18em;height:.18em;border-radius:50%;background:currentColor;opacity:.4}
+
+/* ===== round 2 ===== */
+/* J: shape morph, circle → squircle → leaf → circle */
+.ind-j i{width:.7em;height:.7em;background:var(--working);animation:morph 2.4s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes morph{0%{border-radius:50%;transform:rotate(0) scale(.8)}25%{border-radius:28%;transform:rotate(90deg) scale(.95)}50%{border-radius:50% 8% 50% 8%;transform:rotate(180deg) scale(.9)}75%{border-radius:8% 50% 8% 50%;transform:rotate(270deg) scale(1)}100%{border-radius:50%;transform:rotate(360deg) scale(.8)}}
+
+/* K: the Claude Code star, cycling glyphs */
+.ind-k{overflow:hidden;color:var(--accent)}
+.ind-k span{position:absolute;top:0;left:0;width:1em;display:flex;flex-direction:column;animation:braille 1.5s steps(10) infinite}
+.ind-k span b{display:block;height:1em;line-height:1em;text-align:center;font-weight:400;font-size:1.1em}
+
+/* L: LED matrix, a snake running round 3×3 */
+.ind-l{display:inline-grid;grid-template-columns:repeat(3,.24em);gap:.07em;width:auto}
+.ind-l i{width:.24em;height:.24em;border-radius:.05em;background:var(--working);opacity:.15;animation:led 1.6s linear infinite}
+@keyframes led{0%{opacity:1;box-shadow:0 0 .15em var(--working)}30%{opacity:.4;box-shadow:none}55%,100%{opacity:.15}}
+
+/* M: gooey drop splitting and rejoining */
+.ind-m svg{width:1.15em;height:1.15em;overflow:visible}
+.ind-m .c0{fill:var(--working)}
+.ind-m .c1{fill:var(--working);animation:gooA 1.6s cubic-bezier(.6,0,.4,1) infinite}
+.ind-m .c2{fill:var(--working);animation:gooB 1.6s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes gooA{0%,100%{transform:translate(0,0)}45%,55%{transform:translate(7px,0)}}
+@keyframes gooB{0%,100%{transform:translate(0,0)}45%,55%{transform:translate(-7px,0)}}
+
+/* N: nixie tube */
+.ind-n{width:.78em;height:1.08em;border-radius:.2em .2em .12em .12em;background:linear-gradient(180deg,#2a1f18,#120d0a);box-shadow:inset 0 0 0 .04em rgba(255,200,140,.18),inset 0 .08em .1em rgba(255,255,255,.06);overflow:hidden}
+.light .ind-n{background:linear-gradient(180deg,#3a2c22,#1c1410)}
+.ind-n span{position:absolute;top:.05em;left:0;right:0;display:flex;flex-direction:column;font:400 .82em 'IBM Plex Mono',monospace;animation:nixie 2s steps(10) infinite}
+.ind-n span b{display:block;height:1.2em;line-height:1.2em;text-align:center;font-weight:400;color:#FFB45A;text-shadow:0 0 .12em #ff8a1e,0 0 .3em #ff6a00;animation:flick 2s steps(1) infinite}
+@keyframes nixie{to{transform:translateY(-12em)}}
+@keyframes flick{0%,100%{opacity:1}47%{opacity:.75}49%{opacity:1}83%{opacity:.85}}
+
+/* O: the helm with momentum */
+.ind-o svg{width:1em;height:1em;color:var(--working);animation:momentum 2.8s infinite}
+.ind-o svg circle.hub{fill:var(--accent)}
+@keyframes momentum{0%{transform:rotate(0);animation-timing-function:cubic-bezier(.15,.75,.3,1.08)}62%{transform:rotate(540deg)}100%{transform:rotate(540deg)}}
+
+/* P: oscilloscope trace */
+.ind-p{width:1.5em;overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
+.ind-p svg{position:absolute;left:0;top:0;width:3em;height:1em;animation:scope 1s linear infinite;filter:drop-shadow(0 0 .08em var(--working))}
+.ind-p path{fill:none;stroke:var(--working);stroke-width:1.6;stroke-linecap:round}
+@keyframes scope{to{transform:translateX(-1.5em)}}
+
+/* Q: decode, a window of random letters sweeping the words */
+.ind-q{display:none}
+.stage .ind.ind-q,.cell .big .ind.ind-q{display:inline-block;width:auto;height:auto;font-size:40px;line-height:1.3;color:var(--muted)}
+.cell .big .ind.ind-q{font-size:24px}
+.scr .g{color:var(--working)}
+
+/* R: infinity, a stroke travelling the loop */
+.ind-r{width:1.5em}
+.ind-r svg{width:1.5em;height:.9em;overflow:visible}
+.ind-r path{fill:none;stroke-linecap:round;stroke-width:2}
+.ind-r .bg{stroke:currentColor;opacity:.18}
+.ind-r .fg{stroke:var(--working);stroke-dasharray:28 72;animation:trace 1.6s linear infinite}
+@keyframes trace{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}

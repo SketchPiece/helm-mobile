@@ -82,6 +82,76 @@
    "w": 1720,
    "h": 900,
    "title": "I. Orbit"
+  },
+  "2-more.html": {
+   "x": 5800,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "Round 2 side by side"
+  },
+  "j-morph.html": {
+   "x": 7600,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "J. Shape morph"
+  },
+  "k-star.html": {
+   "x": 9400,
+   "y": 0,
+   "w": 1720,
+   "h": 900,
+   "title": "K. The Claude Code star"
+  },
+  "l-led.html": {
+   "x": 5800,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "L. LED matrix"
+  },
+  "m-goo.html": {
+   "x": 7600,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "M. Liquid drop"
+  },
+  "n-nixie.html": {
+   "x": 9400,
+   "y": 1060,
+   "w": 1720,
+   "h": 900,
+   "title": "N. Nixie tube"
+  },
+  "o-helm.html": {
+   "x": 5800,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "O. The helm, spun"
+  },
+  "p-scope.html": {
+   "x": 7600,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "P. Oscilloscope"
+  },
+  "q-decode.html": {
+   "x": 9400,
+   "y": 2120,
+   "w": 1720,
+   "h": 900,
+   "title": "Q. Decode"
+  },
+  "r-infinity.html": {
+   "x": 5800,
+   "y": 3180,
+   "w": 1720,
+   "h": 900,
+   "title": "R. Infinity"
   }
  },
  "order": [
@@ -95,7 +165,17 @@
   "f-lamp.html",
   "g-vu.html",
   "h-dial.html",
-  "i-orbit.html"
+  "i-orbit.html",
+  "2-more.html",
+  "j-morph.html",
+  "k-star.html",
+  "l-led.html",
+  "m-goo.html",
+  "n-nixie.html",
+  "o-helm.html",
+  "p-scope.html",
+  "q-decode.html",
+  "r-infinity.html"
  ],
  "notes": {
   "t": {
@@ -104,6 +184,20 @@
    "text": "Helm Mobile · Our own working indicator instead of the iOS spinner",
    "kind": "title1",
    "maxW": 5320
+  },
+  "r1": {
+   "x": 0,
+   "y": -120,
+   "text": "Round 1",
+   "kind": "title2",
+   "maxW": 1720
+  },
+  "r2": {
+   "x": 5800,
+   "y": -120,
+   "text": "Round 2: bolder ideas",
+   "kind": "title2",
+   "maxW": 1720
   }
  },
  "annotations": [],
