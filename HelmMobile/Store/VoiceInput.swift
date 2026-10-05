@@ -268,6 +268,9 @@ private actor MicrophoneSession {
         guard session.category != .playAndRecord || session.mode != .measurement || session.categoryOptions != options
         else { return }
         try? session.setCategory(.playAndRecord, mode: .measurement, options: options)
+        // iOS mutes haptics while the microphone records, and recording starts at touch-down:
+        // without this the "it's a hold" tap and the slide-to-cancel tick went missing.
+        try? session.setAllowHapticsAndSystemSoundsDuringRecording(true)
     }
 
     func open(url: URL, maxDuration: TimeInterval) throws -> RecorderBox {
