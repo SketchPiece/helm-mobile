@@ -125,6 +125,7 @@ struct WorkGroupView: View {
                     Text(headline)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .shimmering(isLive)
                     Spacer(minLength: 0)
                 }
                 .font(Typography.subheadline)
@@ -279,12 +280,49 @@ struct WorkingDots: View {
     }
 }
 
+/// A band of light sweeping left to right across text, then a short rest: the "still thinking" gleam.
+/// Off with Reduce Motion.
+private struct Shimmer: ViewModifier {
+    let active: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let period = 1.9
+    private let sweep = 1.3
+
+    func body(content: Content) -> some View {
+        if active && !reduceMotion {
+            content.overlay {
+                TimelineView(.animation) { context in
+                    let elapsed = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: period)
+                    let progress = min(elapsed / sweep, 1)
+                    GeometryReader { proxy in
+                        let band = max(proxy.size.width * 0.3, 44)
+                        LinearGradient(colors: [Palette.text.opacity(0), Palette.text, Palette.text.opacity(0)],
+                                       startPoint: .leading, endPoint: .trailing)
+                            .frame(width: band)
+                            .offset(x: -band + (proxy.size.width + band) * progress)
+                    }
+                }
+                .mask(content)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func shimmering(_ active: Bool = true) -> some View { modifier(Shimmer(active: active)) }
+}
+
 /// While the agent has started but produced nothing visible yet.
 struct ThinkingRow: View {
     var body: some View {
         HStack(spacing: 8) {
             WorkingDots()
-            Text("Thinking").font(Typography.subheadline)
+            Text("Thinking").font(Typography.subheadline).shimmering()
         }
         .foregroundStyle(Palette.textMuted)
     }
