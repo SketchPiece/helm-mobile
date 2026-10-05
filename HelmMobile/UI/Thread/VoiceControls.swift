@@ -197,7 +197,7 @@ struct LevelBars: View {
                 context.fill(Path(roundedRect: rect, cornerRadius: 1.5), with: .color(Palette.textMuted))
             }
         }
-        .frame(height: 22)
+        .frame(height: 28)
         .frame(maxWidth: .infinity)
     }
 }
