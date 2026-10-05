@@ -15,6 +15,9 @@ struct MicButton: View {
 
     @State private var pressedAt: Date?
     @State private var holding = false
+    /// True while a finger is down. Unlike `onEnded`, it also resets when the system cancels the
+    /// touch (another gesture takes over), so a hold can never be left recording with no finger.
+    @GestureState private var touching = false
     static let cancelThreshold: CGFloat = -72
 
     var body: some View {
@@ -27,8 +30,10 @@ struct MicButton: View {
             .scaleEffect(recordingHold ? 1.25 : 1)
             .animation(.easeOut(duration: 0.15), value: recordingHold)
             .contentShape(.circle)
-            .gesture(
+            // Ahead of the glass card's own touch handling around it.
+            .highPriorityGesture(
                 DragGesture(minimumDistance: 0)
+                    .updating($touching) { _, touching, _ in touching = true }
                     .onChanged { value in
                         if pressedAt == nil {
                             pressedAt = Date()
@@ -44,22 +49,32 @@ struct MicButton: View {
                         }
                         dragOffset = min(0, value.translation.width)
                     }
-                    .onEnded { _ in
-                        let wasHolding = holding
-                        let cancelled = dragOffset < Self.cancelThreshold
-                        pressedAt = nil
-                        holding = false
-                        dragOffset = 0
-                        if wasHolding {
-                            onHoldEnd(cancelled)
-                        } else {
-                            onTap()
-                        }
-                    }
+                    .onEnded { _ in release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: true) }
             )
+            // The touch went away without onEnded: the system cancelled it. End the hold as a
+            // release (sending what was said), but don't count it as a tap.
+            .onChange(of: touching) { _, touching in
+                if !touching, pressedAt != nil { release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: false) }
+            }
+            .onDisappear {
+                if pressedAt != nil { release(cancelledByUser: false, tapped: false) }
+            }
             .accessibilityLabel("Dictate")
             .accessibilityHint("Hold to talk, release to send")
             .accessibilityAction { onTap() }
+    }
+
+    private func release(cancelledByUser: Bool, tapped: Bool) {
+        guard pressedAt != nil else { return }
+        let wasHolding = holding
+        pressedAt = nil
+        holding = false
+        dragOffset = 0
+        if wasHolding {
+            onHoldEnd(cancelledByUser)
+        } else if tapped {
+            onTap()
+        }
     }
 }
 
