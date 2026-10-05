@@ -106,11 +106,11 @@ final class VoiceInput {
     private func sample() {
         guard let recorder, recorder.isRecording else { return }
         recorder.updateMeters()
-        // The measurement mode records without gain, so speech sits low: map -45...-15 dB, lean on
-        // the peak (livelier than the average) and lift the quiet end so normal speech fills the bars.
-        let power = Double(max(recorder.averagePower(forChannel: 0), recorder.peakPower(forChannel: 0) - 6))
-        let linear = max(0, min(1, (power + 45) / 30))
-        level = pow(linear, 0.55)
+        // The measurement mode records without gain, so speech sits low: map -44...-10 dB, lean on
+        // the peak (livelier than the average) and lift the quiet end so the bars follow the voice.
+        let power = Double(max(recorder.averagePower(forChannel: 0), recorder.peakPower(forChannel: 0) - 7))
+        let linear = max(0, min(1, (power + 44) / 34))
+        level = pow(linear, 0.65)
         levels.append(level)
         if levels.count > 48 { levels.removeFirst(levels.count - 48) }
     }
