@@ -1368,6 +1368,16 @@
         }
       }
     },
+    "All projects…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все проекты…"
+          }
+        }
+      }
+    },
     "Allow for session": {
       "localizations": {
         "ru": {

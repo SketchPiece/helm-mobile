@@ -165,11 +165,26 @@ final class AppModel {
         }
     }
 
+    /// Projects across Macs, the latest worked in first, as the New thread fan has them: by their newest
+    /// thread; projects without threads after those, by their own date.
     func allProjects() -> [(environment: EnvironmentSession, project: Project)] {
-        environments.flatMap { environment in
-            environment.shell.projects.values.map { (environment, $0) }
+        var latest: [String: Date] = [:]
+        for entry in allThreads() {
+            let key = "\(entry.ref.environmentId)|\(entry.thread.projectId)"
+            latest[key] = max(latest[key] ?? .distantPast, entry.thread.updatedAt ?? .distantPast)
         }
-        .sorted { ($0.project.updatedAt ?? .distantPast) > ($1.project.updatedAt ?? .distantPast) }
+        let all = environments.flatMap { environment in
+            environment.shell.projects.values.map { (environment: environment, project: $0, latest: latest["\(environment.id)|\($0.id)"]) }
+        }
+        return all.sorted { a, b in
+            switch (a.latest, b.latest) {
+            case let (a?, b?): a > b
+            case (.some, nil): true
+            case (nil, .some): false
+            case (nil, nil): (a.project.updatedAt ?? .distantPast) > (b.project.updatedAt ?? .distantPast)
+            }
+        }
+        .map { ($0.environment, $0.project) }
     }
 
     // MARK: Thread actions

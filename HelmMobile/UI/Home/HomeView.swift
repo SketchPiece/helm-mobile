@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var snoozeChoosing: ThreadListEntry?
     @State private var actionError: String?
     @State private var fan = NewThreadFanState()
+    /// The fan's "All projects…": the picker, and New Thread in whatever is picked.
+    @State private var pickingProject = false
     /// Moves on when the next snoozed thread is due, so it walks back into the list (as "Woke")
     /// at its wake time rather than at the next unrelated update.
     @State private var now = Date()
@@ -135,6 +137,12 @@ struct HomeView: View {
         }
         .sheet(item: $snoozingCustom) { entry in
             CustomSnoozeSheet { date in try await model.perform(.snooze(date), on: entry.ref) }
+        }
+        .sheet(isPresented: $pickingProject) {
+            ProjectPicker(selectedEnvironment: nil, selectedProject: nil) { environment, project in
+                pickingProject = false
+                router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project.id))
+            }
         }
         .alert("Couldn't do that", isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -367,7 +375,12 @@ struct HomeView: View {
             .newThreadFan($fan) {
                 NewThreadFanItem.recent(in: model)
             } onPick: { item in
-                router.startNewThread(in: item.target)
+                switch item.kind {
+                case let .project(environment, project):
+                    router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project?.id))
+                case .allProjects:
+                    pickingProject = true
+                }
             }
             .accessibilityLabel("New thread")
             .accessibilityIdentifier("newThread")

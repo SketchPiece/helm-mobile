@@ -1,16 +1,25 @@
 import SwiftUI
 
-/// What a long press on New thread offers: the last few projects, then "no project" at the top.
+/// What a long press on New thread offers: the last few projects, "no project", then all projects at the top.
 struct NewThreadFanItem: Identifiable {
-    var environment: EnvironmentSession
-    /// Nil is the Mac's "no project" scratch folder.
-    var project: Project?
-    var id: String { "\(environment.id)|\(project?.id ?? "-")" }
-    var target: NewThreadTarget { NewThreadTarget(environmentId: environment.id, projectId: project?.id) }
+    enum Kind {
+        /// Nil project is the Mac's "no project" scratch folder.
+        case project(EnvironmentSession, Project?)
+        /// Every project, in the picker: for one that isn't among the recent.
+        case allProjects
+    }
+    var kind: Kind
+    var id: String {
+        switch kind {
+        case let .project(environment, project): "\(environment.id)|\(project?.id ?? "-")"
+        case .allProjects: "all"
+        }
+    }
 
-    /// The projects of the most recently active threads, newest first, and "no project" when a Mac has it.
+    /// The projects of the most recently active threads, newest first, "no project" when a Mac has it,
+    /// and all projects last.
     @MainActor
-    static func recent(in model: AppModel, limit: Int = 4) -> [NewThreadFanItem] {
+    static func recent(in model: AppModel, limit: Int = 5) -> [NewThreadFanItem] {
         var items: [NewThreadFanItem] = []
         var seen = Set<String>()
         let entries = model.allThreads().sorted { ($0.thread.updatedAt ?? .distantPast) > ($1.thread.updatedAt ?? .distantPast) }
@@ -18,18 +27,21 @@ struct NewThreadFanItem: Identifiable {
             guard let project = entry.project, let environment = model.environment(entry.ref.environmentId),
                   environment.config?.isScratch(project) != true
             else { continue }
-            let item = NewThreadFanItem(environment: environment, project: project)
+            let item = NewThreadFanItem(kind: .project(environment, project))
             if seen.insert(item.id).inserted { items.append(item) }
         }
         if let environment = model.environments.first(where: { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }) {
-            items.append(NewThreadFanItem(environment: environment, project: nil))
+            items.append(NewThreadFanItem(kind: .project(environment, nil)))
+        }
+        if !model.allProjects().isEmpty {
+            items.append(NewThreadFanItem(kind: .allProjects))
         }
         return items
     }
 }
 
 /// Press, slide up, let go: the fan rises from the New thread button, nearest is the latest project,
-/// the far end is "no project". Letting go anywhere else cancels.
+/// then "no project", and the far end is all projects. Letting go anywhere else cancels.
 struct NewThreadFanState {
     var items: [NewThreadFanItem] = []
     /// The button, in global coordinates; the fan stacks up from it.
@@ -49,8 +61,8 @@ struct NewThreadFanState {
         return CGPoint(x: anchor.midX, y: first - CGFloat(index) * (Self.bubble + Self.spacing))
     }
 
-    /// The item under the finger. Past the far end still counts as the last one, so "no project"
-    /// is a long pull; too far sideways or back on the button is nothing.
+    /// The item under the finger. Past the far end still counts as the last one, so an overshoot
+    /// lands on all projects and starts nothing; too far sideways or back on the button is nothing.
     func item(at point: CGPoint) -> Int? {
         guard !items.isEmpty, abs(point.x - anchor.midX) < 110 else { return nil }
         let step = Self.bubble + Self.spacing
@@ -94,7 +106,7 @@ struct NewThreadFan: View {
 
     private func row(_ item: NewThreadFanItem, selected: Bool) -> some View {
         HStack(spacing: 10) {
-            Text(item.project?.title ?? String(localized: "No project"))
+            Text(title(item))
                 .font(Typography.subheadline.weight(.medium))
                 .lineLimit(1)
                 .foregroundStyle(selected ? Palette.accentForeground : Palette.text)
@@ -111,13 +123,27 @@ struct NewThreadFan: View {
         }
     }
 
+    private func title(_ item: NewThreadFanItem) -> String {
+        switch item.kind {
+        case let .project(_, project): project?.title ?? String(localized: "No project")
+        case .allProjects: String(localized: "All projects…")
+        }
+    }
+
     @ViewBuilder
     private func bubble(_ item: NewThreadFanItem) -> some View {
         let size = NewThreadFanState.bubble
-        if let project = item.project {
-            ProjectIcon(project: project, environment: item.environment, size: size)
-        } else {
+        switch item.kind {
+        case let .project(environment, project?):
+            ProjectIcon(project: project, environment: environment, size: size)
+        case .project(_, nil):
             ScratchIcon(size: size)
+        case .allProjects:
+            Image(systemName: "square.grid.2x2")
+                .font(.system(size: size * 0.4))
+                .foregroundStyle(Palette.textMuted)
+                .frame(width: size, height: size)
+                .background(Palette.surfaceRaised, in: .rect(cornerRadius: size * 0.25, style: .continuous))
         }
     }
 }
