@@ -170,7 +170,7 @@ struct ShelfScreen: View {
             .listRowBackground(Palette.canvas)
             .listRowSeparatorTint(Palette.border)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .swipeActions(edge: .trailing, allowsFullSwipe: true) { bringBack(entry).labelStyle(.iconOnly) }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) { bringBack(entry) }
             .contextMenu {
                 bringBack(entry)
                 Button { run(.archive, on: entry) } label: { Label("Archive", systemImage: "archivebox") }

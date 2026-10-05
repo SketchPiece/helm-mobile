@@ -207,7 +207,6 @@ struct HomeView: View {
                 } label: {
                     Label("Discard", systemImage: "trash")
                 }
-                .labelStyle(.iconOnly)
             }
         }
     }
@@ -229,7 +228,7 @@ struct HomeView: View {
             .listRowBackground(Palette.canvas)
             .listRowSeparatorTint(Palette.border)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .swipeActions(edge: .trailing, allowsFullSwipe: true) { trailingSwipe(entry).labelStyle(.iconOnly) }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) { trailingSwipe(entry) }
             .swipeActions(edge: .leading) { leadingSwipe(entry).labelStyle(.iconOnly) }
             .contextMenu {
                 contextMenu(entry, arrangement: arrangement, in: entries)
