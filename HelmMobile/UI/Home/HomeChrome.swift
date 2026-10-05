@@ -137,11 +137,7 @@ struct ConnectionBanner: View {
                 .foregroundStyle(Palette.accentText)
             VStack(alignment: .leading, spacing: 2) {
                 Text(environment.label).font(Typography.bodyMedium).foregroundStyle(Palette.text)
-                Text(detail).font(Typography.footnote).foregroundStyle(Palette.textMuted).lineLimit(2)
-                if let savedAt = environment.shellSavedAt {
-                    Text("Threads as of \(savedAt.asOfDescription)")
-                        .font(Typography.footnote).foregroundStyle(Palette.textMuted)
-                }
+                Text(detail).font(Typography.footnote).foregroundStyle(Palette.textMuted).lineLimit(1)
             }
             Spacer()
             if environment.status == .unauthorized {
@@ -158,12 +154,17 @@ struct ConnectionBanner: View {
         .background(Palette.warningSurface, in: .rect(cornerRadius: 16))
     }
 
+    /// One short line; the raw reason stays in the Connections sheet.
     private var detail: String {
         switch environment.status {
         case .unauthorized:
-            String(localized: "This phone's access expired or was removed. Pair it again.")
-        case .offline(let reason):
-            String(localized: "Can't reach the computer. Is it awake and is Tailscale on? (\(reason))")
+            String(localized: "Access expired")
+        case .offline:
+            if let savedAt = environment.shellSavedAt {
+                String(localized: "Offline · threads from \(savedAt.asOfDescription)")
+            } else {
+                String(localized: "Offline. Is it awake?")
+            }
         default:
             environment.statusText
         }

@@ -1144,6 +1144,16 @@
         }
       }
     },
+    "Access expired": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ истёк"
+          }
+        }
+      }
+    },
     "Access: %@": {
       "localizations": {
         "ru": {
@@ -1789,7 +1799,6 @@
         }
       }
     },
-    "Can't reach the computer. Is it awake and is Tailscale on? (%@)": {},
     "Cancel": {
       "localizations": {
         "ru": {
@@ -4062,6 +4071,26 @@
         }
       }
     },
+    "Offline · threads from %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Офлайн · треды на %@"
+          }
+        }
+      }
+    },
+    "Offline. Is it awake?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Офлайн. Он не спит?"
+          }
+        }
+      }
+    },
     "On": {
       "localizations": {
         "ru": {
@@ -5825,16 +5854,6 @@
       }
     },
     "This phone forgets the computer. Threads stay on the computer.": {},
-    "This phone's access expired or was removed. Pair it again.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Доступ телефона истёк или отозван. Привяжи заново."
-          }
-        }
-      }
-    },
     "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {
@@ -5923,16 +5942,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тред откреплён"
-          }
-        }
-      }
-    },
-    "Threads as of %@": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Треды по состоянию на %@"
           }
         }
       }
