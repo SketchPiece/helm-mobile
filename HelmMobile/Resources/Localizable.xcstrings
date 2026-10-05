@@ -1669,6 +1669,16 @@
         }
       }
     },
+    "Back to threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернуться к тредам"
+          }
+        }
+      }
+    },
     "Background task": {
       "localizations": {
         "ru": {
@@ -3673,16 +3683,6 @@
         }
       }
     },
-    "New Thread clears and stays in the same project, ready for the next task.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Экран нового треда очищается и остаётся в том же проекте, готовый к следующей задаче."
-          }
-        }
-      }
-    },
     "New project": {
       "localizations": {
         "ru": {
@@ -4173,6 +4173,26 @@
     },
     "On the computer, turn on Helm → Settings → Connections → Network access.": {},
     "On the computer: Helm → Settings → Connections → Pair a device.": {},
+    "Once the agent is at work, New Thread opens in the same project for the next task.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда агент начнёт работу, откроется новый тред в том же проекте для следующей задачи."
+          }
+        }
+      }
+    },
+    "Once the agent is at work, you're back on the thread list.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда агент начнёт работу, вы вернётесь к списку тредов."
+          }
+        }
+      }
+    },
     "Open": {
       "localizations": {
         "ru": {
@@ -5849,6 +5869,16 @@
         }
       }
     },
+    "The thread always opens first, so you see the message go out. If the agent hasn't started within a few seconds, you stay in the thread.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала всегда открывается тред, чтобы было видно, что сообщение ушло. Если агент не начал работу за несколько секунд, вы остаётесь в треде."
+          }
+        }
+      }
+    },
     "Theme": {
       "localizations": {
         "ru": {
@@ -6022,16 +6052,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тред отложен"
-          }
-        }
-      }
-    },
-    "Thread started": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Тред запущен"
           }
         }
       }
@@ -6483,16 +6503,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пока агент работает"
-          }
-        }
-      }
-    },
-    "With Start another, tap Open in the notice on top to go to the thread that just started.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Если выбрано «Начать следующий», нажмите «Открыть» в уведомлении сверху, чтобы перейти к только что запущенному треду."
           }
         }
       }

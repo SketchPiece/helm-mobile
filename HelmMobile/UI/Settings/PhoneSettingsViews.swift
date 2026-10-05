@@ -11,14 +11,14 @@ struct FollowUpSettingsView: View {
     }
 }
 
-/// Settings → New threads: open each thread once it starts, or stay to start the next one.
+/// Settings → New threads: stay in a thread once it starts, or move on once the agent is at work.
 struct AfterStartSettingsView: View {
     @AppStorage(PhonePreferences.afterStartKey) private var behavior = AfterStartBehavior.open
 
     var body: some View {
         ChoiceForm(title: String(localized: "New threads"), header: String(localized: "After starting a thread"),
                    options: AfterStartBehavior.allCases, selection: $behavior, label: \.title, detail: \.detail,
-                   footer: String(localized: "With Start another, tap Open in the notice on top to go to the thread that just started."))
+                   footer: String(localized: "The thread always opens first, so you see the message go out. If the agent hasn't started within a few seconds, you stay in the thread."))
     }
 }
 

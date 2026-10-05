@@ -40,22 +40,25 @@ enum FollowUpBehavior: String, CaseIterable, Identifiable {
     }
 }
 
-/// What New Thread does once a thread starts: open it, or stay for the next task in the same project.
+/// What happens once a thread starts. It always opens first; the other two move on by themselves once
+/// the agent is at work: to New Thread in the same project, or back to the thread list.
 enum AfterStartBehavior: String, CaseIterable, Identifiable {
-    case open, another
+    case open, another, home
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .open: String(localized: "Open the thread")
         case .another: String(localized: "Start another")
+        case .home: String(localized: "Back to threads")
         }
     }
 
     var detail: String {
         switch self {
         case .open: String(localized: "The new thread opens, so you can follow the agent.")
-        case .another: String(localized: "New Thread clears and stays in the same project, ready for the next task.")
+        case .another: String(localized: "Once the agent is at work, New Thread opens in the same project for the next task.")
+        case .home: String(localized: "Once the agent is at work, you're back on the thread list.")
         }
     }
 }

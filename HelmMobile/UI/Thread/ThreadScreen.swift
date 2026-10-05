@@ -232,6 +232,22 @@ private struct ThreadContent: View {
             if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
         }
         .onChange(of: session.isDeleted) { _, deleted in if deleted { dismiss() } }
+        .task(id: session.projection?.isWorking == true) { await moveOnAfterStart() }
+    }
+
+    /// Started from New Thread with "Start another" or "Back to threads": once the agent is seen at work,
+    /// a moment to take it in, then on. If it hasn't started within a few seconds, stay here.
+    private func moveOnAfterStart() async {
+        let ref = ThreadRef(environmentId: environment.id, threadId: session.threadId)
+        guard router.afterStart?.ref == ref else { return }
+        let working = session.projection?.isWorking == true
+        try? await Task.sleep(for: working ? .seconds(1.5) : .seconds(10))
+        guard !Task.isCancelled else { return }
+        if working {
+            router.finishAfterStart(ref)
+        } else if router.afterStart?.ref == ref {
+            router.afterStart = nil
+        }
     }
 
     private var subtitle: String {

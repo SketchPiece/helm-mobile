@@ -22,6 +22,8 @@ final class Router {
     var newThreadTarget: NewThreadTarget?
     /// New Thread's attachments outlive the screen, so going back keeps them with the draft.
     let newThreadComposer = ComposerDraft()
+    /// A thread just started from New Thread, to move on from once the agent is at work.
+    var afterStart: AfterStart?
     /// What New Thread was left holding, listed on top of Home.
     private(set) var newThreadDraft = NewThreadDraft.load()
 
@@ -59,6 +61,23 @@ final class Router {
         newThreadDraft = nil
     }
 
+    /// The started thread showed the agent at work: on to New Thread in the same project, or Home.
+    /// Nothing happens if the user has gone somewhere else meanwhile.
+    func finishAfterStart(_ ref: ThreadRef) {
+        guard let pending = afterStart, pending.ref == ref else { return }
+        afterStart = nil
+        guard path.last == .thread(ref) else { return }
+        switch pending.behavior {
+        case .open: break
+        case .another:
+            newThreadTarget = pending.target
+            // Replacing the thread pushes New Thread, and Back from it goes Home.
+            path = [.newThread]
+        case .home:
+            path = []
+        }
+    }
+
     /// Screens pushed inside Settings, for links such as the Usage widget's.
     var settingsPath: [SettingsDestination] = []
 
@@ -77,6 +96,12 @@ final class Router {
 }
 
 enum SettingsDestination: Hashable { case usage }
+
+struct AfterStart: Equatable {
+    var ref: ThreadRef
+    var behavior: AfterStartBehavior
+    var target: NewThreadTarget
+}
 
 /// A project to start a thread in; no project id means the Mac's "no project" scratch folder.
 struct NewThreadTarget: Equatable {

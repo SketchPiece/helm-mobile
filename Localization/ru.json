@@ -733,7 +733,8 @@
   "Open the thread": "Открыть тред",
   "Start another": "Начать следующий",
   "The new thread opens, so you can follow the agent.": "Новый тред открывается, и можно следить за агентом.",
-  "New Thread clears and stays in the same project, ready for the next task.": "Экран нового треда очищается и остаётся в том же проекте, готовый к следующей задаче.",
-  "Thread started": "Тред запущен",
-  "With Start another, tap Open in the notice on top to go to the thread that just started.": "Если выбрано «Начать следующий», нажмите «Открыть» в уведомлении сверху, чтобы перейти к только что запущенному треду."
+  "Back to threads": "Вернуться к тредам",
+  "Once the agent is at work, New Thread opens in the same project for the next task.": "Когда агент начнёт работу, откроется новый тред в том же проекте для следующей задачи.",
+  "Once the agent is at work, you're back on the thread list.": "Когда агент начнёт работу, вы вернётесь к списку тредов.",
+  "The thread always opens first, so you see the message go out. If the agent hasn't started within a few seconds, you stay in the thread.": "Сначала всегда открывается тред, чтобы было видно, что сообщение ушло. Если агент не начал работу за несколько секунд, вы остаётесь в треде."
 }
