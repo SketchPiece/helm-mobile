@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var fan = NewThreadFanState()
     /// The fan's "All projects…": the picker, and New Thread in whatever is picked.
     @State private var pickingProject = false
+    @State private var editingProject: ProjectEditing?
+    @State private var deletingProject: ProjectDeletion?
     /// Moves on when the next snoozed thread is due, so it walks back into the list (as "Woke")
     /// at its wake time rather than at the next unrelated update.
     @State private var now = Date()
@@ -29,7 +31,16 @@ struct HomeView: View {
         let sections = HomeSections(entries: entries, now: now)
         List {
             if !chips.isEmpty {
-                ProjectChips(chips: chips, selection: $projectFilter)
+                ProjectChips(chips: chips, selection: $projectFilter) { chip, action in
+                    switch action {
+                    case .newThread:
+                        router.startNewThread(in: NewThreadTarget(environmentId: chip.environment.id, projectId: chip.project.id))
+                    case .edit:
+                        editingProject = ProjectEditing(environment: chip.environment, project: chip.project)
+                    case .delete:
+                        deletingProject = ProjectDeletion(environment: chip.environment, project: chip.project, in: model)
+                    }
+                }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -137,6 +148,14 @@ struct HomeView: View {
         }
         .sheet(item: $snoozingCustom) { entry in
             CustomSnoozeSheet { date in try await model.perform(.snooze(date), on: entry.ref) }
+        }
+        .sheet(item: $editingProject) { editing in
+            ProjectEditSheet(environment: editing.environment, project: editing.project) {
+                if projectFilter == editing.project.id { projectFilter = nil }
+            }
+        }
+        .projectDeletionAlert($deletingProject) { deletion in
+            if projectFilter == deletion.project.id { projectFilter = nil }
         }
         .sheet(isPresented: $pickingProject) {
             ProjectPicker(selectedEnvironment: nil, selectedProject: nil) { environment, project in

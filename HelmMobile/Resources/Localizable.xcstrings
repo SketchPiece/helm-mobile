@@ -1071,6 +1071,16 @@
     "15": {
       "shouldTranslate": false
     },
+    "1–2 letters": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1–2 буквы"
+          }
+        }
+      }
+    },
     "2": {
       "shouldTranslate": false
     },
@@ -1110,6 +1120,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "90 д"
+          }
+        }
+      }
+    },
+    "A new image is drawn on the Mac: ask an agent to make the icon.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новую картинку рисуют на Mac: попроси агента сделать иконку."
           }
         }
       }
@@ -1455,6 +1475,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ответь на вопросы"
+          }
+        }
+      }
+    },
+    "Any emoji": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Любой эмодзи"
           }
         }
       }
@@ -1849,6 +1879,16 @@
         }
       }
     },
+    "Change icon": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сменить иконку"
+          }
+        }
+      }
+    },
     "Changes": {
       "localizations": {
         "ru": {
@@ -2036,6 +2076,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Диффы всегда листаются вбок."
+          }
+        }
+      }
+    },
+    "Colour": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цвет"
           }
         }
       }
@@ -2313,6 +2363,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось сжать контекст"
+          }
+        }
+      }
+    },
+    "Couldn't delete the project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не получилось удалить проект"
           }
         }
       }
@@ -2607,6 +2667,78 @@
         }
       }
     },
+    "Delete project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить проект"
+          }
+        }
+      }
+    },
+    "Delete project and %lld threads": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete project and %lld thread"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete project and %lld threads"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить проект и %lld треда"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить проект и %lld тредов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить проект и %lld тред"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить проект и %lld треда"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Delete project…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить проект…"
+          }
+        }
+      }
+    },
     "Delete this task?": {
       "localizations": {
         "ru": {
@@ -2623,6 +2755,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалить тред?"
+          }
+        }
+      }
+    },
+    "Delete “%@”?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить «%@»?"
           }
         }
       }
@@ -2738,6 +2880,26 @@
         }
       }
     },
+    "Edit project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменить проект"
+          }
+        }
+      }
+    },
+    "Edit project…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменить проект…"
+          }
+        }
+      }
+    },
     "Edit queued message": {
       "localizations": {
         "ru": {
@@ -2764,6 +2926,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Правит сам, команды — с разрешения"
+          }
+        }
+      }
+    },
+    "Emoji": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эмодзи"
           }
         }
       }
@@ -2908,6 +3080,16 @@
         }
       }
     },
+    "Folder on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка на Mac"
+          }
+        }
+      }
+    },
     "Folder on the computer": {},
     "Follow-ups": {
       "localizations": {
@@ -3015,6 +3197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "От origin/%@"
+          }
+        }
+      }
+    },
+    "From the project folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Из папки проекта"
           }
         }
       }
@@ -3230,6 +3422,26 @@
         }
       }
     },
+    "Icon": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Иконка"
+          }
+        }
+      }
+    },
+    "Image": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Картинка"
+          }
+        }
+      }
+    },
     "Implement plan": {
       "localizations": {
         "ru": {
@@ -3310,6 +3522,58 @@
         }
       }
     },
+    "Its %lld threads are deleted for good. The folder on the Mac stays as it is.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Its %lld thread is deleted for good. The folder on the Mac stays as it is."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Its %lld threads are deleted for good. The folder on the Mac stays as it is."
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Его %lld треда удалятся насовсем. Папка на Mac останется как есть."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Его %lld тредов удалятся насовсем. Папка на Mac останется как есть."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Его %lld тред удалится насовсем. Папка на Mac останется как есть."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Его %lld треда удалятся насовсем. Папка на Mac останется как есть."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Its own folder and branch": {
       "localizations": {
         "ru": {
@@ -3336,6 +3600,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Клавиатура"
+          }
+        }
+      }
+    },
+    "Kind": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вид"
           }
         }
       }
@@ -3371,6 +3645,16 @@
       }
     },
     "Later": {},
+    "Letters": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Буквы"
+          }
+        }
+      }
+    },
     "Light": {
       "localizations": {
         "ru": {
@@ -3993,6 +4277,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Таких папок нет"
+          }
+        }
+      }
+    },
+    "No images in the project. A new one is drawn on the Mac: ask an agent to make the icon.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В проекте нет картинок. Новую рисуют на Mac: попроси агента сделать иконку."
           }
         }
       }
@@ -5829,6 +6123,16 @@
         }
       }
     },
+    "The folder on the Mac stays as it is.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка на Mac останется как есть."
+          }
+        }
+      }
+    },
     "The new thread opens, so you can follow the agent.": {
       "localizations": {
         "ru": {
@@ -6187,6 +6491,16 @@
         }
       }
     },
+    "Type one from the emoji keyboard, or pick below.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Набери на клавиатуре эмодзи или выбери ниже."
+          }
+        }
+      }
+    },
     "URL or owner/name": {
       "localizations": {
         "ru": {
@@ -6473,6 +6787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "По будням"
+          }
+        }
+      }
+    },
+    "What Helm finds in the folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что Штурвал найдёт в папке"
           }
         }
       }

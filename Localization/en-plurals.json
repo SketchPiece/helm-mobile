@@ -62,5 +62,13 @@
   "%lld background tasks": {
     "one": "%lld background task",
     "other": "%lld background tasks"
+  },
+  "Delete project and %lld threads": {
+    "one": "Delete project and %lld thread",
+    "other": "Delete project and %lld threads"
+  },
+  "Its %lld threads are deleted for good. The folder on the Mac stays as it is.": {
+    "one": "Its %lld thread is deleted for good. The folder on the Mac stays as it is.",
+    "other": "Its %lld threads are deleted for good. The folder on the Mac stays as it is."
   }
 }
