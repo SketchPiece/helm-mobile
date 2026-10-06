@@ -9,12 +9,8 @@ struct ProjectChips: View {
         var id: String { project.id }
     }
 
-    enum Action { case newThread, edit, delete }
-
     let chips: [Chip]
     @Binding var selection: String?
-    /// The long-press menu on a project chip; none without it.
-    var onAction: ((Chip, Action) -> Void)?
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -33,14 +29,6 @@ struct ProjectChips: View {
                         }
                     } action: {
                         selection = selection == chip.project.id ? nil : chip.project.id
-                    }
-                    .contextMenu {
-                        if let onAction {
-                            Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
-                            Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
-                            Divider()
-                            Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
-                        }
                     }
                 }
             }

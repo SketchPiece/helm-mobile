@@ -21,14 +21,14 @@ struct ProjectIcon: View {
 
     private var tile: some View {
         ZStack {
-            if project?.iconKind == "emoji", let emoji = project?.iconEmoji {
-                Palette.surfaceRaised
-                Text(emoji).font(.system(size: size * 0.55))
-            } else if project?.iconKind != "monogram", let image {
+            if let image {
                 Image(uiImage: image)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFill()
+            } else if let emoji = project?.iconEmoji {
+                Palette.surfaceRaised
+                Text(emoji).font(.system(size: size * 0.55))
             } else {
                 tileColor
                 Text(project?.initials ?? "·")
@@ -38,7 +38,7 @@ struct ProjectIcon: View {
         }
         .frame(width: size, height: size)
         .clipShape(.rect(cornerRadius: size * 0.25, style: .continuous))
-        .task(id: project.map { "\($0.faviconPath ?? "")|\($0.iconKind ?? "")" }) { await load() }
+        .task(id: project?.faviconPath) { await load() }
     }
 
     private var tileColor: Color {
@@ -51,11 +51,7 @@ struct ProjectIcon: View {
         return palette[hash % palette.count]
     }
 
-    /// The server's icon colours, in the order the colour picker shows them.
-    static let colorNames = ["red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan",
-                             "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose", "gray"]
-
-    static let namedColors: [String: Color] = [
+    private static let namedColors: [String: Color] = [
         "gray": Color(hex: 0x6B7280), "red": Color(hex: 0xDC2626), "orange": Color(hex: 0xEA580C),
         "amber": Color(hex: 0xD97706), "yellow": Color(hex: 0xCA8A04), "lime": Color(hex: 0x65A30D),
         "green": Color(hex: 0x16A34A), "emerald": Color(hex: 0x059669), "teal": Color(hex: 0x0D9488),
@@ -65,7 +61,7 @@ struct ProjectIcon: View {
     ]
 
     private func load() async {
-        guard let project, let path = project.faviconPath, project.iconKind == nil, let environment else {
+        guard let project, let path = project.faviconPath, let environment else {
             image = nil
             return
         }

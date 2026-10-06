@@ -37,8 +37,6 @@ struct Project: Identifiable, Hashable, Sendable {
     var iconEmoji: String?
     var iconColor: String?
     var monogram: String?
-    /// The icon override's kind (`emoji`, `monogram`, `lucide`); an override wins over the favicon.
-    var iconKind: String?
     var defaultModelSelection: ModelSelection?
     var updatedAt: Date?
     /// `repositoryIdentity.displayName` ("acme/app"); `#` pull request search needs it.
@@ -54,46 +52,9 @@ struct Project: Identifiable, Hashable, Sendable {
         iconEmoji = icon?["emoji"]?.string
         iconColor = icon?["color"]?.string
         monogram = icon?["text"]?.string ?? icon?["monogramText"]?.string
-        // Older peers send a monogram as a lucide icon with `monogramText`.
-        iconKind = icon?["kind"]?.string == "lucide" && monogram != nil ? "monogram" : icon?["kind"]?.string
         defaultModelSelection = ModelSelection(json: json["defaultModelSelection"]?.nonNull)
         updatedAt = ISODate.parse(json["updatedAt"]?.string)
         repositoryName = json["repositoryIdentity"]?.nonNull?["displayName"]?.string
-    }
-
-    /// What the project's tile shows, as the edit sheet chooses it.
-    enum IconChoice: Hashable {
-        /// No override and no chosen image: the favicon Helm finds itself, or the monogram.
-        case automatic
-        /// A workspace-relative image file.
-        case image(String)
-        case emoji(String)
-        case letters(String, color: String)
-    }
-
-    var iconChoice: IconChoice {
-        switch iconKind {
-        case "emoji": iconEmoji.map(IconChoice.emoji) ?? .automatic
-        case "monogram": .letters(monogram ?? initials, color: iconColor ?? "gray")
-        default: faviconPath.map(IconChoice.image) ?? .automatic
-        }
-    }
-
-    /// The project as it would look with `choice`, for previews.
-    func with(_ choice: IconChoice) -> Project {
-        var copy = self
-        copy.iconKind = nil
-        copy.iconEmoji = nil
-        copy.monogram = nil
-        copy.iconColor = nil
-        copy.faviconPath = nil
-        switch choice {
-        case .automatic: break
-        case .image(let path): copy.faviconPath = path
-        case .emoji(let emoji): copy.iconKind = "emoji"; copy.iconEmoji = emoji
-        case let .letters(text, color): copy.iconKind = "monogram"; copy.monogram = text; copy.iconColor = color
-        }
-        return copy
     }
 
     var initials: String {

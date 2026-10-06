@@ -86,17 +86,6 @@ struct FolderListing: Sendable {
 
 /// Project mutations for `projects.mutate`.
 enum ProjectCommands {
-    /// `project.update` fields for an icon: an override clears the image and the other way round.
-    static func iconFields(_ choice: Project.IconChoice) -> [String: JSON] {
-        switch choice {
-        case .automatic: ["faviconPath": nil, "projectIcon": nil]
-        case .image(let path): ["faviconPath": .string(path), "projectIcon": nil]
-        case .emoji(let emoji): ["faviconPath": nil, "projectIcon": ["kind": "emoji", "emoji": .string(emoji)]]
-        case let .letters(text, color):
-            ["faviconPath": nil, "projectIcon": ["kind": "monogram", "text": .string(text), "color": .string(color)]]
-        }
-    }
-
     /// Adds an existing (or missing, then created) folder as a project.
     static func create(projectId: String, path: String) -> JSON {
         [
@@ -110,19 +99,8 @@ enum ProjectCommands {
         ]
     }
 
-    /// Changes only the given fields; `nil` values clear them (`projectIcon: nil` is the automatic icon).
-    static func update(projectId: String, _ fields: [String: JSON]) -> JSON {
-        var command: [String: JSON] = [
-            "type": "project.update", "commandId": .string(UUID().uuidString.lowercased()), "projectId": .string(projectId),
-        ]
-        command.merge(fields) { _, new in new }
-        return .object(command)
-    }
-
-    /// `force` deletes the project's threads too; without it a project with threads is refused.
-    static func delete(projectId: String, force: Bool = false) -> JSON {
-        ["type": "project.delete", "commandId": .string(UUID().uuidString.lowercased()), "projectId": .string(projectId),
-         "force": .bool(force)]
+    static func delete(projectId: String) -> JSON {
+        ["type": "project.delete", "commandId": .string(UUID().uuidString.lowercased()), "projectId": .string(projectId)]
     }
 }
 

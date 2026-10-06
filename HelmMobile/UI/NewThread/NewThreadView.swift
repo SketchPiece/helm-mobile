@@ -563,8 +563,6 @@ struct ProjectPicker: View {
     @State private var showAdd = false
     @State private var preparingScratch: String?
     @State private var error: String?
-    @State private var editing: ProjectEditing?
-    @State private var deleting: ProjectDeletion?
 
     var body: some View {
         NavigationStack {
@@ -603,15 +601,6 @@ struct ProjectPicker: View {
                     }
                     .accessibilityIdentifier("projectOption")
                     .listRowBackground(Palette.surface)
-                    .contextMenu {
-                        Button("Edit project…", systemImage: "pencil") {
-                            editing = ProjectEditing(environment: entry.environment, project: entry.project)
-                        }
-                        Divider()
-                        Button("Delete project…", systemImage: "trash", role: .destructive) {
-                            deleting = ProjectDeletion(environment: entry.environment, project: entry.project, in: model)
-                        }
-                    }
                 }
             }
             .scrollContentBackground(.hidden)
@@ -633,10 +622,6 @@ struct ProjectPicker: View {
                     .accessibilityIdentifier("addProject")
                 }
             }
-            .sheet(item: $editing) { editing in
-                ProjectEditSheet(environment: editing.environment, project: editing.project)
-            }
-            .projectDeletionAlert($deleting)
             .sheet(isPresented: $showAdd) {
                 AddProjectSheet(environmentId: selectedEnvironment) { environment, project in
                     showAdd = false

@@ -737,38 +737,5 @@
   "Back to threads": "Вернуться к тредам",
   "Once the agent is at work, New Thread opens in the same project for the next task.": "Когда агент начнёт работу, откроется новый тред в том же проекте для следующей задачи.",
   "Once the agent is at work, you're back on the thread list.": "Когда агент начнёт работу, вы вернётесь к списку тредов.",
-  "The thread always opens first, so you see the message go out. If the agent hasn't started within a few seconds, you stay in the thread.": "Сначала всегда открывается тред, чтобы было видно, что сообщение ушло. Если агент не начал работу за несколько секунд, вы остаётесь в треде.",
-  "Change icon": "Сменить иконку",
-  "Delete project…": "Удалить проект…",
-  "Edit project": "Изменить проект",
-  "Edit project…": "Изменить проект…",
-  "Icon": "Иконка",
-  "Kind": "Вид",
-  "Image": "Картинка",
-  "Emoji": "Эмодзи",
-  "Letters": "Буквы",
-  "What Helm finds in the folder": "Что Штурвал найдёт в папке",
-  "From the project folder": "Из папки проекта",
-  "No images in the project. A new one is drawn on the Mac: ask an agent to make the icon.": "В проекте нет картинок. Новую рисуют на Mac: попроси агента сделать иконку.",
-  "A new image is drawn on the Mac: ask an agent to make the icon.": "Новую картинку рисуют на Mac: попроси агента сделать иконку.",
-  "Any emoji": "Любой эмодзи",
-  "Type one from the emoji keyboard, or pick below.": "Набери на клавиатуре эмодзи или выбери ниже.",
-  "1–2 letters": "1–2 буквы",
-  "Colour": "Цвет",
-  "Delete “%@”?": "Удалить «%@»?",
-  "Delete project": "Удалить проект",
-  "Delete project and %lld threads": {
-    "one": "Удалить проект и %lld тред",
-    "few": "Удалить проект и %lld треда",
-    "many": "Удалить проект и %lld тредов",
-    "other": "Удалить проект и %lld треда"
-  },
-  "Its %lld threads are deleted for good. The folder on the Mac stays as it is.": {
-    "one": "Его %lld тред удалится насовсем. Папка на Mac останется как есть.",
-    "few": "Его %lld треда удалятся насовсем. Папка на Mac останется как есть.",
-    "many": "Его %lld тредов удалятся насовсем. Папка на Mac останется как есть.",
-    "other": "Его %lld треда удалятся насовсем. Папка на Mac останется как есть."
-  },
-  "The folder on the Mac stays as it is.": "Папка на Mac останется как есть.",
-  "Couldn't delete the project": "Не получилось удалить проект"
+  "The thread always opens first, so you see the message go out. If the agent hasn't started within a few seconds, you stay in the thread.": "Сначала всегда открывается тред, чтобы было видно, что сообщение ушло. Если агент не начал работу за несколько секунд, вы остаётесь в треде."
 }
