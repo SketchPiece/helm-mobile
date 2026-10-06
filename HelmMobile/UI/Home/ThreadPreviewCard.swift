@@ -51,7 +51,7 @@ struct ThreadPreviewCard: View {
                     }
                 }
                 if let number = thread.pullRequestNumber {
-                    detail(symbol: "arrow.triangle.pull", tint: Palette.question) {
+                    detail(icon: PullRequestIcon(size: 11), tint: Palette.pullRequest) {
                         Text("#\(number)").font(Typography.mono(13))
                         if let state = thread.pullRequestState {
                             Text(ComposerSuggestions.stateLabel(state.lowercased())).foregroundStyle(Palette.textMuted)
@@ -114,9 +114,14 @@ struct ThreadPreviewCard: View {
 
     private func detail<Content: View>(symbol: String, tint: Color = Palette.textMuted,
                                        @ViewBuilder _ content: () -> Content) -> some View {
+        detail(icon: Image(systemName: symbol)
+            .font(.system(size: symbol == "circle.fill" ? 7 : 11, weight: .semibold)), tint: tint, content)
+    }
+
+    private func detail<Icon: View, Content: View>(icon: Icon, tint: Color = Palette.textMuted,
+                                                   @ViewBuilder _ content: () -> Content) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: symbol)
-                .font(.system(size: symbol == "circle.fill" ? 7 : 11, weight: .semibold))
+            icon
                 .foregroundStyle(tint)
                 .frame(width: 16)
             content()

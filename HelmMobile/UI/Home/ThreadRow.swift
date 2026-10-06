@@ -30,6 +30,21 @@ extension ThreadPhase {
 
 extension Palette {
     static let done = dynamic(light: 0x3E7A2E, dark: 0x8FC56A)
+    /// GitHub's own pull-request purple.
+    static let pullRequest = dynamic(light: 0x8250DF, dark: 0xA371F7)
+}
+
+/// GitHub's pull-request octicon, tinted by the foreground style.
+struct PullRequestIcon: View {
+    var size: CGFloat
+
+    var body: some View {
+        Image("PullRequest")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
 }
 
 /// One thread in the list: project tile with a status lamp, title, one line of context, and
@@ -91,10 +106,12 @@ struct ThreadRow: View {
     private func trailing(thread: ThreadSummary, phase: ThreadPhase, woke: Bool) -> some View {
         if woke {
             // Back from a snooze in its old place: the label carries the news until it's opened.
-            Label("Woke", systemImage: "sun.max")
-                .labelStyle(.titleAndIcon)
-                .font(Typography.footnote.weight(.medium))
-                .foregroundStyle(Palette.accentText)
+            HStack(spacing: 3) {
+                Image(systemName: "sun.max")
+                Text("Woke")
+            }
+            .font(Typography.footnote.weight(.medium))
+            .foregroundStyle(Palette.accentText)
         } else if let label = phase.label, phase != .done {
             if phase == .working, let since = thread.activityRunStartedAt {
                 HStack(spacing: 4) {
@@ -141,11 +158,13 @@ struct ThreadRow: View {
             }
             Spacer(minLength: 0)
             if let number = thread.pullRequestNumber {
-                Label("#\(number)", systemImage: "arrow.triangle.pull")
-                    .labelStyle(.titleAndIcon)
-                    .font(Typography.mono(12))
-                    .foregroundStyle(Palette.question)
-                    .padding(.leading, 6)
+                HStack(spacing: 3) {
+                    PullRequestIcon(size: 12)
+                    Text("#\(number)")
+                }
+                .font(Typography.mono(12))
+                .foregroundStyle(Palette.pullRequest)
+                .padding(.leading, 6)
             }
         }
         .font(Typography.subheadline)
