@@ -125,6 +125,7 @@ struct PairingView: View {
                 .disabled(address.trimmingCharacters(in: .whitespaces).isEmpty || isBusy)
                 if case .failed(let message) = phase {
                     Label(message, systemImage: "exclamationmark.triangle")
+                        .labelStyle(.tight)
                         .font(Typography.footnote)
                         .foregroundStyle(Palette.errorText)
                 }

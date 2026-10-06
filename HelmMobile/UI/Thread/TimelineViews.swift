@@ -50,7 +50,7 @@ struct UserBubble: View {
             if steered || sentAt != nil {
                 HStack(spacing: 6) {
                     if steered {
-                        Label("Steered", systemImage: "arrow.turn.down.right")
+                        Label("Steered", systemImage: "arrow.turn.down.right").labelStyle(.tight)
                         if sentAt != nil { Text(verbatim: "·") }
                     }
                     if let sentAt {
@@ -365,6 +365,7 @@ struct PlanCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label("Plan", systemImage: "list.bullet.clipboard")
+                    .labelStyle(.tight)
                     .sectionLabelStyle()
                 Spacer()
                 Menu {
@@ -393,6 +394,7 @@ struct PlanCard: View {
             MarkdownView(text: item.text)
             if let saved {
                 Label("Saved to \(saved)", systemImage: "checkmark.circle")
+                    .labelStyle(.tight)
                     .font(Typography.footnote)
                     .foregroundStyle(Palette.done)
                     .transition(.opacity)
@@ -675,6 +677,7 @@ struct AttachmentThumbnail: View {
                 .clipShape(.rect(cornerRadius: 14, style: .continuous))
             } else {
                 Label(attachment.name, systemImage: "doc")
+                    .labelStyle(.tight)
                     .font(Typography.footnote)
                     .lineLimit(1)
                     .padding(.horizontal, 10)

@@ -75,6 +75,7 @@ private struct ApprovalCard: View {
             }
             if let warning = options.compactMap(\.warning).first {
                 Label(warning, systemImage: "exclamationmark.triangle")
+                    .labelStyle(.tight)
                     .font(Typography.footnote)
                     .foregroundStyle(Palette.accentText)
             }
@@ -746,6 +747,7 @@ private struct KeptAttachmentTile: View {
                 .clipShape(.rect(cornerRadius: 12, style: .continuous))
             } else {
                 Label(attachment.name, systemImage: "doc")
+                    .labelStyle(.tight)
                     .font(Typography.footnote)
                     .foregroundStyle(Palette.text)
                     .lineLimit(1)

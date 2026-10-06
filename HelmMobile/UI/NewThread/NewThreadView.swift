@@ -162,6 +162,7 @@ struct NewThreadView: View {
                     }
                 } label: {
                     Label("on \(environment.label)", systemImage: "laptopcomputer")
+                        .labelStyle(.tight)
                         .font(Typography.subheadline)
                         .foregroundStyle(Palette.textMuted)
                         .padding(.horizontal, 12)

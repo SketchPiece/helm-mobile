@@ -348,7 +348,7 @@ private struct CloneForm: View {
                     .accessibilityIdentifier("cloneSource")
             } footer: {
                 if let lookup {
-                    Label(lookup.nameWithOwner, systemImage: "checkmark.circle").font(Typography.footnote)
+                    Label(lookup.nameWithOwner, systemImage: "checkmark.circle").labelStyle(.tight).font(Typography.footnote)
                 } else if let lookupError {
                     Text(lookupError).font(Typography.footnote)
                 }

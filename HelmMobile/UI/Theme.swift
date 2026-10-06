@@ -77,6 +77,21 @@ enum Typography {
     static let code = mono(13)
 }
 
+/// Icon right next to its words. The system style leaves a wide gap at small sizes, which
+/// reads as two separate things in a row's status or a caption.
+struct TightLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            configuration.icon
+            configuration.title
+        }
+    }
+}
+
+extension LabelStyle where Self == TightLabelStyle {
+    static var tight: TightLabelStyle { TightLabelStyle() }
+}
+
 extension View {
     /// An opaque raised panel that floats over the timeline (composer, queue). Glass is too
     /// see-through over text, so these stay solid with a hairline and a soft shadow.

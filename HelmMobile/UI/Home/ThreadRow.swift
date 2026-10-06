@@ -43,6 +43,8 @@ struct PullRequestIcon: View {
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
+            // Centred on the capitals next to it, the way a symbol sits, not standing on the baseline.
+            .alignmentGuide(.firstTextBaseline) { $0.height * 0.85 }
             .accessibilityHidden(true)
     }
 }
@@ -106,12 +108,10 @@ struct ThreadRow: View {
     private func trailing(thread: ThreadSummary, phase: ThreadPhase, woke: Bool) -> some View {
         if woke {
             // Back from a snooze in its old place: the label carries the news until it's opened.
-            HStack(spacing: 3) {
-                Image(systemName: "sun.max")
-                Text("Woke")
-            }
-            .font(Typography.footnote.weight(.medium))
-            .foregroundStyle(Palette.accentText)
+            Label("Woke", systemImage: "sun.max")
+                .labelStyle(.tight)
+                .font(Typography.footnote.weight(.medium))
+                .foregroundStyle(Palette.accentText)
         } else if let label = phase.label, phase != .done {
             if phase == .working, let since = thread.activityRunStartedAt {
                 HStack(spacing: 4) {
@@ -128,15 +128,12 @@ struct ThreadRow: View {
             }
         } else if thread.isSnoozed(), let wake = thread.snoozedUntil {
             // A snoozed row shows when it comes back, not when it was last touched.
-            HStack(spacing: 3) {
-                Image(systemName: "moon.zzz")
-                Text(Snooze.wakeLabel(until: wake))
-            }
-            .font(Typography.footnote)
-            .foregroundStyle(Palette.question)
-            .monospacedDigit()
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("Wakes \(Snooze.wakeDescription(until: wake))"))
+            Label(Snooze.wakeLabel(until: wake), systemImage: "moon.zzz")
+                .labelStyle(.tight)
+                .font(Typography.footnote)
+                .foregroundStyle(Palette.question)
+                .monospacedDigit()
+                .accessibilityLabel(Text("Wakes \(Snooze.wakeDescription(until: wake))"))
         } else if let date = thread.updatedAt {
             Text(RelativeTime.short(date))
                 .font(Typography.footnote)
@@ -161,13 +158,11 @@ struct ThreadRow: View {
             }
             Spacer(minLength: 0)
             if let number = thread.pullRequestNumber {
-                HStack(spacing: 3) {
-                    PullRequestIcon(size: 12)
-                    Text("#\(number)")
-                }
-                .font(Typography.mono(12))
-                .foregroundStyle(Palette.pullRequest)
-                .padding(.leading, 6)
+                Label { Text("#\(number)") } icon: { PullRequestIcon(size: 12) }
+                    .labelStyle(.tight)
+                    .font(Typography.mono(12))
+                    .foregroundStyle(Palette.pullRequest)
+                    .padding(.leading, 6)
             }
         }
         .font(Typography.subheadline)

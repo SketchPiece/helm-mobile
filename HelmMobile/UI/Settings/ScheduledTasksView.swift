@@ -81,7 +81,7 @@ private struct EnvironmentTasksSection: View {
                 }
             }
         } header: {
-            Label(environment.label, systemImage: "laptopcomputer").sectionLabelStyle()
+            Label(environment.label, systemImage: "laptopcomputer").labelStyle(.tight).sectionLabelStyle()
         }
         // Resubscribes whenever the Mac reconnects; the stream ends with the socket.
         .task(id: environment.isLive) { await subscribe() }
