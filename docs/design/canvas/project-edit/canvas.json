@@ -1,0 +1,151 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · Editing and deleting projects",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "designSystems": [],
+ "boards": {
+  "1-chip-menu.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "1. Long press on a project chip"
+  },
+  "2-picker-menu.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "2. Long press on a project in the picker"
+  },
+  "3-edit.html": {
+   "x": 0,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "3. Edit project"
+  },
+  "4a-icon-letters.html": {
+   "x": 470,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "4a. Icon: letters and colour"
+  },
+  "4b-icon-emoji.html": {
+   "x": 940,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "4b. Icon: emoji"
+  },
+  "4c-icon-image.html": {
+   "x": 1410,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "4c. Icon: image from the project"
+  },
+  "5a-delete-alert.html": {
+   "x": 0,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "5a. Delete: one alert"
+  },
+  "5b-delete-sheet.html": {
+   "x": 470,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "5b. Delete: a sheet with what goes"
+  },
+  "5c-delete-empty.html": {
+   "x": 940,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "5c. Delete: a project without threads"
+  }
+ },
+ "order": [
+  "1-chip-menu.html",
+  "2-picker-menu.html",
+  "3-edit.html",
+  "4a-icon-letters.html",
+  "4b-icon-emoji.html",
+  "4c-icon-image.html",
+  "5a-delete-alert.html",
+  "5b-delete-sheet.html",
+  "5c-delete-empty.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · Editing and deleting projects",
+   "kind": "title1",
+   "maxW": 2300
+  },
+  "h1": {
+   "x": 0,
+   "y": -90,
+   "text": "Where it opens",
+   "kind": "title2"
+  },
+  "h2": {
+   "x": 0,
+   "y": 1010,
+   "text": "Editing",
+   "kind": "title2"
+  },
+  "h3": {
+   "x": 0,
+   "y": 2110,
+   "text": "Deleting",
+   "kind": "title2"
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 940,
+   "y": 0,
+   "w": 340,
+   "color": "blue",
+   "text": "The same menu everywhere a project shows up. On a chip it also has New thread; in the picker a tap already starts one, so only Edit and Delete."
+  },
+  {
+   "id": "claude-2",
+   "x": 1880,
+   "y": 1100,
+   "w": 320,
+   "color": "blue",
+   "text": "Icon kinds are the ones the server stores: an image from the folder (favicon), an emoji, or 1–2 letters on one of its colours. Drawing a new image stays with an agent on the Mac."
+  },
+  {
+   "id": "claude-3",
+   "x": 1410,
+   "y": 2200,
+   "w": 340,
+   "color": "blue",
+   "text": "I'd go with 5a: one system alert, the count is right on the red button. 5b says the same at more length. Threads are deleted for good, the folder on the Mac stays."
+  },
+  {
+   "id": "claude-4",
+   "x": 870,
+   "y": 1500,
+   "w": 260,
+   "color": "blue",
+   "to": {
+    "board": "3-edit.html",
+    "x": 195,
+    "y": 480
+   },
+   "text": "Model and workspace for new threads: second step, greyed here."
+  }
+ ]
+}
