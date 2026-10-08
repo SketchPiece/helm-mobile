@@ -1,0 +1,17 @@
+---
+title: How the phone learns what the Mac is doing
+board: 1500x860
+---
+sequenceDiagram
+  autonumber
+  participant Mac as Helm on the Mac
+  participant Srv as Helm server (on the Mac)
+  participant Ph as Helm Mobile
+  Mac->>Srv: reportClientActivity · focused, thread scope (on focus, route change, 25 s)
+  Srv-->>Ph: subscribeBackgroundPolicy · lease for the open thread
+  Note over Ph: pill shows when the Mac is focused or touched in the last 2 min
+  Ph->>Srv: hold mic · live words (on-device speech)
+  Srv-->>Mac: composer.insert stream · text appears in the composer
+  Ph->>Srv: let go · clip to voice.transcribe for the clean text
+  Srv-->>Mac: replace the draft with the clean text
+  Ph->>Srv: or swipe up · message.dispatch (steer or queue)

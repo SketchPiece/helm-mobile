@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1280x800"><title>4. On the Mac: the phone types into the composer</title><link rel="stylesheet" href="_shared.css"><style>
+html,body{width:1280px;height:800px}
+.mac{position:relative;width:1280px;height:800px;display:flex;background:var(--canvas)}
+.sb{width:270px;background:#120f0d;border-right:1px solid var(--border);padding:46px 10px 10px;font-size:13.5px;display:flex;flex-direction:column;gap:2px}
+.lights{position:absolute;left:14px;top:14px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;background:#3a332d}
+.proj{display:flex;align-items:center;gap:8px;padding:6px 8px;font-weight:500;margin-top:8px}
+.thr{padding:5px 8px 5px 32px;color:#cfc6bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:6px;display:flex;align-items:center;gap:6px}
+.thr.on{background:var(--raised);color:var(--text)}
+.main{flex:1;display:flex;flex-direction:column;position:relative}
+.top{height:46px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;font-size:14px;font-weight:500}
+.top .ph{margin-left:auto;display:flex;align-items:center;gap:7px;font:12px 'IBM Plex Mono',monospace;color:var(--accentText);background:rgba(232,163,61,.10);border:1px solid rgba(232,163,61,.25);padding:4px 10px;border-radius:999px}
+.tl{flex:1;padding:26px 0 0;width:760px;margin:0 auto;font-size:15px;line-height:1.6}
+.tl .user{margin:0 0 18px auto;max-width:70%;background:var(--message);border-radius:18px;padding:10px 14px}
+.tl p{margin-bottom:12px;color:#ddd4c6}
+.tl .tool{font:13px 'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px}
+.tl .tool i{font-style:normal;color:var(--working)}
+.comp{width:760px;margin:0 auto 26px;border-radius:20px;background:var(--raised);border:1.5px solid rgba(232,163,61,.55);box-shadow:0 0 0 5px rgba(232,163,61,.08);padding:14px 16px 10px;position:relative}
+.comp .txt{font-size:15.5px;line-height:1.5;min-height:48px}
+.comp .bar{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--muted)}
+.tag{position:absolute;top:-13px;left:16px;display:flex;align-items:center;gap:6px;background:var(--accent);color:var(--accentFg);font:500 11.5px 'IBM Plex Mono',monospace;padding:4px 10px;border-radius:999px}
+.ghost{color:var(--ph)}
+</style></head><body><div class="mac"><div class="lights"><i></i><i></i><i></i></div>
+<div class="sb">
+<div class="proj"><span class="pi" style="width:16px;height:16px;background:#E8A33D"></span>Helm Mobile</div>
+<div class="thr on"><span class="dot w" style="width:6px;height:6px"></span>Пульт для Мака: плашка и голос</div>
+<div class="thr">Удобный размер строк чатов</div>
+<div class="proj"><span class="pi" style="width:16px;height:16px;background:#B8321F"></span>Волна</div>
+<div class="thr">Анализ и оптимизация основного пр…</div>
+<div class="thr">Ключи для релея на Railway</div>
+<div class="proj"><span class="pi" style="width:16px;height:16px;background:#3F5566"></span>wellskin</div>
+<div class="thr">Причина ошибки в админке</div>
+</div>
+<div class="main">
+<div class="top">Пульт для Мака: плашка и голос <span style="color:var(--muted);font-weight:400">· Helm Mobile</span>
+<span class="ph"><svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>iPhone is your remote</span></div>
+<div class="tl">
+<div class="user">Сделай плашку на главном экране, когда на Маке идёт работа в треде</div>
+<p>Плашка ставится над нижней панелью и пропадает, когда Мак уходит в сон. Дальше подключаю поток присутствия к сессии.</p>
+<div class="tool"><i>●</i> Edited HomeChrome.swift <span style="color:#7DBE6A">+48</span> <span style="color:#e0705f">−12</span></div>
+<div class="tool"><i>●</i> Editing EnvironmentSession.swift…</div>
+</div>
+<div class="comp"><div class="tag"><svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Dictating from iPhone</div>
+<div class="txt">Давай плашку оставим над панелью, а микрофон на ней пусть сразу пишет в тред, <span class="ghost">без открытия пульта</span><span style="display:inline-block;width:2px;height:18px;background:var(--accent);vertical-align:-3px;margin-left:2px"></span></div>
+<div class="bar"><span>＋</span><span>GPT-6.1 · high</span><span style="margin-left:auto">Grey words are still being heard · ⌘↩ sends</span></div></div>
+</div></div></body></html>

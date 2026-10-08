@@ -1,0 +1,171 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · the phone as a remote for the Mac thread",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-flow.mmd": {
+   "x": 1620,
+   "y": 0,
+   "w": 1500,
+   "h": 860,
+   "title": "How the phone learns what the Mac is doing"
+  },
+  "1a-pill-accessory.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "1A. Pill above the bar (mini player)"
+  },
+  "1b-pill-in-bar.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "1B. Pill takes the search slot"
+  },
+  "1c-pill-top.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "1C. Card at the top, like Handoff in the app switcher"
+  },
+  "2a-remote-mic.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2A. Remote: one big microphone"
+  },
+  "2b-remote-walkie.html": {
+   "x": 470,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2B. Remote: the whole screen is a talk button"
+  },
+  "2c-remote-deck.html": {
+   "x": 940,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2C. Remote: a deck of buttons"
+  },
+  "3a-talking.html": {
+   "x": 0,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "3A. Talking: words land on the Mac as you say them"
+  },
+  "3b-request.html": {
+   "x": 470,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "3B. The agent asks: answer from the phone"
+  },
+  "4-mac.html": {
+   "x": 0,
+   "y": 3180,
+   "w": 1280,
+   "h": 800,
+   "title": "4. On the Mac: the phone types into the composer"
+  },
+  "5-lock.html": {
+   "x": 1360,
+   "y": 3180,
+   "w": 390,
+   "h": 844,
+   "title": "5. Away from the app: Live Activity and the Action button"
+  }
+ },
+ "order": [
+  "1a-pill-accessory.html",
+  "1b-pill-in-bar.html",
+  "1c-pill-top.html",
+  "2a-remote-mic.html",
+  "2b-remote-walkie.html",
+  "2c-remote-deck.html",
+  "3a-talking.html",
+  "3b-request.html",
+  "4-mac.html",
+  "5-lock.html",
+  "0-flow.mmd"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Helm Mobile · the phone as a remote for the Mac thread",
+   "kind": "title1",
+   "maxW": 3000
+  },
+  "h0": {
+   "x": 0,
+   "y": -80,
+   "text": "1. The pill on Home, while the Mac is busy",
+   "kind": "title2",
+   "maxW": 1400
+  },
+  "h1": {
+   "x": 0,
+   "y": 980,
+   "text": "2. The remote: three ways to build it",
+   "kind": "title2",
+   "maxW": 1400
+  },
+  "h2": {
+   "x": 0,
+   "y": 2040,
+   "text": "3. Remote A in use",
+   "kind": "title2",
+   "maxW": 1400
+  },
+  "h3": {
+   "x": 0,
+   "y": 3100,
+   "text": "4. The other side, and away from the app",
+   "kind": "title2",
+   "maxW": 1400
+  },
+  "hf": {
+   "x": 1620,
+   "y": -80,
+   "text": "How it works",
+   "kind": "title2",
+   "maxW": 1400
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1620,
+   "y": 900,
+   "w": 420,
+   "color": "blue",
+   "text": "Mostly there already: the Mac reports focus to the server (reportClientActivity) and the server streams it (subscribeBackgroundPolicy). Missing pieces: the open thread as a scope, and a way to write into the Mac composer (today drafts live only in the Mac's localStorage)."
+  },
+  {
+   "id": "claude-2",
+   "x": 1620,
+   "y": 1060,
+   "w": 420,
+   "color": "blue",
+   "text": "Recommend 1A + 2A: the pill sits above the bar like a mini player, its mic talks straight into the Mac thread without opening anything; tapping the pill opens the remote."
+  },
+  {
+   "id": "claude-3",
+   "x": 2080,
+   "y": 3180,
+   "w": 380,
+   "color": "blue",
+   "text": "Phase 2: the Live Activity gets Stop/Talk buttons, and a Control for the Action button opens straight into talking."
+  }
+ ],
+ "designSystems": []
+}
