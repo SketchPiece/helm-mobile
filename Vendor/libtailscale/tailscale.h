@@ -191,6 +191,16 @@ extern int tailscale_loopback(tailscale sd, char* addr_out, size_t addrlen, char
 // 	-1    - call tailscale_errmsg for details (*json_out is NULL)
 extern int tailscale_status_json(tailscale sd, char** json_out);
 
+// tailscale_rebind reopens the node's UDP sockets and re-runs STUN, as after
+// a network change. Call it when a suspended process resumes: the OS may have
+// defunct its sockets (observed on iOS), which leaves the node on DERP only.
+//
+// Returns:
+// 	0     - success
+// 	EBADF - sd is not a valid tailscale
+// 	-1    - call tailscale_errmsg for details
+extern int tailscale_rebind(tailscale sd);
+
 // tailscale_enable_funnel_to_localhost_plaintext_http1 configures sd to have
 // Tailscale Funnel enabled, routing requests from the public web
 // (without any authentication) down to this Tailscale node, requesting new 

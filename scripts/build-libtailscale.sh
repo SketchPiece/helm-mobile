@@ -29,7 +29,12 @@ if [ ! -d "$WORK/.git" ]; then
   git clone --quiet https://github.com/tailscale/libtailscale.git "$WORK"
 fi
 git -C "$WORK" fetch --quiet origin "$LIBTAILSCALE_COMMIT" 2>/dev/null || true
-git -C "$WORK" checkout --quiet "$LIBTAILSCALE_COMMIT"
+git -C "$WORK" checkout --quiet --force "$LIBTAILSCALE_COMMIT"
+git -C "$WORK" clean --quiet -fd
+# Our additions to the C API (tailscale_rebind); Vendor/libtailscale/tailscale.h matches.
+for patch in "$HERE"/scripts/libtailscale-patches/*.patch; do
+  git -C "$WORK" apply "$patch"
+done
 
 build() {
   sdk=$1

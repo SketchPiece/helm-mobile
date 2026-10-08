@@ -17,19 +17,26 @@ final class TailnetNode: @unchecked Sendable {
   private let forwardersLock = NSLock()
 
   private init() {
-    // iOS may reclaim listening sockets of a suspended app; rebind on return.
+    // iOS may reclaim sockets of a suspended app: the loopback listeners, and the node's
+    // UDP socket, which leaves peers on DERP relays for good. Reopen both on return.
     NotificationCenter.default.addObserver(
       forName: UIApplication.willEnterForegroundNotification,
       object: nil,
       queue: nil
     ) { [weak self] _ in
       self?.rebindForwarders()
+      self?.rebindNode()
     }
   }
 
   static var stateDirectory: URL {
     FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("helm-tailscale", isDirectory: true)
+  }
+
+  static var logURL: URL {
+    FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("helm-tailscale.log")
   }
 
   /// True once a node has run here; its login lives in the state directory.
@@ -51,7 +58,10 @@ final class TailnetNode: @unchecked Sendable {
       try? directory.setResourceValues(values)
       let node = tailscale_new()
       guard node >= 0 else { throw TailnetError("Could not create the Tailscale node") }
-      tailscale_set_logfd(node, -1)
+      // The node's own log, overwritten on each start; pull it with devicectl to see
+      // why a peer stays on DERP.
+      let logFile = open(Self.logURL.path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
+      tailscale_set_logfd(node, logFile)
       _ = Self.stateDirectory.path.withCString { tailscale_set_dir(node, $0) }
       _ = hostname.withCString { tailscale_set_hostname(node, $0) }
       if tailscale_start(node) != 0 {
@@ -153,6 +163,13 @@ final class TailnetNode: @unchecked Sendable {
       return -1
     }
     return connection
+  }
+
+  private func rebindNode() {
+    queue.async { [self] in
+      guard handle >= 0, tailscale_rebind(handle) != 0 else { return }
+      ConnectionLog.shared.log("tailscale", "rebind failed: \(Self.errorMessage(handle))")
+    }
   }
 
   private func rebindForwarders() {
