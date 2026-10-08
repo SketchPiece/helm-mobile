@@ -7,11 +7,11 @@
  "pages": [],
  "boards": {
   "0-flow.mmd": {
-   "x": 1620,
+   "x": 560,
    "y": 0,
    "w": 1500,
-   "h": 860,
-   "title": "How the phone learns what the Mac is doing"
+   "h": 900,
+   "title": "How the phone knows the Mac is nearby and busy"
   },
   "1a-pill-accessory.html": {
    "x": 0,
@@ -19,41 +19,6 @@
    "w": 390,
    "h": 844,
    "title": "1A. Pill above the bar (mini player)"
-  },
-  "1b-pill-in-bar.html": {
-   "x": 470,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "1B. Pill takes the search slot"
-  },
-  "1c-pill-top.html": {
-   "x": 940,
-   "y": 0,
-   "w": 390,
-   "h": 844,
-   "title": "1C. Card at the top, like Handoff in the app switcher"
-  },
-  "2a-remote-mic.html": {
-   "x": 0,
-   "y": 1060,
-   "w": 390,
-   "h": 844,
-   "title": "2A. Remote: one big microphone"
-  },
-  "2b-remote-walkie.html": {
-   "x": 470,
-   "y": 1060,
-   "w": 390,
-   "h": 844,
-   "title": "2B. Remote: the whole screen is a talk button"
-  },
-  "2c-remote-deck.html": {
-   "x": 940,
-   "y": 1060,
-   "w": 390,
-   "h": 844,
-   "title": "2C. Remote: a deck of buttons"
   },
   "3a-talking.html": {
    "x": 0,
@@ -70,29 +35,64 @@
    "title": "3B. The agent asks: answer from the phone"
   },
   "4-mac.html": {
-   "x": 0,
+   "x": 470,
    "y": 3180,
    "w": 1280,
    "h": 800,
-   "title": "4. On the Mac: the phone types into the composer"
+   "title": "4. On the Mac, with “Type on the Mac” chosen"
   },
   "5-lock.html": {
-   "x": 1360,
+   "x": 1830,
    "y": 3180,
    "w": 390,
    "h": 844,
    "title": "5. Away from the app: Live Activity and the Action button"
+  },
+  "2a-toggle-badge.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2A·1. Where the voice goes: a badge on the mic"
+  },
+  "2a-toggle-menu.html": {
+   "x": 940,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2A·3. Where the voice goes: a menu in the header"
+  },
+  "2a-toggle-slide.html": {
+   "x": 470,
+   "y": 1060,
+   "w": 390,
+   "h": 844,
+   "title": "2A·2. Where the voice goes: slide while holding"
+  },
+  "6-screenshot.html": {
+   "x": 940,
+   "y": 2120,
+   "w": 390,
+   "h": 844,
+   "title": "6. Camera button: the latest screenshot goes to the thread"
+  },
+  "7-open-on-mac.html": {
+   "x": 0,
+   "y": 3180,
+   "w": 390,
+   "h": 844,
+   "title": "7. The other way: a thread on the phone opens on the Mac"
   }
  },
  "order": [
   "1a-pill-accessory.html",
-  "1b-pill-in-bar.html",
-  "1c-pill-top.html",
-  "2a-remote-mic.html",
-  "2b-remote-walkie.html",
-  "2c-remote-deck.html",
+  "2a-toggle-badge.html",
+  "2a-toggle-slide.html",
+  "2a-toggle-menu.html",
   "3a-talking.html",
   "3b-request.html",
+  "6-screenshot.html",
+  "7-open-on-mac.html",
   "4-mac.html",
   "5-lock.html",
   "0-flow.mmd"
@@ -108,33 +108,33 @@
   "h0": {
    "x": 0,
    "y": -80,
-   "text": "1. The pill on Home, while the Mac is busy",
+   "text": "1. Chosen: the pill above the bar",
    "kind": "title2",
-   "maxW": 1400
+   "maxW": 1600
   },
   "h1": {
    "x": 0,
    "y": 980,
-   "text": "2. The remote: three ways to build it",
+   "text": "2. The remote: pick how to switch where the voice goes (sends by default)",
    "kind": "title2",
-   "maxW": 1400
+   "maxW": 1600
   },
   "h2": {
    "x": 0,
    "y": 2040,
-   "text": "3. Remote A in use",
+   "text": "3. The remote in use",
    "kind": "title2",
-   "maxW": 1400
+   "maxW": 1600
   },
   "h3": {
    "x": 0,
    "y": 3100,
-   "text": "4. The other side, and away from the app",
+   "text": "4. The other way, the Mac side, and later",
    "kind": "title2",
-   "maxW": 1400
+   "maxW": 1600
   },
   "hf": {
-   "x": 1620,
+   "x": 560,
    "y": -80,
    "text": "How it works",
    "kind": "title2",
@@ -144,27 +144,35 @@
  "annotations": [
   {
    "id": "claude-1",
-   "x": 1620,
-   "y": 900,
-   "w": 420,
+   "x": 560,
+   "y": 940,
+   "w": 520,
    "color": "blue",
-   "text": "Mostly there already: the Mac reports focus to the server (reportClientActivity) and the server streams it (subscribeBackgroundPolicy). Missing pieces: the open thread as a scope, and a way to write into the Mac composer (today drafts live only in the Mac's localStorage)."
+   "text": "Nearby = the Mac's Helm server is seen over Bonjour on the same Wi-Fi (and it's the paired Mac). On another network the pill never shows, even though the phone stays connected over Tailscale."
   },
   {
    "id": "claude-2",
-   "x": 1620,
+   "x": 1460,
    "y": 1060,
-   "w": 420,
+   "w": 380,
    "color": "blue",
-   "text": "Recommend 1A + 2A: the pill sits above the bar like a mini player, its mic talks straight into the Mac thread without opening anything; tapping the pill opens the remote."
+   "text": "Recommend 2A·3: the choice lives in a native menu in the header, out of the way of the mic. 2A·1 is quicker to flip but easy to tap by mistake; 2A·2 has no state to forget, but it is a gesture to learn."
   },
   {
    "id": "claude-3",
-   "x": 2080,
+   "x": 0,
+   "y": 900,
+   "w": 390,
+   "color": "blue",
+   "text": "Haptics: a short tap when the run finishes or the agent needs you, while the Mac is nearby and the app is open."
+  },
+  {
+   "id": "claude-4",
+   "x": 2440,
    "y": 3180,
    "w": 380,
    "color": "blue",
-   "text": "Phase 2: the Live Activity gets Stop/Talk buttons, and a Control for the Action button opens straight into talking."
+   "text": "Later: Live Activity buttons and the Action button."
   }
  ],
  "designSystems": []
