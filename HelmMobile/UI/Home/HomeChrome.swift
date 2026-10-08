@@ -32,18 +32,21 @@ struct ProjectChips: View {
                         selection = selected ? nil : chip.project.id
                     }
                     if let onAction {
-                        // In a list row the system would lift the whole strip; the preview is the chip alone,
-                        // so it's clear which project the menu is for.
-                        button
-                            .contentShape(.contextMenuPreview, .capsule)
-                            .contextMenu {
-                                Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
-                                Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
-                                Divider()
-                                Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
-                            } preview: {
-                                styled(projectLabel(chip), selected: selected)
-                            }
+                        // A context menu inside the list row would belong to the row, so every chip would get
+                        // the first one's; a Menu is the chip's own. Tap filters, long press opens it.
+                        Menu {
+                            Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
+                            Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
+                            Divider()
+                            Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
+                        } label: {
+                            styled(projectLabel(chip), selected: selected)
+                        } primaryAction: {
+                            UISelectionFeedbackGenerator().selectionChanged()
+                            withAnimation(.snappy(duration: 0.2)) { selection = selected ? nil : chip.project.id }
+                        }
+                        .menuStyle(.button)
+                        .buttonStyle(.plain)
                     } else {
                         button
                     }
