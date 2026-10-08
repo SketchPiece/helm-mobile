@@ -770,5 +770,11 @@
     "other": "Его %lld треда удалятся насовсем. Папка на Mac останется как есть."
   },
   "The folder on the Mac stays as it is.": "Папка на Mac останется как есть.",
-  "Couldn't delete the project": "Не получилось удалить проект"
+  "Couldn't delete the project": "Не получилось удалить проект",
+  "Projects": "Проекты",
+  "No projects": "Нет проектов",
+  "Nothing found": "Ничего не найдено",
+  "Helm's default": "Как в Штурвале",
+  "Where a new thread in this project starts. You can still change it before sending.": "С чего начинается новый тред в этом проекте. Перед отправкой это всё равно можно поменять.",
+  "Default model": "Модель по умолчанию"
 }

@@ -25,22 +25,30 @@ struct ProjectChips: View {
                     selection = nil
                 }
                 ForEach(chips) { chip in
-                    self.chip(selected: selection == chip.project.id) {
-                        HStack(spacing: 6) {
-                            ProjectIcon(project: chip.project, environment: chip.environment, size: 20)
-                            Text(chip.project.title).lineLimit(1)
-                            Text("\(chip.count)").foregroundStyle(Palette.textMuted).monospacedDigit()
-                        }
+                    let selected = selection == chip.project.id
+                    let button = self.chip(selected: selected) {
+                        projectLabel(chip)
                     } action: {
-                        selection = selection == chip.project.id ? nil : chip.project.id
+                        selection = selected ? nil : chip.project.id
                     }
-                    .contextMenu {
-                        if let onAction {
+                    if let onAction {
+                        // A context menu inside the list row would belong to the row, so every chip would get
+                        // the first one's; a Menu is the chip's own. Tap filters, long press opens it.
+                        Menu {
                             Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
                             Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
                             Divider()
                             Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
+                        } label: {
+                            styled(projectLabel(chip), selected: selected)
+                        } primaryAction: {
+                            UISelectionFeedbackGenerator().selectionChanged()
+                            withAnimation(.snappy(duration: 0.2)) { selection = selected ? nil : chip.project.id }
                         }
+                        .menuStyle(.button)
+                        .buttonStyle(.plain)
+                    } else {
+                        button
                     }
                 }
             }
@@ -49,17 +57,29 @@ struct ProjectChips: View {
         }
     }
 
+    private func projectLabel(_ chip: Chip) -> some View {
+        HStack(spacing: 6) {
+            ProjectIcon(project: chip.project, environment: chip.environment, size: 20)
+            Text(chip.project.title).lineLimit(1)
+            Text("\(chip.count)").foregroundStyle(Palette.textMuted).monospacedDigit()
+        }
+    }
+
+    private func styled(_ label: some View, selected: Bool) -> some View {
+        label
+            .font(Typography.subheadline.weight(.medium))
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .foregroundStyle(selected ? Palette.canvas : Palette.text)
+            .background(selected ? Palette.text : Palette.surface, in: .capsule)
+    }
+
     private func chip<Label: View>(selected: Bool, @ViewBuilder label: () -> Label, action: @escaping () -> Void) -> some View {
         Button {
             UISelectionFeedbackGenerator().selectionChanged()
             withAnimation(.snappy(duration: 0.2)) { action() }
         } label: {
-            label()
-                .font(Typography.subheadline.weight(.medium))
-                .padding(.horizontal, 12)
-                .frame(height: 34)
-                .foregroundStyle(selected ? Palette.canvas : Palette.text)
-                .background(selected ? Palette.text : Palette.surface, in: .capsule)
+            styled(label(), selected: selected)
         }
         .buttonStyle(.plain)
     }

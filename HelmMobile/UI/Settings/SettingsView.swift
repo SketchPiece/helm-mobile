@@ -12,6 +12,10 @@ struct SettingsView: View {
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
 
+    private var projectCount: Int {
+        model.allProjects().count { $0.environment.config?.isScratch($0.project) != true }
+    }
+
     var body: some View {
         @Bindable var router = router
         NavigationStack(path: $router.settingsPath) {
@@ -37,6 +41,14 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        ProjectsListView()
+                    } label: {
+                        SettingsRow(String(localized: "Projects"), symbol: "folder") {
+                            Text("\(projectCount)").foregroundStyle(Palette.textMuted).monospacedDigit()
+                        }
+                    }
+                    .accessibilityIdentifier("projects")
                     NavigationLink {
                         ArchivedThreadsView()
                     } label: {

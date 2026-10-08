@@ -1,28 +1,35 @@
 import SwiftUI
 
-/// A project's name and icon, and deleting it. Opens from a long press on a project chip on Home
-/// or on a project in the picker.
+/// A project's name, icon and defaults for new threads, and deleting it. A sheet from a long press on
+/// a project chip or a project in the picker; a page in Settings › Projects.
 struct ProjectEditSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let environment: EnvironmentSession
     let project: Project
+    /// Pushed in a navigation stack (Settings) rather than presented in its own.
+    var asPage = false
     /// After the project is gone, so the caller can drop a filter or selection pointing at it.
     var onDeleted: () -> Void = {}
 
     @State private var title: String
     @State private var icon: Project.IconChoice
+    @State private var modelSelection: ModelSelection?
+    @State private var envMode: String?
     @State private var editingIcon = false
     @State private var saving = false
     @State private var error: String?
     @State private var deleting: ProjectDeletion?
 
-    init(environment: EnvironmentSession, project: Project, onDeleted: @escaping () -> Void = {}) {
+    init(environment: EnvironmentSession, project: Project, asPage: Bool = false, onDeleted: @escaping () -> Void = {}) {
         self.environment = environment
         self.project = project
+        self.asPage = asPage
         self.onDeleted = onDeleted
         _title = State(initialValue: project.title)
         _icon = State(initialValue: project.iconChoice)
+        _modelSelection = State(initialValue: project.defaultModelSelection)
+        _envMode = State(initialValue: project.defaultThreadEnvMode)
     }
 
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -32,94 +39,140 @@ struct ProjectEditSheet: View {
         var fields: [String: JSON] = [:]
         if trimmedTitle != project.title { fields["title"] = .string(trimmedTitle) }
         if icon != project.iconChoice { fields.merge(ProjectCommands.iconFields(icon)) { _, new in new } }
+        if modelSelection != project.defaultModelSelection { fields["defaultModelSelection"] = modelSelection?.json ?? .null }
+        if envMode != project.defaultThreadEnvMode { fields["defaultThreadEnvMode"] = envMode.map(JSON.string) ?? .null }
         return fields
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Button {
-                        editingIcon = true
-                    } label: {
-                        VStack(spacing: 10) {
-                            ProjectIcon(project: project.with(icon), environment: environment, size: 88)
-                            Text("Change icon")
-                                .font(Typography.subheadline.weight(.medium))
-                                .foregroundStyle(Palette.accentText)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("changeProjectIcon")
-                    .listRowBackground(Color.clear)
-                }
-                Section {
-                    TextField("Name", text: $title)
-                        .font(Typography.body)
-                        .foregroundStyle(Palette.text)
-                        .submitLabel(.done)
-                        .accessibilityIdentifier("projectName")
-                } header: {
-                    Text("Name")
-                }
-                .listRowBackground(Palette.surface)
-                Section {
-                    HStack {
-                        Text(FolderPath.short(project.workspaceRoot))
-                            .font(Typography.mono(13))
-                            .foregroundStyle(Palette.text)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer()
-                        Image(systemName: "lock")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Palette.placeholder)
-                    }
-                } header: {
-                    Text("Folder on the Mac")
-                } footer: {
-                    if let error {
-                        Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+        if asPage {
+            form
+        } else {
+            NavigationStack {
+                form.toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .cancel) { dismiss() }
                     }
                 }
-                .listRowBackground(Palette.surface)
-                Section {
-                    Button(role: .destructive) {
-                        deleting = ProjectDeletion(environment: environment, project: project, in: model)
-                    } label: {
-                        Text("Delete project…").frame(maxWidth: .infinity)
-                    }
-                    .accessibilityIdentifier("deleteProject")
-                }
-                .listRowBackground(Palette.surface)
-            }
-            .scrollContentBackground(.hidden)
-            .background(Palette.canvas)
-            .navigationTitle("Edit project")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $editingIcon) {
-                ProjectIconEditor(environment: environment, project: project, choice: $icon)
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    if saving {
-                        ProgressView()
-                    } else {
-                        Button("Save", action: save)
-                            .disabled(changes.isEmpty || trimmedTitle.isEmpty)
-                            .accessibilityIdentifier("saveProject")
-                    }
-                }
-            }
-            .projectDeletionAlert($deleting) { _ in
-                dismiss()
-                onDeleted()
             }
         }
+    }
+
+    private var form: some View {
+        List {
+            Section {
+                Button {
+                    editingIcon = true
+                } label: {
+                    VStack(spacing: 10) {
+                        ProjectIcon(project: project.with(icon), environment: environment, size: 88)
+                        Text("Change icon")
+                            .font(Typography.subheadline.weight(.medium))
+                            .foregroundStyle(Palette.accentText)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("changeProjectIcon")
+                .listRowBackground(Color.clear)
+            }
+            Section {
+                TextField("Name", text: $title)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.text)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("projectName")
+            } header: {
+                Text("Name")
+            }
+            .listRowBackground(Palette.surface)
+            Section {
+                HStack {
+                    Text(FolderPath.short(project.workspaceRoot))
+                        .font(Typography.mono(13))
+                        .foregroundStyle(Palette.text)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer()
+                    Image(systemName: "lock")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.placeholder)
+                }
+            } header: {
+                Text("Folder on the Mac")
+            }
+            .listRowBackground(Palette.surface)
+            if let config = environment.config {
+                defaultsSection(config)
+            }
+            Section {
+                Button(role: .destructive) {
+                    deleting = ProjectDeletion(environment: environment, project: project, in: model)
+                } label: {
+                    Text("Delete project…").frame(maxWidth: .infinity)
+                }
+                .accessibilityIdentifier("deleteProject")
+            } footer: {
+                if let error {
+                    Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
+                }
+            }
+            .listRowBackground(Palette.surface)
+        }
+        .scrollContentBackground(.hidden)
+        .background(Palette.canvas)
+        .navigationTitle(asPage ? project.title : String(localized: "Edit project"))
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $editingIcon) {
+            ProjectIconEditor(environment: environment, project: project, choice: $icon)
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                if saving {
+                    ProgressView()
+                } else {
+                    Button("Save", action: save)
+                        .disabled(changes.isEmpty || trimmedTitle.isEmpty)
+                        .accessibilityIdentifier("saveProject")
+                }
+            }
+        }
+        .projectDeletionAlert($deleting) { _ in
+            dismiss()
+            onDeleted()
+        }
+    }
+
+    /// The model and checkout new threads in this project start with; each can follow the Mac's default.
+    @ViewBuilder
+    private func defaultsSection(_ config: ServerConfig) -> some View {
+        Section {
+            NavigationLink {
+                ProjectModelPicker(config: config, selection: $modelSelection)
+            } label: {
+                HStack {
+                    Text("Model").foregroundStyle(Palette.text)
+                    Spacer()
+                    Text(modelSelection.map { config.modelLabel(for: $0) } ?? String(localized: "Helm's default"))
+                        .foregroundStyle(Palette.textMuted)
+                }
+                .font(Typography.body)
+            }
+            Picker(selection: $envMode) {
+                Text("Helm's default").tag(String?.none)
+                Text("Current checkout").tag(String?.some("local"))
+                Text("New worktree").tag(String?.some("worktree"))
+            } label: {
+                Text("Workspace").font(Typography.body).foregroundStyle(Palette.text)
+            }
+            .pickerStyle(.menu)
+            .tint(Palette.textMuted)
+        } header: {
+            Text("New threads")
+        } footer: {
+            Text("Where a new thread in this project starts. You can still change it before sending.")
+        }
+        .listRowBackground(Palette.surface)
     }
 
     private func save() {
@@ -136,6 +189,82 @@ struct ProjectEditSheet: View {
             }
             saving = false
         }
+    }
+}
+
+/// A project's default model: one of the usable providers' models, or the Mac's own default.
+struct ProjectModelPicker: View {
+    let config: ServerConfig
+    @Binding var selection: ModelSelection?
+    @State private var showLegacy = false
+
+    var body: some View {
+        List {
+            Section {
+                Button {
+                    selection = nil
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Helm's default").font(Typography.body).foregroundStyle(Palette.text)
+                            Text(config.modelLabel(for: config.defaultModelSelection))
+                                .font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                        }
+                        Spacer()
+                        if selection == nil {
+                            Image(systemName: "checkmark").foregroundStyle(Palette.accentText)
+                        }
+                    }
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
+            .listRowBackground(Palette.surface)
+            Section {
+                ForEach(config.usableProviders) { provider in
+                    let models = provider.models.filter { showLegacy || !$0.isLegacy || $0.slug == selection?.model }
+                    if !models.isEmpty {
+                        Menu {
+                            ForEach(models) { model in
+                                Button {
+                                    selection = ModelSelection(instanceId: provider.instanceId, model: model.slug)
+                                } label: {
+                                    if selection?.instanceId == provider.instanceId && selection?.model == model.slug {
+                                        Label(model.name, systemImage: "checkmark")
+                                    } else {
+                                        Text(model.name)
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                ProviderIcon(driver: provider.driver, iconUrl: provider.iconUrl, size: 18)
+                                    .frame(width: 22)
+                                Text(provider.displayName).foregroundStyle(Palette.text)
+                                Spacer()
+                                if selection?.instanceId == provider.instanceId {
+                                    Text(config.modelLabel(for: selection)).foregroundStyle(Palette.accentText)
+                                }
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Palette.placeholder)
+                            }
+                            .font(Typography.body)
+                        }
+                    }
+                }
+                Toggle("Show older models", isOn: $showLegacy)
+                    .font(Typography.subheadline)
+                    .tint(Palette.accent)
+            } header: {
+                Text("Model")
+            }
+            .listRowBackground(Palette.surface)
+        }
+        .scrollContentBackground(.hidden)
+        .background(Palette.canvas)
+        .navigationTitle("Default model")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

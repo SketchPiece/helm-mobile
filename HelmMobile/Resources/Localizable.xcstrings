@@ -2657,6 +2657,16 @@
         }
       }
     },
+    "Default model": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель по умолчанию"
+          }
+        }
+      }
+    },
     "Delete": {
       "localizations": {
         "ru": {
@@ -3392,6 +3402,16 @@
       }
     },
     "Helm will reach your computers only through the Tailscale VPN app. Remove this phone in the Tailscale admin console if you no longer need it.": {},
+    "Helm's default": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как в Штурвале"
+          }
+        }
+      }
+    },
     "Helm's default · Light · Dark": {
       "localizations": {
         "ru": {
@@ -4321,6 +4341,16 @@
         }
       }
     },
+    "No projects": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет проектов"
+          }
+        }
+      }
+    },
     "No provider on this computer reports subscription limits.": {},
     "No scheduled tasks yet.": {
       "localizations": {
@@ -4369,6 +4399,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не сохранён на телефоне"
+          }
+        }
+      }
+    },
+    "Nothing found": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не найдено"
           }
         }
       }
@@ -4905,6 +4945,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Папка проекта"
+          }
+        }
+      }
+    },
+    "Projects": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проекты"
           }
         }
       }
@@ -6827,6 +6877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Что агенту делать каждый раз?"
+          }
+        }
+      }
+    },
+    "Where a new thread in this project starts. You can still change it before sending.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С чего начинается новый тред в этом проекте. Перед отправкой это всё равно можно поменять."
           }
         }
       }
