@@ -86,22 +86,40 @@ struct NewThreadFan: View {
                 ForEach(Array(state.items.enumerated()), id: \.element.id) { index, item in
                     let center = state.center(of: index)
                     let selected = state.highlighted == index
-                    row(item, selected: selected)
-                        .scaleEffect(state.isOpen ? (selected ? 1.12 : 1) : 0.3, anchor: .trailing)
-                        .opacity(state.isOpen ? 1 : 0)
-                        // Rises out of the button, the nearest first.
-                        .offset(y: state.isOpen ? 0 : state.anchor.midY - center.y)
-                        .animation(.spring(duration: 0.32, bounce: 0.25).delay(state.isOpen ? Double(index) * 0.03 : 0),
-                                   value: state.isOpen)
-                        .animation(.snappy(duration: 0.15), value: selected)
-                        .frame(width: 300, alignment: .trailing)
-                        .position(x: center.x - origin.x - 150 + NewThreadFanState.bubble / 2, y: center.y - origin.y)
+                    FanRow(isOpen: state.isOpen, index: index, selected: selected, rise: state.anchor.midY - center.y) {
+                        row(item, selected: selected)
+                    }
+                    .frame(width: 300, alignment: .trailing)
+                    .position(x: center.x - origin.x - 150 + NewThreadFanState.bubble / 2, y: center.y - origin.y)
                 }
             }
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    /// One rising row. Rows are created the moment the fan first opens (cold start, or a project new
+    /// to the fan), so each starts closed until it is on screen; otherwise it would appear already open.
+    private struct FanRow<Content: View>: View {
+        let isOpen: Bool
+        let index: Int
+        let selected: Bool
+        let rise: CGFloat
+        @ViewBuilder let content: Content
+        @State private var mounted = false
+
+        var body: some View {
+            let open = isOpen && mounted
+            content
+                .scaleEffect(open ? (selected ? 1.12 : 1) : 0.3, anchor: .trailing)
+                .opacity(open ? 1 : 0)
+                // Rises out of the button, the nearest first.
+                .offset(y: open ? 0 : rise)
+                .animation(.spring(duration: 0.32, bounce: 0.25).delay(open ? Double(index) * 0.03 : 0), value: open)
+                .animation(.snappy(duration: 0.15), value: selected)
+                .onAppear { mounted = true }
+        }
     }
 
     private func row(_ item: NewThreadFanItem, selected: Bool) -> some View {
