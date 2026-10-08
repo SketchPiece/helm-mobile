@@ -35,14 +35,14 @@
    "title": "3B. The agent asks: answer from the phone"
   },
   "4-mac.html": {
-   "x": 470,
+   "x": 0,
    "y": 3180,
    "w": 1280,
    "h": 800,
    "title": "4. On the Mac, with “Type on the Mac” chosen"
   },
   "5-lock.html": {
-   "x": 1830,
+   "x": 1360,
    "y": 3180,
    "w": 390,
    "h": 844,
@@ -76,12 +76,33 @@
    "h": 844,
    "title": "6. Camera button: the latest screenshot goes to the thread"
   },
-  "7-open-on-mac.html": {
+  "7a-open-in-menu.html": {
    "x": 0,
-   "y": 3180,
+   "y": 4240,
    "w": 390,
    "h": 844,
-   "title": "7. The other way: a thread on the phone opens on the Mac"
+   "title": "7A. Open on Mac: first item in the ··· menu"
+  },
+  "7b-open-in-title.html": {
+   "x": 470,
+   "y": 4240,
+   "w": 390,
+   "h": 844,
+   "title": "7B. Open on Mac: a menu under the thread title"
+  },
+  "7c-open-chip.html": {
+   "x": 940,
+   "y": 4240,
+   "w": 390,
+   "h": 844,
+   "title": "7C. Open on Mac: a glass chip above the composer"
+  },
+  "7d-open-from-row.html": {
+   "x": 1410,
+   "y": 4240,
+   "w": 390,
+   "h": 844,
+   "title": "7D. And from Home: long press a thread"
   }
  },
  "order": [
@@ -92,10 +113,13 @@
   "3a-talking.html",
   "3b-request.html",
   "6-screenshot.html",
-  "7-open-on-mac.html",
   "4-mac.html",
   "5-lock.html",
-  "0-flow.mmd"
+  "0-flow.mmd",
+  "7a-open-in-menu.html",
+  "7b-open-in-title.html",
+  "7c-open-chip.html",
+  "7d-open-from-row.html"
  ],
  "notes": {
   "t": {
@@ -129,7 +153,7 @@
   "h3": {
    "x": 0,
    "y": 3100,
-   "text": "4. The other way, the Mac side, and later",
+   "text": "4. The Mac side, and later",
    "kind": "title2",
    "maxW": 1600
   },
@@ -139,24 +163,23 @@
    "text": "How it works",
    "kind": "title2",
    "maxW": 1400
+  },
+  "h4": {
+   "x": 0,
+   "y": 4160,
+   "text": "5. Open on Mac: where it lives (only while the Mac is nearby)",
+   "kind": "title2",
+   "maxW": 1600
   }
  },
  "annotations": [
   {
    "id": "claude-1",
-   "x": 560,
-   "y": 940,
+   "x": 471,
+   "y": 621,
    "w": 520,
    "color": "blue",
    "text": "Nearby = the Mac's Helm server is seen over Bonjour on the same Wi-Fi (and it's the paired Mac). On another network the pill never shows, even though the phone stays connected over Tailscale."
-  },
-  {
-   "id": "claude-2",
-   "x": 1460,
-   "y": 1060,
-   "w": 380,
-   "color": "blue",
-   "text": "Recommend 2A·3: the choice lives in a native menu in the header, out of the way of the mic. 2A·1 is quicker to flip but easy to tap by mistake; 2A·2 has no state to forget, but it is a gesture to learn."
   },
   {
    "id": "claude-3",
@@ -168,11 +191,27 @@
   },
   {
    "id": "claude-4",
-   "x": 2440,
+   "x": 1830,
    "y": 3180,
    "w": 380,
    "color": "blue",
    "text": "Later: Live Activity buttons and the Action button."
+  },
+  {
+   "id": "claude-5",
+   "x": 1880,
+   "y": 4240,
+   "w": 400,
+   "color": "blue",
+   "text": "Recommend 7A + 7D: the header keeps its two buttons; Open on Mac is the first item in ··· and in the long-press menu on Home, shown only while the Mac is nearby. 7C is one tap but sits over the thread the whole time you're near the Mac."
+  },
+  {
+   "id": "claude-6",
+   "x": 1460,
+   "y": 1060,
+   "w": 380,
+   "color": "blue",
+   "text": "Chosen: 2A·3, the menu in the header."
   }
  ],
  "designSystems": []
