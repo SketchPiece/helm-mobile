@@ -94,17 +94,21 @@ struct RemoteStatusLine: View {
 
     var body: some View {
         let phase = thread.phase
+        if phase != .idle { line(phase) }
+    }
+
+    private func line(_ phase: ThreadPhase) -> some View {
         HStack(spacing: 6) {
-            Circle().fill(phase == .idle ? Palette.textMuted : phase.color).frame(width: 7, height: 7)
+            Circle().fill(phase.color).frame(width: 7, height: 7)
             if phase == .working, let since = thread.activityRunStartedAt {
                 Text("Working")
                 Text(since, style: .timer).monospacedDigit()
-            } else {
-                Text(phase.label ?? String(localized: "Open"))
+            } else if let label = phase.label {
+                Text(label)
             }
         }
         .font(Typography.mono(12))
-        .foregroundStyle(phase == .idle ? Palette.textMuted : phase.color)
+        .foregroundStyle(phase.color)
         .lineLimit(1)
     }
 }
@@ -134,7 +138,7 @@ struct MacRemotePill: View {
                                     .lineLimit(1)
                                 HStack(spacing: 6) {
                                     RemoteStatusLine(thread: thread)
-                                    Text(verbatim: "· \(target.macLabel)")
+                                    Text(thread.phase == .idle ? target.macLabel : "· \(target.macLabel)")
                                         .font(Typography.mono(12))
                                         .foregroundStyle(Palette.textMuted)
                                         .lineLimit(1)
@@ -267,8 +271,10 @@ struct MacRemoteSheet: View {
                     .font(Typography.subheadline)
                     .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
-                Text("·").foregroundStyle(Palette.textMuted)
-                RemoteStatusLine(thread: thread)
+                if thread.phase != .idle {
+                    Text(verbatim: "·").foregroundStyle(Palette.textMuted)
+                    RemoteStatusLine(thread: thread)
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -281,7 +287,10 @@ struct MacRemoteSheet: View {
         let running = remote.session?.projection?.items.values
             .filter { $0.isRunning && !($0.title ?? "").isEmpty }
             .max { $0.ordinal < $1.ordinal }
-        if running != nil || thread.latestMessageText?.isEmpty == false || remote.sendError != nil {
+        let latest = thread.latestMessageText?.isEmpty == false ? thread.latestMessageText : remote.session?.projection?.items.values
+            .filter { $0.type == "assistant_message" && !$0.text.isEmpty }
+            .max { $0.ordinal < $1.ordinal }?.text
+        if running != nil || latest != nil || remote.sendError != nil {
             VStack(alignment: .leading, spacing: 8) {
                 if let running, let title = running.title {
                     HStack(spacing: 8) {
@@ -291,8 +300,9 @@ struct MacRemoteSheet: View {
                     .font(Typography.mono(13))
                     .foregroundStyle(Palette.working)
                 }
-                if let text = thread.latestMessageText, !text.isEmpty {
-                    Text(text)
+                if let text = latest {
+                    // Inline markdown only: a glance, not the thread.
+                    Text((try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text))
                         .font(Typography.subheadline)
                         .foregroundStyle(thread.latestMessageRole == "user" ? Palette.textMuted : Palette.text)
                         .lineLimit(5)
