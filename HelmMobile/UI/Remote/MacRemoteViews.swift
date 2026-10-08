@@ -214,6 +214,7 @@ struct MacRemoteSheet: View {
     let remote: MacRemote
     let onOpenThread: (ThreadRef) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var choosingScreenshot = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -240,6 +241,10 @@ struct MacRemoteSheet: View {
         }
         .background(Palette.canvas)
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $choosingScreenshot) {
+            ScreenshotPanel(remote: remote)
+                .presentationDetents([.large])
+        }
     }
 
     private func header(target: MacRemoteTarget, thread: ThreadSummary) -> some View {
@@ -321,9 +326,38 @@ struct MacRemoteSheet: View {
 
     private var controls: some View {
         VStack(spacing: 14) {
-            RemoteVoiceStatus(remote: remote)
-                .frame(height: 32)
+            if let screenshot = remote.pendingScreenshot {
+                // Kept for what is said next.
+                HStack(spacing: 10) {
+                    Image(uiImage: screenshot)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 28, height: 44)
+                        .clipShape(.rect(cornerRadius: 5))
+                    Text("The screenshot goes with what you say")
+                        .font(Typography.footnote)
+                        .foregroundStyle(Palette.text)
+                    Spacer(minLength: 0)
+                    Button {
+                        remote.pendingScreenshot = nil
+                    } label: {
+                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).frame(width: 28, height: 28)
+                    }
+                    .foregroundStyle(Palette.textMuted)
+                    .accessibilityLabel("Remove the screenshot")
+                }
+                .padding(8)
+                .background(Palette.surface, in: .rect(cornerRadius: 14))
                 .padding(.horizontal, 24)
+            }
+            if remote.isSending, remote.voice.state == .idle {
+                Text("Sending to the computer…").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
+                    .frame(height: 32)
+            } else {
+                RemoteVoiceStatus(remote: remote)
+                    .frame(height: 32)
+                    .padding(.horizontal, 24)
+            }
             HStack {
                 Button {
                     Task { await remote.stop() }
@@ -341,8 +375,17 @@ struct MacRemoteSheet: View {
                 RemoteMicButton(remote: remote, diameter: 112)
                     .background(Circle().fill(Palette.accent.opacity(0.1)).padding(-12))
                 Spacer()
-                // Room for the camera (a screenshot into the thread).
-                Color.clear.frame(width: 58, height: 58)
+                Button {
+                    choosingScreenshot = true
+                } label: {
+                    Image(systemName: "camera")
+                        .font(.system(size: 20, weight: .medium))
+                        .frame(width: 58, height: 58)
+                        .foregroundStyle(Palette.text)
+                        .background(Palette.surface, in: .circle)
+                        .overlay(Circle().stroke(Palette.border))
+                }
+                .accessibilityLabel("Send a screenshot")
             }
             .padding(.horizontal, 34)
             Text(remote.voice.state == .recording(handsFree: true) ? "Tap to send" : "Hold to talk · let go to send")

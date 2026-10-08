@@ -15,8 +15,12 @@ final class MacRemote {
     private(set) var environment: EnvironmentSession?
     /// Why the last message didn't go, until the next one does.
     private(set) var sendError: String?
-    /// Bumped each time a spoken message went out (drives the haptic).
+    /// Bumped each time a message went out (drives the haptic).
     private(set) var sentCount = 0
+    /// A screenshot that goes out with the next thing said.
+    var pendingScreenshot: UIImage?
+    /// A message with a screenshot is on its way up.
+    private(set) var isSending = false
 
     /// Points the remote at `target` (nil: nothing to offer), keeping the thread subscribed.
     func follow(_ target: MacRemoteTarget?, in model: AppModel) {
@@ -60,14 +64,33 @@ final class MacRemote {
         await send(text)
     }
 
+    /// Sends a screenshot on its own, right away.
+    func sendScreenshot(_ image: UIImage) async {
+        pendingScreenshot = image
+        await send("")
+    }
+
     private func send(_ text: String) async {
-        guard let session else { return }
+        guard let session, let environment else { return }
+        isSending = true
+        defer { isSending = false }
+        var attachments: [ChatAttachment] = []
+        if let screenshot = pendingScreenshot {
+            do {
+                attachments.append(try await environment.uploadImage(screenshot, name: "screenshot.jpg"))
+                pendingScreenshot = nil
+            } catch {
+                sendError = error.localizedDescription
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                return
+            }
+        }
         let followUp = FollowUpBehavior(
             rawValue: UserDefaults.standard.string(forKey: PhonePreferences.followUpKey) ?? ""
         ) ?? .queue
-        await session.send(text: text, attachments: [], followUp: followUp.followUp,
+        await session.send(text: text, attachments: attachments, followUp: followUp.followUp,
                            modelSelection: nil, runtimeMode: nil, interactionMode: nil)
-        if let failed = session.outbox.last(where: { $0.text == text })?.failed {
+        if let failed = session.outbox.last?.failed {
             sendError = failed
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         } else {

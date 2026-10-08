@@ -1266,6 +1266,16 @@
         }
       }
     },
+    "Add a few words": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить пару слов"
+          }
+        }
+      }
+    },
     "Add a name, prompt, project, model, a valid schedule, and the checkout path if needed.": {
       "localizations": {
         "ru": {
@@ -1398,12 +1408,32 @@
         }
       }
     },
+    "All photos": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все фото"
+          }
+        }
+      }
+    },
     "All projects…": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Все проекты…"
+          }
+        }
+      }
+    },
+    "Allow Helm to see your photos in Settings, or pick one under All photos.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разреши Штурвалу доступ к фото в Настройках или выбери снимок в «Все фото»."
           }
         }
       }
@@ -4241,6 +4271,16 @@
         }
       }
     },
+    "No access to photos": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет доступа к фото"
+          }
+        }
+      }
+    },
     "No activity in this period.": {
       "localizations": {
         "ru": {
@@ -4378,6 +4418,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Задач пока нет."
+          }
+        }
+      }
+    },
+    "No screenshots yet": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скриншотов пока нет"
           }
         }
       }
@@ -5219,6 +5269,16 @@
         }
       }
     },
+    "Remove the screenshot": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убрать скриншот"
+          }
+        }
+      }
+    },
     "Remove this computer": {},
     "Rename": {
       "localizations": {
@@ -5450,6 +5510,26 @@
         }
       }
     },
+    "SCREENSHOT · %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СКРИНШОТ · %@"
+          }
+        }
+      }
+    },
+    "SCREENSHOTS": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "СКРИНШОТЫ"
+          }
+        }
+      }
+    },
     "Save": {
       "localizations": {
         "ru": {
@@ -5607,6 +5687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отправить"
+          }
+        }
+      }
+    },
+    "Send a screenshot": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить скриншот"
           }
         }
       }
@@ -6132,6 +6222,16 @@
         }
       }
     },
+    "Take one with the side and volume up buttons.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сделай его боковой кнопкой и кнопкой громкости вверх."
+          }
+        }
+      }
+    },
     "Talk to the computer": {
       "localizations": {
         "ru": {
@@ -6329,6 +6429,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сброс уже прошёл. Продолжи тред сам."
+          }
+        }
+      }
+    },
+    "The screenshot goes with what you say": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скриншот уйдёт вместе с тем, что скажешь"
           }
         }
       }
@@ -7312,9 +7422,6 @@
           }
         }
       }
-    },
-    "·": {
-      "shouldTranslate": false
     },
     "· Plan": {
       "localizations": {

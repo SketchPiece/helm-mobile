@@ -786,5 +786,16 @@
   "Send to the computer": "Отправить на компьютер",
   "Sending to the computer…": "Отправляю на компьютер…",
   "Talk to the computer": "Сказать на компьютер",
-  "Tap to send": "Нажми, чтобы отправить"
+  "Tap to send": "Нажми, чтобы отправить",
+  "All photos": "Все фото",
+  "Add a few words": "Добавить пару слов",
+  "SCREENSHOTS": "СКРИНШОТЫ",
+  "SCREENSHOT · %@": "СКРИНШОТ · %@",
+  "No access to photos": "Нет доступа к фото",
+  "Allow Helm to see your photos in Settings, or pick one under All photos.": "Разреши Штурвалу доступ к фото в Настройках или выбери снимок в «Все фото».",
+  "No screenshots yet": "Скриншотов пока нет",
+  "Take one with the side and volume up buttons.": "Сделай его боковой кнопкой и кнопкой громкости вверх.",
+  "Send a screenshot": "Отправить скриншот",
+  "The screenshot goes with what you say": "Скриншот уйдёт вместе с тем, что скажешь",
+  "Remove the screenshot": "Убрать скриншот"
 }
