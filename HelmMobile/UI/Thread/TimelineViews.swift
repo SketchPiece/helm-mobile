@@ -247,20 +247,48 @@ struct WorkStepRow: View {
     }
 }
 
+/// One clock for the dots and the shimmer: the dots hop in turn, and as the last one lands the gleam
+/// sets off across the text, so the light reads as thrown by the dots. Absolute time, so every
+/// indicator on screen keeps the same beat.
+private enum WorkingRhythm {
+    static let period = 1.8
+    /// How long one dot takes to rise and fall, and the delay between neighbours.
+    static let hop = 0.55
+    static let stagger = 0.13
+    /// The gleam leaves as the third dot tops out and crosses the text before the next round.
+    static let sweepStart = 2 * stagger + hop * 0.4
+    static let sweep = 1.05
+
+    static func phase(_ time: TimeInterval) -> Double {
+        time.truncatingRemainder(dividingBy: period)
+    }
+
+    /// 0 at rest, 1 at the top, for the dot at `index`.
+    static func lift(at time: TimeInterval, index: Int) -> Double {
+        let local = phase(time) - Double(index) * stagger
+        guard local > 0, local < hop else { return 0 }
+        return sin(.pi * local / hop)
+    }
+
+    /// 0...1 across the text while sweeping, nil while the gleam rests.
+    static func sweepProgress(at time: TimeInterval) -> Double? {
+        let local = phase(time) - sweepStart
+        guard local > 0, local < sweep else { return nil }
+        return local / sweep
+    }
+}
+
 /// Helm's in-progress mark in the timeline: three dots rising in turn, in the surrounding text colour.
 /// Stands where a mini ProgressView would; holds still when Reduce Motion is on.
 struct WorkingDots: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private let period = 1.2
-    private let stagger = 0.15
 
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { context in
             let time = context.date.timeIntervalSinceReferenceDate
             HStack(spacing: 1.8) {
                 ForEach(0..<3, id: \.self) { index in
-                    let lift = reduceMotion ? 0 : lift(at: time - Double(index) * stagger)
+                    let lift = reduceMotion ? 0 : WorkingRhythm.lift(at: time, index: index)
                     Circle()
                         .frame(width: 3.2, height: 3.2)
                         .opacity(reduceMotion ? 0.6 : 0.3 + 0.7 * lift)
@@ -271,36 +299,26 @@ struct WorkingDots: View {
         .frame(width: 15, height: 14)
         .accessibilityHidden(true)
     }
-
-    /// 0 at rest, 1 at the top: each dot rises and falls in the first half of the cycle, then waits.
-    private func lift(at time: Double) -> Double {
-        let phase = time.truncatingRemainder(dividingBy: period) / period
-        guard phase < 0.6 else { return 0 }
-        return sin(.pi * phase / 0.6)
-    }
 }
 
-/// A band of light sweeping left to right across text, then a short rest: the "still thinking" gleam.
+/// A band of light sweeping left to right across text, timed off the working dots: the "still thinking" gleam.
 /// Off with Reduce Motion.
 private struct Shimmer: ViewModifier {
     let active: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let period = 1.9
-    private let sweep = 1.3
-
     func body(content: Content) -> some View {
         if active && !reduceMotion {
             content.overlay {
                 TimelineView(.animation) { context in
-                    let elapsed = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: period)
-                    let progress = min(elapsed / sweep, 1)
                     GeometryReader { proxy in
-                        let band = max(proxy.size.width * 0.3, 44)
-                        LinearGradient(colors: [Palette.text.opacity(0), Palette.text, Palette.text.opacity(0)],
-                                       startPoint: .leading, endPoint: .trailing)
-                            .frame(width: band)
-                            .offset(x: -band + (proxy.size.width + band) * progress)
+                        if let progress = WorkingRhythm.sweepProgress(at: context.date.timeIntervalSinceReferenceDate) {
+                            let band = max(proxy.size.width * 0.3, 44)
+                            LinearGradient(colors: [Palette.text.opacity(0), Palette.text, Palette.text.opacity(0)],
+                                           startPoint: .leading, endPoint: .trailing)
+                                .frame(width: band)
+                                .offset(x: -band + (proxy.size.width + band) * progress)
+                        }
                     }
                 }
                 .mask(content)
