@@ -4,9 +4,10 @@ import Observation
 import Speech
 import UIKit
 
-/// Dictation for the composer. Records AAC (.m4a); Helm transcribes it on the Mac's side
-/// (gpt-transcribe through the Volna core, Russian and English in one take). Servers without
-/// `voiceTranscription` fall back to Apple's recogniser on the phone.
+/// Dictation for the composer. Records AAC (.m4a) and sends it straight to the Volna core
+/// (gpt-transcribe, Russian and English in one take). When the core can't take it (no push config,
+/// over its daily allowance, unreachable), the Mac's Helm server forwards it there as before, and
+/// servers without `voiceTranscription` fall back to Apple's recogniser on the phone.
 @MainActor
 @Observable
 final class VoiceInput {
@@ -187,7 +188,9 @@ final class VoiceInput {
         state = .transcribing
         do {
             let text: String
-            if environment.config?.capability("voiceTranscription") == true {
+            if let direct = await coreTranscription(url: url, environment: environment, threadId: threadId) {
+                text = direct
+            } else if environment.config?.capability("voiceTranscription") == true {
                 text = try await serverTranscription(url: url, environment: environment, threadId: threadId)
             } else {
                 text = try await deviceTranscription(url: url)
@@ -205,6 +208,29 @@ final class VoiceInput {
             state = .failed(String(localized: "Couldn't transcribe the recording."))
             return nil
         }
+    }
+
+    /// Phone → core in one hop, skipping the Mac. Nil sends the clip the old way.
+    private func coreTranscription(url: URL, environment: EnvironmentSession, threadId: String?) async -> String? {
+        guard let config = PushService.config, let audio = try? Data(contentsOf: url) else { return nil }
+        // The thread's project and branch help recognise spoken names; the core adds the coding words.
+        let thread = threadId.flatMap { environment.thread($0) }
+        let keywords = [environment.project(thread?.projectId)?.title, thread?.branch].compactMap { $0 }
+        var form = MultipartForm()
+        for language in ["ru", "en"] { form.field("languages[]", language) }
+        for keyword in keywords { form.field("keywords[]", keyword) }
+        if lastDuration > 0 { form.field("seconds", String(Int(lastDuration.rounded(.up)))) }
+        form.file("file", name: "dictation.m4a", mimeType: "audio/mp4", data: audio)
+        var request = URLRequest(url: config.baseURL.appending(path: "v1/transcriptions"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(config.token)", forHTTPHeaderField: "Authorization")
+        request.setValue(form.contentType, forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 60
+        guard let (data, response) = try? await URLSession.shared.upload(for: request, from: form.finished()),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              case .object(let body)? = try? JSONDecoder().decode(JSON.self, from: data)
+        else { return nil }
+        return body["text"]?.string
     }
 
     private func serverTranscription(url: URL, environment: EnvironmentSession, threadId: String?) async throws -> String {
@@ -303,6 +329,26 @@ private actor MicrophoneSession {
 /// Hands a freshly started recorder over to the main actor, which owns it from then on.
 private struct RecorderBox: @unchecked Sendable {
     let recorder: AVAudioRecorder
+}
+
+/// A multipart/form-data body for the core's transcription route.
+private struct MultipartForm {
+    private let boundary = "helm-\(UUID().uuidString)"
+    private var body = Data()
+
+    var contentType: String { "multipart/form-data; boundary=\(boundary)" }
+
+    mutating func field(_ name: String, _ value: String) {
+        body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".utf8))
+    }
+
+    mutating func file(_ name: String, name fileName: String, mimeType: String, data: Data) {
+        body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"; filename=\"\(fileName)\"\r\nContent-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(data)
+        body.append(Data("\r\n".utf8))
+    }
+
+    func finished() -> Data { body + Data("--\(boundary)--\r\n".utf8) }
 }
 
 /// Lets exactly one of several racing callbacks resume a continuation.
