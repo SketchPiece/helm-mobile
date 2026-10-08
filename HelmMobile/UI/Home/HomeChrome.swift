@@ -25,22 +25,27 @@ struct ProjectChips: View {
                     selection = nil
                 }
                 ForEach(chips) { chip in
-                    self.chip(selected: selection == chip.project.id) {
-                        HStack(spacing: 6) {
-                            ProjectIcon(project: chip.project, environment: chip.environment, size: 20)
-                            Text(chip.project.title).lineLimit(1)
-                            Text("\(chip.count)").foregroundStyle(Palette.textMuted).monospacedDigit()
-                        }
+                    let selected = selection == chip.project.id
+                    let button = self.chip(selected: selected) {
+                        projectLabel(chip)
                     } action: {
-                        selection = selection == chip.project.id ? nil : chip.project.id
+                        selection = selected ? nil : chip.project.id
                     }
-                    .contextMenu {
-                        if let onAction {
-                            Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
-                            Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
-                            Divider()
-                            Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
-                        }
+                    if let onAction {
+                        // In a list row the system would lift the whole strip; the preview is the chip alone,
+                        // so it's clear which project the menu is for.
+                        button
+                            .contentShape(.contextMenuPreview, .capsule)
+                            .contextMenu {
+                                Button("New thread", systemImage: "plus") { onAction(chip, .newThread) }
+                                Button("Edit project…", systemImage: "pencil") { onAction(chip, .edit) }
+                                Divider()
+                                Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(chip, .delete) }
+                            } preview: {
+                                styled(projectLabel(chip), selected: selected)
+                            }
+                    } else {
+                        button
                     }
                 }
             }
@@ -49,17 +54,29 @@ struct ProjectChips: View {
         }
     }
 
+    private func projectLabel(_ chip: Chip) -> some View {
+        HStack(spacing: 6) {
+            ProjectIcon(project: chip.project, environment: chip.environment, size: 20)
+            Text(chip.project.title).lineLimit(1)
+            Text("\(chip.count)").foregroundStyle(Palette.textMuted).monospacedDigit()
+        }
+    }
+
+    private func styled(_ label: some View, selected: Bool) -> some View {
+        label
+            .font(Typography.subheadline.weight(.medium))
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .foregroundStyle(selected ? Palette.canvas : Palette.text)
+            .background(selected ? Palette.text : Palette.surface, in: .capsule)
+    }
+
     private func chip<Label: View>(selected: Bool, @ViewBuilder label: () -> Label, action: @escaping () -> Void) -> some View {
         Button {
             UISelectionFeedbackGenerator().selectionChanged()
             withAnimation(.snappy(duration: 0.2)) { action() }
         } label: {
-            label()
-                .font(Typography.subheadline.weight(.medium))
-                .padding(.horizontal, 12)
-                .frame(height: 34)
-                .foregroundStyle(selected ? Palette.canvas : Palette.text)
-                .background(selected ? Palette.text : Palette.surface, in: .capsule)
+            styled(label(), selected: selected)
         }
         .buttonStyle(.plain)
     }
