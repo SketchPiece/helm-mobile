@@ -282,11 +282,13 @@ private actor MicrophoneSession {
            let builtIn = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
             try? session.setPreferredInput(builtIn)
         }
+        // Speech models hear at 16 kHz anyway; 32 kbit/s keeps a minute near 240 KB instead of ~1 MB,
+        // and every upload on the way to the recogniser waits for those bytes.
         let recorder = try AVAudioRecorder(url: url, settings: [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: 44_100,
+            AVSampleRateKey: 16_000,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+            AVEncoderBitRateKey: 32_000,
         ])
         recorder.isMeteringEnabled = true
         guard recorder.record(forDuration: maxDuration) else { throw VoiceInput.VoiceError.recorderFailed }
