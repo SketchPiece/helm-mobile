@@ -39,6 +39,25 @@ extension EnvironmentSession {
         return (try await arrived(id), result["commitError"]?.nonNull?.string)
     }
 
+    /// `project.update` with only the fields that changed.
+    func updateProject(_ projectId: String, _ fields: [String: JSON]) async throws {
+        _ = try await call("projects.mutate", ProjectCommands.update(projectId: projectId, fields))
+    }
+
+    /// Removes the project from Helm along with its threads; its folder on the Mac stays.
+    func deleteProject(_ projectId: String) async throws {
+        _ = try await call("projects.mutate", ProjectCommands.delete(projectId: projectId, force: true))
+    }
+
+    /// Image files in the project folder that can be its icon, as workspace-relative paths.
+    func projectImages(_ project: Project, query: String = "") async throws -> [String] {
+        let result = try await call("projects.searchEntries", [
+            "cwd": .string(project.workspaceRoot), "query": .string(query), "limit": 40,
+            "kind": "file", "imageOnly": true,
+        ])
+        return (result["entries"]?.array ?? []).compactMap { $0["path"]?.string }
+    }
+
     /// GitHub, when this Mac can create repositories on it.
     func gitHubTarget() async -> GitHubTarget? {
         guard let discovery = try? await call("server.discoverSourceControl", [:], timeout: .seconds(20)) else { return nil }
