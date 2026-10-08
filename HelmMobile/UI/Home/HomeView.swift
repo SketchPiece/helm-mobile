@@ -301,6 +301,10 @@ struct HomeView: View {
     @ViewBuilder
     private func trailingSwipe(_ entry: ThreadListEntry) -> some View {
         let thread = entry.thread
+        if let environment = model.environment(entry.ref.environmentId), NearbyMacs.shared.contains(environment.id) {
+            OpenOnComputerButton(environment: environment, threadId: entry.ref.threadId)
+            Divider()
+        }
         if thread.isSettled {
             Button { run(.unsettle, on: entry) } label: { Label("Reopen", systemImage: "tray.and.arrow.up") }
                 .tint(Palette.working)
@@ -329,6 +333,10 @@ struct HomeView: View {
     @ViewBuilder
     private func contextMenu(_ entry: ThreadListEntry, arrangement: Arrangement?, in entries: [ThreadListEntry]) -> some View {
         let thread = entry.thread
+        if let environment = model.environment(entry.ref.environmentId), NearbyMacs.shared.contains(environment.id) {
+            OpenOnComputerButton(environment: environment, threadId: entry.ref.threadId)
+            Divider()
+        }
         if thread.isSettled {
             Button { run(.unsettle, on: entry) } label: { Label("Reopen", systemImage: "tray.and.arrow.up") }
         } else {

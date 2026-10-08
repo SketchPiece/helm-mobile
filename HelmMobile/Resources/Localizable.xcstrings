@@ -1599,6 +1599,16 @@
         }
       }
     },
+    "As a new message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новым сообщением"
+          }
+        }
+      }
+    },
     "As of %@": {
       "localizations": {
         "ru": {
@@ -3429,6 +3439,16 @@
       }
     },
     "Helm on the computer asks you to allow this phone. No code needed.": {},
+    "Helm on the computer didn't take it. Update Helm there, or send instead.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал на компьютере не принял текст. Обнови его там или отправь сообщением."
+          }
+        }
+      }
+    },
     "Helm on the computer said no.": {},
     "Helm on this computer can't arrange threads.": {},
     "Helm version": {
@@ -3468,6 +3488,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удерживай и говори · отпусти, чтобы отправить"
+          }
+        }
+      }
+    },
+    "Hold to talk · let go to type it on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживай и говори · отпусти, чтобы напечатать на компьютере"
           }
         }
       }
@@ -3588,6 +3618,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Куда"
+          }
+        }
+      }
+    },
+    "Into its composer, you send": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В поле ввода, отправишь сам"
           }
         }
       }
@@ -4678,6 +4718,16 @@
         }
       }
     },
+    "Open on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть на %@"
+          }
+        }
+      }
+    },
     "Open subagent %@": {
       "localizations": {
         "ru": {
@@ -5741,6 +5791,16 @@
         }
       }
     },
+    "Send right away": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сразу отправлять"
+          }
+        }
+      }
+    },
     "Send to the computer": {
       "localizations": {
         "ru": {
@@ -6252,6 +6312,16 @@
         }
       }
     },
+    "Tap to type it on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажми, чтобы напечатать на компьютере"
+          }
+        }
+      }
+    },
     "Task": {
       "localizations": {
         "ru": {
@@ -6751,6 +6821,16 @@
         }
       }
     },
+    "Type on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Печатать на компьютере"
+          }
+        }
+      }
+    },
     "Type one from the emoji keyboard, or pick below.": {
       "localizations": {
         "ru": {
@@ -6917,6 +6997,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Значение"
+          }
+        }
+      }
+    },
+    "Voice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос"
+          }
+        }
+      }
+    },
+    "Voice sends": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос отправляет"
+          }
+        }
+      }
+    },
+    "Voice types": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Голос печатает"
           }
         }
       }
@@ -7097,6 +7207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "С чего начинается новый тред в этом проекте. Перед отправкой это всё равно можно поменять."
+          }
+        }
+      }
+    },
+    "Where your voice goes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Куда идёт голос"
           }
         }
       }

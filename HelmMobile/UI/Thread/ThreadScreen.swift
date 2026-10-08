@@ -496,6 +496,10 @@ private struct ThreadContent: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                if NearbyMacs.shared.contains(environment.id) {
+                    OpenOnComputerButton(environment: environment, threadId: session.threadId)
+                    Divider()
+                }
                 if let checkpoint = projection?.latestCheckpointWithChanges {
                     Button {
                         reviewing = checkpoint

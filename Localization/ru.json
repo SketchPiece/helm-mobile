@@ -797,5 +797,17 @@
   "Take one with the side and volume up buttons.": "Сделай его боковой кнопкой и кнопкой громкости вверх.",
   "Send a screenshot": "Отправить скриншот",
   "The screenshot goes with what you say": "Скриншот уйдёт вместе с тем, что скажешь",
-  "Remove the screenshot": "Убрать скриншот"
+  "Remove the screenshot": "Убрать скриншот",
+  "Voice": "Голос",
+  "Send right away": "Сразу отправлять",
+  "As a new message": "Новым сообщением",
+  "Type on the computer": "Печатать на компьютере",
+  "Into its composer, you send": "В поле ввода, отправишь сам",
+  "Voice sends": "Голос отправляет",
+  "Voice types": "Голос печатает",
+  "Where your voice goes": "Куда идёт голос",
+  "Tap to type it on the computer": "Нажми, чтобы напечатать на компьютере",
+  "Hold to talk · let go to type it on the computer": "Удерживай и говори · отпусти, чтобы напечатать на компьютере",
+  "Helm on the computer didn't take it. Update Helm there, or send instead.": "Штурвал на компьютере не принял текст. Обнови его там или отправь сообщением.",
+  "Open on %@": "Открыть на %@"
 }

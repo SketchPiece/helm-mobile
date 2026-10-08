@@ -72,6 +72,10 @@ final class MacRemote {
 
     private func send(_ text: String) async {
         guard let session, let environment else { return }
+        if voiceTarget == .composer, !text.isEmpty, pendingScreenshot == nil {
+            await type(text, threadId: session.threadId, in: environment)
+            return
+        }
         isSending = true
         defer { isSending = false }
         var attachments: [ChatAttachment] = []
@@ -96,6 +100,41 @@ final class MacRemote {
         } else {
             sendError = nil
             sentCount += 1
+        }
+    }
+
+    /// Where the words go: sent as a message (the default), or typed into the computer's composer.
+    enum VoiceTarget: String, CaseIterable {
+        case send, composer
+        static let key = "macRemoteVoiceTarget"
+    }
+
+    var voiceTarget: VoiceTarget {
+        get {
+            access(keyPath: \.voiceTarget)
+            return VoiceTarget(rawValue: UserDefaults.standard.string(forKey: VoiceTarget.key) ?? "") ?? .send
+        }
+        set {
+            withMutation(keyPath: \.voiceTarget) { UserDefaults.standard.set(newValue.rawValue, forKey: VoiceTarget.key) }
+        }
+    }
+
+    /// Puts the words at the end of the thread's draft on the computer, to edit and send there.
+    private func type(_ text: String, threadId: String, in environment: EnvironmentSession) async {
+        do {
+            let delivered = try await environment.sendRemoteCommand([
+                "type": "composer.insert", "threadId": .string(threadId), "text": .string(text),
+            ])
+            if delivered {
+                sendError = nil
+                sentCount += 1
+            } else {
+                sendError = String(localized: "Helm on the computer didn't take it. Update Helm there, or send instead.")
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+            }
+        } catch {
+            sendError = error.localizedDescription
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
     }
 

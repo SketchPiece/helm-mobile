@@ -256,6 +256,7 @@ struct MacRemoteSheet: View {
                     .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
                 Spacer()
+                voiceTargetMenu
                 Button {
                     dismiss()
                     onOpenThread(target.ref)
@@ -284,6 +285,42 @@ struct MacRemoteSheet: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 22)
+    }
+
+    /// Where the words go: sent as a message, or typed into the composer on the computer.
+    private var voiceTargetMenu: some View {
+        Menu {
+            Picker("Voice", selection: Binding(get: { remote.voiceTarget }, set: { remote.voiceTarget = $0 })) {
+                Label {
+                    Text("Send right away")
+                    Text("As a new message")
+                } icon: {
+                    Image(systemName: "arrow.up")
+                }
+                .tag(MacRemote.VoiceTarget.send)
+                Label {
+                    Text("Type on the computer")
+                    Text("Into its composer, you send")
+                } icon: {
+                    Image(systemName: "keyboard")
+                }
+                .tag(MacRemote.VoiceTarget.composer)
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: remote.voiceTarget == .send ? "arrow.up" : "keyboard")
+                    .font(.system(size: 12, weight: .semibold))
+                Text(remote.voiceTarget == .send ? "Voice sends" : "Voice types")
+                Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+            }
+            .font(Typography.footnote)
+            .foregroundStyle(Palette.text)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Palette.surface, in: .capsule)
+            .overlay(Capsule().stroke(Palette.border))
+        }
+        .accessibilityLabel("Where your voice goes")
     }
 
     /// The agent's latest words, a few lines of them: enough to know where it is.
@@ -322,6 +359,14 @@ struct MacRemoteSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Palette.surface, in: .rect(cornerRadius: 18))
         }
+    }
+
+    private var hint: LocalizedStringKey {
+        let typing = remote.voiceTarget == .composer
+        if remote.voice.state == .recording(handsFree: true) {
+            return typing ? "Tap to type it on the computer" : "Tap to send"
+        }
+        return typing ? "Hold to talk · let go to type it on the computer" : "Hold to talk · let go to send"
     }
 
     private var controls: some View {
@@ -388,11 +433,33 @@ struct MacRemoteSheet: View {
                 .accessibilityLabel("Send a screenshot")
             }
             .padding(.horizontal, 34)
-            Text(remote.voice.state == .recording(handsFree: true) ? "Tap to send" : "Hold to talk · let go to send")
+            Text(hint)
                 .font(Typography.footnote)
                 .foregroundStyle(Palette.textMuted)
         }
         .padding(.top, 12)
         .padding(.bottom, 20)
+    }
+}
+
+/// "Open on <computer>": shows the thread in Helm on that computer and brings it forward. Only
+/// offered while the computer is on the same network, for the thread menu and Home's long press.
+struct OpenOnComputerButton: View {
+    let environment: EnvironmentSession
+    let threadId: String
+
+    var body: some View {
+        if environment.isLive, NearbyMacs.shared.contains(environment.id) {
+            Button {
+                Task {
+                    let opened = (try? await environment.sendRemoteCommand([
+                        "type": "thread.open", "threadId": .string(threadId),
+                    ])) ?? false
+                    UINotificationFeedbackGenerator().notificationOccurred(opened ? .success : .error)
+                }
+            } label: {
+                Label("Open on \(environment.label)", systemImage: "desktopcomputer")
+            }
+        }
     }
 }

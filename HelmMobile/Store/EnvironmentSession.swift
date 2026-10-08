@@ -504,6 +504,19 @@ final class EnvironmentSession: Identifiable {
         return connection.stream(tag, payload)
     }
 
+    /// `helm.remote.send`: a command for Helm's desktop windows on this computer (open a thread,
+    /// type into its composer). False when no window took it, or the server has no such method.
+    func sendRemoteCommand(_ command: [String: JSON]) async throws -> Bool {
+        do {
+            let result = try await call("helm.remote.send", .object(command), timeout: .seconds(10))
+            return (result["delivered"]?.int ?? 0) > 0
+        } catch RPCError.disconnected {
+            throw RPCError.disconnected
+        } catch {
+            return false
+        }
+    }
+
     /// `orchestration.dispatchCommand`. `commandId` is generated unless provided (retries reuse it).
     @discardableResult
     func dispatch(_ type: String, _ fields: [String: JSON], commandId: String = UUID().uuidString.lowercased()) async throws -> JSON {
