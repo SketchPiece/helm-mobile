@@ -160,8 +160,10 @@ final class PushService: NSObject {
     // MARK: Live Activity
 
     /// On launch and foreground: keep one card, start it if agents are busy, (re)post its token.
+    /// A card with nothing left running (all done) has been seen once the app opens; it goes.
     func reconcileActivities() async {
         guard isAvailable, liveActivitiesEnabled, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        await Self.endFinishedActivities()
         await Self.endActivities(keepingFirst: true)
         var activities = Array(Activity<LiveActivityAttributes>.activities
             .filter { $0.activityState == .active || $0.activityState == .stale }
@@ -253,6 +255,17 @@ final class PushService: NSObject {
         let live = Activity<LiveActivityAttributes>.activities
             .filter { $0.activityState == .active || $0.activityState == .stale }
         for activity in live.dropFirst(keepingFirst ? 1 : 0) {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+    }
+
+    /// Ends cards whose last state has no active agents (the "all done" card).
+    nonisolated private static func endFinishedActivities() async {
+        let finished = Activity<LiveActivityAttributes>.activities.filter {
+            ($0.activityState == .active || $0.activityState == .stale)
+                && AgentAggregate(state: $0.content.state).map { $0.activeCount == 0 } == true
+        }
+        for activity in finished {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
     }
