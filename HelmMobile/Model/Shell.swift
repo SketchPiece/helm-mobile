@@ -40,6 +40,8 @@ struct Project: Identifiable, Hashable, Sendable {
     /// The icon override's kind (`emoji`, `monogram`, `lucide`); an override wins over the favicon.
     var iconKind: String?
     var defaultModelSelection: ModelSelection?
+    /// `local` or `worktree` for this project's new threads; nil follows the Mac's setting.
+    var defaultThreadEnvMode: String?
     var updatedAt: Date?
     /// `repositoryIdentity.displayName` ("acme/app"); `#` pull request search needs it.
     var repositoryName: String?
@@ -57,6 +59,7 @@ struct Project: Identifiable, Hashable, Sendable {
         // Older peers send a monogram as a lucide icon with `monogramText`.
         iconKind = icon?["kind"]?.string == "lucide" && monogram != nil ? "monogram" : icon?["kind"]?.string
         defaultModelSelection = ModelSelection(json: json["defaultModelSelection"]?.nonNull)
+        defaultThreadEnvMode = json["defaultThreadEnvMode"]?.nonNull?.string
         updatedAt = ISODate.parse(json["updatedAt"]?.string)
         repositoryName = json["repositoryIdentity"]?.nonNull?["displayName"]?.string
     }

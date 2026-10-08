@@ -193,6 +193,8 @@ struct ServerConfig: Sendable {
     /// Settings: where the folder browser starts, and the default for "Start from origin".
     var addProjectBaseDirectory: String?
     var newWorktreesStartFromOrigin: Bool
+    /// `local` or `worktree`: where new threads work unless their project says otherwise.
+    var defaultThreadEnvMode: String?
 
     init?(json: JSON) {
         guard let environment = json["environment"], let id = environment["environmentId"]?.string else { return nil }
@@ -218,6 +220,7 @@ struct ServerConfig: Sendable {
         let base = settings["addProjectBaseDirectory"]?.string?.trimmingCharacters(in: .whitespaces) ?? ""
         addProjectBaseDirectory = base.isEmpty ? nil : base
         newWorktreesStartFromOrigin = settings["newWorktreesStartFromOrigin"]?.bool ?? true
+        defaultThreadEnvMode = settings["defaultThreadEnvMode"]?.nonNull?.string
     }
 
     /// The environment's scratch project backs "No project" threads; it always runs in place.

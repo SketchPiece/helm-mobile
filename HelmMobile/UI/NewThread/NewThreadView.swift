@@ -494,6 +494,7 @@ struct NewThreadView: View {
         selection = config.initialSelection(project: project)
         runtimeMode = config.defaultRuntimeMode
         startFromOrigin = config.newWorktreesStartFromOrigin
+        newWorktree = (project?.defaultThreadEnvMode ?? config.defaultThreadEnvMode) == "worktree"
     }
 
     /// Whether the project is a repository, and the branch a worktree starts from by default.
