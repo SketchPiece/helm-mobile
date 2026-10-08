@@ -25,6 +25,10 @@ final class EnvironmentSession: Identifiable {
     /// When the thread list on screen was last in step with the server: set while it is a copy
     /// saved on this phone or the connection is down, nil while it is live.
     private(set) var shellSavedAt: Date?
+    /// The thread Helm on this Mac shows, while a desktop window has one open.
+    private(set) var desktop: DesktopPresence?
+    /// When someone was last seen at the Mac (its input, a focused Helm window).
+    private(set) var desktopInUseAt: Date?
 
     /// Called each time the socket comes up with a fresh config (the app refreshes the widget).
     @ObservationIgnored var onLive: (() -> Void)?
@@ -212,6 +216,7 @@ final class EnvironmentSession: Identifiable {
     }
 
     private func teardown() {
+        desktop = nil
         streams.forEach { $0.cancel() }
         streams.removeAll()
         if let connection {
@@ -296,6 +301,8 @@ final class EnvironmentSession: Identifiable {
             await self?.streamEnded(on: connection)
         })
 
+        followDesktop(on: connection)
+
         for (key, weakThread) in threads {
             if let thread = weakThread.value {
                 thread.subscribe(on: connection)
@@ -339,6 +346,25 @@ final class EnvironmentSession: Identifiable {
     private func streamEnded(on ended: RPCConnection) async {
         guard ended === connection, !Task.isCancelled else { return }
         await ended.close()
+    }
+
+    /// What the desktop app shows, for Home's Mac remote. Servers without the stream just
+    /// leave `desktop` empty; its end never takes the socket down.
+    private func followDesktop(on connection: RPCConnection) {
+        let policy = connection.stream("subscribeBackgroundPolicy", [:])
+        streams.append(Task { [weak self] in
+            do {
+                for try await snapshot in policy {
+                    guard let self else { return }
+                    let next = DesktopPresence.from(snapshot: snapshot)
+                    if let next, next.macInUse || next.focused && self.desktop?.threadId != next.threadId {
+                        self.desktopInUseAt = Date()
+                    }
+                    if next != self.desktop { self.desktop = next }
+                }
+            } catch {}
+            self?.desktop = nil
+        })
     }
 
     // MARK: Local cache

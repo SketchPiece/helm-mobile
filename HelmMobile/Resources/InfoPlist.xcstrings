@@ -38,13 +38,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Helm connects to the Helm app on your Mac over your local network or tailnet."
+            "value": "Helm connects to the Helm app on your Mac over your local network or tailnet, and notices when your Mac is nearby."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Штурвал подключается к Mac по локальной сети или Tailscale."
+            "value": "Штурвал подключается к Mac по локальной сети или Tailscale и замечает, когда Mac рядом."
           }
         }
       }

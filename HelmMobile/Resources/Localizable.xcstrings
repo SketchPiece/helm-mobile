@@ -159,6 +159,16 @@
         }
       }
     },
+    "%@ · NEARBY": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · РЯДОМ"
+          }
+        }
+      }
+    },
     "%@ → %@ tokens": {
       "localizations": {
         "ru": {
@@ -3422,6 +3432,16 @@
         }
       }
     },
+    "Hold to talk · let go to send": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживай и говори · отпусти, чтобы отправить"
+          }
+        }
+      }
+    },
     "Hold to talk, release to send": {
       "localizations": {
         "ru": {
@@ -4373,6 +4393,16 @@
       }
     },
     "Nobody answered on the computer. Try again.": {},
+    "Nobody at the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За компьютером никого"
+          }
+        }
+      }
+    },
     "Not asked yet": {
       "localizations": {
         "ru": {
@@ -4578,6 +4608,16 @@
         }
       }
     },
+    "Open a thread in Helm on your computer to use the remote.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открой тред в Штурвале на компьютере, чтобы пользоваться пультом."
+          }
+        }
+      }
+    },
     "Open login again": {
       "localizations": {
         "ru": {
@@ -4618,12 +4658,32 @@
         }
       }
     },
+    "Open the thread on this phone": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть тред на телефоне"
+          }
+        }
+      }
+    },
     "Opens a new thread in Helm.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Открывает новый тред в Штурвале."
+          }
+        }
+      }
+    },
+    "Opens the remote for the thread on your computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывает пульт для треда на компьютере"
           }
         }
       }
@@ -5591,6 +5651,26 @@
         }
       }
     },
+    "Send to the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить на компьютер"
+          }
+        }
+      }
+    },
+    "Sending to the computer…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправляю на компьютер…"
+          }
+        }
+      }
+    },
     "Sending…": {
       "localizations": {
         "ru": {
@@ -6048,6 +6128,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tailscale"
+          }
+        }
+      }
+    },
+    "Talk to the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сказать на компьютер"
+          }
+        }
+      }
+    },
+    "Tap to send": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажми, чтобы отправить"
           }
         }
       }
@@ -7212,6 +7312,9 @@
           }
         }
       }
+    },
+    "·": {
+      "shouldTranslate": false
     },
     "· Plan": {
       "localizations": {

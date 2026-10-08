@@ -25,6 +25,9 @@ struct HomeView: View {
     /// Moves on when the next snoozed thread is due, so it walks back into the list (as "Woke")
     /// at its wake time rather than at the next unrelated update.
     @State private var now = Date()
+    /// The thread open in Helm on a Mac nearby, as a pill above the bar and a remote sheet.
+    @State private var remote = MacRemote()
+    @State private var showingRemote = false
 
     var body: some View {
         let entries = filteredEntries
@@ -107,6 +110,35 @@ struct HomeView: View {
         .overlay { emptyState(entries: entries) }
         .undoToast()
         .overlay { NewThreadFan(state: fan) }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            MacRemotePill(remote: remote) { showingRemote = true }
+                .animation(.snappy(duration: 0.35), value: remote.target)
+        }
+        .sheet(isPresented: $showingRemote) {
+            MacRemoteSheet(remote: remote) { ref in router.path = [.thread(ref)] }
+        }
+        .onChange(of: model.macRemoteTarget(), initial: true) { _, target in
+            withAnimation(.snappy(duration: 0.35)) { remote.follow(target, in: model) }
+        }
+        .onChange(of: remote.voice.state) {
+            if remote.voice.state == .idle { remote.follow(model.macRemoteTarget(), in: model) }
+        }
+        .onChange(of: remote.thread?.phase) { old, phase in
+            // A short tap when the run on the Mac finishes or the agent needs you.
+            guard remote.target != nil, let phase, let old, old != phase else { return }
+            if phase == .done || phase == .failed || phase == .limited {
+                UINotificationFeedbackGenerator().notificationOccurred(phase == .done ? .success : .warning)
+            } else if phase == .approval || phase == .input {
+                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            }
+        }
+        .task {
+            // The remote lingers a while after the Mac was last used; let it go when that runs out.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(30))
+                remote.follow(model.macRemoteTarget(), in: model)
+            }
+        }
         .navigationTitle(navigationTitle)
         .toolbarTitleDisplayMode(.inlineLarge)
         .searchable(text: $search, prompt: Text("Search"))

@@ -55,8 +55,12 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan the pairing QR code shown by Helm on your Mac.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_helm._tcp</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Helm connects to the Helm app on your Mac over your local network or tailnet.</string>
+	<string>Helm connects to the Helm app on your Mac over your local network or tailnet, and notices when your Mac is nearby.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Dictate messages to your agents.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

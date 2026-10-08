@@ -776,5 +776,15 @@
   "Nothing found": "Ничего не найдено",
   "Helm's default": "Как в Штурвале",
   "Where a new thread in this project starts. You can still change it before sending.": "С чего начинается новый тред в этом проекте. Перед отправкой это всё равно можно поменять.",
-  "Default model": "Модель по умолчанию"
+  "Default model": "Модель по умолчанию",
+  "%@ · NEARBY": "%@ · РЯДОМ",
+  "Hold to talk · let go to send": "Удерживай и говори · отпусти, чтобы отправить",
+  "Nobody at the computer": "За компьютером никого",
+  "Open a thread in Helm on your computer to use the remote.": "Открой тред в Штурвале на компьютере, чтобы пользоваться пультом.",
+  "Open the thread on this phone": "Открыть тред на телефоне",
+  "Opens the remote for the thread on your computer": "Открывает пульт для треда на компьютере",
+  "Send to the computer": "Отправить на компьютер",
+  "Sending to the computer…": "Отправляю на компьютер…",
+  "Talk to the computer": "Сказать на компьютер",
+  "Tap to send": "Нажми, чтобы отправить"
 }

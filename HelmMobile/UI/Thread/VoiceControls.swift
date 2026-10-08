@@ -89,9 +89,9 @@ struct MicButton: View {
     }
 }
 
-/// One finger on the microphone, reported straight from the touches: the press as it lands, the
+/// One finger on a microphone (the composer's, the Mac remote's), reported straight from the touches: the press as it lands, the
 /// horizontal slide, and the lift (or the system taking the touch away).
-private struct MicPressGesture: UIGestureRecognizerRepresentable {
+struct MicPressGesture: UIGestureRecognizerRepresentable {
     let onBegan: () -> Void
     let onMoved: (CGFloat) -> Void
     let onEnded: (_ cancelledBySystem: Bool) -> Void
@@ -105,7 +105,7 @@ private struct MicPressGesture: UIGestureRecognizerRepresentable {
     }
 }
 
-private final class MicPressRecognizer: UIGestureRecognizer {
+final class MicPressRecognizer: UIGestureRecognizer {
     var onBegan: () -> Void = {}
     var onMoved: (CGFloat) -> Void = { _ in }
     var onEnded: (Bool) -> Void = { _ in }

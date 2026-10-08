@@ -10,6 +10,12 @@ struct ThreadRef: Hashable, Codable, Sendable {
     var threadId: String
 }
 
+/// A thread open in Helm on a Mac nearby, for the remote on Home.
+struct MacRemoteTarget: Equatable {
+    var ref: ThreadRef
+    var macLabel: String
+}
+
 /// A thread row with what the list needs to draw it.
 struct ThreadListEntry: Identifiable, Hashable {
     var ref: ThreadRef
@@ -40,6 +46,7 @@ final class AppModel {
             self?.environments.filter { !$0.isLive }.forEach { $0.reconnectNow(reason: "Tailscale node running") }
         }
         environments.forEach { $0.start() }
+        NearbyMacs.shared.start()
         // A new network path (Wi-Fi ↔ cellular, Tailscale toggled) is the moment a dropped
         // connection can come back; don't wait for the backoff timer.
         pathMonitor.pathUpdateHandler = { [weak self] path in
@@ -123,6 +130,7 @@ final class AppModel {
 
     func foregrounded() {
         ConnectionLog.shared.log("app", "foreground: " + environments.map { "\($0.label) \($0.logStatus)" }.joined(separator: ", "))
+        NearbyMacs.shared.start()
         for environment in environments {
             Task { await environment.refreshAfterForeground() }
         }
@@ -133,6 +141,7 @@ final class AppModel {
     /// (or a dead connection) still shows it.
     func backgrounded() {
         ConnectionLog.shared.log("app", "background")
+        NearbyMacs.shared.stop()
         environments.forEach { $0.saveToDisk() }
         let task = UIApplication.shared.beginBackgroundTask(withName: "helm.local-cache")
         guard task != .invalid else { return }
@@ -147,6 +156,25 @@ final class AppModel {
             guard let self else { return }
             Task { await UsageWidgetPublisher.shared.publish(from: self.environments) }
         }
+    }
+
+    // MARK: Mac remote
+
+    /// How long after the last sign of someone at the Mac its open thread is still offered:
+    /// long enough to watch an agent work without touching the Mac.
+    static let remoteLinger: TimeInterval = 15 * 60
+
+    /// The thread Helm shows on a Mac on this phone's network, while someone is at that Mac.
+    func macRemoteTarget(now: Date = Date()) -> MacRemoteTarget? {
+        for environment in environments where environment.isLive && NearbyMacs.shared.contains(environment.id) {
+            guard let desktop = environment.desktop, !desktop.macAway,
+                  let inUseAt = environment.desktopInUseAt, now.timeIntervalSince(inUseAt) < Self.remoteLinger,
+                  environment.thread(desktop.threadId) != nil
+            else { continue }
+            return MacRemoteTarget(ref: ThreadRef(environmentId: environment.id, threadId: desktop.threadId),
+                                   macLabel: environment.label)
+        }
+        return nil
     }
 
     // MARK: Thread list
