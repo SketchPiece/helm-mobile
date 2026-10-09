@@ -311,9 +311,12 @@ struct MacRemoteSheet: View {
                 Task { await remote.switchTo(ref, in: model) }
             } content: {
                 VStack(spacing: 0) {
-                    latest(thread: thread)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    // The words never size the card: they hang from its bottom in whatever room
+                    // the header and the controls leave, and the top of a long message is cut off.
+                    Color.clear
+                        .overlay(alignment: .bottomLeading) {
+                            latest(thread: thread).fixedSize(horizontal: false, vertical: true)
+                        }
                         .clipped()
                         .mask {
                             VStack(spacing: 0) {
