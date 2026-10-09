@@ -90,12 +90,34 @@ final class MacRemote {
     }
 
     /// The thread before or after this one in Home's order (`step` −1 or 1), for the swipe.
+    /// Past the last thread it goes round to the first, and back. A thread that just left the list
+    /// (settled or snoozed while shown) keeps its place: the next one is whatever moved into it.
     func neighbour(_ step: Int, in model: AppModel) -> ThreadRef? {
+        let all = orderedRefs(in: model)
+        guard !all.isEmpty, let target else { return nil }
+        let next: Int
+        if let index = all.firstIndex(of: target.ref) {
+            next = index + step
+        } else if let place = lastPlace, place.ref == target.ref {
+            next = step > 0 ? place.index : place.index - 1
+        } else {
+            next = step > 0 ? 0 : all.count - 1
+        }
+        let wrapped = ((next % all.count) + all.count) % all.count
+        return all[wrapped] == target.ref ? nil : all[wrapped]
+    }
+
+    private func orderedRefs(in model: AppModel) -> [ThreadRef] {
         let lists = threads(in: model)
-        let all = (lists.waiting + lists.others).map(\.ref)
-        guard let index = all.firstIndex(where: { $0 == target?.ref }) else { return all.first }
-        let next = index + step
-        return all.indices.contains(next) ? all[next] : nil
+        return (lists.waiting + lists.others).map(\.ref)
+    }
+
+    /// Where the shown thread sat in the list, for when it leaves it.
+    @ObservationIgnored private var lastPlace: (ref: ThreadRef, index: Int)?
+
+    private func rememberPlace(in model: AppModel) {
+        guard let ref = target?.ref, let index = orderedRefs(in: model).firstIndex(of: ref) else { return }
+        lastPlace = (ref, index)
     }
 
     // MARK: Trackpad
@@ -143,6 +165,7 @@ final class MacRemote {
     /// Settles or snoozes the thread on the computer, then moves on to the next one that needs you.
     func settle(_ action: AppModel.ThreadAction, in model: AppModel) async {
         guard let ref = target?.ref else { return }
+        rememberPlace(in: model)
         let next = nextWaiting(in: model)
         do {
             try await model.perform(action, on: ref)
