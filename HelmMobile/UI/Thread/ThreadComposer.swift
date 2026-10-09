@@ -108,6 +108,9 @@ struct ThreadComposer: View {
         .contentShape(.rect)
         .onTapGesture { if voice.state == .idle { focused = true } }
         .composerGlass(cornerRadius: expanded ? 26 : 25)
+        .composerImageDrop(cornerRadius: expanded ? 26 : 25) { images in
+            images.forEach { draft.attach(image: $0, environment: environment) }
+        }
         // At rest the pill floats inset from the edges and stretches out to them when it opens.
         .padding(.horizontal, expanded ? 0 : 14)
         .animation(.composer, value: expanded)

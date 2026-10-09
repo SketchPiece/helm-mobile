@@ -299,6 +299,10 @@ struct NewThreadView: View {
         .contentShape(.rect)
         .onTapGesture { if voice.state == .idle { focused = true } }
         .composerGlass()
+        .composerImageDrop { images in
+            guard let environment else { return }
+            images.forEach { draft.attach(image: $0, environment: environment) }
+        }
         .animation(.composer, value: voice.state)
         .animation(.composer, value: hasContent)
         .animation(.composer, value: newWorktree)

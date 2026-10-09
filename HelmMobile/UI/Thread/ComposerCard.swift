@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // Pieces shared by the thread composer and the new-thread composer: the glass they sit in, and the
 // chips in the card's bottom row (model, access mode) and the new thread's "where" row.
@@ -9,6 +10,49 @@ extension View {
     func composerGlass(cornerRadius: CGFloat = 26) -> some View {
         glassEffect(.regular.tint(Palette.surfaceRaised.opacity(0.6)).interactive(),
                     in: .rect(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+extension View {
+    /// Pictures dragged onto the composer (a screenshot's thumbnail, a photo from another app) attach
+    /// like pasted ones. The card is outlined while one hovers over it.
+    func composerImageDrop(cornerRadius: CGFloat = 26, onImages: @escaping ([UIImage]) -> Void) -> some View {
+        modifier(ComposerImageDrop(cornerRadius: cornerRadius, onImages: onImages))
+    }
+}
+
+private struct ComposerImageDrop: ViewModifier {
+    let cornerRadius: CGFloat
+    let onImages: ([UIImage]) -> Void
+    @State private var targeted = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Palette.accent, lineWidth: 2)
+                    .opacity(targeted ? 1 : 0)
+                    .allowsHitTesting(false)
+            }
+            .animation(.easeOut(duration: 0.15), value: targeted)
+            .onDrop(of: [.image], isTargeted: $targeted) { providers in
+                let pictures = providers.filter { $0.hasItemConformingToTypeIdentifier(UTType.image.identifier) }
+                guard !pictures.isEmpty else { return false }
+                Task {
+                    for provider in pictures {
+                        if let data = await Self.imageData(provider), let image = UIImage(data: data) {
+                            onImages([image])
+                        }
+                    }
+                }
+                return true
+            }
+    }
+
+    private static func imageData(_ provider: NSItemProvider) async -> Data? {
+        await withCheckedContinuation { continuation in
+            _ = provider.loadDataRepresentation(for: .image) { data, _ in continuation.resume(returning: data) }
+        }
     }
 }
 
