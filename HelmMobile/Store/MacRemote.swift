@@ -104,12 +104,12 @@ final class MacRemote {
     @ObservationIgnored private var scrollFlush: Task<Void, Never>?
 
     /// Scrolls the computer's timeline by `points` (positive: toward newer). Many small moves
-    /// from a drag go out as one every ~30 ms.
+    /// from a drag go out as one every frame or so (~16 ms); the computer eases between them.
     func scrollComputer(by points: Double) {
         pendingScroll += points
         guard scrollFlush == nil else { return }
         scrollFlush = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(30))
+            try? await Task.sleep(for: .milliseconds(16))
             guard let self else { return }
             let by = pendingScroll
             pendingScroll = 0
