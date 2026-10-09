@@ -22,12 +22,22 @@ final class MacRemote {
     /// A message with a screenshot is on its way up.
     private(set) var isSending = false
 
+    /// A thread just picked on the phone, kept while the Mac catches up: its next report may
+    /// still name the thread it showed before.
+    @ObservationIgnored private var switching: (threadId: String, until: Date)?
+
     /// Points the remote at `target` (nil: nothing to offer), keeping the thread subscribed.
     func follow(_ target: MacRemoteTarget?, in model: AppModel) {
+        if let switching, Date() < switching.until, target?.ref.threadId != switching.threadId { return }
+        switching = nil
         guard target != self.target else { return }
         // Mid-sentence the Mac may switch threads or doze off; the take still goes where it began.
         // The views follow again once the voice is idle.
         if voice.isRecording || voice.state == .transcribing { return }
+        point(at: target, in: model)
+    }
+
+    private func point(at target: MacRemoteTarget?, in model: AppModel) {
         self.target = target
         sendError = nil
         guard let target, let environment = model.environment(target.ref.environmentId) else {
@@ -46,6 +56,62 @@ final class MacRemote {
     }
 
     var isWorking: Bool { session?.projection?.isWorking ?? thread?.isWorking ?? false }
+
+    // MARK: Other threads on this computer
+
+    /// This computer's threads in Home's order: what needs you, then pinned and active ones.
+    func threads(in model: AppModel) -> (waiting: [ThreadListEntry], others: [ThreadListEntry]) {
+        guard let environmentId = target?.ref.environmentId else { return ([], []) }
+        let sections = HomeSections(entries: model.allThreads().filter { $0.ref.environmentId == environmentId })
+        return (sections.attention, sections.pinned + sections.active)
+    }
+
+    /// The thread the remote moves on to after Settle or Snooze: the next one that needs you.
+    func nextWaiting(in model: AppModel) -> ThreadListEntry? {
+        threads(in: model).waiting.first { $0.ref != target?.ref }
+    }
+
+    /// Opens `ref` on the computer without bringing Helm forward, and follows it here at once.
+    func switchTo(_ ref: ThreadRef, in model: AppModel) async {
+        guard let target, ref != target.ref, !voice.isRecording, voice.state != .transcribing,
+              let environment = model.environment(ref.environmentId)
+        else { return }
+        switching = (ref.threadId, Date().addingTimeInterval(4))
+        point(at: MacRemoteTarget(ref: ref, macLabel: target.macLabel), in: model)
+        UISelectionFeedbackGenerator().selectionChanged()
+        do {
+            let opened = try await environment.sendRemoteCommand([
+                "type": "thread.open", "threadId": .string(ref.threadId), "reveal": false,
+            ])
+            if !opened { sendError = String(localized: "Helm on the computer didn't switch threads.") }
+        } catch {
+            sendError = error.localizedDescription
+        }
+    }
+
+    /// The thread before or after this one in Home's order (`step` −1 or 1), for the swipe.
+    func neighbour(_ step: Int, in model: AppModel) -> ThreadRef? {
+        let lists = threads(in: model)
+        let all = (lists.waiting + lists.others).map(\.ref)
+        guard let index = all.firstIndex(where: { $0 == target?.ref }) else { return all.first }
+        let next = index + step
+        return all.indices.contains(next) ? all[next] : nil
+    }
+
+    /// Settles or snoozes the thread on the computer, then moves on to the next one that needs you.
+    func settle(_ action: AppModel.ThreadAction, in model: AppModel) async {
+        guard let ref = target?.ref else { return }
+        let next = nextWaiting(in: model)
+        do {
+            try await model.perform(action, on: ref)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            if case .unsettle = action { return }
+            if let next { await switchTo(next.ref, in: model) }
+        } catch {
+            sendError = error.localizedDescription
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+        }
+    }
 
     /// Stops the recording and sends what was said to the thread.
     func finishAndSend() async {

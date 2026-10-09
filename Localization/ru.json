@@ -809,5 +809,10 @@
   "Tap to type it on the computer": "Нажми, чтобы напечатать на компьютере",
   "Hold to talk · let go to type it on the computer": "Удерживай и говори · отпусти, чтобы напечатать на компьютере",
   "Helm on the computer didn't take it. Update Helm there, or send instead.": "Штурвал на компьютере не принял текст. Обнови его там или отправь сообщением.",
-  "Open on %@": "Открыть на %@"
+  "Open on %@": "Открыть на %@",
+  "On the computer": "На компьютере",
+  "Lists the threads on this computer": "Показывает треды на этом компьютере",
+  "Swipe for the next thread": "Свайп — следующий тред",
+  "Next: %@": "Дальше: %@",
+  "Helm on the computer didn't switch threads.": "Штурвал на компьютере не переключил тред."
 }

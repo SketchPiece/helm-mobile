@@ -214,8 +214,10 @@ struct RemoteVoiceStatus: View {
 struct MacRemoteSheet: View {
     let remote: MacRemote
     let onOpenThread: (ThreadRef) -> Void
+    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var choosingScreenshot = false
+    @State private var snoozingCustom = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -232,8 +234,20 @@ struct MacRemoteSheet: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
+                    pageDots
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                // Sideways: the thread before or after this one, as on Home; the computer follows.
+                .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { drag in
+                    let x = drag.translation.width
+                    guard abs(x) > 60, abs(x) > abs(drag.translation.height) * 1.5,
+                          let ref = remote.neighbour(x < 0 ? 1 : -1, in: model)
+                    else { return }
+                    Task { await remote.switchTo(ref, in: model) }
+                })
+                .id(target.ref)
+                .transition(.opacity)
+                threadActions
                 controls
             } else {
                 ContentUnavailableView("Nobody at the computer", systemImage: "desktopcomputer",
@@ -246,6 +260,11 @@ struct MacRemoteSheet: View {
             ScreenshotPanel(remote: remote)
                 .presentationDetents([.large])
         }
+        .sheet(isPresented: $snoozingCustom) {
+            CustomSnoozeSheet { date in await remote.settle(.snooze(date), in: model) }
+        }
+        .animation(.snappy(duration: 0.25), value: remote.target)
+        .undoToast()
     }
 
     private func header(target: MacRemoteTarget, thread: ThreadSummary) -> some View {
@@ -268,10 +287,7 @@ struct MacRemoteSheet: View {
                 }
                 .accessibilityLabel("Open the thread on this phone")
             }
-            Text(thread.displayTitle)
-                .font(Typography.sans(22, .semibold, relativeTo: .title2))
-                .foregroundStyle(Palette.text)
-                .lineLimit(2)
+            threadMenu(current: thread)
             HStack(spacing: 8) {
                 ProjectIcon(project: remote.environment?.project(thread.projectId), environment: remote.environment, size: 18)
                 Text(remote.environment?.project(thread.projectId)?.title ?? target.macLabel)
@@ -286,6 +302,112 @@ struct MacRemoteSheet: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 22)
+    }
+
+    /// The title, and under it every thread on this computer: pick one and the computer opens it.
+    private func threadMenu(current thread: ThreadSummary) -> some View {
+        let lists = remote.threads(in: model)
+        return Menu {
+            if !lists.waiting.isEmpty {
+                Section("Needs you") { ForEach(lists.waiting) { threadItem($0) } }
+            }
+            if !lists.others.isEmpty {
+                Section("Active") { ForEach(lists.others) { threadItem($0) } }
+            }
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(thread.displayTitle)
+                    .font(Typography.sans(22, .semibold, relativeTo: .title2))
+                    .foregroundStyle(Palette.text)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.textMuted)
+            }
+        }
+        .accessibilityHint("Lists the threads on this computer")
+    }
+
+    private func threadItem(_ entry: ThreadListEntry) -> some View {
+        Button {
+            Task { await remote.switchTo(entry.ref, in: model) }
+        } label: {
+            Text(entry.thread.displayTitle)
+            Text(entry.ref == remote.target?.ref ? String(localized: "On the computer")
+                 : entry.thread.phase.label ?? entry.project?.title ?? "")
+            if entry.ref == remote.target?.ref { Image(systemName: "desktopcomputer") }
+        }
+    }
+
+    /// Where this thread sits among the others, under the card: the swipe's map.
+    @ViewBuilder
+    private var pageDots: some View {
+        let lists = remote.threads(in: model)
+        let all = (lists.waiting + lists.others).map(\.ref)
+        if all.count > 1, let index = all.firstIndex(where: { $0 == remote.target?.ref }) {
+            VStack(spacing: 6) {
+                if all.count <= 9 {
+                    HStack(spacing: 6) {
+                        ForEach(all.indices, id: \.self) { i in
+                            Capsule()
+                                .fill(i == index ? Palette.text : Palette.border)
+                                .frame(width: i == index ? 16 : 6, height: 6)
+                        }
+                    }
+                } else {
+                    Text("\(index + 1) of \(all.count)").font(Typography.mono(12)).foregroundStyle(Palette.textMuted)
+                }
+                Text("Swipe for the next thread").font(Typography.footnote).foregroundStyle(Palette.textMuted)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 14)
+            .animation(.snappy(duration: 0.25), value: index)
+        }
+    }
+
+    /// Settle and Snooze, by the thumb. When another thread needs you, the remote goes on to it.
+    private var threadActions: some View {
+        let next = remote.nextWaiting(in: model)
+        return VStack(alignment: .leading, spacing: 8) {
+            if let next {
+                Text("Next: \(next.thread.displayTitle)")
+                    .font(Typography.mono(12))
+                    .foregroundStyle(Palette.textMuted)
+                    .lineLimit(1)
+                    .padding(.horizontal, 6)
+            }
+            HStack(spacing: 10) {
+                let settled = remote.thread?.isSettled == true
+                Button {
+                    Task { await remote.settle(settled ? .unsettle : .settle, in: model) }
+                } label: {
+                    Label(settled ? "Reopen" : "Settle", systemImage: settled ? "tray.and.arrow.up" : "checkmark")
+                        .font(Typography.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.glass)
+                Menu {
+                    ForEach(Snooze.presets()) { preset in
+                        Button {
+                            Task { await remote.settle(.snooze(preset.date), in: model) }
+                        } label: {
+                            Text(preset.title)
+                            Text(preset.whenLabel)
+                        }
+                    }
+                    Button("Custom…") { snoozingCustom = true }
+                } label: {
+                    Label("Snooze", systemImage: "moon.zzz")
+                        .font(Typography.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.glass)
+            }
+            .foregroundStyle(Palette.text)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 10)
     }
 
     /// Where the words go: sent as a message, or typed into the composer on the computer.

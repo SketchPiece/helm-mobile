@@ -3439,6 +3439,16 @@
       }
     },
     "Helm on the computer asks you to allow this phone. No code needed.": {},
+    "Helm on the computer didn't switch threads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Штурвал на компьютере не переключил тред."
+          }
+        }
+      }
+    },
     "Helm on the computer didn't take it. Update Helm there, or send instead.": {
       "localizations": {
         "ru": {
@@ -3791,6 +3801,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Лимиты"
+          }
+        }
+      }
+    },
+    "Lists the threads on this computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывает треды на этом компьютере"
           }
         }
       }
@@ -4311,6 +4331,16 @@
         }
       }
     },
+    "Next: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дальше: %@"
+          }
+        }
+      }
+    },
     "No access to photos": {
       "localizations": {
         "ru": {
@@ -4631,6 +4661,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Включены"
+          }
+        }
+      }
+    },
+    "On the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На компьютере"
           }
         }
       }
@@ -6208,6 +6248,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Под контролем"
+          }
+        }
+      }
+    },
+    "Swipe for the next thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп — следующий тред"
           }
         }
       }
