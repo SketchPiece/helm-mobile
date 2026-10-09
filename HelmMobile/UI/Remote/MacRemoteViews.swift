@@ -153,13 +153,14 @@ struct MacRemotePill: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint("Opens the remote for the thread on your computer")
-                RemoteMicButton(remote: remote, diameter: 44)
+                RemoteMicButton(remote: remote, diameter: 40)
             }
-            .padding(.leading, 18)
-            .padding(.trailing, 7)
-            .frame(height: 58)
+            .padding(.leading, 16)
+            .padding(.trailing, 6)
+            .frame(height: 52)
             .glassEffect(.regular, in: .capsule)
-            .padding(.horizontal, 16)
+            // Edge to edge with the bottom bar's glass (Search and New thread) under it.
+            .padding(.horizontal, 28)
             .padding(.bottom, 8)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
