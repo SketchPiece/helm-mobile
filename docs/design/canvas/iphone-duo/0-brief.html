@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1280x820"><title>0. What iPhone Duo gives us</title><link rel="stylesheet" href="_shared.css">
+<style>
+html,body{width:1280px;height:820px}
+.grid{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:22px;flex:1}
+.col{display:flex;flex-direction:column;gap:14px}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.box h3{font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:var(--accentText)}
+.box p,.box li{font-size:13.5px;line-height:1.45;color:#d8cfc1}
+.box ul{padding-left:16px;display:flex;flex-direction:column;gap:5px}
+.box b{color:var(--text);font-weight:600}
+.api{font:12px 'IBM Plex Mono',monospace;color:var(--working)}
+.geo{display:flex;align-items:flex-end;gap:16px;padding:6px 0 4px}
+.g-out{width:70px;height:102px;border:2px solid var(--text);border-radius:10px;position:relative}
+.g-in{width:134px;height:94px;border:2px solid var(--text);border-radius:10px;position:relative}
+.g-in::after{content:'';position:absolute;top:0;bottom:0;left:50%;border-left:1.5px dashed var(--accent)}
+.g-out::after{content:'';position:absolute;right:6px;top:6px;width:7px;height:7px;border-radius:50%;background:var(--text)}
+.glab{font:11px/1.4 'IBM Plex Mono',monospace;color:var(--muted);margin-top:6px}
+.poses{display:flex;gap:10px}
+.pose{flex:1;background:#171310;border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
+.pose svg{width:56px;height:40px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round}
+.pose b{color:var(--text);font-weight:500}
+</style></head><body><div class="board">
+<div class="cap"><span class="k">iPhone Duo · iOS 27.1 · ships Oct 23</span><span class="h">What the device gives Helm, beyond "a bigger screen"</span><span class="d">From Apple's HIG page "Designing for iPhone Duo", the developer guide "Preparing your app for iPhone Duo" and the six Tech Talks. The left column is the device, the middle is what Apple asks of every app, the right is the new capabilities the concepts on this canvas build on.</span></div>
+<div class="grid">
+ <div class="col">
+  <div class="box"><h3>Two displays, one ratio</h3>
+   <div class="geo"><div><div class="g-out"></div><div class="glab">outer 5.4″<br>~466×678 pt</div></div><div><div class="g-in"></div><div class="glab">inner 7.6″, fold in the middle<br>~890×626 pt = two outers</div></div></div>
+   <p>The inner display is exactly two outer displays side by side (√2, like A4). Closed, you hold a phone; open, you hold a <b>book with two pages</b>, each about the size of the outer screen.</p>
+  </div>
+  <div class="box"><h3>Poses</h3>
+   <div class="poses">
+    <div class="pose"><svg viewBox="0 0 56 40"><rect x="18" y="3" width="20" height="34" rx="4"/></svg><b>Closed</b>outer, compact</div>
+    <div class="pose"><svg viewBox="0 0 56 40"><path d="M28 6v30M28 6L6 12v26l22-2M28 6l22 6v26l-22-2"/></svg><b>Book</b>half open, fold divides</div>
+    <div class="pose"><svg viewBox="0 0 56 40"><path d="M10 34h36M10 34L16 6M16 6l30 0" /></svg><b>Desk</b>top shows, bottom taps</div>
+    <div class="pose"><svg viewBox="0 0 56 40"><rect x="4" y="6" width="48" height="30" rx="4"/><path d="M28 6v30" stroke-dasharray="3 3"/></svg><b>Open</b>flat, regular width</div>
+   </div>
+  </div>
+  <div class="box"><h3>Cameras</h3><p>A front camera on each display; the inner one sits under the panel and only "appears" while active. With the rear camera running, the <b>outer display faces whoever is being filmed</b>.</p></div>
+ </div>
+ <div class="col">
+  <div class="box"><h3>Apple's rules for every app</h3><ul>
+   <li><b>Resize, don't redesign per pose.</b> Compact width outside, regular width inside; size classes, margins, safe areas. No <span class="api">UIScreen.main</span>, no orientation checks.</li>
+   <li><b>Bars go to the side.</b> Toolbars, tab bar, status bar and the Dynamic Island stack on a vertical rail (outer display and inner landscape). Back/Close on top, then Done; icons with titles; overflow by priority.</li>
+   <li><b>Same functions in every pose.</b> Inside may add one level of hierarchy (Mail: list + message), never a different app.</li>
+   <li><b>Keep controls off the fold.</b> Buttons, sheets, alerts get displaced to a page; scrolling content may cross it.</li>
+   <li><b>Desk pose is the one optional special layout:</b> media up, controls on the stable bottom half.</li>
+  </ul></div>
+  <div class="box"><h3>What it means for Helm today</h3><p>Helm Mobile is iPhone-only, one <span class="api">NavigationStack</span>, no size classes anywhere, custom bottom bar. Built with the 27.1 SDK it would extend under the rail; without work it shows as a stretched phone inside. Step 1 is plain hygiene.</p></div>
+ </div>
+ <div class="col">
+  <div class="box"><h3>New capabilities</h3><ul>
+   <li><b>Hinge angle, live.</b> <span class="api">onHingeChange</span> / <span class="api">UIHingeInteraction</span>: closed / partially open / open plus continuous degrees. Apple's demo: a whammy bar.</li>
+   <li><b>Fold as a reserved region.</b> <span class="api">reservedRegions(kind: .division)</span> tells where the pages are.</li>
+   <li><b>Arrangement views.</b> <span class="api">ArrangementView</span> split or overlay: two views that go side by side, stacked, or onto separate pages when folded.</li>
+   <li><b>Multiple windows.</b> First iPhone with several scenes of one app, side by side, inner display only.</li>
+   <li><b>Scene accessories.</b> Extra UI on another display; on Duo the <span class="api">CameraCaptureAccessory</span> shows content on the outer screen while the camera runs inside.</li>
+  </ul></div>
+  <div class="box"><h3>Testing</h3><p>The Duo simulator ships with Xcode 27.1 (RC now) and the iOS 27.1 runtime; Device Hub opens, closes, folds and rotates it. This Mac has Xcode 27.0, without the Duo.</p></div>
+ </div>
+</div></div></body></html>

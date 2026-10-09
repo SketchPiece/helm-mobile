@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1280x760"><title>More ideas worth a sketch</title><link rel="stylesheet" href="_shared.css"><style>html,body{width:1280px;height:760px}
+.g{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;flex:1}
+.i{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.i .k{font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:var(--accentText)}
+.i h3{font-size:17px;font-weight:600;letter-spacing:-.1px}
+.i p{font-size:13.5px;line-height:1.45;color:#d8cfc1}
+.i .api{font:12px 'IBM Plex Mono',monospace;color:var(--working);margin-top:auto}
+.v{font:11px 'IBM Plex Mono',monospace;color:var(--muted)}
+</style></head><body><div class="board">
+<div class="cap"><span class="k">Smaller ideas</span><span class="h">More things only a folding phone does</span><span class="d">Ranked roughly by value for Helm. The first row is cheap once the split layout exists; the second row is experiments.</span></div>
+<div class="g">
+ <div class="i"><span class="k">F · cover</span><h3>The cover is a fleet board</h3><p>Closed, Home's top shelf turns into a strip of every running agent with a lamp and timer, and the Live Activity grows down the rail. Tapping a lamp opens that thread when you open the phone.</p><span class="api">Live Activities on the rail · toolbar visibilityPriority</span></div>
+ <div class="i"><span class="k">G · continuity</span><h3>Open where your eyes were</h3><p>Opening the phone keeps the exact message on screen and adds the page you would have opened next: the diff, the plan card, the screenshot. Closing keeps the composer draft and the recording.</p><span class="api">scene geometry · state restoration</span></div>
+ <div class="i"><span class="k">H · review</span><h3>Diff in two columns at the spine</h3><p>Before on the left page, after on the right, the fold as the natural divider. Unified diff stays on the cover and in flat open.</p><span class="api">ArrangementView(.split) · reservedRegions(.division)</span></div>
+ <div class="i"><span class="k">I · camera · experiment</span><h3>Show the agent the bug, with a second screen for the room</h3><p>Point the rear camera at a device or a whiteboard; the inner screen is the composer with the frame. The outer display faces the room and shows what Helm sees and its live transcript, so a teammate in front of you follows along.</p><span class="api">CameraCaptureAccessory (system decides when it shows)</span></div>
+ <div class="i"><span class="k">J · hinge · experiment</span><h3>Hinge scrub</h3><p>In book pose, a "time" mode maps the hinge angle to the thread's checkpoints: tilt to step back through the agent's turns and see the files as they were. Fun, risky to discoverability, so opt-in.</p><span class="api">onHingeChange (angle, continuous)</span></div>
+ <div class="i"><span class="k">K · multitasking</span><h3>Helm beside the thing being built</h3><p>50/50 split view with Safari or TestFlight on one side and the thread on the other: try the build, talk to the agent about it without switching apps.</p><span class="api">resizable scenes · UIWindowSceneActivationAction</span></div>
+</div></div></body></html>

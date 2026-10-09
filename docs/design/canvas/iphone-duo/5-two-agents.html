@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1060x860"><title>C. Two pages, two agents: race a task</title><link rel="stylesheet" href="_shared.css"><style>html,body{width:1060px;height:860px}
+.pg{position:absolute;top:0;bottom:0;width:445px;padding:22px 24px 18px;display:flex;flex-direction:column;gap:11px}
+.model{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.badge{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:600 11px 'IBM Plex Mono';color:#161310}
+.todo{font-size:13.5px;color:#d8cfc1;display:flex;flex-direction:column;gap:5px}
+.todo span::before{content:'✓ ';color:var(--done)} .todo span.o::before{content:'○ ';color:var(--muted)} .todo span.r::before{content:'◐ ';color:var(--working)}
+.shot{height:120px;border-radius:12px;background:linear-gradient(135deg,#2a2420,#1b1715);display:grid;place-items:center;color:var(--muted);font:12px 'IBM Plex Mono'}
+</style></head><body><div class="board">
+<div class="cap"><span class="k">Idea C · open flat · multiple windows</span><span class="h">Two pages, two agents: race one task, keep the winner</span><span class="d">Helm already runs Claude, Codex and others side by side on the Mac. Duo is the first iPhone that can show two windows of one app, and the fold gives each one a page. "Race this" sends the same prompt to two models in two worktrees; you watch both, compare the results, and keep one with a tap. Each window keeps its controls on its outer edge, as Apple's split view does.</span></div>
+<div class="stage"><div class="dev inner">
+ <div class="pg" style="left:0;padding-left:84px">
+  <div class="model"><span class="badge" style="background:#E8A33D">C</span>Claude Opus 5.5 <span class="work" style="margin-left:auto"><span class="dot g"></span>Done 4:10</span></div>
+  <div class="mono" style="font-size:12px;color:var(--muted)">worktree race/opus · 6 files +212 −40</div>
+  <div class="todo"><span>Size classes in RootView</span><span>NavigationSplitView for Home</span><span>Evidence page in ArrangementView</span></div>
+  <div class="shot">simulator · Duo, book pose</div>
+  <div class="msg" style="font-size:14px">Сплит работает, страницы переключаются по сгибу. 2 snapshot-теста.</div>
+  <div style="flex:1"></div>
+  <div class="btns"><div class="btn pri">Keep this one</div><div class="btn ghost" style="flex:.5">Diff</div></div>
+ </div>
+ <div class="rail left"><div class="vstat" style="margin-top:4px"><span>9:41</span></div><div class="rb" style="margin-top:8px"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></div><div class="rb"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></div></div>
+ <div class="pg" style="right:0;padding-right:84px;background:#141110">
+  <div class="model"><span class="badge" style="background:#6CC4B8">X</span>GPT-6.1-Sol <span class="work" style="margin-left:auto"><span class="dot w"></span>Working 4:10</span></div>
+  <div class="mono" style="font-size:12px;color:var(--muted)">worktree race/sol · 4 files +160 −22</div>
+  <div class="todo"><span>Size classes in RootView</span><span class="r">Split view for Home</span><span class="o">Evidence page</span></div>
+  <div class="shot">no screenshot yet</div>
+  <div class="msg" style="font-size:14px">Делаю сплит через UISplitViewController, SwiftUI-сплит теряет выделение при сгибе.</div>
+  <div style="flex:1"></div>
+  <div class="btns"><div class="btn">Keep this one</div><div class="btn ghost" style="flex:.5">Diff</div></div>
+ </div>
+ <div class="rail"><div class="vstat" style="margin-top:4px"><span class="vbatt"></span></div><div class="rb" style="margin-top:8px;color:var(--stop)"><span style="width:12px;height:12px;border-radius:2px;background:var(--error)"></span></div><div class="rb"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></div></div>
+ <div class="fold"></div>
+ <div class="callout" style="left:340px;top:440px;max-width:210px">Close the phone: the outer screen shows a one-line scoreboard of both</div>
+</div></div></div></body></html>

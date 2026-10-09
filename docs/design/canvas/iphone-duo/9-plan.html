@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1280x640"><title>Plan: from "works" to "only on Duo"</title><link rel="stylesheet" href="_shared.css"><style>html,body{width:1280px;height:640px}
+.ph{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1}
+.p{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.p .n{font:600 34px/1 'IBM Plex Sans';color:var(--accent)}
+.p h3{font-size:17px;font-weight:600}
+.p .w{font:11px 'IBM Plex Mono',monospace;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.p ul{padding-left:16px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.42;color:#d8cfc1}
+.p code{font:12px 'IBM Plex Mono';color:var(--working)}
+.q{font-size:13.5px;color:var(--muted);line-height:1.5}
+.q b{color:var(--text);font-weight:500}
+</style></head><body><div class="board">
+<div class="cap"><span class="k">Plan</span><span class="h">From "runs on Duo" to "only makes sense on Duo"</span></div>
+<div class="ph">
+ <div class="p"><span class="n">0</span><h3>Hygiene</h3><span class="w">needed before launch day</span><ul>
+  <li>Build with Xcode 27.1 SDK so we get the full screen and the rail.</li>
+  <li>Home's bottom bar and the thread menu become real toolbar items with icon + title and <code>visibilityPriority</code> (New thread, Stop and badges last to overflow).</li>
+  <li>Drop any <code>UIScreen.main</code>, fixed widths, orientation checks.</li>
+  <li>Composer, approval cards and sheets checked against the fold; image viewer and diff pan in every pose.</li>
+  <li>Read size classes for the first time; the app stays iPhone-only.</li></ul></div>
+ <div class="p"><span class="n">1</span><h3>Split</h3><span class="w">boards 1–2</span><ul>
+  <li><code>NavigationSplitView</code>: Home as sidebar, thread as detail; Router keeps one selected thread across poses.</li>
+  <li>Shelves and New thread inside the sidebar; settings as a sheet that avoids the fold.</li>
+  <li>Same app gets an iPad build almost free.</li></ul></div>
+ <div class="p"><span class="n">2</span><h3>Pages and poses</h3><span class="w">boards A, B, D, H</span><ul>
+  <li>Evidence page in an <code>ArrangementView</code>: files, commands, screenshots the agent mentions.</li>
+  <li>Side-by-side diff at the spine.</li>
+  <li>Desk pose console, reusing the Mac remote parts + hands-free voice.</li>
+  <li>Risk levels on approvals (needs a field from the Mac side) and "Open to review" on the cover.</li></ul></div>
+ <div class="p"><span class="n">3</span><h3>Experiments</h3><span class="w">boards C, I, J, K</span><ul>
+  <li>Race two agents in two windows (needs "Race this" on the Mac: two worktrees, one prompt).</li>
+  <li>Camera with the room-facing outer screen.</li>
+  <li>Hinge scrub through checkpoints.</li></ul></div>
+</div>
+<div class="q"><b>Open questions.</b> Does the Mac side mark command risk, or does the phone guess from the command? Should the desk console be its own mode or simply what the remote sheet becomes when folded? Is "Race this" a Helm feature we want on the Mac anyway? Everything here should be checked in the Duo simulator before we commit to it: Xcode 27.1 isn't installed on this Mac yet.</div>
+</div></body></html>

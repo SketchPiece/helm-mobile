@@ -1,0 +1,18 @@
+---
+title: E. The hinge as verbs (one thread, every pose)
+board: 1400x820
+---
+stateDiagram-v2
+  direction LR
+  Closed: Closed<br>triage on the cover
+  Book: Book<br>talk ¦ evidence
+  Flat: Open flat<br>threads + thread, or two agents
+  Desk: Desk pose<br>console + hands-free voice
+  Closed --> Book: 1. open = look closer
+  Book --> Closed: 2. close = snooze open asks
+  Book --> Flat: 3. flatten = more hierarchy
+  Flat --> Desk: 4. stand on edge = console
+  Desk --> Closed: 5. close = Settle prompt
+  Closed --> Closed: risky ask = Open to review
+  Book --> Book: hinge angle scrubs the diff timeline
+  %% hl: Book, Desk

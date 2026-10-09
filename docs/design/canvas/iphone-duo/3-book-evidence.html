@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1060x860"><title>A. Book: the talk on one page, the evidence on the other</title><link rel="stylesheet" href="_shared.css"><style>html,body{width:1060px;height:860px}</style></head><body><div class="board">
+<div class="cap"><span class="k">Idea A · book pose · ArrangementView</span><span class="h">The talk on the left page, the evidence on the right</span><span class="d">Fold the phone a little and the thread splits at the spine: what the agent says stays left, what it actually did opens on the right page. Every file, command or screenshot it mentions is a link that turns the right page. The approval card moves to the right page too, next to the diff it asks you to trust, and that is where it stays when you close the phone.</span></div>
+<div class="stage"><div class="dev inner">
+ <div style="position:absolute;left:0;top:0;bottom:0;width:423px;padding:22px 26px 18px 24px;display:flex;flex-direction:column;gap:12px">
+  <span class="where"><span class="dot a"></span>Sketch MacBook Pro · waiting for you</span>
+  <div class="ttl">Duo: book layout for diffs</div>
+  <div class="you">Сделай раскладку дифа для открытого Duo</div>
+  <div class="fold-blk">▸ Worked 6 min · 9 files</div>
+  <div class="msg">Перенёс тред в <span class="code" style="outline:1.5px solid var(--accent)">ThreadSplitView.swift</span>, диф теперь живёт в <span class="code">ArrangementView</span>, а <span class="code">RootView.swift</span> выбирает между стеком и сплитом по size class.</div>
+  <div class="msg">Старая история мешает, поэтому прошу force push.</div>
+  <div style="flex:1"></div>
+  <div class="composer"><span class="ph">Reply…</span><span class="mic"><svg class="ic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span></div>
+ </div>
+ <div style="position:absolute;left:467px;top:0;bottom:0;right:0;padding:22px 20px 18px 22px;display:flex;flex-direction:column;gap:10px;background:#141110">
+  <div style="display:flex;gap:6px;align-items:center"><span class="chip sel" style="height:28px;font-size:13px">ThreadSplitView.swift</span><span class="chip" style="height:28px;font-size:13px">RootView.swift</span><span class="chip" style="height:28px;font-size:13px;color:var(--muted)">+7</span></div>
+  <div class="diffh"><b>UI/Thread/ThreadSplitView.swift</b><span class="add">+86</span><span class="del">−0</span></div>
+  <div style="background:#100E0C;border-radius:12px;padding:8px 0;overflow:hidden">
+   <div class="dl p"><span class="n">12</span>struct ThreadSplitView: View {</div>
+   <div class="dl p"><span class="n">13</span>  @Environment(\.horizontalSizeClass) var h</div>
+   <div class="dl p"><span class="n">14</span>  var body: some View {</div>
+   <div class="dl p"><span class="n">15</span>    NavigationSplitView {</div>
+   <div class="dl p"><span class="n">16</span>      HomeList(selection: $router.thread)</div>
+   <div class="dl p"><span class="n">17</span>    } detail: {</div>
+   <div class="dl p"><span class="n">18</span>      ArrangementView {</div>
+   <div class="dl p"><span class="n">19</span>        ThreadScreen(id)</div>
+   <div class="dl p"><span class="n">20</span>      } secondary: {</div>
+   <div class="dl p"><span class="n">21</span>        EvidencePage(id)</div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="req"><div class="l"><span class="dot a"></span>Approve command</div><div class="cmd">git push --force origin duo-layout</div><div class="btns"><div class="btn pri">Allow</div><div class="btn">Decline</div></div></div>
+ </div>
+ <div class="fold bent"></div>
+ <div class="foldtag" style="left:calc(50% - 22px);top:8px">spine</div>
+ <div class="callout" style="left:24px;top:350px">tap = turn the right page</div>
+</div></div></div></body></html>

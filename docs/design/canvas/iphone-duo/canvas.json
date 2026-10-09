@@ -1,0 +1,141 @@
+{
+ "v": 3,
+ "title": "iPhone Duo: what a folding iPhone unlocks for Helm",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-brief.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 820,
+   "title": "0. What iPhone Duo gives us"
+  },
+  "1-closed-home.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 640,
+   "h": 880,
+   "title": "1. Closed: Home on the outer display"
+  },
+  "2-open-split.html": {
+   "x": 2080,
+   "y": 0,
+   "w": 1060,
+   "h": 860,
+   "title": "2. Open flat: threads beside the thread"
+  },
+  "3-book-evidence.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1060,
+   "h": 860,
+   "title": "A. Book: the talk on one page, the evidence on the other"
+  },
+  "4-desk-console.html": {
+   "x": 1140,
+   "y": 1240,
+   "w": 1060,
+   "h": 1180,
+   "title": "B. Desk pose: a Helm console beside the Mac"
+  },
+  "5-two-agents.html": {
+   "x": 2280,
+   "y": 1240,
+   "w": 1060,
+   "h": 860,
+   "title": "C. Two pages, two agents: race a task"
+  },
+  "6-open-to-approve.html": {
+   "x": 3420,
+   "y": 1240,
+   "w": 1180,
+   "h": 940,
+   "title": "D. Open to approve: the fold as friction for risky actions"
+  },
+  "7-hinge-verbs.mmd": {
+   "x": 0,
+   "y": 2780,
+   "w": 1400,
+   "h": 820,
+   "title": "E. The hinge as verbs (one thread, every pose)"
+  },
+  "8-more-ideas.html": {
+   "x": 1480,
+   "y": 2780,
+   "w": 1280,
+   "h": 760,
+   "title": "More ideas worth a sketch"
+  },
+  "9-plan.html": {
+   "x": 2840,
+   "y": 2780,
+   "w": 1280,
+   "h": 640,
+   "title": "Plan: from \"works\" to \"only on Duo\""
+  }
+ },
+ "order": [
+  "0-brief.html",
+  "1-closed-home.html",
+  "2-open-split.html",
+  "3-book-evidence.html",
+  "4-desk-console.html",
+  "5-two-agents.html",
+  "6-open-to-approve.html",
+  "7-hinge-verbs.mmd",
+  "8-more-ideas.html",
+  "9-plan.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "iPhone Duo: what a folding iPhone unlocks for Helm",
+   "kind": "title1",
+   "maxW": 4600
+  },
+  "n1": {
+   "x": 0,
+   "y": -120,
+   "text": "Device and baseline: the same app, resized the way Apple asks",
+   "kind": "title2",
+   "maxW": 3200
+  },
+  "n2": {
+   "x": 0,
+   "y": 1120,
+   "text": "Experiences only Duo unlocks",
+   "kind": "title2",
+   "maxW": 3200
+  },
+  "n3": {
+   "x": 0,
+   "y": 2660,
+   "text": "The hinge as verbs, smaller ideas, and the plan",
+   "kind": "title2",
+   "maxW": 3200
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 3460,
+   "y": 0,
+   "w": 340,
+   "color": "blue",
+   "text": "Simulator: the Duo ships with Xcode 27.1 (RC). This Mac has 27.0 only; the download is in progress, so these boards are drawn from Apple's HIG, the developer guide and the Tech Talks, not from screenshots yet."
+  },
+  {
+   "id": "claude-2",
+   "x": 3420,
+   "y": 2440,
+   "w": 340,
+   "color": "blue",
+   "text": "My pick to start with: B (desk console) and A (book with the evidence page). Both reuse parts we already have and neither works on a regular iPhone."
+  }
+ ],
+ "designSystems": []
+}
