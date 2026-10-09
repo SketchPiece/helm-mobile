@@ -98,6 +98,48 @@ final class MacRemote {
         return all.indices.contains(next) ? all[next] : nil
     }
 
+    // MARK: Trackpad
+
+    @ObservationIgnored private var pendingScroll: Double = 0
+    @ObservationIgnored private var scrollFlush: Task<Void, Never>?
+
+    /// Scrolls the computer's timeline by `points` (positive: toward newer). Many small moves
+    /// from a drag go out as one every ~30 ms.
+    func scrollComputer(by points: Double) {
+        pendingScroll += points
+        guard scrollFlush == nil else { return }
+        scrollFlush = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(30))
+            guard let self else { return }
+            let by = pendingScroll
+            pendingScroll = 0
+            scrollFlush = nil
+            if abs(by) >= 1 { await sendScroll(by: by, smooth: false) }
+        }
+    }
+
+    /// The glide after a fling.
+    func flingComputer(by points: Double) {
+        // What the drag still holds goes along, so nothing lands after the glide.
+        scrollFlush?.cancel()
+        scrollFlush = nil
+        let by = points + pendingScroll
+        pendingScroll = 0
+        Task { await sendScroll(by: by, smooth: true) }
+    }
+
+    func scrollComputerToEnd() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Task { await sendScroll(by: nil, smooth: true) }
+    }
+
+    private func sendScroll(by: Double?, smooth: Bool) async {
+        guard let environment, let threadId = target?.ref.threadId else { return }
+        var command: [String: JSON] = ["type": "timeline.scroll", "threadId": .string(threadId), "smooth": .bool(smooth)]
+        if let by { command["by"] = .number(max(-20_000, min(20_000, by.rounded()))) }
+        _ = try? await environment.sendRemoteCommand(command)
+    }
+
     /// Settles or snoozes the thread on the computer, then moves on to the next one that needs you.
     func settle(_ action: AppModel.ThreadAction, in model: AppModel) async {
         guard let ref = target?.ref else { return }

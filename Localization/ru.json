@@ -814,5 +814,10 @@
   "Lists the threads on this computer": "Показывает треды на этом компьютере",
   "Swipe for the next thread": "Свайп — следующий тред",
   "Next: %@": "Дальше: %@",
-  "Helm on the computer didn't switch threads.": "Штурвал на компьютере не переключил тред."
+  "Helm on the computer didn't switch threads.": "Штурвал на компьютере не переключил тред.",
+  "Drag to scroll the chat on the computer": "Веди пальцем, чтобы листать чат на компьютере",
+  "Double tap for the latest · swipe sideways for the next thread": "Двойное касание — к последнему · свайп вбок — следующий тред",
+  "Scroll up on the computer": "Листать вверх на компьютере",
+  "Scroll down on the computer": "Листать вниз на компьютере",
+  "Jump to the latest": "К последнему сообщению"
 }

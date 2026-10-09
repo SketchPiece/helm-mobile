@@ -2899,6 +2899,16 @@
         }
       }
     },
+    "Double tap for the latest · swipe sideways for the next thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Двойное касание — к последнему · свайп вбок — следующий тред"
+          }
+        }
+      }
+    },
     "Draft": {
       "localizations": {
         "ru": {
@@ -2915,6 +2925,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Перетащи, чтобы поменять порядок"
+          }
+        }
+      }
+    },
+    "Drag to scroll the chat on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Веди пальцем, чтобы листать чат на компьютере"
           }
         }
       }
@@ -3700,6 +3720,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Своя папка и своя ветка"
+          }
+        }
+      }
+    },
+    "Jump to the latest": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "К последнему сообщению"
           }
         }
       }
@@ -5740,6 +5770,26 @@
         }
       }
     },
+    "Scroll down on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Листать вниз на компьютере"
+          }
+        }
+      }
+    },
+    "Scroll up on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Листать вверх на компьютере"
+          }
+        }
+      }
+    },
     "Search": {
       "localizations": {
         "ru": {
@@ -6248,16 +6298,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Под контролем"
-          }
-        }
-      }
-    },
-    "Swipe for the next thread": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Свайп — следующий тред"
           }
         }
       }

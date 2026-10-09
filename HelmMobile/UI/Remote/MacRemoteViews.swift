@@ -227,30 +227,22 @@ struct MacRemoteSheet: View {
                 header(target: target, thread: thread)
                 ZStack(alignment: .top) {
                     VStack(spacing: 0) {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        nowCard(thread: thread)
-                        if let session = remote.session, let projection = session.projection {
-                            ForEach(projection.pendingRequests) { request in
-                                PendingRequestCard(request: request, session: session)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    pageDots
+                // What the agent says and asks, as tall as it needs (scrolling past ~half the
+                // screen); the rest of the middle is a trackpad for the chat on the computer.
+                ViewThatFits(in: .vertical) {
+                    cards(thread: thread)
+                    ScrollView { cards(thread: thread) }
+                        .scrollBounceBehavior(.basedOnSize)
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                // Sideways: the thread before or after this one, as on Home; the computer follows.
-                .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { drag in
-                    let x = drag.translation.width
-                    guard abs(x) > 60, abs(x) > abs(drag.translation.height) * 1.5,
-                          let ref = remote.neighbour(x < 0 ? 1 : -1, in: model)
-                    else { return }
-                    Task { await remote.switchTo(ref, in: model) }
-                })
+                .frame(maxHeight: 380, alignment: .top)
                 .id(target.ref)
                 .transition(.opacity)
+                RemoteTrackpad(remote: remote) { step in
+                    guard let ref = remote.neighbour(step, in: model) else { return }
+                    Task { await remote.switchTo(ref, in: model) }
+                } dots: {
+                    pageDots
+                }
                 threadActions
                 controls
                     }
@@ -272,6 +264,19 @@ struct MacRemoteSheet: View {
         }
         .animation(.snappy(duration: 0.25), value: remote.target)
         .undoToast()
+    }
+
+    private func cards(thread: ThreadSummary) -> some View {
+        VStack(spacing: 12) {
+            nowCard(thread: thread)
+            if let session = remote.session, let projection = session.projection {
+                ForEach(projection.pendingRequests) { request in
+                    PendingRequestCard(request: request, session: session)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
     }
 
     private func header(target: MacRemoteTarget, thread: ThreadSummary) -> some View {
@@ -432,10 +437,8 @@ struct MacRemoteSheet: View {
                 } else {
                     Text("\(index + 1) of \(all.count)").font(Typography.mono(12)).foregroundStyle(Palette.textMuted)
                 }
-                Text("Swipe for the next thread").font(Typography.footnote).foregroundStyle(Palette.textMuted)
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 14)
             .animation(.snappy(duration: 0.25), value: index)
         }
     }
@@ -658,5 +661,78 @@ struct OpenOnComputerButton: View {
                 Label("Open on \(environment.label)", systemImage: "desktopcomputer")
             }
         }
+    }
+}
+
+/// The empty middle of the remote: drag up and down to scroll the chat on the computer (finger
+/// up, newer messages, as on the phone), fling to glide, double tap for the latest. Sideways
+/// goes to the thread before or after.
+struct RemoteTrackpad<Dots: View>: View {
+    let remote: MacRemote
+    let onSwipe: (_ step: Int) -> Void
+    @ViewBuilder let dots: () -> Dots
+
+    private enum Axis { case vertical, horizontal }
+    @State private var axis: Axis?
+    @State private var lastY: CGFloat = 0
+    /// Pixels on the computer per point on the phone.
+    private var gain: Double { 2.5 }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Spacer(minLength: 0)
+            dots()
+            Image(systemName: "arrow.up.and.down")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(Palette.textMuted.opacity(axis == .vertical ? 1 : 0.6))
+            Text("Drag to scroll the chat on the computer")
+                .font(Typography.footnote)
+                .foregroundStyle(Palette.textMuted)
+            Text("Double tap for the latest · swipe sideways for the next thread")
+                .font(Typography.caption)
+                .foregroundStyle(Palette.textMuted.opacity(0.7))
+                .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            RoundedRectangle(cornerRadius: 22)
+                .fill(Palette.surface.opacity(axis == .vertical ? 0.9 : 0))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .animation(.easeOut(duration: 0.2), value: axis)
+        }
+        .contentShape(.rect)
+        .onTapGesture(count: 2) { remote.scrollComputerToEnd() }
+        .gesture(
+            DragGesture(minimumDistance: 6)
+                .onChanged { drag in
+                    if axis == nil {
+                        axis = abs(drag.translation.width) > abs(drag.translation.height) ? .horizontal : .vertical
+                        lastY = 0
+                    }
+                    guard axis == .vertical else { return }
+                    let dy = drag.translation.height - lastY
+                    lastY = drag.translation.height
+                    remote.scrollComputer(by: -Double(dy) * gain)
+                }
+                .onEnded { drag in
+                    defer { axis = nil }
+                    switch axis {
+                    case .horizontal:
+                        if abs(drag.translation.width) > 60 { onSwipe(drag.translation.width < 0 ? 1 : -1) }
+                    case .vertical:
+                        let carry = drag.predictedEndTranslation.height - drag.translation.height
+                        if abs(carry) > 40 { remote.flingComputer(by: -Double(carry) * gain) }
+                    case nil:
+                        break
+                    }
+                }
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Scroll up on the computer") { remote.flingComputer(by: -600) }
+        .accessibilityAction(named: "Scroll down on the computer") { remote.flingComputer(by: 600) }
+        .accessibilityAction(named: "Jump to the latest") { remote.scrollComputerToEnd() }
     }
 }
