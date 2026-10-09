@@ -40,6 +40,27 @@
    "w": 390,
    "h": 844,
    "title": "D. The card shows the end of the chat: your message, the steps, the reply"
+  },
+  "e1-screen.html": {
+   "x": 1880,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "E1. The chat sits in a dark recessed screen: a view of the Mac"
+  },
+  "e2-trackpad.html": {
+   "x": 2350,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "E2. A matte trackpad surface over the chat: dotted, sunken, words under it"
+  },
+  "e3-wheel.html": {
+   "x": 2820,
+   "y": 1100,
+   "w": 390,
+   "h": 844,
+   "title": "E3. Plain chat with a ribbed scroll wheel on the edge that shows where the Mac is"
   }
  },
  "order": [
@@ -47,7 +68,10 @@
   "a-hug.html",
   "b-turn-summary.html",
   "c-read-from-top.html",
-  "d-chat-tail.html"
+  "d-chat-tail.html",
+  "e1-screen.html",
+  "e2-trackpad.html",
+  "e3-wheel.html"
  ],
  "notes": {
   "t": {
@@ -55,6 +79,13 @@
    "y": -240,
    "text": "Mac remote: what the card shows when the reply is short",
    "kind": "title1",
+   "maxW": 1330
+  },
+  "t2": {
+   "x": 1880,
+   "y": 1020,
+   "text": "D + a material: the chat is driven, not scrolled",
+   "kind": "title2",
    "maxW": 1330
   }
  },
@@ -98,6 +129,30 @@
    "w": 390,
    "color": "blue",
    "text": "D (recommended): the end of the chat, as on the Mac: your message, the steps, the reply. Short reply → earlier turns fill the room; the pad scrolls the Mac and the card looks like what it scrolls. Empty only when the whole thread is that short."
+  },
+  {
+   "id": "claude-6",
+   "x": 1880,
+   "y": 1980,
+   "w": 390,
+   "color": "blue",
+   "text": "E1 (recommended): the chat is a dark recessed screen with ON THE MAC and a position rail. Reads as a window onto the computer, not a list in the phone; the dark glass is the 'not here' signal. Matches the Mac's own dark chat."
+  },
+  {
+   "id": "claude-7",
+   "x": 2350,
+   "y": 1980,
+   "w": 390,
+   "color": "blue",
+   "text": "E2: a matte, dotted, sunken surface over the chat, like a trackpad you touch through. Says 'drag here', but the dot grid sits on top of the words and costs a bit of legibility."
+  },
+  {
+   "id": "claude-8",
+   "x": 2820,
+   "y": 1980,
+   "w": 390,
+   "color": "blue",
+   "text": "E3: the chat stays plain; a ribbed wheel on the edge is the control and its knob shows where the Mac is in the chat. Clearest 'this is a control', but it looks like the wheel is the only place to drag."
   }
  ],
  "designSystems": []
