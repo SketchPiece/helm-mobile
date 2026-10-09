@@ -55,7 +55,10 @@ final class EnvironmentSession: Identifiable {
     }
 
     var label: String { config?.label ?? saved.label }
-    var http: HelmHTTP { HelmHTTP(baseURL: saved.baseURL, token: Keychain.token(for: saved.id)) }
+    var http: HelmHTTP { HelmHTTP(baseURL: localBaseURL ?? saved.baseURL, token: Keychain.token(for: saved.id)) }
+    /// The Mac's address on this network while the socket went there instead of the saved
+    /// tailnet address (the built-in Tailscale node was not running yet); nil otherwise.
+    @ObservationIgnored private var localBaseURL: URL?
     var isLive: Bool { status == .live }
 
     var logStatus: String {
@@ -228,22 +231,15 @@ final class EnvironmentSession: Identifiable {
     }
 
     private func connectOnce() async throws {
+        guard Keychain.token(for: saved.id) != nil else { throw HelmHTTPError.status(401, "missing token") }
+        let base = await chooseAddress()
+        localBaseURL = base == saved.baseURL ? nil : base
         let http = self.http
-        guard http.token != nil else { throw HelmHTTPError.status(401, "missing token") }
-        if TailnetRouting.usesNode(saved.baseURL), !TailnetNode.shared.isRunning() {
-            // Just launched: the built-in Tailscale node is still coming up and would refuse
-            // the connection. Wait for it rather than fail into the backoff.
-            let waitStarted = ContinuousClock.now
-            log("waiting for the built-in Tailscale node")
-            let running = await TailnetRouting.waitForNode(timeout: .seconds(12))
-            log(running ? "Tailscale node ready after \(Self.elapsed(since: waitStarted))"
-                        : "Tailscale node still not running after \(Self.elapsed(since: waitStarted)), trying anyway")
-        }
         var step = ContinuousClock.now
         let ticket = try await http.webSocketTicket()
         let url = await http.webSocketURL(ticket: ticket)
         log("ticket in \(Self.elapsed(since: step)), opening socket via \(HelmHTTP.logHost(url))"
-            + (TailnetRouting.usesNode(saved.baseURL) ? " (built-in Tailscale)" : ""))
+            + (localBaseURL != nil ? " (this network)" : TailnetRouting.usesNode(base) ? " (built-in Tailscale)" : ""))
         step = ContinuousClock.now
         let connection = RPCConnection(url: url)
         self.connection = connection
@@ -309,6 +305,38 @@ final class EnvironmentSession: Identifiable {
             } else {
                 threads[key] = nil
             }
+        }
+    }
+
+    /// The saved address, unless it goes through the built-in Tailscale node and that is still
+    /// coming up (right after launch, which can take a minute): then the Mac's address on this
+    /// network as soon as Bonjour has it, else the saved one once the node runs or after 12 s.
+    private func chooseAddress() async -> URL {
+        guard TailnetRouting.usesNode(saved.baseURL),
+              !(await Task.detached { TailnetNode.shared.isRunning() }.value)
+        else { return saved.baseURL }
+        if let local = NearbyMacs.shared.address(id) {
+            log("Tailscale node not running yet, going to \(HelmHTTP.logHost(local)) on this network")
+            return local
+        }
+        let waitStarted = ContinuousClock.now
+        let deadline = waitStarted + .seconds(12)
+        log("waiting for the built-in Tailscale node or this Mac on the local network")
+        while true {
+            if await Task.detached(operation: { TailnetNode.shared.isRunning() }).value {
+                log("Tailscale node ready after \(Self.elapsed(since: waitStarted))")
+                return saved.baseURL
+            }
+            if let local = NearbyMacs.shared.address(id) {
+                log("found on this network after \(Self.elapsed(since: waitStarted)), going to \(HelmHTTP.logHost(local))")
+                return local
+            }
+            if ContinuousClock.now >= deadline || Task.isCancelled {
+                log("Tailscale node still not running after \(Self.elapsed(since: waitStarted)), trying anyway")
+                TailnetNode.shared.logRecentNodeOutput()
+                return saved.baseURL
+            }
+            try? await Task.sleep(for: .milliseconds(250))
         }
     }
 

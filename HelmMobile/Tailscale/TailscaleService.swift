@@ -49,17 +49,6 @@ enum TailnetRouting {
         else { return false }
         return isTailnetHost(host)
     }
-
-    /// Right after launch the node needs a few seconds to come up; a connection tried before
-    /// that is refused. Waits up to `timeout` and returns whether it is running.
-    static func waitForNode(timeout: Duration) async -> Bool {
-        let deadline = ContinuousClock.now + timeout
-        while true {
-            if await Task.detached(operation: { TailnetNode.shared.isRunning() }).value { return true }
-            if ContinuousClock.now >= deadline || Task.isCancelled { return false }
-            try? await Task.sleep(for: .milliseconds(250))
-        }
-    }
 }
 
 struct TailnetPeer: Identifiable, Hashable, Sendable {
@@ -107,6 +96,9 @@ final class TailscaleService {
     @ObservationIgnored private var poller: Task<Void, Never>?
     @ObservationIgnored private var openedAuthURL: URL?
     @ObservationIgnored private var watchers = 0
+    @ObservationIgnored private var startedAt: Date?
+    /// The node's backend state and health warnings as last logged.
+    @ObservationIgnored private var loggedProgress = ""
 
     var isRunning: Bool { if case .running = state { true } else { false } }
     var hasLogin: Bool { TailnetNode.shared.hasState }
@@ -124,14 +116,18 @@ final class TailscaleService {
 
     func start() {
         state = .starting
+        startedAt = Date()
+        loggedProgress = ""
         let hostname = Self.hostname
         Task.detached {
+            let started = Date()
             do {
                 try TailnetNode.shared.start(hostname: hostname)
             } catch {
                 await MainActor.run { self.state = .failed(error.localizedDescription) }
                 return
             }
+            ConnectionLog.shared.log("tailscale", "node process up in \(Int(Date().timeIntervalSince(started) * 1000)) ms")
             await self.refresh()
         }
         ensurePolling()
@@ -176,6 +172,7 @@ final class TailscaleService {
         guard let json, let data = json.data(using: .utf8), let status = try? JSON.parse(data) else { return }
         let wasRunning = isRunning
         let backend = status["BackendState"]?.string ?? ""
+        logProgress(status, backend: backend)
         switch backend {
         case "Running":
             let me = status["Self"]
@@ -208,6 +205,20 @@ final class TailscaleService {
         default:
             state = .starting
         }
+    }
+
+    /// Each step of the node coming up (backend state, its home relay, health warnings such as
+    /// "not connected to the coordination server"), so a slow start shows where it waited.
+    private func logProgress(_ status: JSON, backend: String) {
+        var parts = [backend.isEmpty ? "no state" : backend]
+        if let relay = status["Self"]?["Relay"]?.string, !relay.isEmpty { parts.append("relay \(relay)") }
+        if status["HaveNodeKey"]?.bool == false { parts.append("no node key") }
+        let health = status["Health"]?.array?.compactMap(\.string) ?? []
+        let progress = parts.joined(separator: ", ") + (health.isEmpty ? "" : "; health: " + health.joined(separator: "; "))
+        guard progress != loggedProgress else { return }
+        loggedProgress = progress
+        let since = startedAt.map { " (\(String(format: "%.1f", Date().timeIntervalSince($0))) s after start)" } ?? ""
+        ConnectionLog.shared.log("tailscale", "backend \(progress)\(since)")
     }
 
     /// Opens a fresh login link once; "Open login again" passes force.

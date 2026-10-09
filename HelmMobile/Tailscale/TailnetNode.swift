@@ -178,6 +178,36 @@ final class TailnetNode: @unchecked Sendable {
     }
   }
 
+  /// Copies the last lines of the node's own log into the connection log, for a start
+  /// that takes too long.
+  func logRecentNodeOutput(lines: Int = 8) {
+    guard let handle = try? FileHandle(forReadingFrom: Self.logURL) else { return }
+    defer { try? handle.close() }
+    let size = (try? handle.seekToEnd()) ?? 0
+    try? handle.seek(toOffset: size > 4096 ? size - 4096 : 0)
+    guard let data = try? handle.readToEnd() else { return }
+    let tail = String(decoding: data, as: UTF8.self).split(separator: "\n").suffix(lines)
+    for line in tail { ConnectionLog.shared.log("tailscale", "node log: \(line.prefix(300))") }
+  }
+
+  /// A connection to a loopback port was refused: iOS reclaimed its listener while the app
+  /// was in the background, and the foreground rebind has not run (a retry from the
+  /// background, or before the app came back). Reopens it on the same port; true if it did.
+  func reopenForwarder(port: Int) -> Bool {
+    forwardersLock.lock()
+    let forwarder = forwarders.values.first { Int($0.port) == port }
+    forwardersLock.unlock()
+    guard let forwarder else { return false }
+    do {
+      try forwarder.bind()
+      ConnectionLog.shared.log("tailscale", "loopback port \(port) for \(forwarder.target) refused, reopened it")
+      return true
+    } catch {
+      ConnectionLog.shared.log("tailscale", "loopback port \(port) for \(forwarder.target) refused, could not reopen: \(error.localizedDescription)")
+      return false
+    }
+  }
+
   private func rebindForwarders() {
     forwardersLock.lock()
     let all = Array(forwarders.values)
@@ -211,6 +241,7 @@ final class TailnetForwarder: @unchecked Sendable {
   }
   private let lock = NSLock()
   private var listener: Int32 = -1
+  private var reopenedAt: Date?
 
   init(target: String, dial: @escaping @Sendable () -> Int32) {
     self.target = target
@@ -259,8 +290,12 @@ final class TailnetForwarder: @unchecked Sendable {
     while true {
       let client = accept(fd, nil, nil)
       if client < 0 {
-        if errno == EINTR { continue }
-        return  // closed by a rebind, or reclaimed by the system
+        let code = errno
+        if code == EINTR { continue }
+        // Closed by a rebind (a new listener has taken over), or reclaimed by the system
+        // while suspended: then nothing would listen until the next foreground, so reopen.
+        listenerLost(fd, errno: code)
+        return
       }
       Self.noSigPipe(client)
       DispatchQueue.global(qos: .userInitiated).async { [dial] in
@@ -272,6 +307,27 @@ final class TailnetForwarder: @unchecked Sendable {
         Self.noSigPipe(remote)
         Self.pipe(client, remote)
       }
+    }
+  }
+
+  private func listenerLost(_ fd: Int32, errno code: Int32) {
+    lock.lock()
+    let current = listener == fd
+    // At most once a second, in case the new listener fails right away too.
+    let wait = reopenedAt.map { max(0, 1 - Date().timeIntervalSince($0)) } ?? 0
+    lock.unlock()
+    guard current else { return }
+    if wait > 0 { Thread.sleep(forTimeInterval: wait) }
+    lock.lock()
+    let stillCurrent = listener == fd
+    reopenedAt = Date()
+    lock.unlock()
+    guard stillCurrent else { return }
+    do {
+      try bind()
+      ConnectionLog.shared.log("tailscale", "loopback listener for \(target) closed (errno \(code)), reopened on port \(port)")
+    } catch {
+      ConnectionLog.shared.log("tailscale", "loopback listener for \(target) closed (errno \(code)), could not reopen: \(error.localizedDescription)")
     }
   }
 

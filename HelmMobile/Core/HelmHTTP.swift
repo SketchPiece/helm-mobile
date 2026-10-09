@@ -132,6 +132,14 @@ struct HelmHTTP: Sendable {
         let response: URLResponse
         do {
             (data, response) = try await Self.session.data(for: request)
+        } catch let error as URLError where error.code == .cannotConnectToHost && Self.reopenedForwarder(request.url) {
+            // The built-in Tailscale node's loopback port was gone; it is open again, try once more.
+            do {
+                (data, response) = try await Self.session.data(for: request)
+            } catch {
+                ConnectionLog.shared.log(Self.logScope(baseURL), "\(request.httpMethod ?? "GET") \(request.url?.path ?? "?") via \(Self.logHost(request.url)) failed: \(ConnectionLog.describe(error))")
+                throw HelmHTTPError.unreachable(error.localizedDescription)
+            }
         } catch {
             ConnectionLog.shared.log(Self.logScope(baseURL), "\(request.httpMethod ?? "GET") \(request.url?.path ?? "?") via \(Self.logHost(request.url)) failed: \(ConnectionLog.describe(error))")
             throw HelmHTTPError.unreachable(error.localizedDescription)
@@ -144,6 +152,12 @@ struct HelmHTTP: Sendable {
             throw HelmHTTPError.status(http.statusCode, message)
         }
         return json
+    }
+
+    /// A refused connection to a routed (loopback) URL: reopens that forwarder.
+    private static func reopenedForwarder(_ url: URL?) -> Bool {
+        guard let url, url.host == "127.0.0.1", let port = url.port else { return false }
+        return TailnetNode.shared.reopenForwarder(port: port)
     }
 
     static func logScope(_ url: URL) -> String { url.host ?? url.absoluteString }
