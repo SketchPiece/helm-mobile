@@ -27,7 +27,6 @@ struct HomeView: View {
     @State private var now = Date()
     /// The thread open in Helm on a Mac nearby, as a pill above the bar and a remote sheet.
     @State private var remote = MacRemote()
-    @State private var showingRemote = false
 
     var body: some View {
         let entries = filteredEntries
@@ -110,12 +109,12 @@ struct HomeView: View {
         .overlay { emptyState(entries: entries) }
         .undoToast()
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            MacRemotePill(remote: remote) { showingRemote = true }
+            MacRemotePill(remote: remote) { router.showingMacRemote = true }
                 .animation(.snappy(duration: 0.35), value: remote.target)
         }
         // After the pill, so the fan opens over it.
         .overlay { NewThreadFan(state: fan) }
-        .sheet(isPresented: $showingRemote) {
+        .sheet(isPresented: Binding(get: { router.showingMacRemote }, set: { router.showingMacRemote = $0 })) {
             MacRemoteSheet(remote: remote) { ref in router.path = [.thread(ref)] }
         }
         .onChange(of: model.macRemoteTarget(), initial: true) { _, target in

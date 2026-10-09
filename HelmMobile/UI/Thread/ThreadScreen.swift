@@ -496,7 +496,13 @@ private struct ThreadContent: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                if NearbyMacs.shared.contains(environment.id) {
+                if model.macRemoteTarget()?.ref == ThreadRef(environmentId: environment.id, threadId: session.threadId) {
+                    // The computer shows this very thread: the remote for it, not "open it there".
+                    Button {
+                        router.showingMacRemote = true
+                    } label: { Label("Open the remote", systemImage: "appletvremote.gen4") }
+                    Divider()
+                } else if NearbyMacs.shared.contains(environment.id) {
                     OpenOnComputerButton(environment: environment, threadId: session.threadId)
                     Divider()
                 }

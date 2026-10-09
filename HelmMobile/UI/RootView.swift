@@ -16,6 +16,8 @@ final class Router {
     var path: [Route] = []
     var showSettings = false
     var showPairing = false
+    /// The remote for the thread open on a computer nearby (Home's pill, or a thread's menu).
+    var showingMacRemote = false
     /// What New Thread should start with (shared text and files), taken by it when it opens.
     var newThreadSeed: SharedContent?
     /// Where New Thread should start, picked by a long press on the New thread button; taken when it opens.
