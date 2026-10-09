@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 /// The remote's microphone. Recording starts at touch-down. Hold, then let go: sent to the thread
@@ -216,7 +217,10 @@ struct MacRemoteSheet: View {
     let onOpenThread: (ThreadRef) -> Void
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var choosingScreenshot = false
+    /// The picture button's three ways in: the camera, screenshots only, or every photo.
+    @State private var takingPhoto = false
+    @State private var pickingFrom: PHPickerFilter?
+    @State private var pickedItem: PhotosPickerItem?
     @State private var snoozingCustom = false
     /// The thread list under the title is open.
     @State private var listingThreads = false
@@ -266,9 +270,20 @@ struct MacRemoteSheet: View {
         }
         .background(Palette.canvas)
         .presentationDragIndicator(.visible)
-        .sheet(isPresented: $choosingScreenshot) {
-            ScreenshotPanel(remote: remote)
-                .presentationDetents([.large])
+        .fullScreenCover(isPresented: $takingPhoto) {
+            CameraPicker { image in remote.pendingScreenshot = image }
+                .ignoresSafeArea()
+        }
+        .photosPicker(isPresented: Binding(get: { pickingFrom != nil }, set: { if !$0 { pickingFrom = nil } }),
+                      selection: $pickedItem, matching: pickingFrom ?? .images)
+        .onChange(of: pickedItem) { _, item in
+            guard let item else { return }
+            pickedItem = nil
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                    remote.pendingScreenshot = image
+                }
+            }
         }
         .sheet(isPresented: $snoozingCustom) {
             CustomSnoozeSheet { date in await remote.settle(.snooze(date), in: model) }
@@ -587,17 +602,28 @@ struct MacRemoteSheet: View {
                         .scaledToFill()
                         .frame(width: 28, height: 44)
                         .clipShape(.rect(cornerRadius: 5))
-                    Text("The screenshot goes with what you say")
+                    Text("Send it now, or say something to go with it")
                         .font(Typography.footnote)
                         .foregroundStyle(Palette.text)
                     Spacer(minLength: 0)
                     Button {
                         remote.pendingScreenshot = nil
                     } label: {
-                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).frame(width: 28, height: 28)
+                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).frame(width: 30, height: 30)
                     }
                     .foregroundStyle(Palette.textMuted)
-                    .accessibilityLabel("Remove the screenshot")
+                    .accessibilityLabel("Remove the picture")
+                    Button {
+                        Task { await remote.sendScreenshot(screenshot) }
+                    } label: {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(width: 30, height: 30)
+                            .foregroundStyle(Palette.accentForeground)
+                            .background(Palette.accent, in: .circle)
+                    }
+                    .disabled(remote.isSending)
+                    .accessibilityLabel("Send the picture")
                 }
                 .padding(8)
                 .background(Palette.surface, in: .rect(cornerRadius: 14))
@@ -628,17 +654,21 @@ struct MacRemoteSheet: View {
                 RemoteMicButton(remote: remote, diameter: 112)
                     .background(Circle().fill(Palette.accent.opacity(0.1)).padding(-12))
                 Spacer()
-                Button {
-                    choosingScreenshot = true
+                Menu {
+                    if CameraPicker.isAvailable {
+                        Button { takingPhoto = true } label: { Label("Camera", systemImage: "camera") }
+                    }
+                    Button { pickingFrom = .screenshots } label: { Label("Screenshots", systemImage: "camera.viewfinder") }
+                    Button { pickingFrom = .images } label: { Label("Photos", systemImage: "photo.on.rectangle") }
                 } label: {
-                    Image(systemName: "camera")
+                    Image(systemName: "photo.badge.plus")
                         .font(.system(size: 20, weight: .medium))
                         .frame(width: 58, height: 58)
                         .foregroundStyle(Palette.text)
                         .background(Palette.surface, in: .circle)
                         .overlay(Circle().stroke(Palette.border))
                 }
-                .accessibilityLabel("Send a screenshot")
+                .accessibilityLabel("Add a picture")
             }
             .padding(.horizontal, 34)
             Text(hint)

@@ -17,7 +17,7 @@ final class MacRemote {
     private(set) var sendError: String?
     /// Bumped each time a message went out (drives the haptic).
     private(set) var sentCount = 0
-    /// A screenshot that goes out with the next thing said.
+    /// A picture (photo or screenshot) that goes out with the next thing said, or on its own.
     var pendingScreenshot: UIImage?
     /// A message with a screenshot is on its way up.
     private(set) var isSending = false
@@ -195,7 +195,7 @@ final class MacRemote {
         await send(text)
     }
 
-    /// Sends a screenshot on its own, right away.
+    /// Sends the picture on its own, right away.
     func sendScreenshot(_ image: UIImage) async {
         pendingScreenshot = image
         await send("")
