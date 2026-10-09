@@ -221,6 +221,8 @@ struct MacRemoteSheet: View {
     @State private var takingPhoto = false
     @State private var pickingFrom: PHPickerFilter?
     @State private var pickedItem: PhotosPickerItem?
+    /// A picture is on the clipboard (checked without reading it, so no paste prompt until used).
+    @State private var clipboardHasImage = UIPasteboard.general.hasImages
     @State private var snoozingCustom = false
     /// The thread list under the title is open.
     @State private var listingThreads = false
@@ -276,6 +278,12 @@ struct MacRemoteSheet: View {
         }
         .photosPicker(isPresented: Binding(get: { pickingFrom != nil }, set: { if !$0 { pickingFrom = nil } }),
                       selection: $pickedItem, matching: pickingFrom ?? .images)
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            clipboardHasImage = UIPasteboard.general.hasImages
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            clipboardHasImage = UIPasteboard.general.hasImages
+        }
         .onChange(of: pickedItem) { _, item in
             guard let item else { return }
             pickedItem = nil
@@ -699,6 +707,11 @@ struct MacRemoteSheet: View {
                     .background(Circle().fill(Palette.accent.opacity(0.1)).padding(-12))
                 Spacer()
                 Menu {
+                    if clipboardHasImage {
+                        Button {
+                            if let image = UIPasteboard.general.image { remote.pendingScreenshot = image }
+                        } label: { Label("Paste", systemImage: "doc.on.clipboard") }
+                    }
                     if CameraPicker.isAvailable {
                         Button { takingPhoto = true } label: { Label("Camera", systemImage: "camera") }
                     }
