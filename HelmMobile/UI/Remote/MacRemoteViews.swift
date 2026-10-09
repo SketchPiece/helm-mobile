@@ -218,11 +218,15 @@ struct MacRemoteSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var choosingScreenshot = false
     @State private var snoozingCustom = false
+    /// The thread list under the title is open.
+    @State private var listingThreads = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let target = remote.target, let thread = remote.thread {
                 header(target: target, thread: thread)
+                ZStack(alignment: .top) {
+                    VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 12) {
                         nowCard(thread: thread)
@@ -249,6 +253,9 @@ struct MacRemoteSheet: View {
                 .transition(.opacity)
                 threadActions
                 controls
+                    }
+                    if listingThreads { threadList }
+                }
             } else {
                 ContentUnavailableView("Nobody at the computer", systemImage: "desktopcomputer",
                                        description: Text("Open a thread in Helm on your computer to use the remote."))
@@ -304,16 +311,10 @@ struct MacRemoteSheet: View {
         .padding(.top, 22)
     }
 
-    /// The title, and under it every thread on this computer: pick one and the computer opens it.
+    /// The title; tapping it lists every thread on this computer under it.
     private func threadMenu(current thread: ThreadSummary) -> some View {
-        let lists = remote.threads(in: model)
-        return Menu {
-            if !lists.waiting.isEmpty {
-                Section("Needs you") { ForEach(lists.waiting) { threadItem($0) } }
-            }
-            if !lists.others.isEmpty {
-                Section("Active") { ForEach(lists.others) { threadItem($0) } }
-            }
+        Button {
+            withAnimation(.snappy(duration: 0.25)) { listingThreads.toggle() }
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(thread.displayTitle)
@@ -324,20 +325,93 @@ struct MacRemoteSheet: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Palette.textMuted)
+                    .rotationEffect(.degrees(listingThreads ? 180 : 0))
             }
         }
+        .buttonStyle(.plain)
         .accessibilityHint("Lists the threads on this computer")
     }
 
-    private func threadItem(_ entry: ThreadListEntry) -> some View {
-        Button {
+    /// Every thread on this computer, as on Home: what needs you first, then the rest. The one the
+    /// computer shows is lit; picking another opens it there.
+    private var threadList: some View {
+        let lists = remote.threads(in: model)
+        return ZStack(alignment: .top) {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .onTapGesture { withAnimation(.snappy(duration: 0.25)) { listingThreads = false } }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if !lists.waiting.isEmpty {
+                        listHeader("Needs you")
+                        ForEach(lists.waiting) { threadRow($0) }
+                    }
+                    if !lists.others.isEmpty {
+                        listHeader("Active")
+                        ForEach(lists.others) { threadRow($0) }
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: 460)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(Palette.surfaceRaised, in: .rect(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.border))
+            .shadow(color: .black.opacity(0.45), radius: 20, y: 12)
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+        }
+    }
+
+    private func listHeader(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .textCase(.uppercase)
+            .font(Typography.sectionHeader)
+            .foregroundStyle(Palette.textMuted)
+            .padding(.horizontal, 14)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
+    }
+
+    private func threadRow(_ entry: ThreadListEntry) -> some View {
+        let current = entry.ref == remote.target?.ref
+        let phase = entry.thread.phase
+        return Button {
+            withAnimation(.snappy(duration: 0.25)) { listingThreads = false }
             Task { await remote.switchTo(entry.ref, in: model) }
         } label: {
-            Text(entry.thread.displayTitle)
-            Text(entry.ref == remote.target?.ref ? String(localized: "On the computer")
-                 : entry.thread.phase.label ?? entry.project?.title ?? "")
-            if entry.ref == remote.target?.ref { Image(systemName: "desktopcomputer") }
+            HStack(spacing: 12) {
+                ProjectIcon(project: entry.project, environment: remote.environment, size: 34)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.thread.displayTitle)
+                        .font(Typography.subheadline.weight(.medium))
+                        .foregroundStyle(Palette.text)
+                        .lineLimit(1)
+                    Text(entry.project?.title ?? entry.environmentLabel)
+                        .font(Typography.footnote)
+                        .foregroundStyle(Palette.textMuted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                if current {
+                    Label("On the computer", systemImage: "desktopcomputer")
+                        .labelStyle(.tight)
+                        .font(Typography.mono(12))
+                        .foregroundStyle(Palette.accentText)
+                } else if let label = phase.label {
+                    Text(label)
+                        .font(Typography.mono(12))
+                        .foregroundStyle(phase.color)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(current ? Palette.accent.opacity(0.1) : .clear)
+            .contentShape(.rect)
         }
+        .buttonStyle(.plain)
     }
 
     /// Where this thread sits among the others, under the card: the swipe's map.
