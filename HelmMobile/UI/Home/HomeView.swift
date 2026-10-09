@@ -109,11 +109,12 @@ struct HomeView: View {
         .background(Palette.canvas)
         .overlay { emptyState(entries: entries) }
         .undoToast()
-        .overlay { NewThreadFan(state: fan) }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             MacRemotePill(remote: remote) { showingRemote = true }
                 .animation(.snappy(duration: 0.35), value: remote.target)
         }
+        // After the pill, so the fan opens over it.
+        .overlay { NewThreadFan(state: fan) }
         .sheet(isPresented: $showingRemote) {
             MacRemoteSheet(remote: remote) { ref in router.path = [.thread(ref)] }
         }
