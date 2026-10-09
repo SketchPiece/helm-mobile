@@ -104,26 +104,33 @@
    "h": 844,
    "title": "7D. And from Home: long press a thread"
   },
-  "8a-swipe.html": {
-   "x": 0,
-   "y": 5300,
-   "w": 390,
-   "h": 844,
-   "title": "8A. Swipe between threads, like changing channels"
-  },
   "8b-list.html": {
-   "x": 470,
+   "x": 1410,
    "y": 5300,
    "w": 390,
    "h": 844,
    "title": "8B. Tap the title: pick any thread, the Mac opens it"
   },
-  "8c-triage.html": {
+  "8d-thumb-row.html": {
+   "x": 0,
+   "y": 5300,
+   "w": 390,
+   "h": 844,
+   "title": "8D. Settle and Snooze in a row just above the microphone"
+  },
+  "8d2-thumb-row-next.html": {
+   "x": 470,
+   "y": 5300,
+   "w": 390,
+   "h": 844,
+   "title": "8D, with threads waiting: Settle & next"
+  },
+  "8e-swap-slot.html": {
    "x": 940,
    "y": 5300,
    "w": 390,
    "h": 844,
-   "title": "8C. Settle and go on to the next thread that needs you"
+   "title": "8E. One slot: Stop while it works, Settle once it's done (long press: Snooze)"
   }
  },
  "order": [
@@ -141,9 +148,10 @@
   "7b-open-in-title.html",
   "7c-open-chip.html",
   "7d-open-from-row.html",
-  "8a-swipe.html",
   "8b-list.html",
-  "8c-triage.html"
+  "8d-thumb-row.html",
+  "8d2-thumb-row-next.html",
+  "8e-swap-slot.html"
  ],
  "notes": {
   "t": {
@@ -246,11 +254,11 @@
   },
   {
    "id": "claude-7",
-   "x": 1420,
+   "x": 1880,
    "y": 5300,
    "w": 420,
    "color": "blue",
-   "text": "Recommend all three as one remote: swipe for the next or previous thread (Home's order), tap the title for any thread, and a row of Settle / Snooze / Pin. With threads that need you, Settle becomes \"Settle & next\" and the remote goes on to the next one. Each switch opens that thread on the Mac."
+   "text": "Only Settle and Snooze, down by the thumb. Recommend 8D: two buttons right above the microphone, always in the same place; with threads waiting, Settle becomes \"Settle & next\". 8E saves a row, but the button turns from Stop into Settle as the run ends, right where the finger may be. 8B: tapping the title still lists every thread."
   }
  ],
  "designSystems": []
