@@ -103,6 +103,27 @@
    "w": 390,
    "h": 844,
    "title": "7D. And from Home: long press a thread"
+  },
+  "8a-swipe.html": {
+   "x": 0,
+   "y": 5300,
+   "w": 390,
+   "h": 844,
+   "title": "8A. Swipe between threads, like changing channels"
+  },
+  "8b-list.html": {
+   "x": 470,
+   "y": 5300,
+   "w": 390,
+   "h": 844,
+   "title": "8B. Tap the title: pick any thread, the Mac opens it"
+  },
+  "8c-triage.html": {
+   "x": 940,
+   "y": 5300,
+   "w": 390,
+   "h": 844,
+   "title": "8C. Settle and go on to the next thread that needs you"
   }
  },
  "order": [
@@ -119,7 +140,10 @@
   "7a-open-in-menu.html",
   "7b-open-in-title.html",
   "7c-open-chip.html",
-  "7d-open-from-row.html"
+  "7d-open-from-row.html",
+  "8a-swipe.html",
+  "8b-list.html",
+  "8c-triage.html"
  ],
  "notes": {
   "t": {
@@ -170,6 +194,13 @@
    "text": "5. Open on Mac: where it lives (only while the Mac is nearby)",
    "kind": "title2",
    "maxW": 1600
+  },
+  "h5": {
+   "x": 0,
+   "y": 5220,
+   "text": "6. Beyond one thread: switch threads, settle, snooze",
+   "kind": "title2",
+   "maxW": 1600
   }
  },
  "annotations": [
@@ -212,6 +243,14 @@
    "w": 380,
    "color": "blue",
    "text": "Chosen: 2A·3, the menu in the header."
+  },
+  {
+   "id": "claude-7",
+   "x": 1420,
+   "y": 5300,
+   "w": 420,
+   "color": "blue",
+   "text": "Recommend all three as one remote: swipe for the next or previous thread (Home's order), tap the title for any thread, and a row of Settle / Snooze / Pin. With threads that need you, Settle becomes \"Settle & next\" and the remote goes on to the next one. Each switch opens that thread on the Mac."
   }
  ],
  "designSystems": []
