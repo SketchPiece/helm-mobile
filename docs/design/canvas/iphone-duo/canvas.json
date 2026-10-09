@@ -126,7 +126,7 @@
    "y": 0,
    "w": 340,
    "color": "blue",
-   "text": "Simulator: the Duo ships with Xcode 27.1 (RC). This Mac has 27.0 only; the download is in progress, so these boards are drawn from Apple's HIG, the developer guide and the Tech Talks, not from screenshots yet."
+   "text": "Simulator: the Duo ships only with Xcode 27.1 (RC); this Mac has 27.0. The download needs an Apple Developer sign-in, so these boards are drawn from Apple's HIG, the developer guide and the Tech Talks, not from simulator screenshots."
   },
   {
    "id": "claude-2",
