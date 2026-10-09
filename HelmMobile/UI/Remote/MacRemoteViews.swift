@@ -727,7 +727,8 @@ struct RemoteTrackpad: View {
                     defer { axis = nil }
                     switch axis {
                     case .horizontal:
-                        if abs(drag.translation.width) > 60 { onSwipe(drag.translation.width < 0 ? 1 : -1) }
+                        // Right goes on to the next thread (the lit dot moves right), left goes back.
+                        if abs(drag.translation.width) > 60 { onSwipe(drag.translation.width > 0 ? 1 : -1) }
                     case .vertical:
                         let carry = drag.predictedEndTranslation.height - drag.translation.height
                         if abs(carry) > 40 { remote.flingComputer(by: -Double(carry) * gain) }
