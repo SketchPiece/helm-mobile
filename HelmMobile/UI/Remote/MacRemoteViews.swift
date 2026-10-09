@@ -220,15 +220,16 @@ struct MacRemoteSheet: View {
     @State private var snoozingCustom = false
     /// The thread list under the title is open.
     @State private var listingThreads = false
+    /// Where the thread list drops from: right under the header.
+    @State private var headerHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let target = remote.target, let thread = remote.thread {
                 header(target: target, thread: thread)
-                ZStack(alignment: .top) {
-                    VStack(spacing: 0) {
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
                 // What the agent says and asks, as tall as it needs (scrolling past ~half the
-                // screen); the rest of the middle is a trackpad for the chat on the computer.
+                // screen), with this thread's place among the others right under it.
                 ViewThatFits(in: .vertical) {
                     cards(thread: thread)
                     ScrollView { cards(thread: thread) }
@@ -237,20 +238,30 @@ struct MacRemoteSheet: View {
                 .frame(maxHeight: 380, alignment: .top)
                 .id(target.ref)
                 .transition(.opacity)
+                pageDots
+                    .padding(.top, 12)
+                // The rest of the middle is a trackpad for the chat on the computer.
                 RemoteTrackpad(remote: remote) { step in
                     guard let ref = remote.neighbour(step, in: model) else { return }
                     Task { await remote.switchTo(ref, in: model) }
-                } dots: {
-                    pageDots
                 }
                 threadActions
                 controls
-                    }
-                    if listingThreads { threadList }
-                }
             } else {
                 ContentUnavailableView("Nobody at the computer", systemImage: "desktopcomputer",
                                        description: Text("Open a thread in Helm on your computer to use the remote."))
+            }
+        }
+        .overlay(alignment: .top) {
+            if listingThreads {
+                // No dimming: the list floats on its shadow, and a tap anywhere else puts it away.
+                ZStack(alignment: .top) {
+                    Color.clear
+                        .contentShape(.rect)
+                        .onTapGesture { withAnimation(.snappy(duration: 0.25)) { listingThreads = false } }
+                    threadList
+                        .padding(.top, headerHeight)
+                }
             }
         }
         .background(Palette.canvas)
@@ -341,10 +352,7 @@ struct MacRemoteSheet: View {
     /// computer shows is lit; picking another opens it there.
     private var threadList: some View {
         let lists = remote.threads(in: model)
-        return ZStack(alignment: .top) {
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
-                .onTapGesture { withAnimation(.snappy(duration: 0.25)) { listingThreads = false } }
+        return Group {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if !lists.waiting.isEmpty {
@@ -363,7 +371,7 @@ struct MacRemoteSheet: View {
             .fixedSize(horizontal: false, vertical: true)
             .background(Palette.surfaceRaised, in: .rect(cornerRadius: 18))
             .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.border))
-            .shadow(color: .black.opacity(0.45), radius: 20, y: 12)
+            .shadow(color: .black.opacity(0.22), radius: 24, y: 10)
             .padding(.horizontal, 12)
             .padding(.top, 10)
             .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
@@ -667,10 +675,9 @@ struct OpenOnComputerButton: View {
 /// The empty middle of the remote: drag up and down to scroll the chat on the computer (finger
 /// up, newer messages, as on the phone), fling to glide, double tap for the latest. Sideways
 /// goes to the thread before or after.
-struct RemoteTrackpad<Dots: View>: View {
+struct RemoteTrackpad: View {
     let remote: MacRemote
     let onSwipe: (_ step: Int) -> Void
-    @ViewBuilder let dots: () -> Dots
 
     private enum Axis { case vertical, horizontal }
     @State private var axis: Axis?
@@ -681,7 +688,6 @@ struct RemoteTrackpad<Dots: View>: View {
     var body: some View {
         VStack(spacing: 10) {
             Spacer(minLength: 0)
-            dots()
             Image(systemName: "arrow.up.and.down")
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(Palette.textMuted.opacity(axis == .vertical ? 1 : 0.6))
