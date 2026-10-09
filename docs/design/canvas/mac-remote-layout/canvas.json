@@ -1,0 +1,88 @@
+{
+ "v": 3,
+ "title": "Mac remote: how to lay out the thread screen",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now"
+  },
+  "a-one-pad.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "A. The chat is the trackpad, Settle and Snooze at its foot"
+  },
+  "b-fill-gap.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "B. Same parts, no gap: the trackpad fills the space"
+  },
+  "c-actions-up.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "C. Settle and Snooze in the header, voice mode under the mic"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-one-pad.html",
+  "b-fill-gap.html",
+  "c-actions-up.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Mac remote: how to lay out the thread screen",
+   "kind": "title1",
+   "maxW": 860
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 0,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "Now: ~120pt of empty space between the message and the trackpad; Settle/Snooze weigh as much as the mic; Stop sits next to talk."
+  },
+  {
+   "id": "claude-2",
+   "x": 470,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "A (recommended): the whole middle is one card, the chat itself, and dragging it scrolls the Mac. Settle | Snooze are a quiet strip at its foot. Stop moves to the 'Working' line, the voice mode takes its slot by the mic."
+  },
+  {
+   "id": "claude-3",
+   "x": 940,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "B: smallest change. Trackpad grows into the gap, buttons go flat. Still two cards that look alike."
+  },
+  {
+   "id": "claude-4",
+   "x": 1410,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "C: like A, but Settle/Snooze are icons in the header and the voice mode is a chip under the mic. Cleanest, but the actions are far from the thumb."
+  }
+ ],
+ "designSystems": []
+}
