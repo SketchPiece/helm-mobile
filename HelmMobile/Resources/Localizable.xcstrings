@@ -2879,16 +2879,6 @@
         }
       }
     },
-    "Double tap for the latest · swipe sideways for the next thread": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Двойное касание — к последнему · свайп вбок — следующий тред"
-          }
-        }
-      }
-    },
     "Draft": {
       "localizations": {
         "ru": {
@@ -2909,12 +2899,12 @@
         }
       }
     },
-    "Drag to scroll the chat on the computer": {
+    "Drag to scroll the computer · double tap for the latest": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Веди пальцем, чтобы листать чат на компьютере"
+            "value": "Веди пальцем, чтобы листать на компьютере · двойное касание — к последнему"
           }
         }
       }
@@ -4774,6 +4764,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть тред агента"
+          }
+        }
+      }
+    },
+    "Open the remote": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть пульт"
           }
         }
       }

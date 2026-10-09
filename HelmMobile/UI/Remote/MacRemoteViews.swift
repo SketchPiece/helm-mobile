@@ -232,24 +232,24 @@ struct MacRemoteSheet: View {
             if let target = remote.target, let thread = remote.thread {
                 header(target: target, thread: thread)
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
-                // What the agent says and asks, as tall as it needs (scrolling past ~half the
-                // screen), with this thread's place among the others right under it.
-                ViewThatFits(in: .vertical) {
-                    cards(thread: thread)
-                    ScrollView { cards(thread: thread) }
-                        .scrollBounceBehavior(.basedOnSize)
+                // What the agent asks, as tall as it needs (scrolling past ~half the screen).
+                if let session = remote.session, let requests = session.projection?.pendingRequests, !requests.isEmpty {
+                    ViewThatFits(in: .vertical) {
+                        requestCards(requests, session: session)
+                        ScrollView { requestCards(requests, session: session) }
+                            .scrollBounceBehavior(.basedOnSize)
+                    }
+                    .frame(maxHeight: 380, alignment: .top)
                 }
-                .frame(maxHeight: 380, alignment: .top)
-                .id(target.ref)
-                .transition(.opacity)
+                // The chat itself fills the middle, and dragging it scrolls the chat on the
+                // computer; Settle and Snooze sit at its foot, this thread's place among the others under it.
+                pad(thread: thread)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .id(target.ref)
+                    .transition(.opacity)
                 pageDots
-                    .padding(.top, 12)
-                // The rest of the middle is a trackpad for the chat on the computer.
-                RemoteTrackpad(remote: remote) { step in
-                    guard let ref = remote.neighbour(step, in: model) else { return }
-                    Task { await remote.switchTo(ref, in: model) }
-                }
-                threadActions
+                    .padding(.top, 10)
                 controls
             } else {
                 ContentUnavailableView("Nobody at the computer", systemImage: "desktopcomputer",
@@ -292,17 +292,63 @@ struct MacRemoteSheet: View {
         .undoToast()
     }
 
-    private func cards(thread: ThreadSummary) -> some View {
+    private func requestCards(_ requests: [PendingRequest], session: ThreadSession) -> some View {
         VStack(spacing: 12) {
-            nowCard(thread: thread)
-            if let session = remote.session, let projection = session.projection {
-                ForEach(projection.pendingRequests) { request in
-                    PendingRequestCard(request: request, session: session)
-                }
+            ForEach(requests) { request in
+                PendingRequestCard(request: request, session: session)
             }
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
+    }
+
+    /// One card: the agent's latest words, bottom-up and fading out at the top, over a trackpad for
+    /// the chat on the computer, with Settle and Snooze along its foot.
+    private func pad(thread: ThreadSummary) -> some View {
+        VStack(spacing: 0) {
+            RemoteTrackpad(remote: remote) { step in
+                guard let ref = remote.neighbour(step, in: model) else { return }
+                Task { await remote.switchTo(ref, in: model) }
+            } content: {
+                VStack(spacing: 0) {
+                    latest(thread: thread)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .clipped()
+                        .mask {
+                            VStack(spacing: 0) {
+                                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 48)
+                                Color.black
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    padFooter
+                }
+            }
+            Rectangle().fill(Palette.border).frame(height: 1)
+            threadActions
+        }
+        .background(Palette.surface)
+        .clipShape(.rect(cornerRadius: 20))
+    }
+
+    /// Under the words: the next thread Settle leads to, or how to use the pad.
+    @ViewBuilder
+    private var padFooter: some View {
+        Group {
+            if let next = remote.nextWaiting(in: model) {
+                Text("Next: \(next.thread.displayTitle)")
+                    .font(Typography.mono(12))
+                    .lineLimit(1)
+            } else {
+                Label("Drag to scroll the computer · double tap for the latest", systemImage: "arrow.up.and.down")
+                    .labelStyle(.tight)
+                    .font(Typography.caption)
+            }
+        }
+        .foregroundStyle(Palette.textMuted)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
     private func header(target: MacRemoteTarget, thread: ThreadSummary) -> some View {
@@ -314,7 +360,6 @@ struct MacRemoteSheet: View {
                     .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
                 Spacer()
-                voiceTargetMenu
                 Button {
                     dismiss()
                     onOpenThread(target.ref)
@@ -336,7 +381,10 @@ struct MacRemoteSheet: View {
                     Text(verbatim: "·").foregroundStyle(Palette.textMuted)
                     RemoteStatusLine(thread: thread)
                 }
+                Spacer(minLength: 8)
+                if remote.isWorking { stopButton }
             }
+            .frame(minHeight: 30)
         }
         .padding(.horizontal, 20)
         .padding(.top, 22)
@@ -466,51 +514,61 @@ struct MacRemoteSheet: View {
         }
     }
 
-    /// Settle and Snooze, by the thumb. When another thread needs you, the remote goes on to it.
+    /// Settle and Snooze, a quiet strip along the pad's foot. When another thread needs you, the
+    /// remote goes on to it.
     private var threadActions: some View {
-        let next = remote.nextWaiting(in: model)
-        return VStack(alignment: .leading, spacing: 8) {
-            if let next {
-                Text("Next: \(next.thread.displayTitle)")
-                    .font(Typography.mono(12))
-                    .foregroundStyle(Palette.textMuted)
-                    .lineLimit(1)
-                    .padding(.horizontal, 6)
+        HStack(spacing: 0) {
+            let settled = remote.thread?.isSettled == true
+            Button {
+                Task { await remote.settle(settled ? .unsettle : .settle, in: model) }
+            } label: {
+                Label(settled ? "Reopen" : "Settle", systemImage: settled ? "tray.and.arrow.up" : "checkmark")
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .contentShape(.rect)
             }
-            HStack(spacing: 10) {
-                let settled = remote.thread?.isSettled == true
-                Button {
-                    Task { await remote.settle(settled ? .unsettle : .settle, in: model) }
-                } label: {
-                    Label(settled ? "Reopen" : "Settle", systemImage: settled ? "tray.and.arrow.up" : "checkmark")
-                        .font(Typography.subheadline.weight(.medium))
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.glass)
-                Menu {
-                    ForEach(Snooze.presets()) { preset in
-                        Button {
-                            Task { await remote.settle(.snooze(preset.date), in: model) }
-                        } label: {
-                            Text(preset.title)
-                            Text(preset.whenLabel)
-                        }
+            Rectangle().fill(Palette.border).frame(width: 1, height: 26)
+            Menu {
+                ForEach(Snooze.presets()) { preset in
+                    Button {
+                        Task { await remote.settle(.snooze(preset.date), in: model) }
+                    } label: {
+                        Text(preset.title)
+                        Text(preset.whenLabel)
                     }
-                    Button("Custom…") { snoozingCustom = true }
-                } label: {
-                    Label("Snooze", systemImage: "moon.zzz")
-                        .font(Typography.subheadline.weight(.medium))
-                        .frame(maxWidth: .infinity, minHeight: 48)
                 }
-                .buttonStyle(.glass)
+                Button("Custom…") { snoozingCustom = true }
+            } label: {
+                Label("Snooze", systemImage: "moon.zzz")
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .contentShape(.rect)
             }
-            .foregroundStyle(Palette.text)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 10)
+        .buttonStyle(.plain)
+        .font(Typography.subheadline.weight(.medium))
+        .foregroundStyle(Palette.text)
     }
 
-    /// Where the words go: sent as a message, or typed into the composer on the computer.
+    /// Next to the run it stops, only while there is one.
+    private var stopButton: some View {
+        Button {
+            Task { await remote.stop() }
+        } label: {
+            Label("Stop", systemImage: "stop.fill")
+                .labelStyle(.tight)
+                .font(Typography.footnote.weight(.medium))
+                .foregroundStyle(Palette.errorText)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Palette.surface, in: .capsule)
+                .overlay(Capsule().stroke(Palette.border))
+        }
+        .buttonStyle(.plain)
+        .transition(.opacity)
+        .accessibilityLabel("Stop the agent")
+    }
+
+    /// Where the words go: sent as a message, or typed into the composer on the computer. Sits by
+    /// the microphone, its icon saying which.
     private var voiceTargetMenu: some View {
         Menu {
             Picker("Voice", selection: Binding(get: { remote.voiceTarget }, set: { remote.voiceTarget = $0 })) {
@@ -530,25 +588,21 @@ struct MacRemoteSheet: View {
                 .tag(MacRemote.VoiceTarget.composer)
             }
         } label: {
-            HStack(spacing: 5) {
-                Image(systemName: remote.voiceTarget == .send ? "arrow.up" : "keyboard")
-                    .font(.system(size: 12, weight: .semibold))
-                Text(remote.voiceTarget == .send ? "Voice sends" : "Voice types")
-                Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
-            }
-            .font(Typography.footnote)
-            .foregroundStyle(Palette.text)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Palette.surface, in: .capsule)
-            .overlay(Capsule().stroke(Palette.border))
+            Image(systemName: remote.voiceTarget == .send ? "arrow.up" : "keyboard")
+                .font(.system(size: 20, weight: .medium))
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 58, height: 58)
+                .foregroundStyle(Palette.text)
+                .background(Palette.surface, in: .circle)
+                .overlay(Circle().stroke(Palette.border))
         }
         .accessibilityLabel("Where your voice goes")
+        .accessibilityValue(remote.voiceTarget == .send ? "Voice sends" : "Voice types")
     }
 
-    /// The agent's latest words, a few lines of them: enough to know where it is.
+    /// The agent's latest words and what it is running: enough to know where it is.
     @ViewBuilder
-    private func nowCard(thread: ThreadSummary) -> some View {
+    private func latest(thread: ThreadSummary) -> some View {
         let running = remote.session?.projection?.items.values
             .filter { $0.isRunning && !($0.title ?? "").isEmpty }
             .max { $0.ordinal < $1.ordinal }
@@ -570,7 +624,6 @@ struct MacRemoteSheet: View {
                     Text((try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(text))
                         .font(Typography.subheadline)
                         .foregroundStyle(thread.latestMessageRole == "user" ? Palette.textMuted : Palette.text)
-                        .lineLimit(5)
                 }
                 if let error = remote.sendError {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -578,9 +631,8 @@ struct MacRemoteSheet: View {
                         .foregroundStyle(Palette.errorText)
                 }
             }
-            .padding(16)
+            .padding(.top, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Palette.surface, in: .rect(cornerRadius: 18))
         }
     }
 
@@ -638,18 +690,7 @@ struct MacRemoteSheet: View {
                     .padding(.horizontal, 24)
             }
             HStack {
-                Button {
-                    Task { await remote.stop() }
-                } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: 58, height: 58)
-                        .foregroundStyle(remote.isWorking ? Palette.errorText : Palette.textMuted)
-                        .background(Palette.surface, in: .circle)
-                        .overlay(Circle().stroke(Palette.border))
-                }
-                .disabled(!remote.isWorking)
-                .accessibilityLabel("Stop the agent")
+                voiceTargetMenu
                 Spacer()
                 RemoteMicButton(remote: remote, diameter: 112)
                     .background(Circle().fill(Palette.accent.opacity(0.1)).padding(-12))
@@ -702,12 +743,13 @@ struct OpenOnComputerButton: View {
     }
 }
 
-/// The empty middle of the remote: drag up and down to scroll the chat on the computer (finger
-/// up, newer messages, as on the phone), fling to glide, double tap for the latest. Sideways
-/// goes to the thread before or after.
-struct RemoteTrackpad: View {
+/// The middle of the remote, under what it shows: drag up and down to scroll the chat on the
+/// computer (finger up, newer messages, as on the phone), fling to glide, double tap for the
+/// latest. Sideways goes to the thread before or after.
+struct RemoteTrackpad<Content: View>: View {
     let remote: MacRemote
     let onSwipe: (_ step: Int) -> Void
+    @ViewBuilder let content: Content
 
     private enum Axis { case vertical, horizontal }
     @State private var axis: Axis?
@@ -716,60 +758,42 @@ struct RemoteTrackpad: View {
     private var gain: Double { 2.5 }
 
     var body: some View {
-        VStack(spacing: 10) {
-            Spacer(minLength: 0)
-            Image(systemName: "arrow.up.and.down")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(Palette.textMuted.opacity(axis == .vertical ? 1 : 0.6))
-            Text("Drag to scroll the chat on the computer")
-                .font(Typography.footnote)
-                .foregroundStyle(Palette.textMuted)
-            Text("Double tap for the latest · swipe sideways for the next thread")
-                .font(Typography.caption)
-                .foregroundStyle(Palette.textMuted.opacity(0.7))
-                .multilineTextAlignment(.center)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Palette.surface.opacity(axis == .vertical ? 0.9 : 0))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .animation(.easeOut(duration: 0.2), value: axis)
-        }
-        .contentShape(.rect)
-        .onTapGesture(count: 2) { remote.scrollComputerToEnd() }
-        .gesture(
-            DragGesture(minimumDistance: 6)
-                .onChanged { drag in
-                    if axis == nil {
-                        axis = abs(drag.translation.width) > abs(drag.translation.height) ? .horizontal : .vertical
-                        lastY = 0
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // A touch of shade while a drag scrolls the computer.
+            .background(Palette.text.opacity(axis == .vertical ? 0.04 : 0))
+            .animation(.easeOut(duration: 0.2), value: axis)
+            .contentShape(.rect)
+            .onTapGesture(count: 2) { remote.scrollComputerToEnd() }
+            .gesture(
+                DragGesture(minimumDistance: 6)
+                    .onChanged { drag in
+                        if axis == nil {
+                            axis = abs(drag.translation.width) > abs(drag.translation.height) ? .horizontal : .vertical
+                            lastY = 0
+                        }
+                        guard axis == .vertical else { return }
+                        let dy = drag.translation.height - lastY
+                        lastY = drag.translation.height
+                        remote.scrollComputer(by: -Double(dy) * gain)
                     }
-                    guard axis == .vertical else { return }
-                    let dy = drag.translation.height - lastY
-                    lastY = drag.translation.height
-                    remote.scrollComputer(by: -Double(dy) * gain)
-                }
-                .onEnded { drag in
-                    defer { axis = nil }
-                    switch axis {
-                    case .horizontal:
-                        // Right goes on to the next thread (the lit dot moves right), left goes back.
-                        if abs(drag.translation.width) > 60 { onSwipe(drag.translation.width > 0 ? 1 : -1) }
-                    case .vertical:
-                        let carry = drag.predictedEndTranslation.height - drag.translation.height
-                        if abs(carry) > 40 { remote.flingComputer(by: -Double(carry) * gain) }
-                    case nil:
-                        break
+                    .onEnded { drag in
+                        defer { axis = nil }
+                        switch axis {
+                        case .horizontal:
+                            // Right goes on to the next thread (the lit dot moves right), left goes back.
+                            if abs(drag.translation.width) > 60 { onSwipe(drag.translation.width > 0 ? 1 : -1) }
+                        case .vertical:
+                            let carry = drag.predictedEndTranslation.height - drag.translation.height
+                            if abs(carry) > 40 { remote.flingComputer(by: -Double(carry) * gain) }
+                        case nil:
+                            break
+                        }
                     }
-                }
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityAction(named: "Scroll up on the computer") { remote.flingComputer(by: -600) }
-        .accessibilityAction(named: "Scroll down on the computer") { remote.flingComputer(by: 600) }
-        .accessibilityAction(named: "Jump to the latest") { remote.scrollComputerToEnd() }
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityAction(named: "Scroll up on the computer") { remote.flingComputer(by: -600) }
+            .accessibilityAction(named: "Scroll down on the computer") { remote.flingComputer(by: 600) }
+            .accessibilityAction(named: "Jump to the latest") { remote.scrollComputerToEnd() }
     }
 }
