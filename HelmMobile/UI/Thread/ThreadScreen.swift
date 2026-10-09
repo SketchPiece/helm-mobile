@@ -539,11 +539,15 @@ private struct ThreadContent: View {
                         perform(.markUnread, thenDismiss: true)
                     } label: { Label("Mark as unread", systemImage: "circlebadge") }
                     if environment.config?.capability("threadAutoSettleOptOut") == true {
-                        Toggle(isOn: Binding(
-                            get: { summary.autoSettleDisabledAt == nil },
-                            set: { perform(.autoSettle($0)) }
-                        )) {
-                            Label("Auto-settle", systemImage: "clock.badge.checkmark")
+                        // A button, not a toggle: a toggle's checkmark column would indent every item.
+                        if summary.autoSettleDisabledAt == nil {
+                            Button { perform(.autoSettle(false)) } label: {
+                                Label("Turn off auto-settle", systemImage: "clock.badge.xmark")
+                            }
+                        } else {
+                            Button { perform(.autoSettle(true)) } label: {
+                                Label("Turn on auto-settle", systemImage: "clock.badge.checkmark")
+                            }
                         }
                     }
                     Divider()

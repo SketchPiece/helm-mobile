@@ -1709,16 +1709,6 @@
         }
       }
     },
-    "Auto-settle": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Автозавершение"
-          }
-        }
-      }
-    },
     "Automatic": {
       "localizations": {
         "ru": {
@@ -6847,6 +6837,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Попробовать ещё раз"
+          }
+        }
+      }
+    },
+    "Turn off auto-settle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выключить автозавершение"
+          }
+        }
+      }
+    },
+    "Turn on auto-settle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включить автозавершение"
           }
         }
       }
