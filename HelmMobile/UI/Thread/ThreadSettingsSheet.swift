@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Model, reasoning options, access and plan mode for a thread. Changes apply right away.
+/// Model, reasoning options, access, plan mode and auto-settle for a thread. Changes apply right away.
 struct ThreadSettingsSheet: View {
     let environment: EnvironmentSession
     let session: ThreadSession
+    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var error: String?
 
@@ -22,6 +23,9 @@ struct ThreadSettingsSheet: View {
                         onRuntimeMode: { mode in apply { try await session.setRuntimeMode(mode) } },
                         onInteractionMode: { mode in apply { try await session.setInteractionMode(mode) } }
                     )
+                    if config.capability("threadAutoSettleOptOut") == true {
+                        autoSettleSection(thread)
+                    }
                 } else {
                     ProgressView()
                 }
@@ -40,6 +44,25 @@ struct ThreadSettingsSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func autoSettleSection(_ thread: ThreadSummary) -> some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { thread.autoSettleDisabledAt == nil },
+                set: { enabled in
+                    let ref = ThreadRef(environmentId: environment.id, threadId: session.threadId)
+                    apply { try await model.perform(.autoSettle(enabled), on: ref) }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Auto-settle").font(Typography.body)
+                    Text("Settles by itself once its pull request closes or after a few quiet days.")
+                        .font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                }
+            }
+            .tint(Palette.accent)
+        }
     }
 
     private func apply(_ work: @escaping () async throws -> Void) {

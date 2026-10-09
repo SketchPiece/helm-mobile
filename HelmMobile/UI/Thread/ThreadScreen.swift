@@ -513,7 +513,7 @@ private struct ThreadContent: View {
                 }
                 Button {
                     showSettings = true
-                } label: { Label("Model and access", systemImage: "slider.horizontal.3") }
+                } label: { Label("Thread settings", systemImage: "slider.horizontal.3") }
                 Divider()
                 if let summary {
                     if summary.isSettled {
@@ -538,18 +538,6 @@ private struct ThreadContent: View {
                         leavesUnread = true
                         perform(.markUnread, thenDismiss: true)
                     } label: { Label("Mark as unread", systemImage: "circlebadge") }
-                    if environment.config?.capability("threadAutoSettleOptOut") == true {
-                        // A button, not a toggle: a toggle's checkmark column would indent every item.
-                        if summary.autoSettleDisabledAt == nil {
-                            Button { perform(.autoSettle(false)) } label: {
-                                Label("Turn off auto-settle", systemImage: "clock.badge.xmark")
-                            }
-                        } else {
-                            Button { perform(.autoSettle(true)) } label: {
-                                Label("Turn on auto-settle", systemImage: "clock.badge.checkmark")
-                            }
-                        }
-                    }
                     Divider()
                     Button {
                         renameText = summary.title

@@ -1709,6 +1709,16 @@
         }
       }
     },
+    "Auto-settle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автозавершение"
+          }
+        }
+      }
+    },
     "Automatic": {
       "localizations": {
         "ru": {
@@ -5911,6 +5921,16 @@
         }
       }
     },
+    "Settles by itself once its pull request closes or after a few quiet days.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред завершится сам, когда закроют его PR или после нескольких дней тишины."
+          }
+        }
+      }
+    },
     "Share": {
       "localizations": {
         "ru": {
@@ -6837,26 +6857,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Попробовать ещё раз"
-          }
-        }
-      }
-    },
-    "Turn off auto-settle": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выключить автозавершение"
-          }
-        }
-      }
-    },
-    "Turn on auto-settle": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Включить автозавершение"
           }
         }
       }
