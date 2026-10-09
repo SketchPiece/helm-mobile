@@ -165,6 +165,12 @@ final class TailnetNode: @unchecked Sendable {
     return connection
   }
 
+  /// The node can't see Wi-Fi ↔ cellular from inside the app; without this it keeps
+  /// dialing over the network it started on.
+  func networkChanged() {
+    rebindNode()
+  }
+
   private func rebindNode() {
     queue.async { [self] in
       guard handle >= 0, tailscale_rebind(handle) != 0 else { return }

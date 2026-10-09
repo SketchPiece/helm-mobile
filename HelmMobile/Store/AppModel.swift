@@ -52,6 +52,7 @@ final class AppModel {
         pathMonitor.pathUpdateHandler = { [weak self] path in
             ConnectionLog.shared.log("network", Self.describe(path))
             guard path.status == .satisfied else { return }
+            TailnetNode.shared.networkChanged()
             Task { @MainActor in
                 // Live sockets may be bound to the old interface: probe them; wake the rest.
                 for environment in self?.environments ?? [] {

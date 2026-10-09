@@ -191,9 +191,11 @@ extern int tailscale_loopback(tailscale sd, char* addr_out, size_t addrlen, char
 // 	-1    - call tailscale_errmsg for details (*json_out is NULL)
 extern int tailscale_status_json(tailscale sd, char** json_out);
 
-// tailscale_rebind reopens the node's UDP sockets and re-runs STUN, as after
-// a network change. Call it when a suspended process resumes: the OS may have
-// defunct its sockets (observed on iOS), which leaves the node on DERP only.
+// tailscale_rebind re-reads the network interfaces, reopens the node's UDP
+// sockets and re-runs STUN. Call it when the network path changes (an app
+// can't watch it from inside, so the node would keep using the old one) and
+// when a suspended process resumes: the OS may have defunct its sockets
+// (observed on iOS), which leaves the node on DERP only.
 //
 // Returns:
 // 	0     - success

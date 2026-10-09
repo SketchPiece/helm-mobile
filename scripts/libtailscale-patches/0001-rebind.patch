@@ -22,10 +22,30 @@ index 420d67e..4db2d3d 100644
  	return TsnetErrmsg(sd, buf, buflen);
  }
 diff --git a/tailscale.go b/tailscale.go
-index 316efdd..90a2a92 100644
+index 316efdd..c8d4c7b 100644
 --- a/tailscale.go
 +++ b/tailscale.go
-@@ -583,6 +583,24 @@ func TsnetLoopback(sd C.int, addrOut *C.char, addrLen C.size_t, proxyOut *C.char
+@@ -25,6 +25,7 @@ import (
+ 	"golang.org/x/sys/unix"
+ 	"tailscale.com/hostinfo"
+ 	"tailscale.com/ipn"
++	"tailscale.com/net/netns"
+ 	"tailscale.com/tsnet"
+ 	"tailscale.com/types/logger"
+ )
+@@ -110,6 +111,11 @@ func TsnetStart(sd C.int) C.int {
+ 	if s == nil {
+ 		return C.EBADF
+ 	}
++	// Darwin binds every socket to the default interface netmon saw last, but an
++	// app (not a network extension) can't read the route socket, so netmon never
++	// sees Wi-Fi give way to cellular and all dials fail. With no tun device
++	// there is no routing loop to avoid: let the OS pick the interface.
++	netns.SetDisableBindConnToInterface(logger.Discard, true)
+ 	err := s.s.Start()
+ 	if err == nil {
+ 		s.started = true
+@@ -583,6 +589,29 @@ func TsnetLoopback(sd C.int, addrOut *C.char, addrLen C.size_t, proxyOut *C.char
  	return 0
  }
  
@@ -42,6 +62,11 @@ index 316efdd..90a2a92 100644
 +	if !ok {
 +		return s.recErr(fmt.Errorf("tailscale_rebind: no magicsock"))
 +	}
++	// netmon can't watch the network from inside an app; re-read the interfaces
++	// so DERP, control and the UDP socket follow the new path.
++	if netMon, ok := s.s.Sys().NetMon.GetOK(); ok {
++		netMon.InjectEvent()
++	}
 +	conn.Rebind()
 +	go conn.ReSTUN("tailscale_rebind")
 +	return 0
@@ -51,16 +76,18 @@ index 316efdd..90a2a92 100644
  func TsnetStatusJSON(sd C.int, jsonOut **C.char) C.int {
  	if jsonOut == nil {
 diff --git a/tailscale.h b/tailscale.h
-index 9bc8e7c..0293e61 100644
+index 9bc8e7c..2518cbc 100644
 --- a/tailscale.h
 +++ b/tailscale.h
-@@ -191,6 +191,16 @@ extern int tailscale_loopback(tailscale sd, char* addr_out, size_t addrlen, char
+@@ -191,6 +191,18 @@ extern int tailscale_loopback(tailscale sd, char* addr_out, size_t addrlen, char
  // 	-1    - call tailscale_errmsg for details (*json_out is NULL)
  extern int tailscale_status_json(tailscale sd, char** json_out);
  
-+// tailscale_rebind reopens the node's UDP sockets and re-runs STUN, as after
-+// a network change. Call it when a suspended process resumes: the OS may have
-+// defunct its sockets (observed on iOS), which leaves the node on DERP only.
++// tailscale_rebind re-reads the network interfaces, reopens the node's UDP
++// sockets and re-runs STUN. Call it when the network path changes (an app
++// can't watch it from inside, so the node would keep using the old one) and
++// when a suspended process resumes: the OS may have defunct its sockets
++// (observed on iOS), which leaves the node on DERP only.
 +//
 +// Returns:
 +// 	0     - success
