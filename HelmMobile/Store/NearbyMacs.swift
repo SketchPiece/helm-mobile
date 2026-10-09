@@ -35,6 +35,8 @@ final class NearbyMacs {
         }
         browser.stateUpdateHandler = { state in
             switch state {
+            case .ready:
+                ConnectionLog.shared.log("nearby", "looking for computers on this network")
             case .failed(let error), .waiting(let error):
                 ConnectionLog.shared.log("nearby", "browsing: \(error)")
                 if case .failed = state { Task { @MainActor in NearbyMacs.shared.restart() } }
