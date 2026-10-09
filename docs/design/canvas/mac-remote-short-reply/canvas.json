@@ -1,0 +1,104 @@
+{
+ "v": 3,
+ "title": "Mac remote: what the card shows when the reply is short",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now: the card fills the room, a short reply leaves it blank on top"
+  },
+  "a-hug.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "A. The card is as tall as the words; the free room stays canvas"
+  },
+  "b-turn-summary.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "B. Short reply: the blank top shows what the turn did"
+  },
+  "c-read-from-top.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "C. Words start at the top; a short reply is set larger to fill the card"
+  },
+  "d-chat-tail.html": {
+   "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "D. The card shows the end of the chat: your message, the steps, the reply"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-hug.html",
+  "b-turn-summary.html",
+  "c-read-from-top.html",
+  "d-chat-tail.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Mac remote: what the card shows when the reply is short",
+   "kind": "title1",
+   "maxW": 1330
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 0,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "Now: the card always fills the room, so a short reply hangs under an empty block."
+  },
+  {
+   "id": "claude-2",
+   "x": 470,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "A: the card is as tall as the words; the free room is plain background. Calm, but the trackpad shrinks with the text, and a long reply is cut at the top again."
+  },
+  {
+   "id": "claude-3",
+   "x": 940,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "B: the blank top shows what the turn did: done/time, diff, commit, release. Useful, but only when the turn did something."
+  },
+  {
+   "id": "claude-4",
+   "x": 1410,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "C: words start at the top, a short reply set larger. Reads like a note, but a long one still has to be cut."
+  },
+  {
+   "id": "claude-5",
+   "x": 1880,
+   "y": 880,
+   "w": 390,
+   "color": "blue",
+   "text": "D (recommended): the end of the chat, as on the Mac: your message, the steps, the reply. Short reply → earlier turns fill the room; the pad scrolls the Mac and the card looks like what it scrolls. Empty only when the whole thread is that short."
+  }
+ ],
+ "designSystems": []
+}
