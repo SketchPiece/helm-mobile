@@ -48,9 +48,16 @@ struct NewThreadView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 24)
-            header
-            Spacer(minLength: 24)
+            // A long draft with the keyboard up leaves no room for the question: it gives way so
+            // the composer stays whole above the keyboard instead of running under it.
+            ViewThatFits(in: .vertical) {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 24)
+                    header
+                    Spacer(minLength: 24)
+                }
+                Spacer(minLength: 8)
+            }
             if let error {
                 Text(error)
                     .font(Typography.footnote)
@@ -296,8 +303,7 @@ struct NewThreadView: View {
             .padding(.top, editorFolded ? 0 : 4)
         }
         .padding(6)
-        .contentShape(.rect)
-        .onTapGesture { if voice.state == .idle { focused = true } }
+        .onBackgroundTap { if voice.state == .idle { focused = true } }
         .composerGlass()
         .composerImageDrop { images in
             guard let environment else { return }
