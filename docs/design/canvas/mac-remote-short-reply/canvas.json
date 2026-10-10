@@ -61,6 +61,20 @@
    "w": 390,
    "h": 844,
    "title": "E3. Plain chat with a ribbed scroll wheel on the edge that shows where the Mac is"
+  },
+  "f1-dark-dots.html": {
+   "x": 1880,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "F1. Dark recessed screen with the dotted trackpad grain"
+  },
+  "f2-light-dots.html": {
+   "x": 2350,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "F2. Light sunken trackpad: dots thick on top, thin under the newest words"
   }
  },
  "order": [
@@ -71,7 +85,9 @@
   "d-chat-tail.html",
   "e1-screen.html",
   "e2-trackpad.html",
-  "e3-wheel.html"
+  "e3-wheel.html",
+  "f1-dark-dots.html",
+  "f2-light-dots.html"
  ],
  "notes": {
   "t": {
@@ -87,6 +103,13 @@
    "text": "D + a material: the chat is driven, not scrolled",
    "kind": "title2",
    "maxW": 1330
+  },
+  "t3": {
+   "x": 1880,
+   "y": 2120,
+   "text": "E1 + E2: screen and dots together",
+   "kind": "title2",
+   "maxW": 860
   }
  },
  "annotations": [
@@ -153,6 +176,22 @@
    "w": 390,
    "color": "blue",
    "text": "E3: the chat stays plain; a ribbed wheel on the edge is the control and its knob shows where the Mac is in the chat. Clearest 'this is a control', but it looks like the wheel is the only place to drag."
+  },
+  {
+   "id": "claude-9",
+   "x": 1880,
+   "y": 3080,
+   "w": 390,
+   "color": "blue",
+   "text": "F1 (recommended): E1's dark screen with E2's dots, light and faint on the dark glass, like a speaker grille or an LED panel. Words stay crisp; the dots alone say 'surface you drag', the dark says 'that's the Mac'."
+  },
+  {
+   "id": "claude-10",
+   "x": 2350,
+   "y": 3080,
+   "w": 390,
+   "color": "blue",
+   "text": "F2: E2 kept light, without the blur. Dots are dense on top where older turns fade out and thin under the newest words, so the reply reads clean. ON THE MAC and the position rail from E1."
   }
  ],
  "designSystems": []
