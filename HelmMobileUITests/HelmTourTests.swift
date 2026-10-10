@@ -523,4 +523,75 @@ final class HelmTourTests: XCTestCase {
         sleep(1)
         shot("s2-chooser")
     }
+
+    /// The composer's menus open on the first tap, keyboard up or down, and a long new-thread draft
+    /// keeps the composer above the keyboard. Counts first-tap opens. Opt in with HELM_MENU_TAPS=1.
+    func testComposerMenusFirstTap() throws {
+        guard ProcessInfo.processInfo.environment["HELM_MENU_TAPS"] != nil else { throw XCTSkip("HELM_MENU_TAPS not set") }
+        let rounds = Int(ProcessInfo.processInfo.environment["HELM_MENU_ROUNDS"] ?? "") ?? 10
+        let photos = app.buttons["Photos"]
+        let worktree = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS[c] 'Its own folder'")).firstMatch
+        /// Taps `control` once per round and counts the rounds its menu showed up.
+        func firstTapOpens(_ control: XCUIElement, item: XCUIElement, name: String) -> Int {
+            var opened = 0
+            for round in 0..<rounds {
+                control.tap()
+                if item.waitForExistence(timeout: 2) { opened += 1 } else { shot("m-\(name)-miss-\(round)") }
+                if round == 0 { shot("m-\(name)-open") }
+                // Outside the composer and the menu: closes the menu without other effects.
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.32)).tap()
+                _ = item.waitForNonExistence(timeout: 2)
+                usleep(400_000)
+            }
+            print("MENU-TAPS \(name): \(opened)/\(rounds)")
+            return opened
+        }
+
+        dismissSystemPrompt()
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 20), "not paired or no threads")
+        sleep(2)
+        app.buttons["threadRow"].firstMatch.tap()
+        let attach = app.buttons["attach"].firstMatch
+        XCTAssertTrue(attach.waitForExistence(timeout: 10))
+        sleep(2)
+        let threadRest = firstTapOpens(attach, item: photos, name: "thread-rest")
+        let composer = app.textViews["composer"]
+        composer.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        sleep(1)
+        let threadKeyboard = firstTapOpens(attach, item: photos, name: "thread-keyboard")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        sleep(1)
+
+        app.buttons["newThread"].tap()
+        let field = app.textViews["newThreadText"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
+        sleep(1)
+        let newAttach = firstTapOpens(app.buttons["attach"].firstMatch, item: photos, name: "new-attach")
+        let checkout = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Current checkout'")).firstMatch
+        let newCheckout = checkout.exists ? firstTapOpens(checkout, item: worktree, name: "new-checkout") : -1
+
+        field.typeText((1...14).map { "Line \($0) of a long draft" }.joined(separator: "\n"))
+        sleep(1)
+        shot("m-long-draft")
+        sleep(3)
+        shot("m-long-draft-settled")
+        let keyboardTop = app.keyboards.firstMatch.frame.minY
+        let rowBottom = app.buttons["attach"].firstMatch.frame.maxY
+        print("MENU-TAPS long draft: attach bottom \(rowBottom), keyboard top \(keyboardTop)")
+        XCTAssertLessThanOrEqual(rowBottom, keyboardTop, "the composer's bottom row is under the keyboard")
+        // Leave no draft behind.
+        field.press(forDuration: 1.2)
+        if app.menuItems["Select All"].waitForExistence(timeout: 2) {
+            app.menuItems["Select All"].tap()
+            field.typeText(XCUIKeyboardKey.delete.rawValue)
+        }
+
+        XCTAssertEqual(threadRest, rounds, "thread + at rest")
+        XCTAssertEqual(threadKeyboard, rounds, "thread + with the keyboard")
+        XCTAssertEqual(newAttach, rounds, "new thread +")
+        if newCheckout >= 0 { XCTAssertEqual(newCheckout, rounds, "new thread checkout") }
+    }
 }
