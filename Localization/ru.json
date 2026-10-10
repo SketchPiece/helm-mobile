@@ -828,5 +828,9 @@
   "Screenshots": "Скриншоты",
   "Open the remote": "Открыть пульт",
   "Drag to scroll the computer · double tap for the latest": "Веди пальцем, чтобы листать на компьютере · двойное касание — к последнему",
-  "ON THE COMPUTER": "НА КОМПЬЮТЕРЕ"
+  "ON THE COMPUTER": "НА КОМПЬЮТЕРЕ",
+  "A new thread, not sent yet. What you say and the pictures you add go into its composer on the computer, for you to send there.": "Новый тред, ещё не отправлен. Что ты скажешь и какие снимки добавишь, попадёт в поле ввода на компьютере, а отправишь уже там.",
+  "Add it now, or say something to go with it": "Добавь сразу или скажи что-нибудь к нему",
+  "Adding it on the computer…": "Добавляю на компьютер…",
+  "Add the picture on the computer": "Добавить снимок на компьютере"
 }

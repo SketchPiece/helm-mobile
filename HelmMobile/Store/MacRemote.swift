@@ -46,14 +46,25 @@ final class MacRemote {
             return
         }
         self.environment = environment
-        session = environment.threadSession(target.ref.threadId)
+        // A new thread has nothing to follow until it is sent.
+        session = target.draftProjectId == nil ? environment.threadSession(target.ref.threadId) : nil
         voice.warmUp()
     }
 
+    /// The thread on the computer; for a new one not sent yet, a stand-in with its project.
     var thread: ThreadSummary? {
         guard let target else { return nil }
+        if let projectId = target.draftProjectId {
+            return ThreadSummary(json: ["id": .string(target.ref.threadId), "projectId": .string(projectId)])
+        }
         return environment?.thread(target.ref.threadId)
     }
+
+    /// The computer shows a new thread not sent yet: words and pictures go into its composer.
+    var isDraft: Bool { target?.draftProjectId != nil }
+
+    /// Words and pictures are typed into the computer's composer rather than sent.
+    var typesIntoComposer: Bool { isDraft || voiceTarget == .composer }
 
     var isWorking: Bool { session?.projection?.isWorking ?? thread?.isWorking ?? false }
 
@@ -180,33 +191,34 @@ final class MacRemote {
 
     /// Stops the recording and sends what was said to the thread.
     func finishAndSend() async {
-        guard let environment, let session else {
+        guard let environment, let threadId = target?.ref.threadId else {
             voice.cancel()
             return
         }
-        guard let text = await voice.finish(environment: environment, threadId: session.threadId) else { return }
+        guard let text = await voice.finish(environment: environment, threadId: threadId) else { return }
         await send(text)
     }
 
     func retryTranscription() async {
-        guard let environment, let session,
-              let text = await voice.retry(environment: environment, threadId: session.threadId)
+        guard let environment, let threadId = target?.ref.threadId,
+              let text = await voice.retry(environment: environment, threadId: threadId)
         else { return }
         await send(text)
     }
 
-    /// Sends the picture on its own, right away.
+    /// Sends the picture on its own, right away (into the computer's composer when words go there).
     func sendScreenshot(_ image: UIImage) async {
         pendingScreenshot = image
         await send("")
     }
 
     private func send(_ text: String) async {
-        guard let session, let environment else { return }
-        if voiceTarget == .composer, !text.isEmpty, pendingScreenshot == nil {
-            await type(text, threadId: session.threadId, in: environment)
+        guard let environment, let threadId = target?.ref.threadId else { return }
+        if typesIntoComposer {
+            await type(text, threadId: threadId, in: environment)
             return
         }
+        guard let session else { return }
         isSending = true
         defer { isSending = false }
         var attachments: [ChatAttachment] = []
@@ -250,19 +262,40 @@ final class MacRemote {
         }
     }
 
-    /// Puts the words at the end of the thread's draft on the computer, to edit and send there.
+    /// Puts the picture, then the words, at the end of the thread's draft on the computer, to edit
+    /// and send there.
     private func type(_ text: String, threadId: String, in environment: EnvironmentSession) async {
-        do {
-            let delivered = try await environment.sendRemoteCommand([
-                "type": "composer.insert", "threadId": .string(threadId), "text": .string(text),
-            ])
-            if delivered {
-                sendError = nil
-                sentCount += 1
-            } else {
-                sendError = String(localized: "Helm on the computer didn't take it. Update Helm there, or send instead.")
+        var commands: [[String: JSON]] = []
+        if let screenshot = pendingScreenshot {
+            isSending = true
+            defer { isSending = false }
+            do {
+                let attachment = try await environment.uploadImage(screenshot, name: "screenshot.jpg")
+                commands.append([
+                    "type": "composer.attach", "threadId": .string(threadId),
+                    "attachmentId": .string(attachment.id), "name": .string(attachment.name),
+                ])
+            } catch {
+                sendError = error.localizedDescription
                 UINotificationFeedbackGenerator().notificationOccurred(.error)
+                return
             }
+        }
+        if !text.isEmpty {
+            commands.append(["type": "composer.insert", "threadId": .string(threadId), "text": .string(text)])
+        }
+        guard !commands.isEmpty else { return }
+        do {
+            for command in commands {
+                guard try await environment.sendRemoteCommand(command) else {
+                    sendError = String(localized: "Helm on the computer didn't take it. Update Helm there, or send instead.")
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                    return
+                }
+                if command["type"] == .string("composer.attach") { pendingScreenshot = nil }
+            }
+            sendError = nil
+            sentCount += 1
         } catch {
             sendError = error.localizedDescription
             UINotificationFeedbackGenerator().notificationOccurred(.error)

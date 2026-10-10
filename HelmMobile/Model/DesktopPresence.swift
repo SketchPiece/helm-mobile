@@ -5,24 +5,28 @@ import Foundation
 /// focused, and the Mac reports whether someone is at it.
 struct DesktopPresence: Equatable {
     var threadId: String
+    /// A new thread not sent yet: the server has no thread by `threadId` until it is. Its project.
+    var draftProjectId: String?
     var focused: Bool
     /// Someone used the Mac within the last minute or so, as far as the snapshot can tell.
     var macInUse: Bool
     /// Locked or asleep: nobody is at it, whatever the window says.
     var macAway: Bool
 
-    /// The window to follow: a visible desktop window with a thread open, the focused one first,
-    /// then the one that reported last. Nil when no window shows a thread.
+    /// The window to follow: a visible desktop window with a thread (or a new one) open, the
+    /// focused one first, then the one that reported last. Nil when no window shows a thread.
     static func from(snapshot: JSON, now: Date = Date()) -> DesktopPresence? {
-        struct Candidate { var threadId: String; var focused: Bool; var interacted: Bool; var updatedAt: Date }
+        struct Candidate { var threadId: String; var draftProjectId: String?; var focused: Bool; var interacted: Bool; var updatedAt: Date }
         let candidates: [Candidate] = (snapshot["leases"]?.array ?? []).compactMap { lease in
             guard lease["clientKind"]?.string == "desktop-renderer",
                   lease["visible"]?.bool == true,
                   ISODate.parse(lease["expiresAt"]?.string).map({ $0 > now }) ?? false,
-                  let threadId = (lease["scopes"]?.array ?? []).first(where: { $0["type"]?.string == "thread" })?["threadId"]?.string
+                  let scope = (lease["scopes"]?.array ?? []).first(where: { ["thread", "draft-thread"].contains($0["type"]?.string) }),
+                  let threadId = scope["threadId"]?.string
             else { return nil }
             return Candidate(
                 threadId: threadId,
+                draftProjectId: scope["type"]?.string == "draft-thread" ? scope["projectId"]?.string ?? "" : nil,
                 focused: lease["focused"]?.bool ?? false,
                 interacted: lease["recentlyInteracted"]?.bool ?? false,
                 updatedAt: ISODate.parse(lease["updatedAt"]?.string) ?? .distantPast
@@ -38,6 +42,6 @@ struct DesktopPresence: Equatable {
         let inUse = known && power?["idle"]?.string != "unknown"
             ? power?["idle"]?.string == "false"
             : pick.interacted
-        return DesktopPresence(threadId: pick.threadId, focused: pick.focused, macInUse: inUse && !away, macAway: away)
+        return DesktopPresence(threadId: pick.threadId, draftProjectId: pick.draftProjectId, focused: pick.focused, macInUse: inUse && !away, macAway: away)
     }
 }

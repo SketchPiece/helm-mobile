@@ -1144,6 +1144,16 @@
         }
       }
     },
+    "A new thread, not sent yet. What you say and the pictures you add go into its composer on the computer, for you to send there.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред, ещё не отправлен. Что ты скажешь и какие снимки добавишь, попадёт в поле ввода на компьютере, а отправишь уже там."
+          }
+        }
+      }
+    },
     "A path inside %@.": {
       "localizations": {
         "ru": {
@@ -1286,12 +1296,32 @@
         }
       }
     },
+    "Add it now, or say something to go with it": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавь сразу или скажи что-нибудь к нему"
+          }
+        }
+      }
+    },
     "Add project": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Добавить проект"
+          }
+        }
+      }
+    },
+    "Add the picture on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить снимок на компьютере"
           }
         }
       }
@@ -1312,6 +1342,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добавить в очередь…"
+          }
+        }
+      }
+    },
+    "Adding it on the computer…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавляю на компьютер…"
           }
         }
       }

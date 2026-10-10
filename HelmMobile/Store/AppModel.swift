@@ -14,6 +14,9 @@ struct ThreadRef: Hashable, Codable, Sendable {
 struct MacRemoteTarget: Equatable {
     var ref: ThreadRef
     var macLabel: String
+    /// The computer shows a new thread not sent yet, in this project: there is nothing to follow
+    /// or send to, only its composer to type and add pictures into.
+    var draftProjectId: String?
 }
 
 /// A thread row with what the list needs to draw it.
@@ -169,11 +172,13 @@ final class AppModel {
     func macRemoteTarget(now: Date = Date()) -> MacRemoteTarget? {
         for environment in environments where environment.isLive && NearbyMacs.shared.contains(environment.id) {
             guard let desktop = environment.desktop, !desktop.macAway,
-                  let inUseAt = environment.desktopInUseAt, now.timeIntervalSince(inUseAt) < Self.remoteLinger,
-                  environment.thread(desktop.threadId) != nil
+                  let inUseAt = environment.desktopInUseAt, now.timeIntervalSince(inUseAt) < Self.remoteLinger
             else { continue }
+            // Once the new thread is sent the server has it, whatever the window still reports.
+            let sent = environment.thread(desktop.threadId) != nil
+            guard sent || desktop.draftProjectId != nil else { continue }
             return MacRemoteTarget(ref: ThreadRef(environmentId: environment.id, threadId: desktop.threadId),
-                                   macLabel: environment.label)
+                                   macLabel: environment.label, draftProjectId: sent ? nil : desktop.draftProjectId)
         }
         return nil
     }

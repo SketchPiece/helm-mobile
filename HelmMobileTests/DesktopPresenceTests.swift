@@ -6,11 +6,15 @@ import XCTest
 final class DesktopPresenceTests: XCTestCase {
     private let now = ISODate.parse("2026-10-08T12:00:00.000Z")!
 
-    private func lease(_ threadId: String?, kind: String = "desktop-renderer", focused: Bool = true,
+    private func lease(_ threadId: String?, draftProjectId: String? = nil, kind: String = "desktop-renderer", focused: Bool = true,
                        visible: Bool = true, interacted: Bool = false, updatedAt: String = "2026-10-08T11:59:50.000Z",
                        expiresAt: String = "2026-10-08T12:00:30.000Z") -> JSON {
         var scopes: [JSON] = [["type": "provider-status"]]
-        if let threadId { scopes.append(["type": "thread", "threadId": .string(threadId)]) }
+        if let threadId, let draftProjectId {
+            scopes.append(["type": "draft-thread", "threadId": .string(threadId), "projectId": .string(draftProjectId)])
+        } else if let threadId {
+            scopes.append(["type": "thread", "threadId": .string(threadId)])
+        }
         return [
             "clientKind": .string(kind), "visible": .bool(visible), "focused": .bool(focused),
             "recentlyInteracted": .bool(interacted), "scopes": .array(scopes),
@@ -40,6 +44,13 @@ final class DesktopPresenceTests: XCTestCase {
         XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t", kind: "mobile")]), now: now))
         XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t", visible: false)]), now: now))
         XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t", expiresAt: "2026-10-08T11:59:00.000Z")]), now: now))
+    }
+
+    func testNewThreadNotSentYetCarriesItsProject() {
+        let presence = DesktopPresence.from(snapshot: snapshot([lease("thread-new", draftProjectId: "project-1")]), now: now)
+        XCTAssertEqual(presence?.threadId, "thread-new")
+        XCTAssertEqual(presence?.draftProjectId, "project-1")
+        XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t")]), now: now)?.draftProjectId)
     }
 
     func testLockedMacIsAway() {

@@ -357,8 +357,11 @@ struct MacRemoteSheet: View {
                     padFooter
                 }
             }
-            Rectangle().fill(Palette.border).frame(height: 1)
-            threadActions
+            // A new thread can't be settled or snoozed until it is sent.
+            if !remote.isDraft {
+                Rectangle().fill(Palette.border).frame(height: 1)
+                threadActions
+            }
         }
         .background(Palette.surface)
         .clipShape(.rect(cornerRadius: 20))
@@ -392,15 +395,17 @@ struct MacRemoteSheet: View {
                     .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
                 Spacer()
-                Button {
-                    dismiss()
-                    onOpenThread(target.ref)
-                } label: {
-                    Image(systemName: "arrow.up.forward.square")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Palette.text)
+                if !remote.isDraft {
+                    Button {
+                        dismiss()
+                        onOpenThread(target.ref)
+                    } label: {
+                        Image(systemName: "arrow.up.forward.square")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Palette.text)
+                    }
+                    .accessibilityLabel("Open the thread on this phone")
                 }
-                .accessibilityLabel("Open the thread on this phone")
             }
             threadMenu(current: thread)
             HStack(spacing: 8) {
@@ -620,7 +625,7 @@ struct MacRemoteSheet: View {
                 .tag(MacRemote.VoiceTarget.composer)
             }
         } label: {
-            Image(systemName: remote.voiceTarget == .send ? "arrow.up" : "keyboard")
+            Image(systemName: remote.typesIntoComposer ? "keyboard" : "arrow.up")
                 .font(.system(size: 20, weight: .medium))
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: 58, height: 58)
@@ -628,8 +633,10 @@ struct MacRemoteSheet: View {
                 .background(Palette.surface, in: .circle)
                 .overlay(Circle().stroke(Palette.border))
         }
+        // A new thread has nothing to send to yet: the voice types into it.
+        .disabled(remote.isDraft)
         .accessibilityLabel("Where your voice goes")
-        .accessibilityValue(remote.voiceTarget == .send ? "Voice sends" : "Voice types")
+        .accessibilityValue(remote.typesIntoComposer ? "Voice types" : "Voice sends")
     }
 
     /// The end of the chat as the computer shows it: earlier turns' words, your last message, the
@@ -637,7 +644,19 @@ struct MacRemoteSheet: View {
     @ViewBuilder
     private func chatTail(thread: ThreadSummary) -> some View {
         let tail = Self.tail(of: remote.session?.projection?.rows.map(\.item) ?? [])
-        if tail.items.isEmpty {
+        if remote.isDraft {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("A new thread, not sent yet. What you say and the pictures you add go into its composer on the computer, for you to send there.")
+                    .font(Typography.subheadline)
+                    .foregroundStyle(Palette.textMuted)
+                if let error = remote.sendError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(Typography.footnote)
+                        .foregroundStyle(Palette.errorText)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else if tail.items.isEmpty {
             latest(thread: thread)
         } else {
             VStack(alignment: .leading, spacing: 12) {
@@ -744,7 +763,7 @@ struct MacRemoteSheet: View {
     }
 
     private var hint: LocalizedStringKey {
-        let typing = remote.voiceTarget == .composer
+        let typing = remote.typesIntoComposer
         if remote.voice.state == .recording(handsFree: true) {
             return typing ? "Tap to type it on the computer" : "Tap to send"
         }
@@ -761,7 +780,7 @@ struct MacRemoteSheet: View {
                         .scaledToFill()
                         .frame(width: 28, height: 44)
                         .clipShape(.rect(cornerRadius: 5))
-                    Text("Send it now, or say something to go with it")
+                    Text(remote.typesIntoComposer ? "Add it now, or say something to go with it" : "Send it now, or say something to go with it")
                         .font(Typography.footnote)
                         .foregroundStyle(Palette.text)
                     Spacer(minLength: 0)
@@ -775,21 +794,21 @@ struct MacRemoteSheet: View {
                     Button {
                         Task { await remote.sendScreenshot(screenshot) }
                     } label: {
-                        Image(systemName: "arrow.up")
+                        Image(systemName: remote.typesIntoComposer ? "plus" : "arrow.up")
                             .font(.system(size: 14, weight: .bold))
                             .frame(width: 30, height: 30)
                             .foregroundStyle(Palette.accentForeground)
                             .background(Palette.accent, in: .circle)
                     }
                     .disabled(remote.isSending)
-                    .accessibilityLabel("Send the picture")
+                    .accessibilityLabel(remote.typesIntoComposer ? "Add the picture on the computer" : "Send the picture")
                 }
                 .padding(8)
                 .background(Palette.surface, in: .rect(cornerRadius: 14))
                 .padding(.horizontal, 24)
             }
             if remote.isSending, remote.voice.state == .idle {
-                Text("Sending to the computer…").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
+                Text(remote.typesIntoComposer ? "Adding it on the computer…" : "Sending to the computer…").font(Typography.subheadline).foregroundStyle(Palette.textMuted)
                     .frame(height: 32)
             } else {
                 RemoteVoiceStatus(remote: remote)
