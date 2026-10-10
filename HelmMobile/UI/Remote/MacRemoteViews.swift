@@ -310,8 +310,8 @@ struct MacRemoteSheet: View {
         .padding(.top, 16)
     }
 
-    /// One card: the agent's latest words, bottom-up and fading out at the top, over a trackpad for
-    /// the chat on the computer, with Settle and Snooze along its foot.
+    /// One card: the end of the chat, bottom-up and fading out at the top, sunk into a dotted pad
+    /// that drives the chat on the computer, with Settle and Snooze along its foot.
     private func pad(thread: ThreadSummary) -> some View {
         VStack(spacing: 0) {
             RemoteTrackpad(remote: remote) { step in
@@ -320,19 +320,40 @@ struct MacRemoteSheet: View {
             } content: {
                 VStack(spacing: 0) {
                     // The words never size the card: they hang from its bottom in whatever room
-                    // the header and the controls leave, and the top of a long message is cut off.
+                    // the header and the controls leave, and older words are cut off at the top.
                     Color.clear
                         .overlay(alignment: .bottomLeading) {
-                            latest(thread: thread).fixedSize(horizontal: false, vertical: true)
+                            chatTail(thread: thread)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(14)
                         }
                         .clipped()
                         .mask {
                             VStack(spacing: 0) {
-                                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 48)
+                                Color.clear.frame(height: 30)
+                                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 72)
                                 Color.black
                             }
                         }
-                        .padding(.horizontal, 16)
+                        .background { PadGrain() }
+                        .overlay(alignment: .topLeading) {
+                            HStack(spacing: 6) {
+                                Circle().fill(Palette.done).frame(width: 6, height: 6)
+                                Text("ON THE COMPUTER", comment: "Over the chat on the remote: what it shows is the chat on the computer")
+                            }
+                            .font(Typography.mono(10.5))
+                            .foregroundStyle(Palette.textMuted)
+                            .padding(12)
+                            .accessibilityHidden(true)
+                        }
+                        // Sunk below the card, the way a trackpad sits in the case.
+                        .background {
+                            RoundedRectangle(cornerRadius: 13)
+                                .fill(Palette.canvas.shadow(.inner(color: .black.opacity(0.16), radius: 2, y: 1)))
+                        }
+                        .clipShape(.rect(cornerRadius: 13))
+                        .overlay { RoundedRectangle(cornerRadius: 13).strokeBorder(Palette.text.opacity(0.07)) }
+                        .padding([.horizontal, .top], 10)
                     padFooter
                 }
             }
@@ -611,7 +632,82 @@ struct MacRemoteSheet: View {
         .accessibilityValue(remote.voiceTarget == .send ? "Voice sends" : "Voice types")
     }
 
-    /// The agent's latest words and what it is running: enough to know where it is.
+    /// The end of the chat as the computer shows it: earlier turns' words, your last message, the
+    /// steps of the turn since, and the agent's reply. Older turns fill the room a short reply leaves.
+    @ViewBuilder
+    private func chatTail(thread: ThreadSummary) -> some View {
+        let tail = Self.tail(of: remote.session?.projection?.rows.map(\.item) ?? [])
+        if tail.items.isEmpty {
+            latest(thread: thread)
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(tail.items) { item in
+                    tailRow(item, earlier: item.ordinal < tail.lastAsk)
+                }
+                if let error = remote.sendError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(Typography.footnote)
+                        .foregroundStyle(Palette.errorText)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// Messages from the whole chat, steps only from the turn since your last message, and of
+    /// those the last few: more could never show above the reply anyway.
+    private static func tail(of items: [TurnItem]) -> (items: [TurnItem], lastAsk: Int) {
+        let lastAsk = items.last { $0.type == "user_message" }?.ordinal ?? .min
+        var steps = 0
+        var kept: [TurnItem] = []
+        for item in items.reversed() where item.parentItemId == nil {
+            switch item.type {
+            case "user_message", "assistant_message":
+                if !item.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { kept.append(item) }
+            case "reasoning", "thread_created", _ where Timeline.noticeTypes.contains(item.type):
+                continue
+            default:
+                guard item.ordinal > lastAsk, steps < 3, !(item.title ?? "").isEmpty else { continue }
+                steps += 1
+                kept.append(item)
+            }
+            if kept.count == 16 { break }
+        }
+        return (kept.reversed(), lastAsk)
+    }
+
+    @ViewBuilder
+    private func tailRow(_ item: TurnItem, earlier: Bool) -> some View {
+        let words = (try? AttributedString(markdown: item.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(item.text)
+        switch item.type {
+        case "user_message":
+            Text(words)
+                .font(Typography.subheadline)
+                .foregroundStyle(Palette.text)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .background(Palette.message, in: .rect(cornerRadii: .init(topLeading: 16, bottomLeading: 16, bottomTrailing: 4, topTrailing: 16)))
+                .padding(.leading, 48)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        case "assistant_message":
+            Text(words)
+                .font(Typography.subheadline)
+                .foregroundStyle(earlier ? Palette.textMuted : Palette.text)
+        default:
+            HStack(spacing: 8) {
+                if item.isRunning {
+                    Circle().fill(Palette.working).frame(width: 7, height: 7)
+                } else {
+                    Image(systemName: item.status == "failed" ? "xmark" : "checkmark").font(.system(size: 10, weight: .semibold))
+                }
+                Text(item.title ?? "").lineLimit(1)
+            }
+            .font(Typography.mono(12.5))
+            .foregroundStyle(item.isRunning ? Palette.working : Palette.textMuted)
+        }
+    }
+
+    /// The agent's latest words and what it is running, for a thread whose chat isn't loaded yet.
     @ViewBuilder
     private func latest(thread: ThreadSummary) -> some View {
         let running = remote.session?.projection?.items.values
@@ -756,6 +852,26 @@ struct OpenOnComputerButton: View {
                 Label("Open on \(environment.label)", systemImage: "desktopcomputer")
             }
         }
+    }
+}
+
+/// The matte dots of the remote's pad: dense on top where older turns fade out, thin under the
+/// newest words so the reply reads clean.
+private struct PadGrain: View {
+    var body: some View {
+        Canvas { context, size in
+            let dot = context.resolve(GraphicsContext.Shading.color(Palette.text.opacity(0.16)))
+            for y in stride(from: 3.0, to: size.height, by: 7) {
+                for x in stride(from: 3.0, to: size.width, by: 7) {
+                    context.fill(Path(ellipseIn: CGRect(x: x - 0.8, y: y - 0.8, width: 1.6, height: 1.6)), with: dot)
+                }
+            }
+        }
+        .mask {
+            LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black.opacity(0.35), location: 0.55),
+                                   .init(color: .black.opacity(0.25), location: 1)], startPoint: .top, endPoint: .bottom)
+        }
+        .accessibilityHidden(true)
     }
 }
 

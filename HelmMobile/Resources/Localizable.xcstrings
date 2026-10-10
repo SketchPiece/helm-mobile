@@ -4595,6 +4595,16 @@
         }
       }
     },
+    "ON THE COMPUTER": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "НА КОМПЬЮТЕРЕ"
+          }
+        }
+      }
+    },
     "Off in iOS Settings": {
       "localizations": {
         "ru": {
