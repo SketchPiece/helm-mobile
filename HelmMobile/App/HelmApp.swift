@@ -8,6 +8,7 @@ struct HelmApp: App {
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
+    @AppStorage(PhonePreferences.diffWordWrapKey) private var diffWordWrap = true
 
     init() {
         // Navigation titles in IBM Plex, like the rest of the app.
@@ -26,7 +27,7 @@ struct HelmApp: App {
                 .environment(model)
                 .onAppear { PushService.shared.start() }
                 .preferredColorScheme(appearance.colorScheme)
-                .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap))
+                .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap, diffWordWrap: diffWordWrap))
                 // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
                 .tint(Palette.text)
         }

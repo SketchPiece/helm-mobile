@@ -2140,12 +2140,12 @@
         }
       }
     },
-    "Code blocks and diffs follow the phone's text size unless you set one here. Diffs always scroll sideways.": {
+    "Code blocks and diffs follow the phone's text size unless you set one here. Lines that don't wrap scroll sideways.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Диффы всегда листаются вбок."
+            "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Строки без переноса листаются вбок."
           }
         }
       }
@@ -6011,12 +6011,32 @@
         }
       }
     },
+    "Show formatted": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать оформленным"
+          }
+        }
+      }
+    },
     "Show older models": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Показать старые модели"
+          }
+        }
+      }
+    },
+    "Show source": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать исходник"
           }
         }
       }
@@ -7382,12 +7402,22 @@
         }
       }
     },
-    "Wrap long lines": {
+    "Wrap lines in code blocks": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Переносить длинные строки"
+            "value": "Переносить строки в блоках кода"
+          }
+        }
+      }
+    },
+    "Wrap lines in diffs and files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переносить строки в диффах и файлах"
           }
         }
       }

@@ -34,10 +34,11 @@ struct KeyboardSettingsView: View {
 }
 
 /// Settings → Code and diffs: a fixed code size instead of Dynamic Type's, and wrapping long
-/// lines in code blocks instead of scrolling them sideways.
+/// lines in code blocks and diffs instead of scrolling them sideways.
 struct CodeSettingsView: View {
     @AppStorage(PhonePreferences.codeFontSizeKey) private var fontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var wordWrap = false
+    @AppStorage(PhonePreferences.diffWordWrapKey) private var diffWordWrap = true
 
     private var appearance: CodeAppearance { CodeAppearance(fontSize: fontSize, wordWrap: wordWrap) }
 
@@ -64,10 +65,12 @@ struct CodeSettingsView: View {
                         }
                     }
                 }
-                Toggle("Wrap long lines", isOn: $wordWrap)
+                Toggle("Wrap lines in code blocks", isOn: $wordWrap)
                     .accessibilityIdentifier("codeWordWrap")
+                Toggle("Wrap lines in diffs and files", isOn: $diffWordWrap)
+                    .accessibilityIdentifier("diffWordWrap")
             } footer: {
-                Text("Code blocks and diffs follow the phone's text size unless you set one here. Diffs always scroll sideways.")
+                Text("Code blocks and diffs follow the phone's text size unless you set one here. Lines that don't wrap scroll sideways.")
                     .font(Typography.footnote)
             }
             .tint(Palette.accent)

@@ -116,8 +116,10 @@ private extension DiffFile.Status {
 
 // MARK: - File diff
 
-/// One file's hunks. The whole file pans horizontally as one block so long lines stay aligned,
-/// and rows are lazy so a 20k-line file only builds what is on screen.
+/// One file's hunks. Long lines wrap unless Settings → Code and diffs turns that off; then the
+/// whole file pans horizontally as one block so lines stay aligned. Rows are lazy so a 20k-line
+/// file only builds what is on screen. A new file reads as a document: no hunk header, markers
+/// or tint, and Markdown is shown formatted with a toolbar switch to its source.
 struct DiffFileView: View {
     let file: DiffFile
 
@@ -126,10 +128,22 @@ struct DiffFileView: View {
     @ScaledMetric(relativeTo: .footnote) private var scaledColumnWidth: CGFloat = 7.2
     @ScaledMetric(relativeTo: .footnote) private var scaledRowHeight: CGFloat = 18
     @Environment(\.codeAppearance) private var appearance
+    @State private var showsSource = false
 
     private var columnWidth: CGFloat { appearance.fontSize.map { $0 * 0.6 } ?? scaledColumnWidth }
     private var rowHeight: CGFloat { appearance.fontSize.map { $0 * 1.5 } ?? scaledRowHeight }
     private var font: Font { appearance.font(automatic: 12) }
+    private var wraps: Bool { appearance.diffWordWrap }
+
+    /// Every line is new, so there is nothing to compare against.
+    private var isDocument: Bool { file.status == .added }
+
+    private var isMarkdown: Bool {
+        let ext = (file.fileName as NSString).pathExtension.lowercased()
+        return ["md", "markdown", "mdown", "mkd"].contains(ext)
+    }
+
+    private var showsFormatted: Bool { isDocument && isMarkdown && !showsSource }
 
     var body: some View {
         Group {
@@ -137,6 +151,8 @@ struct DiffFileView: View {
                 ContentUnavailableView("Binary file not shown", systemImage: "doc")
             } else if file.hunks.isEmpty {
                 ContentUnavailableView(emptyTitle, systemImage: "doc.text")
+            } else if showsFormatted {
+                formatted
             } else {
                 lines
             }
@@ -145,26 +161,56 @@ struct DiffFileView: View {
         .navigationTitle(file.fileName)
         .navigationSubtitle(navigationSubtitle)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isDocument && isMarkdown && !file.hunks.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showsSource.toggle()
+                    } label: {
+                        Image(systemName: showsSource ? "doc.richtext" : "chevron.left.forwardslash.chevron.right")
+                    }
+                    .accessibilityLabel(showsSource ? "Show formatted" : "Show source")
+                    .accessibilityIdentifier("diffSourceToggle")
+                }
+            }
+        }
+    }
+
+    private var formatted: some View {
+        ScrollView {
+            MarkdownView(text: documentText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+        }
+    }
+
+    private var documentText: String {
+        file.hunks.flatMap(\.lines).filter { $0.kind != .noNewline }.map(\.text).joined(separator: "\n")
     }
 
     private var lines: some View {
         GeometryReader { proxy in
-            ScrollView([.vertical, .horizontal]) {
+            ScrollView(wraps ? .vertical : [.vertical, .horizontal]) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(file.hunks.indices, id: \.self) { hunkIndex in
                         let hunk = file.hunks[hunkIndex]
-                        DiffHunkHeader(header: hunk.header, height: rowHeight, font: font)
+                        if !isDocument {
+                            DiffHunkHeader(header: hunk.header, height: rowHeight, font: font, wraps: wraps)
+                        }
                         ForEach(hunk.lines.indices, id: \.self) { lineIndex in
                             DiffLineRow(
                                 line: hunk.lines[lineIndex],
                                 gutterWidth: gutterWidth,
                                 height: rowHeight,
-                                font: font
+                                font: font,
+                                wraps: wraps,
+                                plain: isDocument
                             )
                         }
                     }
                 }
-                .frame(width: max(proxy.size.width, contentWidth), alignment: .leading)
+                .padding(.top, isDocument ? 8 : 0)
+                .frame(width: wraps ? proxy.size.width : max(proxy.size.width, contentWidth), alignment: .leading)
                 .frame(minHeight: proxy.size.height, alignment: .top)
             }
             .defaultScrollAnchor(.topLeading)
@@ -202,13 +248,14 @@ private struct DiffHunkHeader: View {
     let header: String
     let height: CGFloat
     let font: Font
+    let wraps: Bool
 
     var body: some View {
         Text(verbatim: header)
             .font(font)
             .foregroundStyle(Palette.textMuted)
             .lineLimit(1)
-            .fixedSize()
+            .fixedSize(horizontal: !wraps, vertical: false)
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: height + 10, alignment: .leading)
             .background(Palette.surface)
@@ -220,24 +267,30 @@ private struct DiffLineRow: View {
     let gutterWidth: CGFloat
     let height: CGFloat
     let font: Font
+    let wraps: Bool
+    /// A new file's line: one gutter, no marker or tint.
+    let plain: Bool
 
     var body: some View {
-        HStack(spacing: 0) {
-            lineNumber(line.oldNumber)
+        HStack(alignment: .top, spacing: 0) {
+            if !plain {
+                lineNumber(line.oldNumber)
+            }
             lineNumber(line.newNumber)
-            Text(verbatim: marker)
+            Text(verbatim: plain ? "" : marker)
                 .foregroundStyle(markerColor)
-                .frame(width: 16)
+                .frame(width: plain ? 8 : 16)
             Text(verbatim: displayText)
                 .foregroundStyle(line.kind == .noNewline ? Palette.textMuted : Palette.text)
                 .italic(line.kind == .noNewline)
-                .lineLimit(1)
-                .fixedSize()
+                .lineLimit(wraps ? nil : 1)
+                .fixedSize(horizontal: !wraps, vertical: true)
+                .frame(maxWidth: wraps ? .infinity : nil, alignment: .leading)
                 .padding(.trailing, 12)
         }
         .font(font)
         .frame(maxWidth: .infinity, minHeight: height, alignment: .leading)
-        .background(background)
+        .background(plain ? .clear : background)
     }
 
     private func lineNumber(_ number: Int?) -> some View {

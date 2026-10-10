@@ -9,6 +9,8 @@ enum PhonePreferences {
     /// 0 means automatic: code follows Dynamic Type.
     static let codeFontSizeKey = "codeFontSize"
     static let codeWordWrapKey = "codeWordWrap"
+    /// On unless turned off: files are read on a phone, where sideways scrolling loses the line.
+    static let diffWordWrapKey = "diffWordWrap"
 
     static let codeFontSizes = 8...18
     /// Code's size at the default Dynamic Type setting.
@@ -88,10 +90,13 @@ struct CodeAppearance: Equatable {
     /// nil follows Dynamic Type.
     var fontSize: CGFloat?
     var wordWrap: Bool
+    /// Diffs and new files wrap long lines instead of panning sideways.
+    var diffWordWrap: Bool
 
-    init(fontSize: Int, wordWrap: Bool) {
+    init(fontSize: Int, wordWrap: Bool, diffWordWrap: Bool = true) {
         self.fontSize = PhonePreferences.codeFontSizes.contains(fontSize) ? CGFloat(fontSize) : nil
         self.wordWrap = wordWrap
+        self.diffWordWrap = diffWordWrap
     }
 
     /// IBM Plex Mono at the chosen size, else `automatic` scaled with Dynamic Type.

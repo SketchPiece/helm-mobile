@@ -519,8 +519,6 @@
   "Custom font size": "Свой размер шрифта",
   "Font size": "Размер шрифта",
   "%lld pt": "%lld пт",
-  "Wrap long lines": "Переносить длинные строки",
-  "Code blocks and diffs follow the phone's text size unless you set one here. Diffs always scroll sideways.": "Код и диффы следуют размеру текста телефона, если не задать свой. Диффы всегда листаются вбок.",
   "Code and diffs": "Код и диффы",
   "Automatic": "Авто",
   "Return sends": "Return отправляет",
@@ -832,5 +830,10 @@
   "A new thread, not sent yet. What you say and the pictures you add go into its composer on the computer, for you to send there.": "Новый тред, ещё не отправлен. Что ты скажешь и какие снимки добавишь, попадёт в поле ввода на компьютере, а отправишь уже там.",
   "Add it now, or say something to go with it": "Добавь сразу или скажи что-нибудь к нему",
   "Adding it on the computer…": "Добавляю на компьютер…",
-  "Add the picture on the computer": "Добавить снимок на компьютере"
+  "Add the picture on the computer": "Добавить снимок на компьютере",
+  "Wrap lines in code blocks": "Переносить строки в блоках кода",
+  "Wrap lines in diffs and files": "Переносить строки в диффах и файлах",
+  "Code blocks and diffs follow the phone's text size unless you set one here. Lines that don't wrap scroll sideways.": "Код и диффы следуют размеру текста телефона, если не задать свой. Строки без переноса листаются вбок.",
+  "Show formatted": "Показать оформленным",
+  "Show source": "Показать исходник"
 }
