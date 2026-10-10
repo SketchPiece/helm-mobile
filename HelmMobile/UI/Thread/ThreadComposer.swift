@@ -105,8 +105,7 @@ struct ThreadComposer: View {
         .padding(.leading, 6)
         .padding(.trailing, 6)
         .padding(.vertical, 6)
-        .contentShape(.rect)
-        .onTapGesture { if voice.state == .idle { focused = true } }
+        .onBackgroundTap { if voice.state == .idle { focused = true } }
         .composerGlass(cornerRadius: expanded ? 26 : 25)
         .composerImageDrop(cornerRadius: expanded ? 26 : 25) { images in
             images.forEach { draft.attach(image: $0, environment: environment) }
