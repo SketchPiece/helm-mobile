@@ -30,6 +30,9 @@ struct NewThreadView: View {
     @State private var preparingScratch = false
     /// Shared files waiting for the Mac to be connected before they upload.
     @State private var sharedFiles: [SharedFile] = []
+    /// The room above the composer and the question's height: the question shows only when it fits.
+    @State private var headerRoom: CGFloat = .infinity
+    @State private var headerHeight: CGFloat = 0
     @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
 
@@ -50,14 +53,17 @@ struct NewThreadView: View {
         VStack(spacing: 0) {
             // A long draft with the keyboard up leaves no room for the question: it gives way so
             // the composer stays whole above the keyboard instead of running under it.
-            ViewThatFits(in: .vertical) {
-                VStack(spacing: 0) {
-                    Spacer(minLength: 24)
+            Color.clear
+                .frame(minHeight: 8, maxHeight: .infinity)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { headerRoom = $0 }
+                .overlay {
                     header
-                    Spacer(minLength: 24)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { headerHeight = $0 }
+                        .opacity(headerFits ? 1 : 0)
+                        .allowsHitTesting(headerFits)
                 }
-                Spacer(minLength: 8)
-            }
+                .animation(.easeOut(duration: 0.15), value: headerFits)
             if let error {
                 Text(error)
                     .font(Typography.footnote)
@@ -180,6 +186,8 @@ struct NewThreadView: View {
         }
         .padding(.horizontal, 24)
     }
+
+    private var headerFits: Bool { headerRoom >= headerHeight + 48 }
 
     private var projectQuestion: String {
         if isScratch { return String(localized: "without a project?") }
