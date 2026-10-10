@@ -1,3 +1,4 @@
+import CryptoKit
 import SwiftUI
 import WebKit
 
@@ -117,9 +118,10 @@ actor IconCache {
         return url
     }()
 
+    /// The whole key is hashed: a truncated key dropped the favicon path for deep workspaces,
+    /// so a project's new icon kept loading the old file from disk.
     private func file(_ key: String) -> URL {
-        let name = key.data(using: .utf8)!.base64EncodedString()
-            .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "+", with: "-").prefix(120)
+        let name = SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
         return directory.appending(path: "\(name).png")
     }
 
