@@ -14,6 +14,8 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     # The app and its test bundle both see `import Libtailscale` (module map next to the header).
     SWIFT_INCLUDE_PATHS: $(SRCROOT)/Vendor/libtailscale
+    # libtailscale's simulator slice is arm64 only, so an "any simulator" build can't link x86_64.
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 targets:
   HelmMobile:
     type: application
