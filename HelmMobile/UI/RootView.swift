@@ -26,8 +26,8 @@ final class Router {
     let newThreadComposer = ComposerDraft()
     /// A thread just started from New Thread, to move on from once the agent is at work.
     var afterStart: AfterStart?
-    /// What New Thread was left holding, listed on top of Home.
-    private(set) var newThreadDraft = NewThreadDraft.load()
+    /// The new-thread draft New Thread shows (`Drafts` key): the last one written or opened.
+    var newThreadDraftKey = Drafts.unassignedNewThreadKey
 
     /// New Thread, right on top of Home; what was left in it is still there.
     func startNewThread() {
@@ -51,16 +51,28 @@ final class Router {
         startNewThread()
     }
 
-    /// Re-reads the new-thread draft after New Thread closes. Attachments alone count as a draft too.
-    func refreshNewThreadDraft() {
-        newThreadDraft = NewThreadDraft.load(hasAttachments: !newThreadComposer.attachments.isEmpty)
+    /// New Thread on a draft from Home's list (one written here or in Helm on the Mac).
+    func resume(_ draft: NewThreadDraft) {
+        if draft.key != newThreadDraftKey {
+            newThreadDraftKey = draft.key
+            newThreadComposer.reset()
+        }
+        if let environmentId = draft.environmentId, let projectId = draft.projectId {
+            newThreadTarget = NewThreadTarget(environmentId: environmentId, projectId: projectId)
+        }
+        startNewThread()
     }
 
-    /// Throws the new-thread draft away: text, project and attachments.
-    func discardNewThreadDraft() {
-        NewThreadDraft.clear()
-        newThreadComposer.reset()
-        newThreadDraft = nil
+    /// Lets Home's list catch up after New Thread closes.
+    func refreshNewThreadDraft() {
+        Drafts.shared.refreshNewThreadList()
+    }
+
+    /// Throws a new-thread draft away (New Thread's own by default): text and attachments, on the Mac too.
+    func discardNewThreadDraft(_ key: String? = nil) {
+        let key = key ?? newThreadDraftKey
+        Drafts.shared.clear(key)
+        if key == newThreadDraftKey { newThreadComposer.reset() }
     }
 
     /// The started thread showed the agent at work: on to New Thread in the same project, or Home.

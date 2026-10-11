@@ -27,7 +27,7 @@ struct ThreadComposer: View {
         self.environment = environment
         self.session = session
         self.didSend = didSend
-        _text = State(initialValue: Drafts.text(for: session.threadId))
+        _text = State(initialValue: Drafts.shared.text(for: session.threadId))
     }
 
     private var thread: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
@@ -50,7 +50,16 @@ struct ThreadComposer: View {
         .sheet(isPresented: $showSettings) {
             ThreadSettingsSheet(environment: environment, session: session)
         }
-        .onAppear { voice.warmUp() }
+        .onAppear {
+            voice.warmUp()
+            draft.restore(Drafts.shared.files(for: session.threadId))
+        }
+        // Written or sent in Helm on the Mac meanwhile.
+        .onChange(of: Drafts.shared.remoteRevision(session.threadId)) {
+            text = Drafts.shared.text(for: session.threadId)
+            draft.restore(Drafts.shared.files(for: session.threadId))
+        }
+        .onChange(of: draft.draftFiles) { saveDraft() }
         .onDisappear { if voice.isRecording { voice.cancel() } }
     }
 
@@ -160,7 +169,7 @@ struct ThreadComposer: View {
                     text = folded
                     return
                 }
-                Drafts.save(value, for: session.threadId)
+                saveDraft()
                 suggestions.update(text: value, scope: suggestionScope)
             }
     }
@@ -328,13 +337,17 @@ struct ThreadComposer: View {
         }
     }
 
+    private func saveDraft() {
+        Drafts.shared.save(text: text, files: draft.draftFiles, for: session.threadId, environmentId: environment.id)
+    }
+
     private func send(followUp: ThreadSession.FollowUp) {
         guard canSend else { return }
         let message = draft.message(text: trimmed, inlineContext: environment.config?.inlineMessageContext ?? false)
         text = ""
         draft.reset()
         suggestions.clear()
-        Drafts.save("", for: session.threadId)
+        Drafts.shared.clear(session.threadId)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         didSend()
         Task {

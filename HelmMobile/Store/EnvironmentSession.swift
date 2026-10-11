@@ -40,6 +40,8 @@ final class EnvironmentSession: Identifiable {
     @ObservationIgnored private var projectionCache: [String: CachedProjection] = [:]
     @ObservationIgnored private var shellDirty = false
     @ObservationIgnored private var shellSave: Task<Void, Never>?
+    /// Unsent drafts shared with Helm on this Mac.
+    @ObservationIgnored private(set) lazy var draftSync = DraftSync(environment: self)
 
     struct CachedProjection {
         var projection: ThreadProjection
@@ -220,6 +222,7 @@ final class EnvironmentSession: Identifiable {
 
     private func teardown() {
         desktop = nil
+        draftSync.connectionEnded()
         streams.forEach { $0.cancel() }
         streams.removeAll()
         if let connection {
@@ -298,6 +301,7 @@ final class EnvironmentSession: Identifiable {
         })
 
         followDesktop(on: connection)
+        followDrafts(on: connection)
 
         for (key, weakThread) in threads {
             if let thread = weakThread.value {
@@ -392,6 +396,18 @@ final class EnvironmentSession: Identifiable {
                 }
             } catch {}
             self?.desktop = nil
+        })
+    }
+
+    /// Drafts written in Helm on the Mac, and when to send the phone's. Like `followDesktop`, its
+    /// end (an older server without the method) never takes the socket down.
+    private func followDrafts(on connection: RPCConnection) {
+        let events = connection.stream("helm.drafts.subscribe", [:])
+        streams.append(Task { [weak self] in
+            do {
+                for try await event in events { self?.draftSync.apply(event) }
+            } catch {}
+            if let self, self.connection === connection { self.draftSync.connectionEnded() }
         })
     }
 
