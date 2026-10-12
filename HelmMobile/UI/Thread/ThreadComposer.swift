@@ -106,7 +106,8 @@ struct ThreadComposer: View {
         .padding(.trailing, 6)
         .padding(.vertical, 6)
         .onBackgroundTap { if voice.state == .idle { focused = true } }
-        .composerGlass(cornerRadius: expanded ? 26 : 25)
+        // Live glass at rest, to play with; opened, the menus in it get the taps instead.
+        .composerGlass(cornerRadius: expanded ? 26 : 25, interactive: !expanded)
         .composerImageDrop(cornerRadius: expanded ? 26 : 25) { images in
             images.forEach { draft.attach(image: $0, environment: environment) }
         }

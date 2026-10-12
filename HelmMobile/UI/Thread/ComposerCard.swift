@@ -6,10 +6,10 @@ import UniformTypeIdentifiers
 
 extension View {
     /// Liquid glass for the composer, tinted so the timeline behind it blurs out instead of
-    /// reading through. Not interactive: interactive glass tracks every touch on the card and
-    /// swallowed taps meant for the "+" and checkout menus inside it.
-    func composerGlass(cornerRadius: CGFloat = 26) -> some View {
-        glassEffect(.regular.tint(Palette.surfaceRaised.opacity(0.6)),
+    /// reading through. Interactive only where asked (the thread's pill at rest): interactive glass
+    /// tracks every touch on the card and swallowed taps meant for the menus in the opened card.
+    func composerGlass(cornerRadius: CGFloat = 26, interactive: Bool = false) -> some View {
+        glassEffect(.regular.tint(Palette.surfaceRaised.opacity(0.6)).interactive(interactive),
                     in: .rect(cornerRadius: cornerRadius, style: .continuous))
     }
 

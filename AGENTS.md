@@ -6,8 +6,10 @@ Menus inside glass cards used to need several taps (the composer's "+", the new 
 "Current checkout"). Simulator UI tests open them on the first tap even when they're broken, so these
 rules come from testing on a device:
 
-- **No `.interactive()` glass on a card that holds controls.** Interactive glass tracks every touch
+- **No `.interactive()` glass on a card while it holds menus.** Interactive glass tracks every touch
   on the card and competes with the `Menu`s inside it. Use `composerGlass()` (`ComposerCard.swift`).
+  Only the thread's composer pill at rest is live (`interactive: !expanded`), so it can be played with;
+  once opened, with the keyboard, its glass goes still.
 - **A "tap the card to focus" gesture goes behind the content** (`onBackgroundTap`), not as
   `.contentShape(.rect).onTapGesture` on top. On top it races the controls for the same tap.
 - **A `Menu` on a screen that redraws often gets its own small view**, `Equatable` on what it shows,
