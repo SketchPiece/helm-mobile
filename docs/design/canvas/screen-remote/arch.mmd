@@ -1,0 +1,24 @@
+---
+title: How the screen gets to the phone
+board: 1500x700
+---
+flowchart LR
+  subgraph mac [Mac · Helm Desktop]
+    cap[ScreenCaptureKit<br>display or one window]:::hl
+    enc[VideoToolbox H.264/HEVC<br>hardware, 30–60 fps]
+    cur[Cursor tracker<br>position + shape]
+    inj[Input injector<br>CGEvent, needs Accessibility]
+    rpc[Helm server<br>RPC + /api/helm/screen]
+  end
+  subgraph phone [iPhone · Helm Mobile]
+    dec[VTDecompressionSession<br>AVSampleBufferDisplayLayer]:::hl
+    vp[Viewport<br>center = cursor, clamp, zoom]:::hl
+    ges[Gestures<br>trackpad / touch / keys]
+  end
+  cap --> enc
+  enc ==>|1. video frames, binary WS| dec
+  cur -->|2. cursor moves, small JSON| vp
+  ges ==>|3. move / click / scroll / keys| inj
+  dec --> vp
+  ges --> vp
+  rpc -.->|start / stop / pick window, existing RPC| phone

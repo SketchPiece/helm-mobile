@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="board" content="1280x800"><title>How Chrome Remote Desktop does it on a phone</title><link rel="stylesheet" href="_shared.css">
+<style>html,body{width:1280px;height:800px;background:var(--canvas)}
+.w{padding:44px 52px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;height:100%}
+h1{grid-column:1/-1;font-size:30px;letter-spacing:-.3px}
+h1 small{display:block;font-size:15px;font-weight:400;color:var(--muted);margin-top:6px}
+.c{background:var(--surface);border-radius:18px;padding:22px 22px;border:1px solid var(--border)}
+h2{font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:7px 0;border-bottom:1px solid #E7E0D2;vertical-align:top}td:first-child{color:var(--muted);width:46%;padding-right:10px}
+p,li{font-size:14.5px;line-height:1.5}ul{padding-left:18px;display:flex;flex-direction:column;gap:9px}
+b{font-weight:600}.k{color:var(--working)}
+</style></head><body><div class="w">
+<h1>How Chrome Remote Desktop does it on a phone<small>From Google's help and the open client code in Chromium (remoting/client/ui: DesktopViewport, GestureInterpreter, TrackpadInputStrategy, TouchInputStrategy)</small></h1>
+<div class="c"><h2>Two modes</h2><ul>
+<li><b>Trackpad</b> (phone default): the screen is a laptop trackpad. The finger moves the cursor relatively, from anywhere; it never covers the target.</li>
+<li><b>Touch</b> (tablet default): the cursor jumps to the finger. Fast, but the finger hides small targets.</li>
+<li>A toolbar (hamburger / three-finger swipe) holds the keyboard, mode switch, Ctrl-Alt-Del, disconnect.</li>
+<li>The cursor shape comes from the host as its own message and is drawn by the phone, so it moves with no lag even when video lags.</li></ul></div>
+<div class="c"><h2>Gestures, trackpad mode</h2><table>
+<tr><td>Drag, one finger</td><td>Move the cursor (with fling inertia)</td></tr>
+<tr><td>Tap</td><td>Left click at the cursor, with a ripple</td></tr>
+<tr><td>Two-finger tap</td><td>Right click</td></tr>
+<tr><td>Three-finger tap</td><td>Middle click</td></tr>
+<tr><td>Tap, then hold and drag</td><td>Click-drag (select, move windows)</td></tr>
+<tr><td>Two-finger drag</td><td>Scroll, with fling</td></tr>
+<tr><td>Pinch</td><td>Zoom, pivoting on the cursor</td></tr>
+<tr><td>Swipe up / down, 3 fingers</td><td>Keyboard / toolbar</td></tr></table></div>
+<div class="c"><h2>Why the zoom "follows the mouse"</h2><ul>
+<li>The viewport is <b>centered on the cursor</b> after every move: <span class="mono k">viewport.center = cursor</span>.</li>
+<li>It is then <b>clamped to the desktop</b>, so at an edge the view stops and the cursor walks to the edge of the phone instead.</li>
+<li>Zoom is clamped between "whole desktop fits" and about 1:1 device pixels and above.</li>
+<li>When the keyboard opens the viewport's safe area shrinks and the view re-centers, so the cursor sits above the keys.</li>
+<li>For us: keep all of this. Change what doesn't fit a phone with Helm on it (boards B, D, E).</li></ul></div>
+</div></body></html>

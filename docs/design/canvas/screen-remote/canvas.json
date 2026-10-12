@@ -1,0 +1,129 @@
+{
+ "v": 3,
+ "title": "Screen remote: controlling the Mac's screen from the phone",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-crd.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800,
+   "title": "How Chrome Remote Desktop does it on a phone"
+  },
+  "a-trackpad.html": {
+   "x": 0,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "A. Like Chrome Remote Desktop: full screen, the view rides on the cursor"
+  },
+  "a2-landscape.html": {
+   "x": 470,
+   "y": 1000,
+   "w": 844,
+   "h": 390,
+   "title": "A′. Same in landscape: the toolbar folds into a tab at the edge"
+  },
+  "arch.mmd": {
+   "x": 1360,
+   "y": 0,
+   "w": 1500,
+   "h": 700,
+   "title": "How the screen gets to the phone"
+  },
+  "b-split.html": {
+   "x": 1394,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "B. Screen on top, the phone's lower half is the trackpad"
+  },
+  "c-touch.html": {
+   "x": 2334,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "C. Direct touch: tap where you see it, hold for a magnifier"
+  },
+  "d-keyboard.html": {
+   "x": 1864,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "D. B with the keyboard: Mac keys above it, hold space to move the cursor"
+  },
+  "e-window.html": {
+   "x": 2804,
+   "y": 1000,
+   "w": 390,
+   "h": 844,
+   "title": "E. One window, shaped for the phone: the Mac resizes it to fit"
+  }
+ },
+ "order": [
+  "0-crd.html",
+  "arch.mmd",
+  "a-trackpad.html",
+  "a2-landscape.html",
+  "b-split.html",
+  "d-keyboard.html",
+  "c-touch.html",
+  "e-window.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -200,
+   "text": "Screen remote: controlling the Mac's screen from the phone",
+   "kind": "title1",
+   "maxW": 2860
+  },
+  "h1": {
+   "x": 0,
+   "y": 920,
+   "text": "Phone screens. One mechanic underneath (cursor-centered viewport, gestures from CRD); they differ in where the finger goes",
+   "kind": "title2",
+   "maxW": 2860
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 0,
+   "y": 1900,
+   "w": 380,
+   "color": "blue",
+   "text": "A + A′ copy CRD: the most familiar, works in both orientations. Downside: in portrait the Mac is a narrow slice and the toolbar covers part of it.",
+   "to": {
+    "board": "a-trackpad.html",
+    "x": 195,
+    "y": 760
+   }
+  },
+  {
+   "id": "claude-2",
+   "x": 1430,
+   "y": 1900,
+   "w": 380,
+   "color": "blue",
+   "text": "My pick for portrait: B. The finger never sits on the picture, the trackpad and big mic match the existing Mac remote sheet, and holding the mic dictates into whatever field is under the cursor. Rotate to landscape and it becomes A′.",
+   "to": {
+    "board": "b-split.html",
+    "x": 195,
+    "y": 600
+   }
+  },
+  {
+   "id": "claude-3",
+   "x": 2320,
+   "y": 1900,
+   "w": 380,
+   "color": "blue",
+   "text": "C is a second mode behind the toolbar switch, like CRD. E is the Helm-only idea: stream one window and have the Mac resize it to phone shape, so nothing needs zooming. Good v2."
+  }
+ ],
+ "designSystems": []
+}
