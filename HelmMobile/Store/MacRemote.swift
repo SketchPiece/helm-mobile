@@ -40,6 +40,7 @@ final class MacRemote {
     private func point(at target: MacRemoteTarget?, in model: AppModel) {
         self.target = target
         sendError = nil
+        typedIntoComposer = false
         guard let target, let environment = model.environment(target.ref.environmentId) else {
             session = nil
             environment = nil
@@ -67,6 +68,74 @@ final class MacRemote {
     var typesIntoComposer: Bool { isDraft || voiceTarget == .composer }
 
     var isWorking: Bool { session?.projection?.isWorking ?? thread?.isWorking ?? false }
+
+    // MARK: The computer's composer
+
+    /// Something went into the computer's composer from here since the remote came to this thread:
+    /// what Send goes by when Helm there doesn't say whether its draft holds anything.
+    private var typedIntoComposer = false
+
+    /// The computer's draft for this thread holds something to send.
+    var composerHasContent: Bool {
+        guard let target, let desktop = environment?.desktop, desktop.threadId == target.ref.threadId,
+              let reported = desktop.composerHasContent
+        else { return typedIntoComposer }
+        return reported
+    }
+
+    /// Words go into the computer's composer, and there is something there to send.
+    var canSendComposer: Bool { typesIntoComposer && composerHasContent && !voice.isRecording && voice.state != .transcribing }
+
+    /// Sends the computer's draft as it stands, as if Send were pressed there.
+    func sendComposer() async {
+        guard let environment, let threadId = target?.ref.threadId else { return }
+        do {
+            guard try await environment.sendRemoteCommand(["type": "composer.send", "threadId": .string(threadId)]) else {
+                sendError = String(localized: "Helm on the computer didn't take it. Update Helm there, or send instead.")
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                return
+            }
+            typedIntoComposer = false
+            sendError = nil
+            sentCount += 1
+        } catch {
+            sendError = error.localizedDescription
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+        }
+    }
+
+    /// Starts recording. When the words go into the computer's composer, the computer shows that
+    /// the phone is listening, and holds typing there, until they arrive or the take is dropped.
+    func beginDictation() {
+        voice.begin()
+        signalDictation()
+    }
+
+    @ObservationIgnored private var dictationSignal: Task<Void, Never>?
+
+    private func signalDictation() {
+        guard typesIntoComposer, dictationSignal == nil, let environment, let threadId = target?.ref.threadId else { return }
+        dictationSignal = Task { [weak self] in
+            func say(_ active: Bool) async {
+                _ = try? await environment.sendRemoteCommand([
+                    "type": "composer.dictation", "threadId": .string(threadId), "active": .bool(active),
+                ])
+            }
+            await say(true)
+            var lastSaid = Date()
+            while let self, self.voice.isRecording || self.voice.state == .transcribing {
+                try? await Task.sleep(for: .milliseconds(300))
+                // The computer lets go after a while of silence, should the phone go away.
+                if Date().timeIntervalSince(lastSaid) > 15 {
+                    await say(true)
+                    lastSaid = Date()
+                }
+            }
+            // The words themselves end it on the computer; a dropped or failed take ends it here.
+            await say(false)
+            self?.dictationSignal = nil
+        }
+    }
 
     // MARK: Other threads on this computer
 
@@ -200,9 +269,10 @@ final class MacRemote {
     }
 
     func retryTranscription() async {
-        guard let environment, let threadId = target?.ref.threadId,
-              let text = await voice.retry(environment: environment, threadId: threadId)
-        else { return }
+        guard let environment, let threadId = target?.ref.threadId else { return }
+        let retrying = Task { await voice.retry(environment: environment, threadId: threadId) }
+        signalDictation()
+        guard let text = await retrying.value else { return }
         await send(text)
     }
 
@@ -294,6 +364,7 @@ final class MacRemote {
                 }
                 if command["type"] == .string("composer.attach") { pendingScreenshot = nil }
             }
+            typedIntoComposer = true
             sendError = nil
             sentCount += 1
         } catch {

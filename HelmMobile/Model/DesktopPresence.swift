@@ -8,6 +8,8 @@ struct DesktopPresence: Equatable {
     /// A new thread not sent yet: the server has no thread by `threadId` until it is. Its project.
     var draftProjectId: String?
     var focused: Bool
+    /// The window's composer holds a draft for the thread; nil from a Helm that doesn't say.
+    var composerHasContent: Bool? = nil
     /// Someone used the Mac within the last minute or so, as far as the snapshot can tell.
     var macInUse: Bool
     /// Locked or asleep: nobody is at it, whatever the window says.
@@ -16,7 +18,7 @@ struct DesktopPresence: Equatable {
     /// The window to follow: a visible desktop window with a thread (or a new one) open, the
     /// focused one first, then the one that reported last. Nil when no window shows a thread.
     static func from(snapshot: JSON, now: Date = Date()) -> DesktopPresence? {
-        struct Candidate { var threadId: String; var draftProjectId: String?; var focused: Bool; var interacted: Bool; var updatedAt: Date }
+        struct Candidate { var threadId: String; var draftProjectId: String?; var composerHasContent: Bool?; var focused: Bool; var interacted: Bool; var updatedAt: Date }
         let candidates: [Candidate] = (snapshot["leases"]?.array ?? []).compactMap { lease in
             guard lease["clientKind"]?.string == "desktop-renderer",
                   lease["visible"]?.bool == true,
@@ -27,6 +29,7 @@ struct DesktopPresence: Equatable {
             return Candidate(
                 threadId: threadId,
                 draftProjectId: scope["type"]?.string == "draft-thread" ? scope["projectId"]?.string ?? "" : nil,
+                composerHasContent: scope["composerHasContent"]?.bool,
                 focused: lease["focused"]?.bool ?? false,
                 interacted: lease["recentlyInteracted"]?.bool ?? false,
                 updatedAt: ISODate.parse(lease["updatedAt"]?.string) ?? .distantPast
@@ -42,6 +45,7 @@ struct DesktopPresence: Equatable {
         let inUse = known && power?["idle"]?.string != "unknown"
             ? power?["idle"]?.string == "false"
             : pick.interacted
-        return DesktopPresence(threadId: pick.threadId, draftProjectId: pick.draftProjectId, focused: pick.focused, macInUse: inUse && !away, macAway: away)
+        return DesktopPresence(threadId: pick.threadId, draftProjectId: pick.draftProjectId, focused: pick.focused,
+                               composerHasContent: pick.composerHasContent, macInUse: inUse && !away, macAway: away)
     }
 }

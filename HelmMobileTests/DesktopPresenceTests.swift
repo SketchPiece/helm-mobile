@@ -6,14 +6,18 @@ import XCTest
 final class DesktopPresenceTests: XCTestCase {
     private let now = ISODate.parse("2026-10-08T12:00:00.000Z")!
 
-    private func lease(_ threadId: String?, draftProjectId: String? = nil, kind: String = "desktop-renderer", focused: Bool = true,
+    private func lease(_ threadId: String?, draftProjectId: String? = nil, composerHasContent: Bool? = nil, kind: String = "desktop-renderer", focused: Bool = true,
                        visible: Bool = true, interacted: Bool = false, updatedAt: String = "2026-10-08T11:59:50.000Z",
                        expiresAt: String = "2026-10-08T12:00:30.000Z") -> JSON {
         var scopes: [JSON] = [["type": "provider-status"]]
-        if let threadId, let draftProjectId {
-            scopes.append(["type": "draft-thread", "threadId": .string(threadId), "projectId": .string(draftProjectId)])
-        } else if let threadId {
-            scopes.append(["type": "thread", "threadId": .string(threadId)])
+        if let threadId {
+            var scope: [String: JSON] = ["type": "thread", "threadId": .string(threadId)]
+            if let draftProjectId {
+                scope["type"] = "draft-thread"
+                scope["projectId"] = .string(draftProjectId)
+            }
+            if let composerHasContent { scope["composerHasContent"] = .bool(composerHasContent) }
+            scopes.append(.object(scope))
         }
         return [
             "clientKind": .string(kind), "visible": .bool(visible), "focused": .bool(focused),
@@ -51,6 +55,12 @@ final class DesktopPresenceTests: XCTestCase {
         XCTAssertEqual(presence?.threadId, "thread-new")
         XCTAssertEqual(presence?.draftProjectId, "project-1")
         XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t")]), now: now)?.draftProjectId)
+    }
+
+    func testComposerContentWhenTheWindowSaysSo() {
+        XCTAssertEqual(DesktopPresence.from(snapshot: snapshot([lease("t", composerHasContent: true)]), now: now)?.composerHasContent, true)
+        XCTAssertEqual(DesktopPresence.from(snapshot: snapshot([lease("t", draftProjectId: "p", composerHasContent: false)]), now: now)?.composerHasContent, false)
+        XCTAssertNil(DesktopPresence.from(snapshot: snapshot([lease("t")]), now: now)?.composerHasContent)
     }
 
     func testLockedMacIsAway() {

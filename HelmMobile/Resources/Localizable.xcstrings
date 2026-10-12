@@ -3522,6 +3522,26 @@
         }
       }
     },
+    "Hold to choose where your voice goes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживай, чтобы выбрать, куда идёт голос"
+          }
+        }
+      }
+    },
+    "Hold to talk and add to it · the arrow sends it": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживай и говори, чтобы дописать · стрелка отправит"
+          }
+        }
+      }
+    },
     "Hold to talk · let go to send": {
       "localizations": {
         "ru": {
@@ -5907,6 +5927,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отправить на компьютер"
+          }
+        }
+      }
+    },
+    "Send what's in the computer's composer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправить то, что в поле ввода на компьютере"
           }
         }
       }

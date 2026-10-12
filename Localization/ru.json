@@ -835,5 +835,8 @@
   "Wrap lines in diffs and files": "Переносить строки в диффах и файлах",
   "Code blocks and diffs follow the phone's text size unless you set one here. Lines that don't wrap scroll sideways.": "Код и диффы следуют размеру текста телефона, если не задать свой. Строки без переноса листаются вбок.",
   "Show formatted": "Показать оформленным",
-  "Show source": "Показать исходник"
+  "Show source": "Показать исходник",
+  "Send what's in the computer's composer": "Отправить то, что в поле ввода на компьютере",
+  "Hold to choose where your voice goes": "Удерживай, чтобы выбрать, куда идёт голос",
+  "Hold to talk and add to it · the arrow sends it": "Удерживай и говори, чтобы дописать · стрелка отправит"
 }

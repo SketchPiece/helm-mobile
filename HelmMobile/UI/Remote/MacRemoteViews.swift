@@ -58,7 +58,7 @@ struct RemoteMicButton: View {
             return
         }
         if case .failed = voice.state { voice.dismissError() }
-        voice.begin()
+        remote.beginDictation()
         let started = pressedAt
         Task {
             try? await Task.sleep(for: .milliseconds(300))
@@ -604,41 +604,6 @@ struct MacRemoteSheet: View {
         .accessibilityLabel("Stop the agent")
     }
 
-    /// Where the words go: sent as a message, or typed into the composer on the computer. Sits by
-    /// the microphone, its icon saying which.
-    private var voiceTargetMenu: some View {
-        Menu {
-            Picker("Voice", selection: Binding(get: { remote.voiceTarget }, set: { remote.voiceTarget = $0 })) {
-                Label {
-                    Text("Send right away")
-                    Text("As a new message")
-                } icon: {
-                    Image(systemName: "arrow.up")
-                }
-                .tag(MacRemote.VoiceTarget.send)
-                Label {
-                    Text("Type on the computer")
-                    Text("Into its composer, you send")
-                } icon: {
-                    Image(systemName: "keyboard")
-                }
-                .tag(MacRemote.VoiceTarget.composer)
-            }
-        } label: {
-            Image(systemName: remote.typesIntoComposer ? "keyboard" : "arrow.up")
-                .font(.system(size: 20, weight: .medium))
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: 58, height: 58)
-                .foregroundStyle(Palette.text)
-                .background(Palette.surface, in: .circle)
-                .overlay(Circle().stroke(Palette.border))
-        }
-        // A new thread has nothing to send to yet: the voice types into it.
-        .disabled(remote.isDraft)
-        .accessibilityLabel("Where your voice goes")
-        .accessibilityValue(remote.typesIntoComposer ? "Voice types" : "Voice sends")
-    }
-
     /// The end of the chat as the computer shows it: earlier turns' words, your last message, the
     /// steps of the turn since, and the agent's reply. Older turns fill the room a short reply leaves.
     @ViewBuilder
@@ -764,6 +729,9 @@ struct MacRemoteSheet: View {
 
     private var hint: LocalizedStringKey {
         let typing = remote.typesIntoComposer
+        if remote.canSendComposer {
+            return "Hold to talk and add to it · the arrow sends it"
+        }
         if remote.voice.state == .recording(handsFree: true) {
             return typing ? "Tap to type it on the computer" : "Tap to send"
         }
@@ -816,7 +784,16 @@ struct MacRemoteSheet: View {
                     .padding(.horizontal, 24)
             }
             HStack {
-                voiceTargetMenu
+                RemoteLeftControl(
+                    canSend: remote.canSendComposer,
+                    isDraft: remote.isDraft,
+                    typesIntoComposer: remote.typesIntoComposer,
+                    voiceTarget: remote.voiceTarget,
+                    onSend: { Task { await remote.sendComposer() } },
+                    onPick: { remote.voiceTarget = $0 }
+                )
+                .equatable()
+                .animation(.snappy(duration: 0.25), value: remote.canSendComposer)
                 Spacer()
                 RemoteMicButton(remote: remote, diameter: 112)
                     .background(Circle().fill(Palette.accent.opacity(0.1)).padding(-12))
@@ -849,6 +826,83 @@ struct MacRemoteSheet: View {
         }
         .padding(.top, 12)
         .padding(.bottom, 20)
+    }
+}
+
+/// Beside the remote's microphone: where the words go, or, once the computer's composer holds
+/// something, Send for it (a long press still picks where the words go). Its own view, equal on
+/// what it shows, so the thread's updates don't rebuild the menu under the finger.
+private struct RemoteLeftControl: View, @MainActor Equatable {
+    let canSend: Bool
+    let isDraft: Bool
+    let typesIntoComposer: Bool
+    let voiceTarget: MacRemote.VoiceTarget
+    let onSend: () -> Void
+    let onPick: (MacRemote.VoiceTarget) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        (lhs.canSend, lhs.isDraft, lhs.typesIntoComposer, lhs.voiceTarget)
+            == (rhs.canSend, rhs.isDraft, rhs.typesIntoComposer, rhs.voiceTarget)
+    }
+
+    var body: some View {
+        if canSend {
+            Group {
+                // A new thread has nothing else to send to: the button only sends.
+                if isDraft {
+                    Button(action: onSend) { sendLabel }
+                } else {
+                    Menu { picker } label: { sendLabel } primaryAction: { onSend() }
+                        .accessibilityHint("Hold to choose where your voice goes")
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Send what's in the computer's composer")
+            .transition(.scale.combined(with: .opacity))
+        } else {
+            Menu { picker } label: {
+                Image(systemName: typesIntoComposer ? "keyboard" : "arrow.up")
+                    .font(.system(size: 20, weight: .medium))
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 58, height: 58)
+                    .foregroundStyle(Palette.text)
+                    .background(Palette.surface, in: .circle)
+                    .overlay(Circle().stroke(Palette.border))
+            }
+            // A new thread has nothing to send to yet: the voice types into it.
+            .disabled(isDraft)
+            .accessibilityLabel("Where your voice goes")
+            .accessibilityValue(typesIntoComposer ? "Voice types" : "Voice sends")
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+
+    private var sendLabel: some View {
+        Image(systemName: "arrow.up")
+            .font(.system(size: 22, weight: .bold))
+            .frame(width: 58, height: 58)
+            .foregroundStyle(Palette.accentForeground)
+            .background(Palette.accent, in: .circle)
+    }
+
+    /// Where the words go: sent as a message, or typed into the composer on the computer.
+    private var picker: some View {
+        Picker("Voice", selection: Binding(get: { voiceTarget }, set: { onPick($0) })) {
+            Label {
+                Text("Send right away")
+                Text("As a new message")
+            } icon: {
+                Image(systemName: "arrow.up")
+            }
+            .tag(MacRemote.VoiceTarget.send)
+            Label {
+                Text("Type on the computer")
+                Text("Into its composer, you send")
+            } icon: {
+                Image(systemName: "keyboard")
+            }
+            .tag(MacRemote.VoiceTarget.composer)
+        }
     }
 }
 
