@@ -41,6 +41,7 @@ final class AppModel {
         // attaches to a quiet main thread.
         guard !Self.isUnitTestHost else { return }
         environments.forEach(adopt)
+        Drafts.shared.onLocalChange = { [weak self] key in self?.draftEdited(key) }
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
         ConnectionLog.shared.log("app", "launch \(version) (\(build)), \(environments.count) computer(s), built-in Tailscale \(TailnetNode.shared.hasState ? "set up" : "not set up")")
@@ -88,6 +89,13 @@ final class AppModel {
     var hasEnvironments: Bool { !environments.isEmpty }
 
     func environment(_ id: String) -> EnvironmentSession? { environments.first { $0.id == id } }
+
+    /// A draft written on this phone goes to the Mac it belongs to.
+    private func draftEdited(_ key: String) {
+        guard let draft = Drafts.shared.draft(for: key) else { return }
+        let environment = draft.environmentId.flatMap(environment) ?? environments.first { $0.thread(key) != nil }
+        environment?.draftSync.schedule(key)
+    }
 
     static func persistLabel(id: String, label: String) {
         var list = SavedEnvironments.load()
@@ -147,6 +155,7 @@ final class AppModel {
         ConnectionLog.shared.log("app", "background")
         NearbyMacs.shared.stop()
         environments.forEach { $0.saveToDisk() }
+        Drafts.shared.saveNow()
         let task = UIApplication.shared.beginBackgroundTask(withName: "helm.local-cache")
         guard task != .invalid else { return }
         LocalCache.shared.flush {

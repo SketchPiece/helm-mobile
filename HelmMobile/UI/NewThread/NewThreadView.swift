@@ -9,7 +9,9 @@ struct NewThreadView: View {
 
     @State private var environmentId: String?
     @State private var projectId: String?
-    @State private var text = Drafts.text(for: NewThreadDraft.key)
+    @State private var text = ""
+    /// The `Drafts` key of what is shown: the project's new-thread draft, once there is a project.
+    @State private var draftKey: String?
     @State private var selection: ModelSelection?
     @State private var runtimeMode = "full-access"
     @State private var interactionMode = "default"
@@ -117,11 +119,18 @@ struct NewThreadView: View {
             .presentationDetents([.medium, .large])
         }
         .onAppear {
+            showDraft(router.newThreadDraftKey)
             takeTarget()
             restoreProject()
             pickDefaults()
+            followProject()
             takeSeed()
         }
+        // Written in Helm on the Mac meanwhile.
+        .onChange(of: Drafts.shared.remoteRevision(draftKey ?? "")) {
+            if let draftKey { showDraft(draftKey) }
+        }
+        .onChange(of: draft.draftFiles) { saveDraft() }
         .onDisappear(perform: leave)
         .onChange(of: router.newThreadSeed) { takeSeed() }
         // Opened from a quick action or share on a cold start: the Mac connects after this appears.
@@ -133,7 +142,7 @@ struct NewThreadView: View {
         }
         .onChange(of: projectId) { _, _ in
             resetForProject()
-            NewThreadDraft.saveProject(environmentId: environmentId, projectId: projectId)
+            followProject()
         }
         // Uploads belong to the Mac they went to.
         .onChange(of: environmentId) { old, _ in if old != nil { draft.reset() } }
@@ -262,7 +271,7 @@ struct NewThreadView: View {
                         text = folded
                         return
                     }
-                    Drafts.save(value, for: NewThreadDraft.key)
+                    saveDraft()
                     suggestions.update(text: value, scope: suggestionScope)
                 }
                 .voiceCollapsed(editorFolded)
@@ -420,7 +429,7 @@ struct NewThreadView: View {
 
     /// Reopening a draft: back on the project it was written for, while that project is still there.
     private func restoreProject() {
-        guard environmentId == nil, let saved = NewThreadDraft.load(hasAttachments: !draft.attachments.isEmpty),
+        guard environmentId == nil, let saved = draftKey.flatMap({ Drafts.shared.draft(for: $0) }),
               let savedEnvironment = saved.environmentId.flatMap({ model.environment($0) })
         else { return }
         let projects = savedEnvironment.shell.projects
@@ -514,9 +523,43 @@ struct NewThreadView: View {
         if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && draft.attachments.isEmpty {
             router.discardNewThreadDraft()
         } else {
-            NewThreadDraft.saveProject(environmentId: environment?.id, projectId: projectId)
             router.refreshNewThreadDraft()
         }
+    }
+
+    // MARK: Draft
+
+    /// The draft key for the project picked now; a draft without a project stays on the phone.
+    private var currentKey: String {
+        guard let environment, let projectId else { return Drafts.unassignedNewThreadKey }
+        return Drafts.newThreadKey(environmentId: environment.id, projectId: projectId)
+    }
+
+    /// Shows a kept draft: its text and its uploads.
+    private func showDraft(_ key: String) {
+        draftKey = key
+        router.newThreadDraftKey = key
+        text = Drafts.shared.text(for: key)
+        draft.restore(Drafts.shared.files(for: key))
+    }
+
+    /// A different project picked: the draft goes along, unless that project has one of its own
+    /// (written here earlier or in Helm on the Mac), which shows instead.
+    private func followProject() {
+        let key = currentKey
+        guard let draftKey, key != draftKey else { return }
+        if Drafts.shared.move(from: draftKey, to: key, environmentId: environment?.id, projectId: projectId) {
+            showDraft(key)
+        } else {
+            self.draftKey = key
+            router.newThreadDraftKey = key
+        }
+    }
+
+    private func saveDraft() {
+        guard let draftKey else { return }
+        Drafts.shared.save(text: text, files: draft.draftFiles, for: draftKey,
+                           environmentId: environment?.id, projectId: draftKey == Drafts.unassignedNewThreadKey ? nil : projectId)
     }
 
     private func launch() {

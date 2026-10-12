@@ -68,88 +68,6 @@ extension EnvironmentSession {
     }
 }
 
-/// Unsent composer text per thread, so leaving a thread doesn't lose a half-written message.
-@MainActor
-enum Drafts {
-    static func text(for key: String) -> String {
-        UserDefaults.standard.string(forKey: "draft.\(key)") ?? ""
-    }
-
-    static func save(_ text: String, for key: String) {
-        if text.isEmpty {
-            UserDefaults.standard.removeObject(forKey: "draft.\(key)")
-        } else {
-            UserDefaults.standard.set(text, forKey: "draft.\(key)")
-        }
-        DraftIndex.shared.update(key, hasText: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-    }
-}
-
-/// Which threads hold unsent text, so their rows can show a pen. Observable, unlike the defaults
-/// the text lives in; it changes only when a draft appears or goes, not on every keystroke.
-@MainActor
-@Observable
-final class DraftIndex {
-    static let shared = DraftIndex()
-
-    private(set) var keys: Set<String>
-
-    private init() {
-        keys = Set(UserDefaults.standard.dictionaryRepresentation().compactMap { key, value in
-            guard key.hasPrefix("draft."), let text = value as? String,
-                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-            return String(key.dropFirst("draft.".count))
-        })
-    }
-
-    func hasDraft(_ key: String) -> Bool { keys.contains(key) }
-
-    func update(_ key: String, hasText: Bool) {
-        if hasText, !keys.contains(key) { keys.insert(key) }
-        if !hasText, keys.contains(key) { keys.remove(key) }
-    }
-}
-
-/// What New Thread was left holding: the text (kept by `Drafts`) and the project it was written
-/// for, so Home can list it and New Thread reopens on the same project.
-struct NewThreadDraft: Equatable {
-    static let key = "new-thread"
-    private static let environmentKey = "draft.new-thread.environmentId"
-    private static let projectKey = "draft.new-thread.projectId"
-
-    var text: String
-    var environmentId: String?
-    var projectId: String?
-
-    /// For a list row: the first line as the title, the rest folded onto one line.
-    var title: String { lines.first ?? "" }
-    var remainder: String { lines.dropFirst().joined(separator: " ") }
-
-    private var lines: [String] {
-        text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-    }
-
-    /// The saved draft, or nil when there's nothing in it.
-    @MainActor static func load(hasAttachments: Bool = false) -> NewThreadDraft? {
-        let text = Drafts.text(for: key)
-        guard hasAttachments || !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-        let defaults = UserDefaults.standard
-        return NewThreadDraft(text: text, environmentId: defaults.string(forKey: environmentKey),
-                              projectId: defaults.string(forKey: projectKey))
-    }
-
-    static func saveProject(environmentId: String?, projectId: String?) {
-        let defaults = UserDefaults.standard
-        defaults.set(environmentId, forKey: environmentKey)
-        defaults.set(projectId, forKey: projectKey)
-    }
-
-    @MainActor static func clear() {
-        Drafts.save("", for: key)
-        saveProject(environmentId: nil, projectId: nil)
-    }
-}
-
 /// What a composer holds besides its text: attachments (uploaded as soon as they are picked),
 /// pull requests picked from `#` and threads picked from `@`. Shared by the thread and new-thread composers.
 @MainActor
@@ -213,6 +131,26 @@ final class ComposerDraft {
         }
         threads.append(reference)
         return true
+    }
+
+    /// Finished uploads, as the draft keeps and shares them.
+    var draftFiles: [DraftFile] { attachments.compactMap { $0.uploaded.map(DraftFile.init) } }
+
+    /// Takes the uploads a kept or shared draft holds: adds the missing ones and drops finished ones
+    /// it no longer has. Uploads still under way stay.
+    func restore(_ files: [DraftFile]) {
+        let wanted = Set(files.map(\.attachmentId))
+        attachments.removeAll { attachment in
+            guard let id = attachment.uploaded?.id else { return false }
+            if wanted.contains(id) { return false }
+            images[attachment.id] = nil
+            return true
+        }
+        let present = Set(attachments.compactMap(\.uploaded?.id))
+        for file in files where !present.contains(file.attachmentId) {
+            attachments.append(DraftAttachment(preview: nil, name: file.name, isImage: file.type == "image",
+                                               sizeBytes: file.sizeBytes, uploaded: file.chatAttachment))
+        }
     }
 
     /// Finished uploads with the context id of their record and link.

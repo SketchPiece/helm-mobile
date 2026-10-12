@@ -238,19 +238,21 @@ struct HomeView: View {
 
     // MARK: Rows
 
-    /// The unsent new thread, unless a search or another project's filter hides it.
-    private var visibleDraft: NewThreadDraft? {
-        guard let draft = router.newThreadDraft, search.isEmpty else { return nil }
-        if let projectFilter, draft.projectId != projectFilter { return nil }
-        return draft
+    /// Unsent new threads (written here or in Helm on the Mac), unless a search or another
+    /// project's filter hides them.
+    private var visibleDrafts: [NewThreadDraft] {
+        guard search.isEmpty else { return [] }
+        let drafts = Drafts.shared.newThreadDrafts
+        guard let projectFilter else { return drafts }
+        return drafts.filter { $0.projectId == projectFilter }
     }
 
     @ViewBuilder
     private var draftRow: some View {
-        if let draft = visibleDraft {
+        ForEach(visibleDrafts) { draft in
             let environment = draft.environmentId.flatMap { model.environment($0) }
             Button {
-                router.startNewThread()
+                router.resume(draft)
             } label: {
                 DraftRow(draft: draft, project: environment?.project(draft.projectId), environment: environment,
                          showsProject: projectFilter == nil)
@@ -262,7 +264,7 @@ struct HomeView: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) {
-                    withAnimation { router.discardNewThreadDraft() }
+                    withAnimation { router.discardNewThreadDraft(draft.key) }
                 } label: {
                     Label("Discard", systemImage: "trash")
                 }
@@ -479,7 +481,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func emptyState(entries: [ThreadListEntry]) -> some View {
-        if entries.isEmpty, visibleDraft == nil {
+        if entries.isEmpty, visibleDrafts.isEmpty {
             if !search.isEmpty {
                 ContentUnavailableView.search(text: search)
             } else if model.environments.contains(where: { $0.status == .connecting }) && model.allThreads().isEmpty {

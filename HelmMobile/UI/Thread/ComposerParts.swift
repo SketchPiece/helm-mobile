@@ -157,6 +157,9 @@ struct AttachmentStrip: View {
             Palette.surface
             if let preview = attachment.preview {
                 Image(uiImage: preview).resizable().scaledToFill()
+            } else if let uploaded = attachment.uploaded, let environment {
+                // A picture the draft came back with (or the Mac added): shown from the server.
+                RemoteDraftImage(attachment: uploaded, environment: environment)
             }
             if attachment.isUploading {
                 Color.black.opacity(0.3)
@@ -272,5 +275,19 @@ struct SuggestionPanel: View {
         .padding(.horizontal, 14)
         .frame(height: rowHeight)
         .contentShape(.rect)
+    }
+}
+
+/// A draft's picture that is only on the Mac, loaded like the timeline's.
+private struct RemoteDraftImage: View {
+    let attachment: ChatAttachment
+    let environment: EnvironmentSession
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image { Image(uiImage: image).resizable().scaledToFill() } else { ProgressView() }
+        }
+        .task(id: attachment.id) { image = await AttachmentLoader.image(attachment, environment: environment) }
     }
 }

@@ -79,7 +79,7 @@ struct ThreadRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
                         // Unsent text in this thread's composer: the same pen as the new-thread draft.
-                        if DraftIndex.shared.hasDraft(thread.id) {
+                        if Drafts.shared.hasDraft(thread.id) {
                             Image(systemName: "square.and.pencil")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(Palette.accentText)
@@ -184,7 +184,7 @@ struct ThreadRow: View {
     }
 }
 
-/// The unsent new thread on top of Home, laid out like a thread row: its project, the first line,
+/// An unsent new thread on top of Home, laid out like a thread row: its project, the first line,
 /// and "Draft" where the time goes.
 struct DraftRow: View {
     let draft: NewThreadDraft
