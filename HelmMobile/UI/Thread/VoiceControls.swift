@@ -21,6 +21,7 @@ struct MicButton: View {
     @State private var pressedAt: Date?
     @State private var holding = false
     static let cancelThreshold: CGFloat = -72
+    private var touchInset: CGFloat { prominent ? 4 : 5 }
 
     var body: some View {
         let recordingHold = voice.state == .recording(handsFree: false)
@@ -39,7 +40,10 @@ struct MicButton: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: cancelling)
             .sensoryFeedback(.impact(weight: .light), trigger: cancelling)
             .animation(.easeOut(duration: 0.1), value: pressedAt != nil)
-            .contentShape(.circle)
+            // A 48pt square to touch (44 for the quiet icon), wider than the circle drawn: a
+            // slightly-off press otherwise lands on the card and opens the keyboard instead.
+            .padding(touchInset)
+            .contentShape(.rect)
             // A UIKit recognizer, not a SwiftUI gesture: by the home indicator SwiftUI held the
             // touch ~0.8 s for the system's swipe home, where UIKit has it within a frame or two.
             .gesture(MicPressGesture(
@@ -51,6 +55,7 @@ struct MicButton: View {
                     release(cancelledByUser: dragOffset < Self.cancelThreshold, tapped: !cancelledBySystem)
                 }
             ))
+            .padding(-touchInset)
             .onDisappear {
                 if pressedAt != nil { release(cancelledByUser: false, tapped: false) }
             }
