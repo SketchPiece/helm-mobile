@@ -21,7 +21,7 @@ struct ThreadComposer: View {
     /// Lets the attach button and the trailing buttons fly between the two rows as the card opens.
     @Namespace private var shape
     @AppStorage(PhonePreferences.followUpKey) private var followUpBehavior = FollowUpBehavior.queue
-    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.standard
 
     init(environment: EnvironmentSession, session: ThreadSession, didSend: @escaping () -> Void = {}) {
         self.environment = environment

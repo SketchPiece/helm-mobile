@@ -35,7 +35,7 @@ struct NewThreadView: View {
     /// The room above the composer and the question's height: the question shows only when it fits.
     @State private var headerRoom: CGFloat = .infinity
     @State private var headerHeight: CGFloat = 0
-    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.standard
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
 
     private var draft: ComposerDraft { router.newThreadComposer }

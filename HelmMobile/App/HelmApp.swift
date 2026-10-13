@@ -31,6 +31,7 @@ struct HelmApp: App {
                 // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
                 .tint(Palette.text)
         }
+        .commands { HelmCommands() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 LaunchActions.shared.pickUpShares()

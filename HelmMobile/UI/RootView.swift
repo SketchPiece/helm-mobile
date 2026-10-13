@@ -114,6 +114,23 @@ final class Router {
         if path.last == .thread(ref) { path.removeLast() }
     }
 
+    /// Changes shown in the inspector beside the thread they belong to (iPad).
+    var reviewing: ChangesReview?
+
+    /// Home's search field is open (⌘K).
+    var isSearching = false
+    /// Home's threads in the order shown (needing you, pinned, active), for Next and Previous Thread.
+    var homeOrder: [ThreadRef] = []
+
+    /// The thread after (or before) the open one in Home's order; the first one when none is open.
+    func openAdjacent(_ step: Int) {
+        guard !homeOrder.isEmpty else { return }
+        let index = selectedThread.flatMap { homeOrder.firstIndex(of: $0) }
+        let next = index.map { $0 + step } ?? (step > 0 ? 0 : homeOrder.count - 1)
+        guard homeOrder.indices.contains(next) else { return }
+        open(homeOrder[next])
+    }
+
     /// The thread open in the detail column on iPad, highlighted in the sidebar.
     var selectedThread: ThreadRef? {
         if case .thread(let ref)? = path.first { return ref }
@@ -122,6 +139,11 @@ final class Router {
 }
 
 enum SettingsDestination: Hashable { case usage }
+
+struct ChangesReview: Equatable {
+    var ref: ThreadRef
+    var checkpoint: Checkpoint
+}
 
 struct AfterStart: Equatable {
     var ref: ThreadRef
@@ -153,6 +175,8 @@ struct RootView: View {
                             HomeView()
                                 .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
                         }
+                        // ⌘K searches Home, which here is under whatever is open.
+                        .onChange(of: router.isSearching) { if router.isSearching { router.path = [] } }
                     }
                 }
                 .sheet(isPresented: $router.showSettings, onDismiss: { router.settingsPath = [] }) {
@@ -166,6 +190,7 @@ struct RootView: View {
             NavigationStack { PairingView() }
         }
         .environment(router)
+        .focusedSceneValue(\.router, router)
         // Under the keyboard too: as it slides away the window would show white in the light theme.
         .background { Palette.canvas.ignoresSafeArea() }
         .task { await pairFromLaunchArguments() }
@@ -233,6 +258,7 @@ struct RouteView: View {
 /// the rest is pushed on top of it (a subagent's thread, a shelf's row), so resizing the window
 /// between the two layouts keeps what is open.
 private struct SplitRoot: View {
+    @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
     @State private var columns = NavigationSplitViewVisibility.all
 
@@ -254,8 +280,26 @@ private struct SplitRoot: View {
                 .id(router.path.first)
                 .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
             }
+            .inspector(isPresented: inspectorShown) {
+                if let review = router.reviewing, let environment = model.environment(review.ref.environmentId) {
+                    ChangesSheet(session: environment.threadSession(review.ref.threadId), checkpoint: review.checkpoint) {
+                        router.reviewing = nil
+                    }
+                    .inspectorColumnWidth(min: 340, ideal: 440, max: 600)
+                }
+            }
         }
         .navigationSplitViewStyle(.balanced)
+    }
+
+    /// The changes stay with their thread: moving to another one hides them.
+    private var inspectorShown: Binding<Bool> {
+        Binding {
+            guard let review = router.reviewing else { return false }
+            return router.path.last == .thread(review.ref)
+        } set: { shown in
+            if !shown { router.reviewing = nil }
+        }
     }
 
     private var detailPath: Binding<[Router.Route]> {

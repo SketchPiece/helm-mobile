@@ -72,6 +72,12 @@ enum ReturnKeyBehavior: String, CaseIterable, Identifiable {
     case send, newline
     var id: String { rawValue }
 
+    /// Until the user picks: an iPad is mostly typed on with a keyboard, where Return sends, as in
+    /// Messages; on the iPhone a message often runs to several lines.
+    @MainActor static var standard: ReturnKeyBehavior {
+        UIDevice.current.userInterfaceIdiom == .pad ? .send : .newline
+    }
+
     var title: String {
         switch self {
         case .send: String(localized: "Send message")

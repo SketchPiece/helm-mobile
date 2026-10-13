@@ -7,7 +7,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage(PhonePreferences.followUpKey) private var followUp = FollowUpBehavior.queue
-    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.returnKeyKey) private var returnKey = ReturnKeyBehavior.standard
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false

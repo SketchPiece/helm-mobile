@@ -43,13 +43,33 @@ final class IPadTourTests: XCTestCase {
             sleep(1)
         }
 
-        app.buttons["newThread"].firstMatch.tap()
+        // Keyboard: the previous thread in Home's order, then ⌘K into the search field, then ⌘N.
+        let title = app.navigationBars.firstMatch.identifier
+        app.typeKey(.upArrow, modifierFlags: [.command, .option])
+        sleep(2)
+        shot("02c-next-thread")
+        print("IPAD next thread: \(title) → \(app.navigationBars.firstMatch.identifier)")
+        app.typeKey("k", modifierFlags: .command)
+        sleep(1)
+        shot("02d-search")
+        XCTAssertTrue(app.searchFields.firstMatch.hasFocus(in: app), "⌘K didn't focus the search field")
+        app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+        sleep(1)
+
+        app.typeKey("n", modifierFlags: .command)
         sleep(2)
         shot("03-landscape-new-thread")
+        XCTAssertTrue(app.textViews["newThreadText"].waitForExistence(timeout: 5), "⌘N didn't open New Thread")
 
         XCUIDevice.shared.orientation = .portrait
         sleep(2)
         shot("04-portrait")
         XCUIDevice.shared.orientation = .landscapeLeft
+    }
+}
+
+private extension XCUIElement {
+    func hasFocus(in app: XCUIApplication) -> Bool {
+        (value(forKey: "hasKeyboardFocus") as? Bool) ?? false
     }
 }

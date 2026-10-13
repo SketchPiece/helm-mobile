@@ -191,16 +191,9 @@ private struct ThreadContent: View {
         .sheet(isPresented: $showSettings) {
             ThreadSettingsSheet(environment: environment, session: session)
         }
-        // A wide window shows the changes beside the conversation; a narrow one, over it.
-        .sheet(item: sizeClass == .regular ? .constant(nil) : $reviewing) { checkpoint in
+        // Narrow windows show the changes over the conversation; wide ones beside it (see `review`).
+        .sheet(item: $reviewing) { checkpoint in
             ChangesSheet(session: session, checkpoint: checkpoint)
-        }
-        .inspector(isPresented: Binding(get: { sizeClass == .regular && reviewing != nil },
-                                        set: { if !$0 { reviewing = nil } })) {
-            if let reviewing {
-                ChangesSheet(session: session, checkpoint: reviewing) { self.reviewing = nil }
-                    .inspectorColumnWidth(min: 340, ideal: 440, max: 600)
-            }
         }
         .sheet(isPresented: $snoozingCustom) {
             CustomSnoozeSheet { date in
@@ -243,6 +236,7 @@ private struct ThreadContent: View {
             if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
         }
         .onChange(of: session.isDeleted) { _, deleted in if deleted { router.close(ref) } }
+        .focusedSceneValue(\.openThread, menuActions(projection: projection))
         .task(id: session.projection?.isWorking == true) { await moveOnAfterStart() }
     }
 
@@ -337,7 +331,7 @@ private struct ThreadContent: View {
                 if let checkpointId = item.raw["checkpointId"]?.string,
                    let checkpoint = projection?.checkpoints[checkpointId]
                 {
-                    reviewing = checkpoint
+                    review(checkpoint)
                 }
             }
         case .error(let item):
@@ -503,11 +497,10 @@ private struct ThreadContent: View {
         if sizeClass == .regular, let checkpoint = projection?.latestCheckpointWithChanges {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    reviewing = reviewing == nil ? checkpoint : nil
+                    review(checkpoint, toggle: true)
                 } label: {
                     Image(systemName: "plusminus")
                 }
-                .keyboardShortcut("i", modifiers: [.command, .option])
                 .accessibilityLabel("Review changes")
                 .accessibilityIdentifier("reviewChanges")
             }
@@ -535,7 +528,7 @@ private struct ThreadContent: View {
                 }
                 if let checkpoint = projection?.latestCheckpointWithChanges {
                     Button {
-                        reviewing = checkpoint
+                        review(checkpoint)
                     } label: { Label("Review changes", systemImage: "plusminus") }
                 }
                 Button {
@@ -583,6 +576,39 @@ private struct ThreadContent: View {
             }
             .accessibilityLabel("Thread actions")
         }
+    }
+
+    /// A turn's changes: in the inspector beside the thread when the window is wide (it lives
+    /// outside the navigation stack, which would otherwise lose its toolbar), else in a sheet.
+    private func review(_ checkpoint: Checkpoint, toggle: Bool = false) {
+        guard sizeClass == .regular else {
+            reviewing = checkpoint
+            return
+        }
+        if toggle, router.reviewing?.ref == ref {
+            router.reviewing = nil
+        } else {
+            router.reviewing = ChangesReview(ref: ref, checkpoint: checkpoint)
+        }
+    }
+
+    /// What the menu bar's Thread menu does here.
+    private func menuActions(projection: ThreadProjection?) -> OpenThreadActions {
+        let checkpoint = projection?.latestCheckpointWithChanges
+        return OpenThreadActions(
+            isWorking: projection?.isWorking == true,
+            hasChanges: checkpoint != nil,
+            isReviewing: router.reviewing?.ref == ref,
+            isSettled: summary?.isSettled == true,
+            isPinned: summary?.pinnedAt != nil,
+            stop: { Task { try? await session.interrupt() } },
+            toggleReview: { if let checkpoint { review(checkpoint, toggle: true) } },
+            perform: { perform($0) },
+            markUnread: {
+                leavesUnread = true
+                perform(.markUnread, thenDismiss: true)
+            }
+        )
     }
 
     /// The thread's provider offers `/compact`.

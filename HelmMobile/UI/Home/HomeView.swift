@@ -142,7 +142,8 @@ struct HomeView: View {
         }
         .navigationTitle(navigationTitle)
         .toolbarTitleDisplayMode(.inlineLarge)
-        .searchable(text: $search, prompt: Text("Search"))
+        .searchable(text: $search, isPresented: searchPresented, prompt: Text("Search"))
+        .onChange(of: sections.order, initial: true) { _, order in router.homeOrder = order }
         .toolbar { toolbarContent }
         .refreshable { model.environments.forEach { $0.reconnectNow(reason: "pull to refresh") } }
         .task(id: nextWake) {
@@ -201,6 +202,11 @@ struct HomeView: View {
         } message: {
             Text(actionError ?? "")
         }
+    }
+
+    /// ⌘K opens the search field from anywhere.
+    private var searchPresented: Binding<Bool> {
+        Binding { router.isSearching } set: { router.isSearching = $0 }
     }
 
     private var navigationTitle: String {
@@ -536,6 +542,9 @@ struct HomeSections {
     var active: [ThreadListEntry] = []
     var snoozed: [ThreadListEntry] = []
     var settled: [ThreadListEntry] = []
+
+    /// The threads in the list itself, top to bottom (shelves aside).
+    var order: [ThreadRef] { (attention + pinned + active).map(\.ref) }
 
     init(entries: [ThreadListEntry], now: Date = Date()) {
         for entry in entries {

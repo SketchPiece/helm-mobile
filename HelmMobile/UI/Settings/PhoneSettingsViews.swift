@@ -24,7 +24,7 @@ struct AfterStartSettingsView: View {
 
 /// Settings → Keyboard: Return sends or inserts a new line.
 struct KeyboardSettingsView: View {
-    @AppStorage(PhonePreferences.returnKeyKey) private var behavior = ReturnKeyBehavior.newline
+    @AppStorage(PhonePreferences.returnKeyKey) private var behavior = ReturnKeyBehavior.standard
 
     var body: some View {
         ChoiceForm(title: String(localized: "Keyboard"), header: String(localized: "Return key"),
