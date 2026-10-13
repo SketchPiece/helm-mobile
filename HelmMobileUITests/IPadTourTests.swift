@@ -82,6 +82,45 @@ final class IPadTourTests: XCTestCase {
     }
 }
 
+/// Pairing over the local network, AirPlay-style, on a fresh (unpaired) simulator:
+/// `TEST_RUNNER_HELM_LOCAL_PAIR=<host:port>` of a dev Helm reached by its LAN address. Something
+/// else plays the Mac: it allows the request and writes the code it got to /tmp/hm-pair-code.
+final class LocalPairingTests: XCTestCase {
+    func testPairWithCodeFromTheMac() throws {
+        let env = ProcessInfo.processInfo.environment
+        guard let host = env["HELM_LOCAL_PAIR"] else { throw XCTSkip("set HELM_LOCAL_PAIR") }
+        let codeFile = "/tmp/hm-pair-code"
+        try? FileManager.default.removeItem(atPath: codeFile)
+        let app = XCUIApplication()
+        app.launch()
+        let connect = app.buttons["connectToHelm"]
+        XCTAssertTrue(connect.waitForExistence(timeout: 10), "not on the welcome screen (already paired?)")
+        connect.tap()
+        let address = app.textFields["100.64.0.1 or my-mac.tailnet.ts.net"]
+        XCTAssertTrue(address.waitForExistence(timeout: 5))
+        address.tap()
+        address.typeText(host)
+        app.buttons["Ask Helm to allow this phone"].tap()
+
+        let field = app.textFields["shownCode"]
+        XCTAssertTrue(field.waitForExistence(timeout: 60), "the app never asked for the code")
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/hm-ipad/06-enter-code.png"))
+        var code = ""
+        for _ in 0..<30 where code.count != 4 {
+            code = ((try? String(contentsOfFile: codeFile, encoding: .utf8)) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if code.count != 4 { sleep(1) }
+        }
+        XCTAssertEqual(code.count, 4, "no code from the Mac side")
+        field.typeText("0000")
+        sleep(2)
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/hm-ipad/07-wrong-code.png"))
+        field.typeText(code)
+        XCTAssertTrue(app.buttons["threadRow"].firstMatch.waitForExistence(timeout: 30), "not paired after the right code")
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/hm-ipad/08-paired.png"))
+    }
+}
+
+
 private extension XCUIElement {
     func hasFocus(in app: XCUIApplication) -> Bool {
         (value(forKey: "hasKeyboardFocus") as? Bool) ?? false

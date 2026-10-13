@@ -857,5 +857,10 @@
   "Enter code": "Ввести код",
   "Found on this network": "Найдено в этой сети",
   "Found nearby": "Найдено рядом",
-  "On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.": "В локальной сети Helm нужен код: на компьютере открой Helm → Settings → Connections → Pair a device. Через Tailscale он просто спросит разрешения."
+  "On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.": "В локальной сети Helm нужен код: на компьютере открой Helm → Settings → Connections → Pair a device. Через Tailscale он просто спросит разрешения.",
+  "Code on the computer": "Код на компьютере",
+  "Helm on the computer shows four digits. Type them here to finish connecting.": "Helm на компьютере покажет четыре цифры. Введи их здесь, чтобы закончить подключение.",
+  "That's not the code on the computer. Try again.": "Это не тот код, что на компьютере. Попробуй ещё раз.",
+  "Type the code from the computer": "Введи код с компьютера",
+  "Helm on the computer asks you to allow this device, then shows a code to type here.": "Helm на компьютере спросит, разрешить ли это устройство, и покажет код, который нужно ввести здесь."
 }

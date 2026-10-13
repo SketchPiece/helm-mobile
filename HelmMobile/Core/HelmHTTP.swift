@@ -281,17 +281,32 @@ struct HelmHTTP: Sendable {
         return id
     }
 
-    enum TailnetPairStatus: Equatable { case pending, approved(String), denied, expired }
+    /// `enterCode`: allowed on the Mac, which now shows a code to send back (local network);
+    /// `wrongCode`: that wasn't it, try again.
+    enum TailnetPairStatus: Equatable { case pending, approved(String), denied, expired, enterCode, wrongCode }
 
     func tailnetPairingStatus(id: String) async throws -> TailnetPairStatus {
         let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
-        let json = try await send(request("/api/helm/tailnet-pair?id=\(escaped)"))
+        return try Self.pairStatus(await send(request("/api/helm/tailnet-pair?id=\(escaped)")))
+    }
+
+    /// Sends back the code Helm on the Mac shows after "Allow" (pairing over the local network).
+    func confirmTailnetPairing(id: String, code: String) async throws -> TailnetPairStatus {
+        var request = request("/api/helm/tailnet-pair/confirm", method: "POST")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSON.object(["id": .string(id), "code": .string(code)]).data()
+        return try Self.pairStatus(await send(request))
+    }
+
+    private static func pairStatus(_ json: JSON) throws -> TailnetPairStatus {
         switch json["status"]?.string {
         case "approved":
             guard let credential = json["credential"]?.string else { throw HelmHTTPError.invalidResponse }
             return .approved(credential)
         case "denied": return .denied
         case "expired": return .expired
+        case "enterCode": return .enterCode
+        case "wrongCode": return .wrongCode
         default: return .pending
         }
     }

@@ -15,28 +15,68 @@ struct PairingView: View {
     @State private var phase = Phase.idle
     @State private var showScanner = false
     @State private var found: [FoundHelm] = []
+    /// Allowed on the Mac over the local network: the code it shows goes back with this request.
+    @State private var codeRequest: CodeRequest?
+    @State private var shownCode = ""
+    @State private var wrongCode = false
+
+    struct CodeRequest: Equatable {
+        var id: String
+        var base: URL
+    }
 
     struct FoundHelm: Identifiable, Hashable {
         var host: String
         var label: String
-        /// Seen on the local network only: Helm approves phones itself only over Tailscale, so
-        /// this one takes the pairing code.
+        /// Seen on the local network only.
+        var local = false
+        /// A Helm that approves devices only over Tailscale: on the local network it takes the
+        /// pairing code from Settings.
         var needsCode = false
         var id: String { host }
     }
     @FocusState private var focused: Field?
 
-    enum Field { case address, code }
+    enum Field { case address, code, shownCode }
 
     enum Phase: Equatable {
         case idle
         case working(String)
         case waitingForApproval
+        case enteringCode
         case failed(String)
     }
 
     var body: some View {
         Form {
+            if codeRequest != nil {
+                Section {
+                    TextField("0000", text: $shownCode)
+                        .font(Typography.mono(34))
+                        .multilineTextAlignment(.center)
+                        .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .focused($focused, equals: .shownCode)
+                        .accessibilityIdentifier("shownCode")
+                        .onChange(of: shownCode) { _, value in
+                            let digits = String(value.filter(\.isNumber).prefix(4))
+                            if digits != value { shownCode = digits }
+                            if !digits.isEmpty { wrongCode = false }
+                            if digits.count == 4 { confirmShownCode() }
+                        }
+                } header: {
+                    Text("Code on the computer").sectionLabelStyle()
+                } footer: {
+                    if wrongCode {
+                        Text("That's not the code on the computer. Try again.")
+                            .font(Typography.footnote)
+                            .foregroundStyle(Palette.errorText)
+                    } else {
+                        Text("Helm on the computer shows four digits. Type them here to finish connecting.")
+                            .font(Typography.footnote)
+                    }
+                }
+            }
             if !found.isEmpty {
                 Section {
                     ForEach(found) { helm in
@@ -65,6 +105,9 @@ struct PairingView: View {
                 } footer: {
                     if found.contains(where: \.needsCode) {
                         Text("On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.")
+                            .font(Typography.footnote)
+                    } else if found.contains(where: \.local) {
+                        Text("Helm on the computer asks you to allow this device, then shows a code to type here.")
                             .font(Typography.footnote)
                     } else {
                         Text("Helm on the computer asks you to allow this phone. No code needed.")
@@ -123,6 +166,8 @@ struct PairingView: View {
                         case .waitingForApproval:
                             ProgressView().padding(.trailing, 6)
                             Text("Allow it in Helm on the computer")
+                        case .enteringCode:
+                            Text("Type the code from the computer")
                         default:
                             Text(code.isEmpty ? "Ask Helm to allow this phone" : "Connect")
                         }
@@ -192,13 +237,16 @@ struct PairingView: View {
                     guard let base = PairingTarget.normalizeHost(host, defaultScheme: nil) else { return nil }
                     let http = HelmHTTP(baseURL: base, token: nil)
                     guard let descriptor = try? await http.descriptor(), !paired.contains(descriptor.environmentId) else { return nil }
-                    return (FoundHelm(host: host, label: descriptor.label, needsCode: local), descriptor.environmentId)
+                    // An older Helm approves only over Tailscale; a newer one, with a code, here too.
+                    let needsCode = local ? !(await http.probeTailnetPairing()) : false
+                    return (FoundHelm(host: host, label: descriptor.label, local: local, needsCode: needsCode),
+                            descriptor.environmentId)
                 }
             }
             // One row per Mac; its tailnet address wins, since there it can approve without a code.
             for await result in group {
                 guard let (helm, environmentId) = result else { continue }
-                if let existing = byEnvironment[environmentId], !existing.needsCode { continue }
+                if let existing = byEnvironment[environmentId], !existing.local { continue }
                 byEnvironment[environmentId] = helm
             }
         }
@@ -222,7 +270,7 @@ struct PairingView: View {
 
     private var isBusy: Bool {
         switch phase {
-        case .working, .waitingForApproval: true
+        case .working, .waitingForApproval, .enteringCode: true
         default: false
         }
     }
@@ -244,7 +292,8 @@ struct PairingView: View {
         Task {
             do {
                 if code.trimmingCharacters(in: .whitespaces).isEmpty {
-                    try await requestApproval(address: address)
+                    // Over the local network the Mac's answer is a code to type, not the pairing yet.
+                    guard try await requestApproval(address: address) else { return }
                 } else {
                     guard let target = PairingTarget.manual(host: address, code: code) else {
                         phase = .failed(String(localized: "That address doesn't look right."))
@@ -263,8 +312,9 @@ struct PairingView: View {
         }
     }
 
-    /// Helm's tailnet pairing: the Mac shows "allow this phone?", we poll until it answers.
-    private func requestApproval(address: String) async throws {
+    /// Helm's own pairing: the Mac shows "allow this phone?", we poll until it answers. True once
+    /// paired; false when the Mac allowed it over the local network and now shows a code to type.
+    private func requestApproval(address: String) async throws -> Bool {
         guard let base = PairingTarget.normalizeHost(address, defaultScheme: nil) else {
             throw HelmHTTPError.unreachable("")
         }
@@ -284,12 +334,52 @@ struct PairingView: View {
             case .approved(let credential):
                 phase = .working(String(localized: "Connecting…"))
                 try await model.pair(PairingTarget(baseURL: base, code: credential))
-                return
+                return true
+            case .enterCode, .wrongCode:
+                shownCode = ""
+                codeRequest = CodeRequest(id: requestId, base: base)
+                phase = .enteringCode
+                focused = .shownCode
+                return false
             case .denied: throw PairingError.denied
             case .expired: throw PairingError.expired
             }
         }
         throw PairingError.expired
+    }
+
+    /// The four digits from the Mac's screen: a match brings the credential, and pairing finishes.
+    private func confirmShownCode() {
+        guard let request = codeRequest else { return }
+        let entered = shownCode
+        Task {
+            do {
+                let http = HelmHTTP(baseURL: request.base, token: nil)
+                switch try await http.confirmTailnetPairing(id: request.id, code: entered) {
+                case .approved(let credential):
+                    phase = .working(String(localized: "Connecting…"))
+                    try await model.pair(PairingTarget(baseURL: request.base, code: credential))
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    router.showPairing = false
+                    dismiss()
+                case .wrongCode, .enterCode, .pending:
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                    shownCode = ""
+                    wrongCode = true
+                    phase = .enteringCode
+                case .denied:
+                    codeRequest = nil
+                    throw PairingError.denied
+                case .expired:
+                    codeRequest = nil
+                    throw PairingError.expired
+                }
+            } catch {
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                codeRequest = nil
+                phase = .failed(error.localizedDescription)
+            }
+        }
     }
 
     enum PairingError: LocalizedError {

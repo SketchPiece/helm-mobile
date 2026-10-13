@@ -1067,6 +1067,9 @@
         }
       }
     },
+    "0000": {
+      "shouldTranslate": false
+    },
     "1 file changed": {
       "localizations": {
         "ru": {
@@ -2147,6 +2150,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код и диффы следуют размеру текста телефона, если не задать свой. Строки без переноса листаются вбок."
+          }
+        }
+      }
+    },
+    "Code on the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Код на компьютере"
           }
         }
       }
@@ -3503,6 +3516,16 @@
         }
       }
     },
+    "Helm on the computer asks you to allow this device, then shows a code to type here.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helm на компьютере спросит, разрешить ли это устройство, и покажет код, который нужно ввести здесь."
+          }
+        }
+      }
+    },
     "Helm on the computer asks you to allow this phone. No code needed.": {},
     "Helm on the computer didn't switch threads.": {
       "localizations": {
@@ -3525,6 +3548,16 @@
       }
     },
     "Helm on the computer said no.": {},
+    "Helm on the computer shows four digits. Type them here to finish connecting.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helm на компьютере покажет четыре цифры. Введи их здесь, чтобы закончить подключение."
+          }
+        }
+      }
+    },
     "Helm on this computer can't arrange threads.": {},
     "Helm version": {
       "localizations": {
@@ -6677,6 +6710,16 @@
         }
       }
     },
+    "That's not the code on the computer. Try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это не тот код, что на компьютере. Попробуй ещё раз."
+          }
+        }
+      }
+    },
     "That's too much text for one message": {
       "localizations": {
         "ru": {
@@ -7177,6 +7220,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Набери на клавиатуре эмодзи или выбери ниже."
+          }
+        }
+      }
+    },
+    "Type the code from the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введи код с компьютера"
           }
         }
       }
