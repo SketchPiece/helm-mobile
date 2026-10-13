@@ -1,6 +1,7 @@
 import AVFoundation
 import CoreMedia
 import Foundation
+import UIKit
 import Observation
 
 /// The computer's screen on the phone (experimental): H.264 from Helm's `/api/helm/screen`
@@ -256,6 +257,30 @@ final class ScreenRemote {
 enum MacKeyCode {
     static let returnKey = 36, tab = 48, space = 49, delete = 51, escape = 53
     static let left = 123, right = 124, down = 125, up = 126
+
+    /// A hardware keyboard's key (HID usage, as `UIKey.keyCode` reports it) as the Mac's key code.
+    static func code(forHID usage: UIKeyboardHIDUsage) -> Int? {
+        let letters = [0, 11, 8, 2, 14, 3, 5, 4, 34, 38, 40, 37, 46, 45, 31, 35, 12, 15, 1, 17, 32, 9, 13, 7, 16, 6]
+        let digits = [18, 19, 20, 21, 23, 22, 26, 28, 25, 29]  // 1…9, 0
+        let functions = [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111]  // F1…F12
+        let raw = usage.rawValue
+        switch raw {
+        case 0x04...0x1D: return letters[raw - 0x04]
+        case 0x1E...0x27: return digits[raw - 0x1E]
+        case 0x3A...0x45: return functions[raw - 0x3A]
+        default: break
+        }
+        let table: [UIKeyboardHIDUsage: Int] = [
+            .keyboardReturnOrEnter: returnKey, .keyboardEscape: escape, .keyboardDeleteOrBackspace: delete,
+            .keyboardTab: tab, .keyboardSpacebar: space, .keyboardHyphen: 27, .keyboardEqualSign: 24,
+            .keyboardOpenBracket: 33, .keyboardCloseBracket: 30, .keyboardBackslash: 42, .keyboardSemicolon: 41,
+            .keyboardQuote: 39, .keyboardGraveAccentAndTilde: 50, .keyboardComma: 43, .keyboardPeriod: 47,
+            .keyboardSlash: 44, .keyboardRightArrow: right, .keyboardLeftArrow: left, .keyboardDownArrow: down,
+            .keyboardUpArrow: up, .keyboardDeleteForward: 117, .keyboardHome: 115, .keyboardEnd: 119,
+            .keyboardPageUp: 116, .keyboardPageDown: 121, .keypadEnter: 76,
+        ]
+        return table[usage]
+    }
 
     static func code(for character: Character) -> Int? {
         let table: [Character: Int] = [

@@ -1,3 +1,4 @@
+import GameController
 import SwiftUI
 import UIKit
 
@@ -8,11 +9,12 @@ struct ScreenRemoteView: View {
     @State private var remote: ScreenRemote
     @State private var viewport = ScreenViewport()
     @State private var showsNotice = true
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    private let close: () -> Void
 
-    init(environment: EnvironmentSession) {
+    init(environment: EnvironmentSession, close: @escaping () -> Void) {
         _remote = State(initialValue: ScreenRemote(environment: environment))
+        self.close = close
     }
 
     var body: some View {
@@ -42,7 +44,7 @@ struct ScreenRemoteView: View {
         }
         .overlay(alignment: .bottom) {
             if !viewport.keyboardShown {
-                ScreenToolbar(remote: remote, viewport: viewport) { dismiss() }
+                ScreenToolbar(remote: remote, viewport: viewport) { close() }
                     .padding(.bottom, 8)
             }
         }
@@ -68,7 +70,7 @@ struct ScreenRemoteView: View {
             Text("Connecting to \(remote.environment.label)…")
                 .font(Typography.subheadline)
                 .foregroundStyle(.white.opacity(0.8))
-            Button("Close") { dismiss() }
+            Button("Close") { close() }
                 .buttonStyle(.glass)
                 .padding(.top, 10)
         }
@@ -85,7 +87,7 @@ struct ScreenRemoteView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             HStack(spacing: 12) {
-                Button("Close") { dismiss() }
+                Button("Close") { close() }
                     .buttonStyle(.glass)
                 Button("Try again") { Task { await remote.connect() } }
                     .buttonStyle(.glassProminent)
@@ -138,6 +140,61 @@ final class ScreenViewport {
     }
 }
 
+// MARK: Presenting
+
+/// Shows the screen remote over everything. A UIKit controller rather than a SwiftUI cover: only a
+/// controller UIKit asks can lock the pointer, which on an iPad with a trackpad or mouse hides
+/// its pointer and hands the moves and clicks to the Mac (GameController's GCMouse).
+@MainActor
+enum ScreenRemotePresenter {
+    static func present(_ environment: EnvironmentSession) {
+        guard let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive }),
+              var top = scene.keyWindow?.rootViewController else { return }
+        while let presented = top.presentedViewController { top = presented }
+        let controller = ScreenRemoteController(environment: environment)
+        top.present(controller, animated: true)
+    }
+}
+
+final class ScreenRemoteController: UIViewController {
+    private let environment: EnvironmentSession
+
+    init(environment: EnvironmentSession) {
+        self.environment = environment
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .fullScreen
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        let host = UIHostingController(rootView: ScreenRemoteView(environment: environment) { [weak self] in
+            self?.dismiss(animated: true)
+        })
+        addChild(host)
+        host.view.frame = view.bounds
+        host.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        host.view.backgroundColor = .black
+        view.addSubview(host.view)
+        host.didMove(toParent: self)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        setNeedsUpdateOfPrefersPointerLocked()
+    }
+
+    override var prefersPointerLocked: Bool { true }
+    override var prefersStatusBarHidden: Bool { true }
+    override var prefersHomeIndicatorAutoHidden: Bool { true }
+    override var childForStatusBarHidden: UIViewController? { nil }
+}
+
 // MARK: Canvas
 
 private struct ScreenCanvas: UIViewRepresentable {
@@ -152,14 +209,12 @@ private struct ScreenCanvas: UIViewRepresentable {
         // Read so SwiftUI calls back when they change; the view lays itself out from them.
         _ = (remote.cursor, remote.desktopSize, viewport.zoom)
         view.setNeedsLayout()
-        if viewport.wantsKeyboard != view.isFirstResponder {
-            _ = viewport.wantsKeyboard ? view.becomeFirstResponder() : view.resignFirstResponder()
-        }
+        view.apply(wantsKeyboard: viewport.wantsKeyboard)
     }
 }
 
 /// The video, the cursor drawn over it, the gestures and the keyboard.
-final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
+final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, UIPointerInteractionDelegate {
     private let remote: ScreenRemote
     private let viewport: ScreenViewport
     private let desktop = CALayer()
@@ -194,6 +249,16 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         ])
         keyboardLayoutGuide.usesBottomSafeArea = false
         addGestures()
+        addInteraction(UIPointerInteraction(delegate: self))
+        let center = NotificationCenter.default
+        center.addObserver(self, selector: #selector(mouseConnected(_:)), name: .GCMouseDidConnect, object: nil)
+        center.addObserver(self, selector: #selector(hardwareKeyboardChanged), name: .GCKeyboardDidConnect, object: nil)
+        GCMouse.mice().forEach(attach)
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        hardwareKeyboardChanged()
     }
 
     @available(*, unavailable)
@@ -257,7 +322,10 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         let scroll = UIPanGestureRecognizer(target: self, action: #selector(scroll(_:)))
         scroll.minimumNumberOfTouches = 2
         scroll.maximumNumberOfTouches = 2
-        scroll.allowedScrollTypesMask = .all
+        // A trackpad's two-finger scroll or a mouse wheel: no touches, only scroll events.
+        let wheel = UIPanGestureRecognizer(target: self, action: #selector(wheel(_:)))
+        wheel.allowedScrollTypesMask = .all
+        wheel.allowedTouchTypes = []
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
         let rightClick = UITapGestureRecognizer(target: self, action: #selector(rightClick))
         rightClick.numberOfTouchesRequired = 2
@@ -269,8 +337,11 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         drag.allowableMovement = 12
         for recognizer in [move, scroll, pinch, rightClick, click, drag] as [UIGestureRecognizer] {
             recognizer.delegate = self
+            // Fingers only: a trackpad or mouse drives the cursor through GCMouse instead.
+            recognizer.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
             addGestureRecognizer(recognizer)
         }
+        addGestureRecognizer(wheel)
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -326,6 +397,13 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         pan.setTranslation(.zero, in: self)
         // The content follows the fingers, at the computer's own scale.
         remote.scroll(dx: delta.x * 2 / zoom.squareRoot(), dy: delta.y * 2 / zoom.squareRoot())
+    }
+
+    @objc private func wheel(_ pan: UIPanGestureRecognizer) {
+        guard pan.state == .changed else { return }
+        let delta = pan.translation(in: self)
+        pan.setTranslation(.zero, in: self)
+        remote.scroll(dx: delta.x * 2, dy: delta.y * 2)
     }
 
     @objc private func pinch(_ pinch: UIPinchGestureRecognizer) {
@@ -400,6 +478,84 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
 
     override var canBecomeFirstResponder: Bool { true }
 
+    private var lastWantsKeyboard = false
+
+    /// The toolbar's keyboard button and the key row's hide button, acted on when they change
+    /// (a hardware keyboard keeps the view first responder on its own).
+    func apply(wantsKeyboard: Bool) {
+        guard wantsKeyboard != lastWantsKeyboard else { return }
+        lastWantsKeyboard = wantsKeyboard
+        if wantsKeyboard {
+            becomeFirstResponder()
+            reloadInputViews()
+        } else if !hasHardwareKeyboard {
+            _ = resignFirstResponder()
+        } else {
+            reloadInputViews()
+        }
+    }
+
+    private var hasHardwareKeyboard: Bool { GCKeyboard.coalesced != nil }
+
+    /// With a keyboard attached the view listens from the start, so typing goes to the Mac.
+    @objc private func hardwareKeyboardChanged() {
+        guard window != nil, hasHardwareKeyboard, !isFirstResponder else { return }
+        becomeFirstResponder()
+    }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        var unhandled = Set<UIPress>()
+        for press in presses {
+            guard let key = press.key, let code = MacKeyCode.code(forHID: key.keyCode) else {
+                unhandled.insert(press)
+                continue
+            }
+            // The physical key with its modifiers, like a keyboard plugged into the Mac
+            // (its own layout applies there). iPadOS keeps a few for itself: ⌘Tab, ⌘Space, 🌐.
+            var modifiers = Set<ScreenRemote.Modifier>()
+            if key.modifierFlags.contains(.command) { modifiers.insert(.cmd) }
+            if key.modifierFlags.contains(.alternate) { modifiers.insert(.alt) }
+            if key.modifierFlags.contains(.control) { modifiers.insert(.ctrl) }
+            if key.modifierFlags.contains(.shift) { modifiers.insert(.shift) }
+            remote.key(code, modifiers: modifiers.union(viewport.modifiers))
+            viewport.modifiers = []
+            startRepeat(press, code: code, modifiers: modifiers)
+        }
+        if !unhandled.isEmpty { super.pressesBegan(unhandled, with: event) }
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        for press in presses where press === repeatingPress { stopRepeat() }
+        super.pressesEnded(presses, with: event)
+    }
+
+    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        stopRepeat()
+        super.pressesCancelled(presses, with: event)
+    }
+
+    private weak var repeatingPress: UIPress?
+    private var repeatTimer: Timer?
+
+    /// A held key repeats, as on the Mac: after half a second, then 25 times a second.
+    private func startRepeat(_ press: UIPress, code: Int, modifiers: Set<ScreenRemote.Modifier>) {
+        stopRepeat()
+        repeatingPress = press
+        repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.remote.key(code, modifiers: modifiers) }
+                }
+            }
+        }
+    }
+
+    private func stopRepeat() {
+        repeatTimer?.invalidate()
+        repeatTimer = nil
+        repeatingPress = nil
+    }
+
     override func resignFirstResponder() -> Bool {
         let resigned = super.resignFirstResponder()
         if resigned, viewport.wantsKeyboard { viewport.wantsKeyboard = false }
@@ -436,6 +592,8 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     }
 
     override var inputAccessoryView: UIView? {
+        // A hardware keyboard has the Mac keys already; the row only shows when asked for.
+        if hasHardwareKeyboard, !viewport.wantsKeyboard { return nil }
         if let accessory { return accessory }
         let host = UIHostingController(rootView: ScreenKeyRow(remote: remote, viewport: viewport))
         host.view.backgroundColor = .clear
@@ -455,6 +613,44 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     }
 
     private var accessory: UIView?
+
+    // MARK: Trackpad and mouse
+
+    func pointerInteraction(_ interaction: UIPointerInteraction, styleFor region: UIPointerRegion) -> UIPointerStyle? {
+        .hidden()
+    }
+
+    @objc private func mouseConnected(_ note: Notification) {
+        guard let mouse = note.object as? GCMouse else { return }
+        attach(mouse)
+    }
+
+    /// Raw moves and buttons of an iPad's trackpad or mouse go to the Mac's cursor. While the
+    /// controller holds the pointer lock the iPad's own pointer is gone; otherwise it's hidden
+    /// over the screen (the pointer interaction below).
+    private func attach(_ mouse: GCMouse) {
+        guard let input = mouse.mouseInput else { return }
+        input.mouseMovedHandler = { [weak self] _, dx, dy in
+            Task { @MainActor in self?.mouseMoved(dx: CGFloat(dx), dy: CGFloat(dy)) }
+        }
+        let buttons: [(GCControllerButtonInput?, ScreenRemote.Button)] = [
+            (input.leftButton, .left), (input.rightButton, .right), (input.middleButton, .middle),
+        ]
+        for (button, name) in buttons {
+            button?.pressedChangedHandler = { [weak self] _, _, pressed in
+                Task { @MainActor in self?.remote.press(name, down: pressed) }
+            }
+        }
+    }
+
+    private func mouseMoved(dx: CGFloat, dy: CGFloat) {
+        guard window != nil else { return }
+        stopFling()
+        // Raw counts get a little acceleration, like the Mac's own: slow moves stay precise.
+        let speed = hypot(dx, dy)
+        let gain = 1 + min(speed / 6, 2.5)
+        remote.moveCursor(by: CGPoint(x: dx * gain, y: -dy * gain))
+    }
 
     // MARK: Cursor
 

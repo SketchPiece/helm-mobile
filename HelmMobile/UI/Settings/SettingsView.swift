@@ -234,22 +234,18 @@ struct EnvironmentDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemove = false
     @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemoteOn = false
-    @State private var showingScreen = false
 
     var body: some View {
         Form {
             if screenRemoteOn, environment.config?.capability("screenRemote") == true {
                 Section {
                     Button {
-                        showingScreen = true
+                        ScreenRemotePresenter.present(environment)
                     } label: {
                         SettingsRow(String(localized: "Control the computer"), symbol: "display")
                             .foregroundStyle(Palette.accentText)
                     }
                     .accessibilityIdentifier("showScreen")
-                }
-                .fullScreenCover(isPresented: $showingScreen) {
-                    ScreenRemoteView(environment: environment)
                 }
             }
             Section {

@@ -229,7 +229,6 @@ struct MacRemoteSheet: View {
     /// Where the thread list drops from: right under the header.
     @State private var headerHeight: CGFloat = 0
     @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemoteOn = false
-    @State private var showingScreen = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -399,16 +398,13 @@ struct MacRemoteSheet: View {
                 Spacer()
                 if screenRemoteOn, let environment = remote.environment, environment.config?.capability("screenRemote") == true {
                     Button {
-                        showingScreen = true
+                        ScreenRemotePresenter.present(environment)
                     } label: {
                         Image(systemName: "display")
                             .font(.system(size: 17))
                             .foregroundStyle(Palette.text)
                     }
                     .accessibilityLabel("Control the computer")
-                    .fullScreenCover(isPresented: $showingScreen) {
-                        ScreenRemoteView(environment: environment)
-                    }
                     .padding(.trailing, 6)
                 }
                 if !remote.isDraft {
