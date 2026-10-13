@@ -452,6 +452,17 @@ make the TS client's decoder fail, so leave flags out unless you handle those ev
 ```
 All capability flags are listed with comments in `environment.ts:91-198`. Missing means unsupported.
 `voiceTranscription` is a Helm-fork flag (`environment.ts:96-97`).
+`screenRemote` (Helm fork, experimental) means `GET /api/helm/screen?wsTicket=…` upgrades to a
+WebSocket that streams the Mac's screen (`apps/server/src/helm/screenRemoteRoute.ts`,
+`native/helm-screen/main.swift`; needs `terminal:operate`):
+- server → phone, binary `[u8 kind][payload]`: kind 2 is SPS/PPS as `[u8 count]([u16 BE length][set])…`,
+  sent before every keyframe; kind 1 is a frame as `[u8 flags, 1 = keyframe][u64 BE pts µs][AVCC, 4-byte lengths]`.
+- server → phone, text JSON: `{"t":"info",width,height,videoWidth,videoHeight,accessibility}` (points),
+  `{"t":"cursor",x,y}` (points from the display's top-left; the video leaves the cursor out),
+  `{"t":"error",code: "screenRecording"|"accessibility"|"capture"|"noDisplay",message}`.
+- phone → server, text JSON: `start {maxWidth,fps,bitrate}`, `keyframe`, `move {x,y}`,
+  `button {b: left|right|middle, down, x, y}`, `scroll {dx,dy}` (pixels), `key {code, mods: [cmd|alt|ctrl|shift]}`
+  (Mac virtual key codes), `text {s}`, `stop`.
 
 Compatibility rule (`packages/client-runtime/src/connection/compatibility.ts:9-27`): if
 `orchestrationProtocolVersion ?? 1` is not 2, the client refuses (a server newer than the client means the client must
