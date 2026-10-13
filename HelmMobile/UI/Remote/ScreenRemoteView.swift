@@ -164,6 +164,8 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     private let viewport: ScreenViewport
     private let desktop = CALayer()
     private let cursorView = UIImageView(image: ScreenCanvasView.cursorImage)
+    /// Where the cursor's tip is on the phone's screen.
+    private var cursorTip = CGPoint.zero
     /// Pinned to the keyboard's top so its coming and going lays the view out again.
     private let keyboardEdge = UIView()
     private var fling: CADisplayLink?
@@ -231,8 +233,12 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         desktop.frame = CGRect(origin: originPoint, size: scaled)
         remote.layer.frame = desktop.bounds
         CATransaction.commit()
-        // The arrow's tip (3, 2 in the image) on the cursor.
-        cursorView.frame.origin = CGPoint(x: originPoint.x + cursor.x * zoom - 3, y: originPoint.y + cursor.y * zoom - 2)
+        // The arrow at the size the computer draws it, scaled with the screen (the Mac's is
+        // about 24 points tall, the image's 29), never so small it gets lost; its tip (3, 2) on the cursor.
+        let arrowScale = min(max(zoom * 24 / 29, 0.4), 1)
+        cursorTip = CGPoint(x: originPoint.x + cursor.x * zoom, y: originPoint.y + cursor.y * zoom)
+        cursorView.frame = CGRect(x: cursorTip.x - 3 * arrowScale, y: cursorTip.y - 2 * arrowScale,
+                                  width: 26 * arrowScale, height: 34 * arrowScale)
         let visible = CGRect(x: -originPoint.x / zoom, y: -originPoint.y / zoom,
                              width: available.width / zoom, height: available.height / zoom)
             .intersection(CGRect(origin: .zero, size: size))
@@ -367,7 +373,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     /// A ring at the cursor, so a click is seen even when the screen doesn't change.
     private func ripple() {
         let ring = CAShapeLayer()
-        let tip = CGPoint(x: cursorView.frame.minX + 3, y: cursorView.frame.minY + 2)
+        let tip = cursorTip
         ring.path = UIBezierPath(ovalIn: CGRect(x: -20, y: -20, width: 40, height: 40)).cgPath
         ring.position = tip
         ring.fillColor = UIColor.clear.cgColor
