@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The paired Macs and what the phone can do with each: its screen (from anywhere), the remote
-/// (only beside it, on the same network), a new thread there. Home's computer button opens it.
+/// (only while the Mac is in use nearby), a new thread there. Home's computer button opens it.
 struct ComputersSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
@@ -107,48 +107,45 @@ struct ComputerStatusLine: View {
     }
 }
 
-/// Screen, Remote and New thread for a connected Mac; Reconnect (or Pair again) for one that isn't.
+/// Screen, Remote (when there is one) and New thread for a connected Mac; Reconnect (or Pair again) for one that isn't.
 struct ComputerActions: View {
     let environment: EnvironmentSession
+    @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                if environment.isLive {
-                    if canShowScreen {
-                        action("Screen", symbol: "display", prominent: true) {
-                            ScreenRemotePresenter.present(environment)
-                        }
-                    }
-                    action("Remote", symbol: "appletvremote.gen4", enabled: isNearby) {
-                        leave { router.showingMacRemote = true }
-                    }
-                    action("New thread", symbol: "square.and.pencil") {
-                        router.showComputers = false
-                        router.showSettings = false
-                        router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: nil))
-                    }
-                } else if environment.status == .unauthorized {
-                    action("Pair again", symbol: "key", prominent: true) {
-                        leave { router.showPairing = true }
-                    }
-                } else {
-                    action("Reconnect", symbol: "arrow.clockwise", prominent: true) {
-                        environment.reconnectNow(reason: "computers sheet")
+        HStack(spacing: 8) {
+            if environment.isLive {
+                if canShowScreen {
+                    action("Screen", symbol: "display", prominent: true) {
+                        ScreenRemotePresenter.present(environment)
                     }
                 }
-            }
-            if environment.isLive, !isNearby {
-                Text("The remote works on the same network as the computer; the screen works from anywhere.")
-                    .font(Typography.caption)
-                    .foregroundStyle(Palette.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                if hasRemote {
+                    action("Remote", symbol: "appletvremote.gen4") {
+                        leave { router.showingMacRemote = true }
+                    }
+                }
+                action("New thread", symbol: "square.and.pencil") {
+                    router.showComputers = false
+                    router.showSettings = false
+                    router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: nil))
+                }
+            } else if environment.status == .unauthorized {
+                action("Pair again", symbol: "key", prominent: true) {
+                    leave { router.showPairing = true }
+                }
+            } else {
+                action("Reconnect", symbol: "arrow.clockwise", prominent: true) {
+                    environment.reconnectNow(reason: "computers sheet")
+                }
             }
         }
     }
 
-    private var isNearby: Bool { NearbyMacs.shared.contains(environment.id) }
+    /// The remote drives the thread open on this Mac, so it's here only while someone uses the
+    /// Mac nearby, the same as Home's pill.
+    private var hasRemote: Bool { model.macRemoteTarget()?.ref.environmentId == environment.id }
     private var canShowScreen: Bool { environment.config?.capability("screenRemote") == true }
 
     /// Closes Computers (or Settings) first: the next sheet comes up from Home once this one is gone.
@@ -161,7 +158,7 @@ struct ComputerActions: View {
         }
     }
 
-    private func action(_ title: LocalizedStringKey, symbol: String, prominent: Bool = false, enabled: Bool = true,
+    private func action(_ title: LocalizedStringKey, symbol: String, prominent: Bool = false,
                         perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
             VStack(spacing: 5) {
@@ -177,7 +174,5 @@ struct ComputerActions: View {
             .contentShape(.rect(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.4)
     }
 }

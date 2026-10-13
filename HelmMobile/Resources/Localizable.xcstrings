@@ -7005,16 +7005,6 @@
         }
       }
     },
-    "The remote works on the same network as the computer; the screen works from anywhere.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Пульт работает в одной сети с компьютером, экран — откуда угодно."
-          }
-        }
-      }
-    },
     "The request was interrupted.": {
       "localizations": {
         "ru": {
