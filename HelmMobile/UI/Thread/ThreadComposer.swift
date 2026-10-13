@@ -284,33 +284,11 @@ struct ThreadComposer: View {
     }
 
     private var sendButton: some View {
-            Button {
-                send(followUp: followUpBehavior.followUp)
-            } label: {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
-                    .background(canSend ? Palette.accent : Palette.border, in: .circle)
-            }
-            .disabled(!canSend)
-            .accessibilityIdentifier("send")
-            .contextMenu {
-                if isWorking && canSend {
-                    // The default is the tap; long-press offers the other one.
-                    switch followUpBehavior.other {
-                    case .steer:
-                        Button {
-                            send(followUp: .steer)
-                        } label: { Label("Send now (steer)", systemImage: "arrow.turn.down.right") }
-                    case .queue:
-                        Button {
-                            send(followUp: .queue)
-                        } label: { Label("Queue after this turn", systemImage: "clock") }
-                    }
-                }
-            }
-            .accessibilityLabel(!isWorking ? "Send" : followUpBehavior == .queue ? "Queue message" : "Steer the agent")
+        SendButton(canSend: canSend, other: isWorking ? followUpBehavior.other : nil,
+                   label: !isWorking ? "Send" : followUpBehavior == .queue ? "Queue message" : "Steer the agent") {
+            send(followUp: $0 ?? followUpBehavior.followUp)
+        }
+        .equatable()
     }
 
     private var settingsChips: some View {
@@ -355,5 +333,50 @@ struct ThreadComposer: View {
             await session.send(text: message.text, attachments: message.attachments, context: message.context,
                                followUp: followUp, modelSelection: nil, runtimeMode: nil, interactionMode: nil)
         }
+    }
+}
+
+/// The amber send button. While the agent works, a hold offers the other follow-up in a menu at
+/// the button: a context menu lifted the button out of the card and dimmed the whole screen.
+/// Its own `Equatable` view, so updates from the Mac don't rebuild the menu under the finger.
+private struct SendButton: View, @MainActor Equatable {
+    let canSend: Bool
+    /// The follow-up a hold offers; nil when the agent is idle and there's nothing else to offer.
+    let other: FollowUpBehavior?
+    let label: LocalizedStringKey
+    /// nil sends the default follow-up.
+    let onSend: (ThreadSession.FollowUp?) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        (lhs.canSend, lhs.other, lhs.label) == (rhs.canSend, rhs.other, rhs.label)
+    }
+
+    var body: some View {
+        Group {
+            if let other, canSend {
+                Menu {
+                    switch other {
+                    case .steer:
+                        Button { onSend(.steer) } label: { Label("Send now (steer)", systemImage: "arrow.turn.down.right") }
+                    case .queue:
+                        Button { onSend(.queue) } label: { Label("Queue after this turn", systemImage: "clock") }
+                    }
+                } label: { arrow } primaryAction: { onSend(nil) }
+            } else {
+                Button { onSend(nil) } label: { arrow }
+                    .disabled(!canSend)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("send")
+        .accessibilityLabel(label)
+    }
+
+    private var arrow: some View {
+        Image(systemName: "arrow.up")
+            .font(.system(size: 16, weight: .bold))
+            .frame(width: 40, height: 40)
+            .foregroundStyle(canSend ? Palette.accentForeground : Palette.placeholder)
+            .background(canSend ? Palette.accent : Palette.border, in: .circle)
     }
 }
