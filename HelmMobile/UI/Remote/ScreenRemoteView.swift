@@ -43,12 +43,19 @@ struct ScreenRemoteView: View {
             if showsNotice, let notice = remote.notice { noticeBanner(notice) }
         }
         .overlay(alignment: .bottom) {
-            if !viewport.keyboardShown {
+            if viewport.keyboardShown {
+                EmptyView()
+            } else if viewport.toolbarHidden {
+                ScreenToolbarGrabber { viewport.toolbarHidden = false }
+                    .transition(.opacity)
+            } else {
                 ScreenToolbar(remote: remote, viewport: viewport) { close() }
                     .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
+        .animation(.snappy(duration: 0.25), value: viewport.toolbarHidden)
         .animation(.easeInOut(duration: 0.2), value: viewport.keyboardShown)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
@@ -126,6 +133,8 @@ final class ScreenViewport {
     /// The part of the computer's screen on view, in its points.
     var visibleRect = CGRect.zero
     var keyboardShown = false
+    /// The toolbar steps aside once the screen is touched; the grabber at the bottom brings it back.
+    var toolbarHidden = false
     /// Asks the canvas to show or hide the keyboard (it owns the first responder).
     var wantsKeyboard = false
     /// Mac modifiers held for the next key (the accessory row's ⌘ ⌥ ⌃ ⇧).
@@ -187,11 +196,14 @@ final class ScreenRemoteController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         setNeedsUpdateOfPrefersPointerLocked()
+        setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
     }
 
     override var prefersPointerLocked: Bool { true }
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
+    // A swipe up from the bottom reaches the grabber first, not the home screen.
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .bottom }
     override var childForStatusBarHidden: UIViewController? { nil }
 }
 
@@ -356,6 +368,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         switch pan.state {
         case .began:
             stopFling()
+            hideToolbar()
         case .changed:
             let delta = pan.translation(in: self)
             pan.setTranslation(.zero, in: self)
@@ -388,7 +401,13 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         fling = nil
     }
 
+    /// Working on the screen puts the toolbar away.
+    private func hideToolbar() {
+        if !viewport.toolbarHidden { viewport.toolbarHidden = true }
+    }
+
     @objc private func scroll(_ pan: UIPanGestureRecognizer) {
+        if pan.state == .began { hideToolbar() }
         guard pan.state == .changed, !pinchActive else {
             pan.setTranslation(.zero, in: self)
             return
@@ -408,7 +427,9 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
 
     @objc private func pinch(_ pinch: UIPinchGestureRecognizer) {
         switch pinch.state {
-        case .began: pinchActive = false
+        case .began:
+            pinchActive = false
+            hideToolbar()
         case .changed:
             // Small spreads are a two-finger scroll; past that it's a zoom.
             if !pinchActive, abs(pinch.scale - 1) < 0.08 { return }
@@ -421,6 +442,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
 
     @objc private func click() {
         stopFling()
+        hideToolbar()
         remote.click()
         haptic.impactOccurred(intensity: 0.6)
         ripple()
@@ -438,6 +460,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         case .began:
             stopFling()
             dragLocation = location
+            hideToolbar()
             remote.press(down: true)
             haptic.impactOccurred(intensity: 1)
         case .changed:
@@ -646,6 +669,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     private func mouseMoved(dx: CGFloat, dy: CGFloat) {
         guard window != nil else { return }
         stopFling()
+        hideToolbar()
         // Raw counts get a little acceleration, like the Mac's own: slow moves stay precise.
         let speed = hypot(dx, dy)
         let gain = 1 + min(speed / 6, 2.5)
@@ -732,6 +756,28 @@ private struct ScreenToolbar: View {
                 .contentShape(.rect)
         }
         .accessibilityLabel(Text(label))
+    }
+}
+
+/// What's left of the toolbar while it's away: a handle at the bottom; a tap or a swipe up brings it back.
+private struct ScreenToolbarGrabber: View {
+    let show: () -> Void
+
+    var body: some View {
+        Capsule()
+            .fill(.white.opacity(0.75))
+            .frame(width: 44, height: 5)
+            .shadow(color: .black.opacity(0.5), radius: 2)
+            .frame(width: 120, height: 34)
+            .contentShape(.rect)
+            .onTapGesture(perform: show)
+            .gesture(DragGesture(minimumDistance: 8).onEnded { drag in
+                if drag.translation.height < -8 { show() }
+            })
+            .accessibilityElement()
+            .accessibilityLabel("Show toolbar")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { show() }
     }
 }
 
