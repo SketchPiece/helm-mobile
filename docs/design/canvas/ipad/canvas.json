@@ -1,0 +1,176 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · iPad: layout, keyboard, windows",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-brief.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1660,
+   "h": 900,
+   "title": "0. Research: iPad UX for Helm"
+  },
+  "1-now.html": {
+   "x": 1780,
+   "y": 0,
+   "w": 1660,
+   "h": 1000,
+   "title": "Now · the iPhone app on an iPad"
+  },
+  "a-split.html": {
+   "x": 0,
+   "y": 1260,
+   "w": 1660,
+   "h": 1000,
+   "title": "A. Two columns: Home | thread (recommended)"
+  },
+  "b-tree.html": {
+   "x": 1780,
+   "y": 1260,
+   "w": 1660,
+   "h": 1000,
+   "title": "B. Two columns, sidebar by project (like Helm Desktop)"
+  },
+  "c-three.html": {
+   "x": 3560,
+   "y": 1260,
+   "w": 1660,
+   "h": 1000,
+   "title": "C. Three columns: lists | threads | thread"
+  },
+  "d-inspector.html": {
+   "x": 0,
+   "y": 2520,
+   "w": 1660,
+   "h": 1000,
+   "title": "D. Review changes in an inspector"
+  },
+  "e-new-thread.html": {
+   "x": 1780,
+   "y": 2520,
+   "w": 1660,
+   "h": 1000,
+   "title": "E. New thread with a hardware keyboard"
+  },
+  "f-palette.html": {
+   "x": 3560,
+   "y": 2520,
+   "w": 1660,
+   "h": 1000,
+   "title": "F. ⌘K: threads and actions"
+  },
+  "g-menubar.html": {
+   "x": 0,
+   "y": 3780,
+   "w": 1660,
+   "h": 1000,
+   "title": "G. Menu bar and shortcuts"
+  },
+  "h-sizes.html": {
+   "x": 0,
+   "y": 5280,
+   "w": 2200,
+   "h": 900,
+   "title": "H. Every window size: from 13\" to Slide Over"
+  },
+  "i-windows.html": {
+   "x": 3560,
+   "y": 3780,
+   "w": 1820,
+   "h": 1240,
+   "title": "I. Windows: a thread and the screen remote side by side"
+  },
+  "j-remote.html": {
+   "x": 1780,
+   "y": 3780,
+   "w": 1660,
+   "h": 1000,
+   "title": "J. Screen remote on iPad with a trackpad"
+  },
+  "k-adapt.mmd": {
+   "x": 2320,
+   "y": 5280,
+   "w": 1500,
+   "h": 800,
+   "title": "K. How the layout follows the window width"
+  }
+ },
+ "order": [
+  "0-brief.html",
+  "1-now.html",
+  "a-split.html",
+  "b-tree.html",
+  "c-three.html",
+  "d-inspector.html",
+  "e-new-thread.html",
+  "f-palette.html",
+  "g-menubar.html",
+  "h-sizes.html",
+  "i-windows.html",
+  "j-remote.html",
+  "k-adapt.mmd"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Helm Mobile · iPad: layout, keyboard, windows",
+   "kind": "title1",
+   "maxW": 5200
+  },
+  "r0": {
+   "x": 0,
+   "y": -90,
+   "text": "Research and today",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r1": {
+   "x": 0,
+   "y": 1170,
+   "text": "Structure: three variants",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r2": {
+   "x": 0,
+   "y": 2430,
+   "text": "Inside A: inspector, new thread, ⌘K",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r3": {
+   "x": 0,
+   "y": 3690,
+   "text": "Keyboard, screen remote, windows",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r4": {
+   "x": 0,
+   "y": 5190,
+   "text": "Adaptivity",
+   "kind": "title2",
+   "maxW": 3000
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 5300,
+   "y": 1060,
+   "w": 340,
+   "color": "blue",
+   "text": "I recommend A: Home in the sidebar, the thread on the right. In a compact window it turns into today's iPhone app by itself. B could be a «Group by project» setting on top of A. C is here for comparison.",
+   "to": {
+    "board": "a-split.html",
+    "x": 1240,
+    "y": 140
+   }
+  }
+ ],
+ "designSystems": []
+}

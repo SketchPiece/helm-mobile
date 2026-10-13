@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><title>0. Research: iPad UX for Helm</title>
+<meta name="board" content="1660x900"><link rel="stylesheet" href="_shared.css">
+<style>html,body{width:1660px;height:900px}.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;flex:1}
+.c{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.c h3{font:500 12px/1 'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:var(--accentText)}
+.c li{font-size:14px;line-height:1.48;color:#d8d0c6}.c li b{color:var(--text);font-weight:500}
+.c ul{padding-left:17px;display:flex;flex-direction:column;gap:8px}
+.src{font:11.5px/1.5 'IBM Plex Mono',monospace;color:var(--ph);margin-top:auto;border-top:1px solid var(--border);padding-top:10px}
+.unv{color:#c9a46a;font-size:12px}</style></head><body><div class="board">
+<div class="cap"><span class="k">Research · Oct 2026 · iPadOS 26/27</span><span class="h">Helm on iPad: what Apple asks for, what similar apps do, what it means for us</span><span class="d">Apple's own guidance was read directly (HIG and the WWDC25 sessions). How the other apps behave is partly observation; where I couldn't check it, it's marked.</span></div>
+<div class="cols">
+<div class="c"><h3>What Apple says (HIG + WWDC25 «Elevate the design of your iPad app»)</h3><ul>
+<li><b>Windows can be any size.</b> In iPadOS 26 the opt-out key <span class="mono">UIRequiresFullScreen</span> is deprecated; with the iOS 27 SDK it stops working. Every width from Slide Over to a full 13" screen has to work.</li>
+<li><b>Choose the layout by size class, not by device or orientation.</b> A bigger window shows more (sidebar, inspector, buttons out of the ⋯ menu), but the app <b>does the same things</b>. Resizing must be reversible.</li>
+<li><b>Deep or nested content gets a sidebar</b> (Mail, Notes). Columns collapse into one stack when the width is compact. Keep the current selection highlighted.</li>
+<li><b>Content runs under the glass</b> sidebar and toolbar (<span class="mono">backgroundExtensionEffect</span>, scroll edge effect).</li>
+<li><b>Window controls</b> (●●●) sit at the leading edge of the toolbar, and toolbar items move right to make room. Every window gets a clear title, which for us is the thread's title.</li>
+<li><b>Every app has a menu bar</b> (swipe down, or the pointer at the top edge). List every action, by how often it's used, with SF Symbols. <b>Disable items, never hide them.</b> The View menu has the sidebar and its shortcut.</li>
+<li><b>Pointer:</b> hover highlights are drawn with glass. Test every control with a trackpad, and never put anything important behind hover alone.</li>
+<li><b>Keyboard:</b> standard shortcuts stay standard. ⌘ is the main modifier and ⇧ the second. ⌃ is the system's, except for standards like ⌃⌘S.</li>
+<li><b>Inspector</b> (<span class="mono">.inspector</span>): a column on the right when wide, a sheet when compact. It also gives a menu item and a shortcut.</li></ul>
+<div class="src">developer.apple.com/design/human-interface-guidelines/{layout, split-views, keyboards} · wwdc2025/208 · TN3192 · docs: NavigationSplitView, inspector, CommandMenu</div></div>
+<div class="c"><h3>How similar apps do it</h3><ul>
+<li><b>Mail / Messages:</b> the list of conversations in a sidebar, the open one in the detail column, the selection highlighted. A narrow window gets the iPhone stack. That's Helm's model one to one: Home is the list, the thread is the detail.</li>
+<li><b>ChatGPT / Claude (desktop and web):</b> chats in a sidebar, a centered message column, and the composer at the bottom of the column. ⌘N new chat, sidebar toggle by shortcut, Return sends. <span class="unv">Their 2026 iPad layouts I couldn't check.</span></li>
+<li><b>Slack:</b> ⌘K quick switcher to any conversation, ⌘/ shows the shortcuts. <span class="unv">Checked on desktop.</span></li>
+<li><b>Helm Desktop (Mac):</b> projects with their threads in the sidebar, the thread on the right, diffs in a side pane. The iPad sits between the phone and this.</li>
+<li><b>Jump Desktop / Screens (remote desktop):</b> a trackpad and mouse drive the remote pointer (right-click, scroll, drag) and keyboard shortcuts pass through. API: <span class="mono">prefersPointerLocked</span> + <span class="mono">GCMouse</span> deltas, which only work in full screen or in the front window.</li>
+<li><b>Blink Shell:</b> remappable shortcuts (vim and emacs collide with ⌘ and ⌃), and Esc mapped onto a key since iPad keyboards have none.</li></ul>
+<div class="src">techcrunch 2023 ChatGPT iPad · docs.blink.sh · jumpdesktop.com · wwdc2020/10617 · <span class="unv">competitor details partly unverified</span></div></div>
+<div class="c"><h3>What that means for Helm</h3><ul>
+<li><b>NavigationSplitView:</b> Home in the sidebar, the thread in the detail column. Compact widths collapse to <b>today's iPhone app exactly</b>. Never branch on <span class="mono">idiom</span>.</li>
+<li><b>Message column ≈ 680pt, centered</b>, and the composer the same width. Lines don't stretch across 1100pt.</li>
+<li><b>Review changes → an inspector</b> on the right, instead of a sheet over the chat.</li>
+<li><b>With a hardware keyboard:</b> ⏎ sends, ⇧⏎ adds a line, ⌘. stops the agent, ⌘K jumps anywhere. Detect the keyboard with <span class="mono">GCKeyboard</span>; without one, the iPhone behaviour.</li>
+<li><b>A menu bar</b> through <span class="mono">.commands</span>: File / Thread / View / Go. The shortcuts come with it.</li>
+<li><b>Several windows:</b> a thread in its own window, and the screen remote in its own window. Each window titled after its thread.</li>
+<li><b>Screen remote:</b> the iPad trackpad becomes the Mac's pointer one to one, a finger is direct touch, and ⌘ shortcuts go to the Mac.</li>
+<li><b>The AGENTS.md rules still hold</b> (no interactive glass around menus, Equatable menus, 44pt targets). The first tap is also checked with the trackpad.</li></ul>
+<div class="src">Today: TARGETED_DEVICE_FAMILY = 1, portrait only, no size classes anywhere. docs/ux-audit.md had iPad «out of scope».</div></div></div></div></body></html>

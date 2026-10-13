@@ -1,0 +1,18 @@
+---
+title: K. How the layout follows the window width
+board: 1500x800
+---
+flowchart LR
+  win([Window resized]) --> sc{horizontalSizeClass}
+  sc -->|compact| stack[NavigationStack<br>today's iPhone app]
+  sc -->|regular| w{width}
+  w -->|under 1000pt| two[Sidebar + thread<br>sidebar overlays or hides]
+  w -->|1000 to 1300pt| split[Sidebar + thread<br>column 680pt]:::hl
+  w -->|over 1300pt| three[Sidebar + thread + inspector<br>column 720pt]
+  split ==>|⌥⌘I on 11 inch| insp[Inspector open<br>sidebar folds away]
+  insp -.->|inspector closed| split
+  stack -.->|wider again| split
+  two --- kb{Hardware keyboard?}
+  split --- kb
+  kb -->|yes| keys[Return sends · hints · ⌘K<br>GCKeyboard]
+  kb -->|no| phone[iPhone composer behaviour]
