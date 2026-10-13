@@ -33,13 +33,37 @@
    "w": 1600,
    "h": 900,
    "title": "C. Grouped by project, like Helm Desktop"
+  },
+  "a1-four.html": {
+   "x": 1680,
+   "y": 1060,
+   "w": 1600,
+   "h": 900,
+   "title": "A1. All four in the header"
+  },
+  "a2-footer.html": {
+   "x": 3360,
+   "y": 1060,
+   "w": 1600,
+   "h": 900,
+   "title": "A2. Computer and settings at the bottom (recommended)"
+  },
+  "a3-no-toggle.html": {
+   "x": 0,
+   "y": 2120,
+   "w": 1600,
+   "h": 900,
+   "title": "A3. Drop the sidebar button"
   }
  },
  "order": [
   "0-now.html",
   "a-switcher.html",
   "b-search-tokens.html",
-  "c-grouped.html"
+  "c-grouped.html",
+  "a1-four.html",
+  "a2-footer.html",
+  "a3-no-toggle.html"
  ],
  "notes": {
   "t": {
