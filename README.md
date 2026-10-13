@@ -45,6 +45,14 @@ sets that thread up; `HELM_CLEANUP=1` deletes both), and `HELM_CAMERA=1` looks f
 against an isolated dev server (t3code's `.t3`), never the live Helm. Point agent turns at a scratch
 repo: agents follow the global "commit often" rule and will commit into whatever project they run in.
 
+## Performance
+
+Settings → Performance puts a counter on screen (frame rate, late frames, main-thread stalls).
+Its Save button writes `Documents/Performance/perf-<date>.{txt,json}`: hitches with the main-thread
+work in each late frame, stalls with sampled main-thread stacks, timed work (`Perf.measure`).
+`scripts/perf-report.py --pull` copies them off a connected device and names the app's frames
+from the dSYM (run `scripts/perf-report.py --keep-dsym` after each deploy so the dSYM is kept).
+
 ## Localization
 
 English is the source; Russian lives in `Localization/ru.json` (plurals as `one/few/many/other`).
