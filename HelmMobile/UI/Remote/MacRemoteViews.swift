@@ -405,7 +405,7 @@ struct MacRemoteSheet: View {
                             .font(.system(size: 17))
                             .foregroundStyle(Palette.text)
                     }
-                    .accessibilityLabel("Show the computer's screen")
+                    .accessibilityLabel("Control the computer")
                     .fullScreenCover(isPresented: $showingScreen) {
                         ScreenRemoteView(environment: environment)
                     }

@@ -117,7 +117,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Experimental").sectionLabelStyle()
                 } footer: {
-                    Text("See the computer's screen and drive it like a trackpad, from the remote or the computer's settings. Needs a Helm that shares its screen.")
+                    Text("See the computer's screen on the phone and control it like a trackpad: Control the computer, in the remote or the computer's settings. Needs a Helm that shares its screen.")
                         .font(Typography.footnote)
                 }
 
@@ -243,7 +243,7 @@ struct EnvironmentDetailView: View {
                     Button {
                         showingScreen = true
                     } label: {
-                        SettingsRow(String(localized: "Show the screen"), symbol: "display")
+                        SettingsRow(String(localized: "Control the computer"), symbol: "display")
                             .foregroundStyle(Palette.accentText)
                     }
                     .accessibilityIdentifier("showScreen")
