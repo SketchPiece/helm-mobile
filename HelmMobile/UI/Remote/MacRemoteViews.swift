@@ -118,6 +118,8 @@ struct RemoteStatusLine: View {
 /// going, and a microphone that talks straight into it. Tapping the rest opens the remote.
 struct MacRemotePill: View {
     let remote: MacRemote
+    /// Edge to edge with the bottom bar's glass on the phone; the iPad sidebar has no bar.
+    var horizontalPadding: CGFloat = 28
     let onOpen: () -> Void
 
     var body: some View {
@@ -160,8 +162,7 @@ struct MacRemotePill: View {
             .padding(.trailing, 6)
             .frame(height: 52)
             .glassEffect(.regular, in: .capsule)
-            // Edge to edge with the bottom bar's glass (Search and New thread) under it.
-            .padding(.horizontal, 28)
+            .padding(.horizontal, horizontalPadding)
             .padding(.bottom, 8)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }

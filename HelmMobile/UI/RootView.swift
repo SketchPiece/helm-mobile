@@ -282,6 +282,8 @@ private struct SplitRoot: View {
         NavigationSplitView(columnVisibility: $columns) {
             HomeView()
                 .environment(\.isSidebar, true)
+                // No sidebar button: the sidebar stays in landscape, and ⌃⌘S or a drag still hides it.
+                .toolbar(removing: .sidebarToggle)
                 .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
         } detail: {
             NavigationStack(path: detailPath) {

@@ -85,6 +85,83 @@ struct ProjectChips: View {
     }
 }
 
+/// The iPad sidebar's project filter: one full-width row that says what is shown and opens a
+/// menu of every project. Chips scrolling sideways in a 300pt column hid most of them.
+/// Equatable on what it shows, so updates from the Mac don't rebuild the menu under the finger.
+struct ProjectSwitcher: View, @MainActor Equatable {
+    let chips: [ProjectChips.Chip]
+    /// The project shown, or nil for all of them.
+    let selected: ProjectChips.Chip?
+    let total: Int
+    let onSelect: (String?) -> Void
+    let onAction: (ProjectChips.Chip, ProjectChips.Action) -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.chips.map(\.signature) == rhs.chips.map(\.signature)
+            && lhs.selected?.signature == rhs.selected?.signature && lhs.total == rhs.total
+    }
+
+    var body: some View {
+        Menu {
+            Section {
+                option(nil, title: String(localized: "All projects"), count: total)
+                ForEach(chips) { chip in
+                    option(chip.project.id, title: chip.project.title, count: chip.count)
+                }
+            }
+            if let selected {
+                Section {
+                    Button("New thread in \(selected.project.title)", systemImage: "square.and.pencil") { onAction(selected, .newThread) }
+                    Button("Edit project…", systemImage: "pencil") { onAction(selected, .edit) }
+                    Button("Delete project…", systemImage: "trash", role: .destructive) { onAction(selected, .delete) }
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                if let selected {
+                    ProjectIcon(project: selected.project, environment: selected.environment, size: 24)
+                    Text(selected.project.title).lineLimit(1)
+                    Text("\(selected.count)").foregroundStyle(Palette.textMuted).monospacedDigit()
+                } else {
+                    Image(systemName: "rectangle.stack")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Palette.textMuted)
+                        .frame(width: 24, height: 24)
+                    Text("All projects")
+                    Text("\(total)").foregroundStyle(Palette.textMuted).monospacedDigit()
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.textMuted)
+            }
+            .font(Typography.subheadline.weight(.medium))
+            .foregroundStyle(Palette.text)
+            .padding(.leading, 8)
+            .padding(.trailing, 12)
+            .frame(height: 44)
+            .background(Palette.surface, in: .rect(cornerRadius: 12))
+            .contentShape(.rect)
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("projectSwitcher")
+    }
+
+    /// A toggle, so the menu marks the shown project itself.
+    private func option(_ id: String?, title: String, count: Int) -> some View {
+        Toggle(isOn: Binding(get: { selected?.project.id == id }, set: { if $0 { onSelect(id) } })) {
+            Text(title)
+            Text("\(count) open")
+        }
+    }
+}
+
+extension ProjectChips.Chip {
+    /// What the switcher draws from a chip, for its Equatable check.
+    var signature: [String] { [project.id, environment.id, project.title, String(count), project.iconKind ?? "", project.iconEmoji ?? ""] }
+}
+
 /// Top right: whether the Macs are connected, as a lamp. Tap for Computers.
 struct EnvironmentStatusButton: View {
     @Environment(AppModel.self) private var model

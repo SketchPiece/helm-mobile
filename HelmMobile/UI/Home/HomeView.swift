@@ -35,17 +35,20 @@ struct HomeView: View {
         let entries = Perf.measure("home.entries") { filteredEntries }
         let sections = Perf.measure("home.sections", units: entries.count) { HomeSections(entries: entries, now: now) }
         List {
-            if !chips.isEmpty {
-                ProjectChips(chips: chips, selection: $projectFilter) { chip, action in
-                    switch action {
-                    case .newThread:
-                        router.startNewThread(in: NewThreadTarget(environmentId: chip.environment.id, projectId: chip.project.id))
-                    case .edit:
-                        editingProject = ProjectEditing(environment: chip.environment, project: chip.project)
-                    case .delete:
-                        deletingProject = ProjectDeletion(environment: chip.environment, project: chip.project, in: model)
-                    }
+            if isSidebar {
+                let chips = chips
+                if !chips.isEmpty {
+                    // In the sidebar's narrow column the chips would hide most projects off the edge.
+                    ProjectSwitcher(chips: chips, selected: selectedChip(in: chips), total: chips.reduce(0) { $0 + $1.count },
+                                    onSelect: { id in withAnimation(.snappy(duration: 0.2)) { projectFilter = id } },
+                                    onAction: projectAction)
+                        .equatable()
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 6, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
+            } else if !chips.isEmpty {
+                ProjectChips(chips: chips, selection: $projectFilter, onAction: projectAction)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -113,7 +116,7 @@ struct HomeView: View {
         .overlay { emptyState(entries: entries) }
         .undoToast()
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            MacRemotePill(remote: remote) { router.showingMacRemote = true }
+            MacRemotePill(remote: remote, horizontalPadding: isSidebar ? 16 : 28) { router.showingMacRemote = true }
                 .animation(.snappy(duration: 0.35), value: remote.target)
         }
         // After the pill, so the fan opens over it.
@@ -213,7 +216,8 @@ struct HomeView: View {
     }
 
     private var navigationTitle: String {
-        if let projectFilter, let project = model.allProjects().first(where: { $0.project.id == projectFilter }) {
+        // The sidebar's switcher already says which project is shown.
+        if !isSidebar, let projectFilter, let project = model.allProjects().first(where: { $0.project.id == projectFilter }) {
             return project.project.title
         }
         return String(localized: "Helm")
@@ -233,6 +237,25 @@ struct HomeView: View {
             .filter { counts[$0.project.id] != nil }
             .sorted { (latest[$0.project.id] ?? .distantPast) > (latest[$1.project.id] ?? .distantPast) }
             .map { ProjectChips.Chip(project: $0.project, environment: $0.environment, count: counts[$0.project.id] ?? 0) }
+    }
+
+    /// The filtered project, also when it has no open threads left and so no chip.
+    private func selectedChip(in chips: [ProjectChips.Chip]) -> ProjectChips.Chip? {
+        guard let projectFilter else { return nil }
+        if let chip = chips.first(where: { $0.project.id == projectFilter }) { return chip }
+        return model.allProjects().first { $0.project.id == projectFilter }
+            .map { ProjectChips.Chip(project: $0.project, environment: $0.environment, count: 0) }
+    }
+
+    private func projectAction(_ chip: ProjectChips.Chip, _ action: ProjectChips.Action) {
+        switch action {
+        case .newThread:
+            router.startNewThread(in: NewThreadTarget(environmentId: chip.environment.id, projectId: chip.project.id))
+        case .edit:
+            editingProject = ProjectEditing(environment: chip.environment, project: chip.project)
+        case .delete:
+            deletingProject = ProjectDeletion(environment: chip.environment, project: chip.project, in: model)
+        }
     }
 
     /// The soonest wake time still ahead.
@@ -432,33 +455,77 @@ struct HomeView: View {
             .accessibilityLabel("Settings")
             .accessibilityIdentifier("settings")
         }
-        DefaultToolbarItem(kind: .search, placement: .bottomBar)
-        ToolbarSpacer(.fixed, placement: .bottomBar)
-        ToolbarItem(placement: .bottomBar) {
-            // Tap: New Thread as it was left. Long press and slide up: right into a recent project.
-            Button {
-                if !fan.justClosed { router.startNewThread() }
-            } label: {
-                // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
-                Image(systemName: "plus")
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(Palette.accentForeground)
+        if isSidebar {
+            // The iPad sidebar has no bottom bar: Search is at the top, and New thread sits up here
+            // with Computers and Settings, where iPad apps keep their compose button.
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            ToolbarItem(placement: .topBarTrailing) {
+                sidebarNewThread
             }
-            .buttonStyle(.glassProminent)
-            .tint(Palette.accent)
-            .newThreadFan($fan) {
-                NewThreadFanItem.recent(in: model)
-            } onPick: { item in
+        } else {
+            DefaultToolbarItem(kind: .search, placement: .bottomBar)
+            ToolbarSpacer(.fixed, placement: .bottomBar)
+            ToolbarItem(placement: .bottomBar) {
+                // Tap: New Thread as it was left. Long press and slide up: right into a recent project.
+                Button {
+                    if !fan.justClosed { router.startNewThread() }
+                } label: {
+                    // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
+                    Image(systemName: "plus")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(Palette.accentForeground)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(Palette.accent)
+                .newThreadFan($fan) {
+                    NewThreadFanItem.recent(in: model)
+                } onPick: { item in
+                    switch item.kind {
+                    case let .project(environment, project):
+                        router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project?.id))
+                    case .allProjects:
+                        pickingProject = true
+                    }
+                }
+                .accessibilityLabel("New thread")
+                .accessibilityIdentifier("newThread")
+            }
+        }
+    }
+
+    /// Tap: New thread, in the project the switcher shows if any. Long press: a recent project,
+    /// as the phone's fan offers.
+    private var sidebarNewThread: some View {
+        // A Button with a context menu rather than a Menu: in the toolbar a Menu drops the amber glass.
+        Button {
+            if let chip = selectedChip(in: chips) {
+                projectAction(chip, .newThread)
+            } else {
+                router.startNewThread()
+            }
+        } label: {
+            // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Palette.accentForeground)
+        }
+        .buttonStyle(.glassProminent)
+        .tint(Palette.accent)
+        .contextMenu {
+            ForEach(NewThreadFanItem.recent(in: model)) { item in
                 switch item.kind {
                 case let .project(environment, project):
-                    router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project?.id))
+                    Button(project?.title ?? String(localized: "No project")) {
+                        router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project?.id))
+                    }
                 case .allProjects:
-                    pickingProject = true
+                    Divider()
+                    Button("All projects…", systemImage: "folder") { pickingProject = true }
                 }
             }
-            .accessibilityLabel("New thread")
-            .accessibilityIdentifier("newThread")
         }
+        .accessibilityLabel("New thread")
+        .accessibilityIdentifier("newThread")
     }
 
     @ViewBuilder
