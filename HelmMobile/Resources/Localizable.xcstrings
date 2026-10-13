@@ -6758,6 +6758,16 @@
       }
     },
     "This phone forgets the computer. Threads stay on the computer.": {},
+    "This phone isn't allowed %@ yet. Pair it with the computer again to allow it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У этого телефона пока нет права %@. Подключите его к компьютеру заново, чтобы его выдать."
+          }
+        }
+      }
+    },
     "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {

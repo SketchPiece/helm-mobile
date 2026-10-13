@@ -12,7 +12,13 @@ enum RPCError: Error, LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .failure(_, let message): message
+        case .failure(_, let message):
+            // A token from before this phone asked for the permission; only pairing again adds it.
+            if let range = message.range(of: "missing required scope: ") {
+                String(localized: "This phone isn't allowed \(message[range.upperBound...].trimmingCharacters(in: .punctuationCharacters)) yet. Pair it with the computer again to allow it.")
+            } else {
+                message
+            }
         case .defect(let message): message
         case .interrupted: String(localized: "The request was interrupted.")
         case .disconnected: String(localized: "Not connected to Helm.")

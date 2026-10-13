@@ -111,7 +111,14 @@ struct HelmHTTP: Sendable {
         return URLSession(configuration: config)
     }()
 
-    static let mobileScopes = "orchestration:read orchestration:operate terminal:operate review:write relay:read"
+    /// What the phone asks for when it pairs; the server grants the part the pairing link allows.
+    /// Since the granular permissions, usage needs `diagnostics:read`, the file viewer and `@` search
+    /// `filesystem:read`, saving a file `filesystem:write`, cloning and publishing `source-control:write`.
+    static let mobileScopes = [
+        "orchestration:read", "orchestration:operate", "settings:write", "diagnostics:read",
+        "terminal:read", "terminal:operate", "source-control:write", "filesystem:read", "filesystem:write",
+        "relay:read",
+    ].joined(separator: " ")
 
     /// Every request, the WebSocket and asset URLs come through here, so this is the one place
     /// tailnet addresses get routed through the built-in Tailscale node when it is in use.
