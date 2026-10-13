@@ -839,5 +839,19 @@
   "Show source": "Показать исходник",
   "Send what's in the computer's composer": "Отправить то, что в поле ввода на компьютере",
   "Hold to choose where your voice goes": "Удерживай, чтобы выбрать, куда идёт голос",
-  "Hold to talk and add to it · the arrow sends it": "Удерживай и говори, чтобы дописать · стрелка отправит"
+  "Hold to talk and add to it · the arrow sends it": "Удерживай и говори, чтобы дописать · стрелка отправит",
+  "No thread open": "Тред не открыт",
+  "Pick a thread on the left, or start a new one.": "Выбери тред слева или начни новый.",
+  "No thread": "Нет треда",
+  "New Thread": "Новый тред",
+  "Settings…": "Настройки…",
+  "Stop Agent": "Остановить агента",
+  "Review Changes": "Показать изменения",
+  "Hide Changes": "Скрыть изменения",
+  "Mark as Unread": "Пометить непрочитанным",
+  "Go": "Переход",
+  "Search Threads": "Искать треды",
+  "Next Thread": "Следующий тред",
+  "Previous Thread": "Предыдущий тред",
+  "Open in New Window": "Открыть в новом окне"
 }

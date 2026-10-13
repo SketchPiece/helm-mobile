@@ -1458,6 +1458,7 @@
         }
       }
     },
+    "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again.": {},
     "Allow for session": {
       "localizations": {
         "ru": {
@@ -2257,6 +2258,7 @@
         }
       }
     },
+    "Connecting to %@…": {},
     "Connecting…": {
       "localizations": {
         "ru": {
@@ -2889,6 +2891,7 @@
         }
       }
     },
+    "Dismiss": {},
     "Dismiss without answering": {
       "localizations": {
         "ru": {
@@ -3050,6 +3053,7 @@
         }
       }
     },
+    "Escape": {},
     "Every %@": {
       "localizations": {
         "ru": {
@@ -3110,6 +3114,7 @@
         }
       }
     },
+    "Experimental": {},
     "Failed": {
       "localizations": {
         "ru": {
@@ -3307,6 +3312,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Полный доступ"
+          }
+        }
+      }
+    },
+    "Go": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переход"
           }
         }
       }
@@ -3522,6 +3537,17 @@
         }
       }
     },
+    "Hide Changes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть изменения"
+          }
+        }
+      }
+    },
+    "Hide the keyboard": {},
     "Hold to choose where your voice goes": {
       "localizations": {
         "ru": {
@@ -3986,6 +4012,16 @@
         }
       }
     },
+    "Mark as Unread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пометить непрочитанным"
+          }
+        }
+      }
+    },
     "Mark as unread": {
       "localizations": {
         "ru": {
@@ -4046,6 +4082,7 @@
         }
       }
     },
+    "Mission Control": {},
     "Model": {
       "localizations": {
         "ru": {
@@ -4076,6 +4113,7 @@
         }
       }
     },
+    "More keys": {},
     "More options": {
       "localizations": {
         "ru": {
@@ -4167,6 +4205,16 @@
         }
       }
     },
+    "New Thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред"
+          }
+        }
+      }
+    },
     "New project": {
       "localizations": {
         "ru": {
@@ -4233,6 +4281,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Дальше"
+          }
+        }
+      }
+    },
+    "Next Thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Следующий тред"
           }
         }
       }
@@ -4542,6 +4600,26 @@
         }
       }
     },
+    "No thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет треда"
+          }
+        }
+      }
+    },
+    "No thread open": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред не открыт"
+          }
+        }
+      }
+    },
     "No threads yet": {
       "localizations": {
         "ru": {
@@ -4794,6 +4872,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открой тред в Штурвале на компьютере, чтобы пользоваться пультом."
+          }
+        }
+      }
+    },
+    "Open in New Window": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть в новом окне"
           }
         }
       }
@@ -5119,6 +5207,16 @@
         }
       }
     },
+    "Pick a thread on the left, or start a new one.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбери тред слева или начни новый."
+          }
+        }
+      }
+    },
     "Pictures in one message can't pass 80 MB": {
       "localizations": {
         "ru": {
@@ -5175,6 +5273,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сначала план"
+          }
+        }
+      }
+    },
+    "Previous Thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Предыдущий тред"
           }
         }
       }
@@ -5580,6 +5688,16 @@
         }
       }
     },
+    "Review Changes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать изменения"
+          }
+        }
+      }
+    },
     "Review changes": {
       "localizations": {
         "ru": {
@@ -5590,6 +5708,7 @@
         }
       }
     },
+    "Right click": {},
     "Run in": {
       "localizations": {
         "ru": {
@@ -5780,6 +5899,7 @@
         }
       }
     },
+    "Screen remote": {},
     "Screenshots": {
       "localizations": {
         "ru": {
@@ -5820,6 +5940,16 @@
         }
       }
     },
+    "Search Threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Искать треды"
+          }
+        }
+      }
+    },
     "Search branches": {
       "localizations": {
         "ru": {
@@ -5841,6 +5971,7 @@
         }
       }
     },
+    "See the computer's screen and drive it like a trackpad, from the remote or the computer's settings. Needs a Helm that shares its screen.": {},
     "Send": {
       "localizations": {
         "ru": {
@@ -5981,6 +6112,16 @@
         }
       }
     },
+    "Settings…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки…"
+          }
+        }
+      }
+    },
     "Settle": {
       "localizations": {
         "ru": {
@@ -6071,6 +6212,8 @@
         }
       }
     },
+    "Show the computer's screen": {},
+    "Show the screen": {},
     "Snooze": {
       "localizations": {
         "ru": {
@@ -6151,6 +6294,7 @@
         }
       }
     },
+    "Spotlight (⌘Space)": {},
     "Standard": {
       "localizations": {
         "ru": {
@@ -6292,6 +6436,16 @@
         }
       }
     },
+    "Stop Agent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановить агента"
+          }
+        }
+      }
+    },
     "Stop background work": {
       "localizations": {
         "ru": {
@@ -6372,6 +6526,7 @@
         }
       }
     },
+    "Switch app (⌘Tab)": {},
     "Switch model": {
       "localizations": {
         "ru": {
@@ -6562,6 +6717,7 @@
         }
       }
     },
+    "The computer couldn't share its screen.": {},
     "The computer is offline.": {
       "localizations": {
         "ru": {
@@ -6572,6 +6728,8 @@
         }
       }
     },
+    "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.": {},
+    "The connection to the computer dropped.": {},
     "The conversation and its terminal history are removed from the computer.": {},
     "The file is empty": {
       "localizations": {
@@ -6737,6 +6895,7 @@
     "This computer doesn't take files": {},
     "This computer isn't connected": {},
     "This computer runs an older Helm; update it to see usage.": {},
+    "This computer's Helm can't share its screen.": {},
     "This evening": {
       "localizations": {
         "ru": {
@@ -6768,6 +6927,7 @@
         }
       }
     },
+    "This phone isn't allowed to control the computer. Pair it again.": {},
     "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {
@@ -7381,6 +7541,7 @@
         }
       }
     },
+    "Whole screen": {},
     "Woke": {
       "localizations": {
         "ru": {
@@ -7522,6 +7683,7 @@
         }
       }
     },
+    "Zoom in": {},
     "another model": {
       "localizations": {
         "ru": {
