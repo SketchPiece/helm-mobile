@@ -19,6 +19,9 @@ struct PairingView: View {
     struct FoundHelm: Identifiable, Hashable {
         var host: String
         var label: String
+        /// Seen on the local network only: Helm approves phones itself only over Tailscale, so
+        /// this one takes the pairing code.
+        var needsCode = false
         var id: String { host }
     }
     @FocusState private var focused: Field?
@@ -40,7 +43,7 @@ struct PairingView: View {
                         Button {
                             address = helm.host
                             code = ""
-                            connect()
+                            if helm.needsCode { focused = .code } else { connect() }
                         } label: {
                             HStack(spacing: 12) {
                                 HelmMark(size: 34)
@@ -49,7 +52,7 @@ struct PairingView: View {
                                     Text(helm.host).font(Typography.mono(12)).foregroundStyle(Palette.textMuted)
                                 }
                                 Spacer()
-                                Text("Connect")
+                                Text(helm.needsCode ? "Enter code" : "Connect")
                                     .font(Typography.subheadline.weight(.semibold))
                                     .foregroundStyle(Palette.accentText)
                             }
@@ -58,10 +61,15 @@ struct PairingView: View {
                         .accessibilityIdentifier("foundHelm")
                     }
                 } header: {
-                    Text("Found on your tailnet").sectionLabelStyle()
+                    Text(found.allSatisfy(\.needsCode) ? "Found on this network" : "Found nearby").sectionLabelStyle()
                 } footer: {
-                    Text("Helm on the computer asks you to allow this phone. No code needed.")
-                        .font(Typography.footnote)
+                    if found.contains(where: \.needsCode) {
+                        Text("On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.")
+                            .font(Typography.footnote)
+                    } else {
+                        Text("Helm on the computer asks you to allow this phone. No code needed.")
+                            .font(Typography.footnote)
+                    }
                 }
             }
 
@@ -156,10 +164,13 @@ struct PairingView: View {
             .ignoresSafeArea()
         }
         .task { await discover() }
+        // The local network answers later (and only once iOS has asked to allow it).
+        .onChange(of: NearbyMacs.shared.environmentIds) { Task { await discover() } }
     }
 
-    /// Probes for Helm: the Macs baked into this build, plus every online computer the
-    /// built-in Tailscale node can see (Helm listens on 3783 and up; T3 Code on 3773).
+    /// Probes for Helm: the Macs baked into this build, every online computer the built-in
+    /// Tailscale node can see (Helm listens on 3783 and up; T3 Code on 3773), and the Helm servers
+    /// announcing themselves on this network over Bonjour.
     private func discover() async {
         var hosts = (Bundle.main.object(forInfoDictionaryKey: "HelmSuggestedHosts") as? String ?? "")
             .split(separator: " ").map(String.init).filter { !$0.isEmpty }
@@ -170,25 +181,43 @@ struct PairingView: View {
                 }
             }
         }
+        let tailnetHosts = Set(hosts)
+        hosts += await nearbyHosts().filter { !tailnetHosts.contains($0) }
         let paired = Set(model.environments.map(\.id))
-        var results: [FoundHelm] = []
-        var seen: Set<String> = []
+        var byEnvironment: [String: FoundHelm] = [:]
         await withTaskGroup(of: (FoundHelm, String)?.self) { group in
             for host in hosts {
+                let local = !tailnetHosts.contains(host)
                 group.addTask {
                     guard let base = PairingTarget.normalizeHost(host, defaultScheme: nil) else { return nil }
                     let http = HelmHTTP(baseURL: base, token: nil)
                     guard let descriptor = try? await http.descriptor(), !paired.contains(descriptor.environmentId) else { return nil }
-                    return (FoundHelm(host: host, label: descriptor.label), descriptor.environmentId)
+                    return (FoundHelm(host: host, label: descriptor.label, needsCode: local), descriptor.environmentId)
                 }
             }
+            // One row per Mac; its tailnet address wins, since there it can approve without a code.
             for await result in group {
-                guard let (helm, environmentId) = result, seen.insert(environmentId).inserted else { continue }
-                results.append(helm)
+                guard let (helm, environmentId) = result else { continue }
+                if let existing = byEnvironment[environmentId], !existing.needsCode { continue }
+                byEnvironment[environmentId] = helm
             }
         }
-        withAnimation { found = results.sorted { $0.label < $1.label } }
-        if results.isEmpty { focused = .address }
+        let results = byEnvironment.values.sorted { $0.label < $1.label }
+        withAnimation { found = results }
+        if results.isEmpty, focused == nil { focused = .address }
+    }
+
+    /// `host:port` of the Helm servers on this network, waiting a moment for their addresses.
+    private func nearbyHosts() async -> [String] {
+        let nearby = NearbyMacs.shared
+        nearby.start()
+        for _ in 0..<15 where nearby.environmentIds.contains(where: { nearby.address($0) == nil }) || nearby.environmentIds.isEmpty {
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        return nearby.environmentIds.compactMap { nearby.address($0) }.compactMap { url in
+            guard let host = url.host(), let port = url.port else { return nil }
+            return host.contains(":") ? "[\(host)]:\(port)" : "\(host):\(port)"
+        }
     }
 
     private var isBusy: Bool {
