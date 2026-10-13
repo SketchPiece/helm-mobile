@@ -85,36 +85,14 @@ struct ProjectChips: View {
     }
 }
 
-/// Bottom-left: which Macs are connected. Tap for the list and quick reconnect.
+/// Top right: whether the Macs are connected, as a lamp. Tap for Computers.
 struct EnvironmentStatusButton: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
 
     var body: some View {
-        Menu {
-            ForEach(model.environments) { environment in
-                Button {
-                    environment.reconnectNow(reason: "connections menu")
-                } label: {
-                    Label {
-                        Text(environment.label)
-                        Text(environment.statusText)
-                    } icon: {
-                        Image(systemName: environment.isLive ? "checkmark.circle.fill" : "exclamationmark.circle")
-                    }
-                }
-            }
-            Divider()
-            Button {
-                router.showPairing = true
-            } label: {
-                Label("Connect another computer", systemImage: "plus")
-            }
-            Button {
-                router.showSettings = true
-            } label: {
-                Label("Settings", systemImage: "gearshape")
-            }
+        Button {
+            router.showComputers = true
         } label: {
             // The lamp sits on the screen's corner, with a ring cut out of the
             // symbol around it so it reads as a badge on any background.
@@ -136,7 +114,8 @@ struct EnvironmentStatusButton: View {
                         .offset(x: 0.5, y: -0.5)
                 }
         }
-        .accessibilityLabel("Connections")
+        .accessibilityLabel("Computers")
+        .accessibilityIdentifier("computers")
     }
 
     private var lampColor: Color {

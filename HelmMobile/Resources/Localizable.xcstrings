@@ -2236,7 +2236,16 @@
         }
       }
     },
-    "Connect a computer": {},
+    "Connect a computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключить компьютер"
+          }
+        }
+      }
+    },
     "Connect a computer to see and create scheduled tasks.": {},
     "Connect a computer to see usage.": {},
     "Connect another computer": {},
@@ -2257,6 +2266,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подключено"
+          }
+        }
+      }
+    },
+    "Connected · from afar": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключён · удалённо"
+          }
+        }
+      }
+    },
+    "Connected · on this network": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключён · в этой сети"
           }
         }
       }
@@ -2368,6 +2397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Продолжить сейчас"
+          }
+        }
+      }
+    },
+    "Control the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Управлять компьютером"
           }
         }
       }
@@ -3076,7 +3115,16 @@
         }
       }
     },
-    "Escape": {},
+    "Escape": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escape"
+          }
+        }
+      }
+    },
     "Every %@": {
       "localizations": {
         "ru": {
@@ -4135,7 +4183,16 @@
         }
       }
     },
-    "Mission Control": {},
+    "Mission Control": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mission Control"
+          }
+        }
+      }
+    },
     "Model": {
       "localizations": {
         "ru": {
@@ -4166,7 +4223,16 @@
         }
       }
     },
-    "More keys": {},
+    "More keys": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ещё клавиши"
+          }
+        }
+      }
+    },
     "More options": {
       "localizations": {
         "ru": {
@@ -5560,6 +5626,16 @@
         }
       }
     },
+    "Remote": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пульт"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "ru": {
@@ -5771,7 +5847,16 @@
         }
       }
     },
-    "Right click": {},
+    "Right click": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правый клик"
+          }
+        }
+      }
+    },
     "Run in": {
       "localizations": {
         "ru": {
@@ -5958,6 +6043,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Задачи по расписанию"
+          }
+        }
+      }
+    },
+    "Screen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экран"
           }
         }
       }
@@ -6277,6 +6372,16 @@
     },
     "Show the computer's screen": {},
     "Show the screen": {},
+    "Show toolbar": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать панель"
+          }
+        }
+      }
+    },
     "Snooze": {
       "localizations": {
         "ru": {
@@ -6357,7 +6462,16 @@
         }
       }
     },
-    "Spotlight (⌘Space)": {},
+    "Spotlight (⌘Space)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotlight (⌘Пробел)"
+          }
+        }
+      }
+    },
     "Standard": {
       "localizations": {
         "ru": {
@@ -6589,7 +6703,16 @@
         }
       }
     },
-    "Switch app (⌘Tab)": {},
+    "Switch app (⌘Tab)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сменить приложение (⌘Tab)"
+          }
+        }
+      }
+    },
     "Switch model": {
       "localizations": {
         "ru": {
@@ -6790,7 +6913,16 @@
         }
       }
     },
-    "The computer couldn't share its screen.": {},
+    "The computer couldn't share its screen.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютер не смог показать экран."
+          }
+        }
+      }
+    },
     "The computer is offline.": {
       "localizations": {
         "ru": {
@@ -6801,7 +6933,16 @@
         }
       }
     },
-    "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.": {},
+    "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютер пока не принимает клики и клавиши: разреши Helm в Системных настройках → Конфиденциальность и безопасность → Универсальный доступ."
+          }
+        }
+      }
+    },
     "The connection to the computer dropped.": {},
     "The conversation and its terminal history are removed from the computer.": {},
     "The file is empty": {
@@ -6860,6 +7001,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Провайдер не сказал, когда сброс. Продолжи, когда лимит вернётся."
+          }
+        }
+      }
+    },
+    "The remote works on the same network as the computer; the screen works from anywhere.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пульт работает в одной сети с компьютером, экран — откуда угодно."
           }
         }
       }
@@ -6968,7 +7119,16 @@
     "This computer doesn't take files": {},
     "This computer isn't connected": {},
     "This computer runs an older Helm; update it to see usage.": {},
-    "This computer's Helm can't share its screen.": {},
+    "This computer's Helm can't share its screen.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helm на этом компьютере не умеет показывать экран."
+          }
+        }
+      }
+    },
     "This evening": {
       "localizations": {
         "ru": {
@@ -7000,7 +7160,16 @@
         }
       }
     },
-    "This phone isn't allowed to control the computer. Pair it again.": {},
+    "This phone isn't allowed to control the computer. Pair it again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этому телефону нельзя управлять компьютером. Подключи его заново."
+          }
+        }
+      }
+    },
     "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {
@@ -7624,7 +7793,16 @@
         }
       }
     },
-    "Whole screen": {},
+    "Whole screen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Весь экран"
+          }
+        }
+      }
+    },
     "Woke": {
       "localizations": {
         "ru": {
@@ -7766,7 +7944,16 @@
         }
       }
     },
-    "Zoom in": {},
+    "Zoom in": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приблизить"
+          }
+        }
+      }
+    },
     "another model": {
       "localizations": {
         "ru": {

@@ -11,7 +11,6 @@ struct SettingsView: View {
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
-    @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemote = false
 
     private var projectCount: Int {
         model.allProjects().count { $0.environment.config?.isScratch($0.project) != true }
@@ -106,19 +105,6 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("This phone").sectionLabelStyle()
-                }
-
-                Section {
-                    Toggle(isOn: $screenRemote) {
-                        SettingsRow(String(localized: "Screen remote"), symbol: "display")
-                    }
-                    .tint(Palette.accent)
-                    .accessibilityIdentifier("screenRemote")
-                } header: {
-                    Text("Experimental").sectionLabelStyle()
-                } footer: {
-                    Text("The computer's screen on the phone, driven like a trackpad.")
-                        .font(Typography.footnote)
                 }
 
                 Section {
@@ -233,20 +219,13 @@ struct EnvironmentDetailView: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemove = false
-    @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemoteOn = false
 
     var body: some View {
         Form {
-            if screenRemoteOn, environment.config?.capability("screenRemote") == true {
-                Section {
-                    Button {
-                        ScreenRemotePresenter.present(environment)
-                    } label: {
-                        SettingsRow(String(localized: "Control the computer"), symbol: "display")
-                            .foregroundStyle(Palette.accentText)
-                    }
-                    .accessibilityIdentifier("showScreen")
-                }
+            Section {
+                ComputerActions(environment: environment)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
             }
             Section {
                 row(String(localized: "Status"), environment.statusText)

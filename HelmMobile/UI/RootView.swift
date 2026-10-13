@@ -16,6 +16,8 @@ final class Router {
     var path: [Route] = []
     var showSettings = false
     var showPairing = false
+    /// Computers: the paired Macs and what to do with each (Home's computer button).
+    var showComputers = false
     /// The remote for the thread open on a computer nearby (Home's pill, or a thread's menu).
     var showingMacRemote = false
     /// What New Thread should start with (shared text and files), taken by it when it opens.
@@ -181,6 +183,9 @@ struct RootView: View {
                 }
                 .sheet(isPresented: $router.showSettings, onDismiss: { router.settingsPath = [] }) {
                     SettingsView()
+                }
+                .sheet(isPresented: $router.showComputers) {
+                    ComputersSheet()
                 }
             } else {
                 WelcomeView()
