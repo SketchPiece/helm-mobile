@@ -376,6 +376,7 @@ extension EnvironmentValues {
 /// First launch: what Helm is and how to connect it.
 struct WelcomeView: View {
     @Environment(Router.self) private var router
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         VStack(spacing: 0) {
@@ -390,7 +391,9 @@ struct WelcomeView: View {
                 .foregroundStyle(Palette.textMuted)
                 .multilineTextAlignment(.center)
                 .padding(.top, 8)
+            // The phone keeps the button low, under the thumb; a big screen keeps it all together.
             Spacer()
+                .frame(maxHeight: sizeClass == .regular ? 40 : .infinity)
             VStack(alignment: .leading, spacing: 14) {
                 step(1, String(localized: "Open Helm on your computer."))
                 step(2, String(localized: "Settings → Connections → turn on Network access."))
@@ -415,7 +418,10 @@ struct WelcomeView: View {
             .padding(.horizontal, 20)
             .padding(.top, 20)
             .padding(.bottom, 12)
+            if sizeClass == .regular { Spacer() }
         }
+        // A phone's width, centered: on an iPad the card and the button would span the screen.
+        .frame(maxWidth: 480)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.canvas)
     }
