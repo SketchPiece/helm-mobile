@@ -613,6 +613,16 @@
         }
       }
     },
+    "%lld open": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "открыто: %lld"
+          }
+        }
+      }
+    },
     "%lld pt": {
       "localizations": {
         "ru": {
@@ -1447,6 +1457,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "All projects": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все проекты"
           }
         }
       }
@@ -4378,6 +4398,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новый тред"
+          }
+        }
+      }
+    },
+    "New thread in %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред в «%@»"
           }
         }
       }

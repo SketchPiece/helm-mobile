@@ -888,5 +888,8 @@
   "Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.": "Следит за опоздавшими кадрами и занятым главным потоком и показывает счётчик на экране. Сделайте то, что подлагивает, и нажмите «Сохранить» на счётчике: запись ляжет в Documents/Performance — сводка и JSON-файл для Мака.",
   "Recordings": "Записи",
   "Delete all recordings": "Удалить все записи",
-  "Delete all recordings?": "Удалить все записи?"
+  "Delete all recordings?": "Удалить все записи?",
+  "All projects": "Все проекты",
+  "%lld open": "открыто: %lld",
+  "New thread in %@": "Новый тред в «%@»"
 }
