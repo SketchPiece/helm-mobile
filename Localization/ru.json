@@ -853,5 +853,9 @@
   "Search Threads": "Искать треды",
   "Next Thread": "Следующий тред",
   "Previous Thread": "Предыдущий тред",
-  "Open in New Window": "Открыть в новом окне"
+  "Open in New Window": "Открыть в новом окне",
+  "Enter code": "Ввести код",
+  "Found on this network": "Найдено в этой сети",
+  "Found nearby": "Найдено рядом",
+  "On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.": "В локальной сети Helm нужен код: на компьютере открой Helm → Settings → Connections → Pair a device. Через Tailscale он просто спросит разрешения."
 }

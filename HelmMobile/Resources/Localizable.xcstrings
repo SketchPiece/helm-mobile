@@ -3053,6 +3053,16 @@
         }
       }
     },
+    "Enter code": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввести код"
+          }
+        }
+      }
+    },
     "Escape": {},
     "Every %@": {
       "localizations": {
@@ -3236,12 +3246,22 @@
         }
       }
     },
-    "Found on your tailnet": {
+    "Found nearby": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Нашёлся в твоём Tailscale"
+            "value": "Найдено рядом"
+          }
+        }
+      }
+    },
+    "Found on this network": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найдено в этой сети"
           }
         }
       }
@@ -4805,6 +4825,16 @@
     },
     "On the computer, turn on Helm → Settings → Connections → Network access.": {},
     "On the computer: Helm → Settings → Connections → Pair a device.": {},
+    "On the local network Helm needs the pairing code: on the computer, Helm → Settings → Connections → Pair a device. Over Tailscale it asks you to allow this phone instead.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В локальной сети Helm нужен код: на компьютере открой Helm → Settings → Connections → Pair a device. Через Tailscale он просто спросит разрешения."
+          }
+        }
+      }
+    },
     "Once the agent is at work, New Thread opens in the same project for the next task.": {
       "localizations": {
         "ru": {
