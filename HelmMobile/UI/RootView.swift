@@ -13,7 +13,18 @@ final class Router {
 
     enum Shelf: Hashable { case snoozed, settled }
 
-    var path: [Route] = []
+    var path: [Route] = [] {
+        didSet { if Perf.isOn, path != oldValue { PerfRecorder.shared.route(Self.describe(path)) } }
+    }
+
+    private static func describe(_ path: [Route]) -> String {
+        guard let last = path.last else { return "home" }
+        return switch last {
+        case .thread(let ref): "thread \(ref.threadId.prefix(8))"
+        case .newThread: "new thread"
+        case .shelf(let shelf, _): "shelf \(shelf)"
+        }
+    }
     var showSettings = false
     var showPairing = false
     /// Computers: the paired Macs and what to do with each (Home's computer button).

@@ -52,6 +52,7 @@ extension HelmApp {
             .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap, diffWordWrap: diffWordWrap))
             // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
             .tint(Palette.text)
+            .perfDiagnostics()
     }
 }
 

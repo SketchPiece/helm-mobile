@@ -881,5 +881,12 @@
   "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.": "Компьютер пока не принимает клики и клавиши: разреши Helm в Системных настройках → Конфиденциальность и безопасность → Универсальный доступ.",
   "This computer's Helm can't share its screen.": "Helm на этом компьютере не умеет показывать экран.",
   "This phone isn't allowed to control the computer. Pair it again.": "Этому телефону нельзя управлять компьютером. Подключи его заново.",
-  "Connect a computer": "Подключить компьютер"
+  "Connect a computer": "Подключить компьютер",
+  "Performance": "Производительность",
+  "Record performance": "Записывать производительность",
+  "Save what was recorded": "Сохранить записанное",
+  "Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.": "Следит за опоздавшими кадрами и занятым главным потоком и показывает счётчик на экране. Сделайте то, что подлагивает, и нажмите «Сохранить» на счётчике: запись ляжет в Documents/Performance — сводка и JSON-файл для Мака.",
+  "Recordings": "Записи",
+  "Delete all recordings": "Удалить все записи",
+  "Delete all recordings?": "Удалить все записи?"
 }

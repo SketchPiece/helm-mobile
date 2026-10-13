@@ -67,13 +67,15 @@ private struct ThreadContent: View {
 
     var body: some View {
         let projection = session.projection
-        let blocks = Timeline.folded(
-            Timeline.blocks(from: projection?.rows.map(\.item) ?? [], liveRunId: projection?.activeRun?.id),
-            runs: projection?.runs ?? [:],
-            activeRunId: projection?.activeRun?.id,
-            isWorking: projection?.isWorking ?? false,
-            expanded: expandedRuns
-        )
+        let blocks = Perf.measure("thread.timeline", units: projection?.rows.count ?? 0) {
+            Timeline.folded(
+                Timeline.blocks(from: projection?.rows.map(\.item) ?? [], liveRunId: projection?.activeRun?.id),
+                runs: projection?.runs ?? [:],
+                activeRunId: projection?.activeRun?.id,
+                isWorking: projection?.isWorking ?? false,
+                expanded: expandedRuns
+            )
+        }
         ScrollViewReader { proxy in
         ScrollView {
             // A plain stack: a lazy one guesses the height of rows it hasn't drawn, so "scroll to
@@ -143,6 +145,7 @@ private struct ThreadContent: View {
         // Only the user's own scrolling decides whether we stop following the bottom: when their
         // drag (and its deceleration) ends away from the end, "↓" appears.
         .onScrollPhaseChange { old, phase in
+            Perf.scroll("timeline", phase)
             scrollPhase = phase
             if phase == .interacting { userScrolled = true }
             if phase == .idle, old == .interacting || old == .decelerating {

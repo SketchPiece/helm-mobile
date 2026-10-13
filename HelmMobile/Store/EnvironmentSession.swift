@@ -293,8 +293,10 @@ final class EnvironmentSession: Identifiable {
         streams.append(Task { [weak self] in
             do {
                 for try await item in shellStream {
-                    self?.applyShell(item)
-                    self?.resolveProjectWaiters()
+                    Perf.measure("shell.apply") {
+                        self?.applyShell(item)
+                        self?.resolveProjectWaiters()
+                    }
                 }
             } catch {}
             await self?.streamEnded(on: connection)

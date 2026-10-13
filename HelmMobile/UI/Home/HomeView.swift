@@ -32,8 +32,8 @@ struct HomeView: View {
     @State private var remote = MacRemote()
 
     var body: some View {
-        let entries = filteredEntries
-        let sections = HomeSections(entries: entries, now: now)
+        let entries = Perf.measure("home.entries") { filteredEntries }
+        let sections = Perf.measure("home.sections", units: entries.count) { HomeSections(entries: entries, now: now) }
         List {
             if !chips.isEmpty {
                 ProjectChips(chips: chips, selection: $projectFilter) { chip, action in
@@ -109,6 +109,7 @@ struct HomeView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Palette.canvas)
+        .onScrollPhaseChange { _, phase in Perf.scroll(isSidebar ? "sidebar" : "home", phase) }
         .overlay { emptyState(entries: entries) }
         .undoToast()
         .safeAreaInset(edge: .bottom, spacing: 0) {

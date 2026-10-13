@@ -57,6 +57,7 @@ struct ThreadRow: View {
     var showsProject = true
 
     var body: some View {
+        let _ = Perf.count("body.ThreadRow")
         let thread = entry.thread
         let phase = thread.phase
         let woke = phase == .idle || phase == .done ? thread.isWoke() : false

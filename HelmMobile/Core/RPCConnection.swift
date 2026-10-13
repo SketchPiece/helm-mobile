@@ -176,7 +176,7 @@ actor RPCConnection {
                 @unknown default: Data()
                 }
                 missedPongs = 0  // any frame proves the socket is alive (big snapshots delay Pongs)
-                let json = try JSON.parse(data)
+                let json = try Perf.measure("rpc.parse", units: data.count) { try JSON.parse(data) }
                 if let batch = json.array {
                     batch.forEach(handle)
                 } else {

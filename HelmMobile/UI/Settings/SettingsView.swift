@@ -123,6 +123,11 @@ struct SettingsView: View {
                     } label: {
                         SettingsRow(String(localized: "Connection log"), symbol: "list.bullet.rectangle")
                     }
+                    NavigationLink {
+                        PerfDiagnosticsView()
+                    } label: {
+                        SettingsRow(String(localized: "Performance"), symbol: "gauge.with.dots.needle.33percent")
+                    }
                 } header: {
                     Text("Network").sectionLabelStyle()
                 } footer: {

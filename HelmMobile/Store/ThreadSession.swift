@@ -137,9 +137,15 @@ final class ThreadSession {
     }
 
     private func apply(_ item: JSON) {
+        let kind = item["kind"]?.string
+        Perf.measure("thread.apply.\(kind ?? "other")") { applyMeasured(item) }
+        if kind == "snapshot" { Perf.mark("thread snapshot", "\(threadId.prefix(8)) \(projection?.rows.count ?? 0) rows") }
+    }
+
+    private func applyMeasured(_ item: JSON) {
         switch item["kind"]?.string {
         case "snapshot":
-            guard let next = ThreadProjection(snapshot: item) else { return }
+            guard let next = Perf.measure("thread.projection", { ThreadProjection(snapshot: item) }) else { return }
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
             savedAt = nil

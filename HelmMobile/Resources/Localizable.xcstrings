@@ -2248,7 +2248,6 @@
     },
     "Connect a computer to see and create scheduled tasks.": {},
     "Connect a computer to see usage.": {},
-    "Connect another computer": {},
     "Connect to Helm": {
       "localizations": {
         "ru": {
@@ -2327,16 +2326,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Связь пропала"
-          }
-        }
-      }
-    },
-    "Connections": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключения"
           }
         }
       }
@@ -2801,6 +2790,26 @@
         }
       }
     },
+    "Delete all recordings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить все записи"
+          }
+        }
+      }
+    },
+    "Delete all recordings?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить все записи?"
+          }
+        }
+      }
+    },
     "Delete project": {
       "localizations": {
         "ru": {
@@ -3185,7 +3194,6 @@
         }
       }
     },
-    "Experimental": {},
     "Failed": {
       "localizations": {
         "ru": {
@@ -5306,6 +5314,16 @@
         }
       }
     },
+    "Performance": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Производительность"
+          }
+        }
+      }
+    },
     "Period": {
       "localizations": {
         "ru": {
@@ -5602,6 +5620,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переподключиться"
+          }
+        }
+      }
+    },
+    "Record performance": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывать производительность"
+          }
+        }
+      }
+    },
+    "Recordings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записи"
           }
         }
       }
@@ -5967,6 +6005,16 @@
         }
       }
     },
+    "Save what was recorded": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить записанное"
+          }
+        }
+      }
+    },
     "Saved": {
       "localizations": {
         "ru": {
@@ -6057,7 +6105,6 @@
         }
       }
     },
-    "Screen remote": {},
     "Screenshots": {
       "localizations": {
         "ru": {
@@ -6129,7 +6176,6 @@
         }
       }
     },
-    "See the computer's screen and drive it like a trackpad, from the remote or the computer's settings. Needs a Helm that shares its screen.": {},
     "Send": {
       "localizations": {
         "ru": {
@@ -6370,8 +6416,6 @@
         }
       }
     },
-    "Show the computer's screen": {},
-    "Show the screen": {},
     "Show toolbar": {
       "localizations": {
         "ru": {
@@ -7699,6 +7743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вернётся %@"
+          }
+        }
+      }
+    },
+    "Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Следит за опоздавшими кадрами и занятым главным потоком и показывает счётчик на экране. Сделайте то, что подлагивает, и нажмите «Сохранить» на счётчике: запись ляжет в Documents/Performance — сводка и JSON-файл для Мака."
           }
         }
       }

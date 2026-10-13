@@ -9,7 +9,7 @@ struct MarkdownView: View {
 
     init(text: String) {
         self.text = text
-        self.blocks = MarkdownParser.parse(text)
+        self.blocks = Perf.measure("markdown.parse", units: text.utf8.count) { MarkdownParser.parse(text) }
     }
 
     var body: some View {
