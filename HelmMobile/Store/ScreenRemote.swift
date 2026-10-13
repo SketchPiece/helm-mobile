@@ -1,0 +1,270 @@
+import AVFoundation
+import CoreMedia
+import Foundation
+import Observation
+
+/// The computer's screen on the phone (experimental): H.264 from Helm's `/api/helm/screen`
+/// shown by a sample-buffer layer, and the phone's trackpad, clicks and keys sent back.
+/// The video leaves the cursor out; the phone draws it at `cursor`, so it moves with the finger
+/// at once instead of waiting for the picture.
+@MainActor
+@Observable
+final class ScreenRemote {
+    enum Phase: Equatable {
+        case connecting
+        case live
+        case failed(String)
+    }
+
+    enum Button: String { case left, right, middle }
+
+    /// Mac modifier keys, as the helper names them.
+    enum Modifier: String, CaseIterable { case cmd, alt, ctrl, shift }
+
+    let environment: EnvironmentSession
+    private(set) var phase = Phase.connecting
+    /// The computer's display in points; zero until it says.
+    private(set) var desktopSize = CGSize.zero
+    /// Where the cursor is on the computer, in its points from the top-left.
+    private(set) var cursor = CGPoint.zero
+    /// Something works only partly, e.g. the picture comes but the computer won't take clicks yet.
+    private(set) var notice: String?
+    /// Bumped when the first picture arrives (the view fades the placeholder out).
+    private(set) var framesShown = 0
+
+    /// Decodes and draws the video; the view places it.
+    @ObservationIgnored let layer = AVSampleBufferDisplayLayer()
+    @ObservationIgnored private var task: URLSessionWebSocketTask?
+    @ObservationIgnored private var format: CMVideoFormatDescription?
+    /// While the finger moves the cursor, the computer's reports of it lag behind and are ignored.
+    @ObservationIgnored private var movedLocallyAt = Date.distantPast
+    @ObservationIgnored private var buttonHeld = false
+
+    init(environment: EnvironmentSession) {
+        self.environment = environment
+        layer.videoGravity = .resize
+    }
+
+    // MARK: Connection
+
+    func connect() async {
+        disconnect()
+        phase = .connecting
+        notice = nil
+        do {
+            try await environment.waitUntilLive()
+            let http = environment.http
+            let ticket = try await http.webSocketTicket()
+            let task = HelmHTTP.session.webSocketTask(with: http.screenSocketURL(ticket: ticket))
+            task.maximumMessageSize = 16 * 1024 * 1024
+            self.task = task
+            task.resume()
+            // Twice the points: zooming in stays sharp up to Retina, capped for the network.
+            send(["t": "start", "maxWidth": 3024, "fps": 30, "bitrate": 8_000_000])
+            await receive(from: task)
+        } catch {
+            phase = .failed(error.localizedDescription)
+        }
+    }
+
+    func disconnect() {
+        guard let task else { return }
+        send(["t": "stop"])
+        task.cancel(with: .goingAway, reason: nil)
+        self.task = nil
+        format = nil
+        layer.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
+    }
+
+    private func receive(from task: URLSessionWebSocketTask) async {
+        while self.task === task {
+            let message: URLSessionWebSocketTask.Message
+            do {
+                message = try await task.receive()
+            } catch {
+                guard self.task === task else { return }
+                self.task = nil
+                phase = .failed(closeReason(task) ?? String(localized: "The connection to the computer dropped."))
+                return
+            }
+            switch message {
+            case .data(let data): handleBinary(data)
+            case .string(let text): handleText(text)
+            @unknown default: break
+            }
+        }
+    }
+
+    private func closeReason(_ task: URLSessionWebSocketTask) -> String? {
+        if let response = task.response as? HTTPURLResponse, response.statusCode == 501 {
+            return String(localized: "This computer's Helm can't share its screen.")
+        }
+        if let response = task.response as? HTTPURLResponse, response.statusCode == 403 {
+            return String(localized: "This phone isn't allowed to control the computer. Pair it again.")
+        }
+        return nil
+    }
+
+    private func handleText(_ text: String) {
+        guard let json = try? JSON.parse(Data(text.utf8)) else { return }
+        switch json["t"]?.string {
+        case "info":
+            desktopSize = CGSize(width: json["width"]?.double ?? 0, height: json["height"]?.double ?? 0)
+            phase = .live
+            if json["accessibility"]?.bool == false { notice = Self.accessibilityNotice }
+        case "cursor":
+            guard Date().timeIntervalSince(movedLocallyAt) > 0.4 else { return }
+            cursor = CGPoint(x: json["x"]?.double ?? 0, y: json["y"]?.double ?? 0)
+        case "error":
+            switch json["code"]?.string {
+            case "accessibility": notice = Self.accessibilityNotice
+            case "screenRecording":
+                phase = .failed(String(localized: "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again."))
+            default: phase = .failed(json["message"]?.string ?? String(localized: "The computer couldn't share its screen."))
+            }
+        default: break
+        }
+    }
+
+    private static var accessibilityNotice: String {
+        String(localized: "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.")
+    }
+
+    // MARK: Video
+
+    /// [u8 kind][payload]: 2 is SPS and PPS (`[count][u16 length + set]…`), 1 is a frame
+    /// (`[flags][u64 pts µs][AVCC]`).
+    private func handleBinary(_ data: Data) {
+        guard let kind = data.first else { return }
+        let payload = data.dropFirst()
+        switch kind {
+        case 2: format = Self.format(from: payload)
+        case 1:
+            guard payload.count > 9, let format, let sample = Self.sample(Data(payload.dropFirst(9)), format: format) else { return }
+            let renderer = layer.sampleBufferRenderer
+            if renderer.status == .failed {
+                renderer.flush()
+                send(["t": "keyframe"])
+                return
+            }
+            renderer.enqueue(sample)
+            if framesShown < 2 { framesShown += 1 }
+        default: break
+        }
+    }
+
+    private static func format(from payload: Data.SubSequence) -> CMVideoFormatDescription? {
+        var bytes = Array(payload)
+        guard let count = bytes.first else { return nil }
+        var sets: [[UInt8]] = []
+        var index = 1
+        for _ in 0..<count {
+            guard index + 2 <= bytes.count else { return nil }
+            let length = Int(bytes[index]) << 8 | Int(bytes[index + 1])
+            index += 2
+            guard index + length <= bytes.count else { return nil }
+            sets.append(Array(bytes[index..<index + length]))
+            index += length
+        }
+        bytes = []
+        var format: CMVideoFormatDescription?
+        let pointers = sets.map { set in
+            let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: set.count)
+            pointer.initialize(from: set, count: set.count)
+            return UnsafePointer(pointer)
+        }
+        defer { pointers.forEach { UnsafeMutablePointer(mutating: $0).deallocate() } }
+        let status = CMVideoFormatDescriptionCreateFromH264ParameterSets(
+            allocator: kCFAllocatorDefault, parameterSetCount: sets.count, parameterSetPointers: pointers,
+            parameterSetSizes: sets.map(\.count), nalUnitHeaderLength: 4, formatDescriptionOut: &format)
+        return status == noErr ? format : nil
+    }
+
+    private static func sample(_ data: Data, format: CMVideoFormatDescription) -> CMSampleBuffer? {
+        var block: CMBlockBuffer?
+        guard CMBlockBufferCreateWithMemoryBlock(
+            allocator: kCFAllocatorDefault, memoryBlock: nil, blockLength: data.count, blockAllocator: kCFAllocatorDefault,
+            customBlockSource: nil, offsetToData: 0, dataLength: data.count, flags: 0, blockBufferOut: &block) == noErr,
+            let block else { return nil }
+        let copied = data.withUnsafeBytes { bytes in
+            CMBlockBufferReplaceDataBytes(with: bytes.baseAddress!, blockBuffer: block, offsetIntoDestination: 0,
+                                          dataLength: data.count)
+        }
+        guard copied == noErr else { return nil }
+        var sample: CMSampleBuffer?
+        var size = data.count
+        guard CMSampleBufferCreateReady(
+            allocator: kCFAllocatorDefault, dataBuffer: block, formatDescription: format, sampleCount: 1,
+            sampleTimingEntryCount: 0, sampleTimingArray: nil, sampleSizeEntryCount: 1, sampleSizeArray: &size,
+            sampleBufferOut: &sample) == noErr, let sample else { return nil }
+        // Live: each frame shows as soon as it's decoded, no clock.
+        if let attachments = CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: true),
+           CFArrayGetCount(attachments) > 0 {
+            let dictionary = unsafeBitCast(CFArrayGetValueAtIndex(attachments, 0), to: CFMutableDictionary.self)
+            CFDictionarySetValue(dictionary, Unmanaged.passUnretained(kCMSampleAttachmentKey_DisplayImmediately).toOpaque(),
+                                 Unmanaged.passUnretained(kCFBooleanTrue).toOpaque())
+        }
+        return sample
+    }
+
+    // MARK: Input
+
+    /// Moves the cursor by `delta` of the computer's points (the trackpad), kept on the display.
+    func moveCursor(by delta: CGPoint) {
+        guard desktopSize != .zero else { return }
+        cursor = CGPoint(x: min(max(0, cursor.x + delta.x), desktopSize.width - 1),
+                         y: min(max(0, cursor.y + delta.y), desktopSize.height - 1))
+        movedLocallyAt = Date()
+        send(["t": "move", "x": .number(cursor.x), "y": .number(cursor.y)])
+    }
+
+    func click(_ button: Button = .left) {
+        press(button, down: true)
+        press(button, down: false)
+    }
+
+    /// Holds or lets go of a button at the cursor (a drag holds the left one while moving).
+    func press(_ button: Button = .left, down: Bool) {
+        buttonHeld = down
+        send(["t": "button", "b": .string(button.rawValue), "down": .bool(down),
+              "x": .number(cursor.x), "y": .number(cursor.y)])
+    }
+
+    /// Scrolls the computer by `dx`, `dy` pixels (positive `dy` moves the content down).
+    func scroll(dx: CGFloat, dy: CGFloat) {
+        send(["t": "scroll", "dx": .number(dx), "dy": .number(dy)])
+    }
+
+    /// Typed text goes as Unicode, whatever the computer's keyboard layout.
+    func type(_ text: String) {
+        send(["t": "text", "s": .string(text)])
+    }
+
+    /// A key by its Mac virtual key code, with modifiers held for it.
+    func key(_ code: Int, modifiers: Set<Modifier> = []) {
+        send(["t": "key", "code": .number(Double(code)), "mods": .array(modifiers.map { .string($0.rawValue) })])
+    }
+
+    private func send(_ command: [String: JSON]) {
+        guard let task, let data = try? JSON.object(command).data() else { return }
+        task.send(.string(String(decoding: data, as: UTF8.self))) { _ in }
+    }
+}
+
+/// Mac virtual key codes (ANSI layout) for what the phone's keyboard types, used when a modifier
+/// is held (⌘C needs the key, not the letter).
+enum MacKeyCode {
+    static let returnKey = 36, tab = 48, space = 49, delete = 51, escape = 53
+    static let left = 123, right = 124, down = 125, up = 126
+
+    static func code(for character: Character) -> Int? {
+        let table: [Character: Int] = [
+            "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12,
+            "w": 13, "e": 14, "r": 15, "y": 16, "t": 17, "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23,
+            "=": 24, "9": 25, "7": 26, "-": 27, "8": 28, "0": 29, "]": 30, "o": 31, "u": 32, "[": 33, "i": 34,
+            "p": 35, "l": 37, "j": 38, "'": 39, "k": 40, ";": 41, "\\": 42, ",": 43, "/": 44, "n": 45, "m": 46,
+            ".": 47, "`": 50, " ": space, "\n": returnKey, "\t": tab,
+        ]
+        return table[Character(character.lowercased())]
+    }
+}

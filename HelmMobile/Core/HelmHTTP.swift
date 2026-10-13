@@ -244,6 +244,14 @@ struct HelmHTTP: Sendable {
         return components.url!
     }
 
+    /// The screen remote's socket (apps/server/src/helm/screenRemoteRoute.ts), authenticated by a ticket.
+    func screenSocketURL(ticket: String) -> URL {
+        var components = URLComponents(url: url("/api/helm/screen"), resolvingAgainstBaseURL: false)!
+        components.scheme = components.scheme == "https" ? "wss" : "ws"
+        components.queryItems = [URLQueryItem(name: "wsTicket", value: ticket)]
+        return components.url!
+    }
+
     // MARK: Helm tailnet pairing (apps/server/src/helm/tailnetPairRoute.ts)
 
     /// True when a Helm server answers the tailnet pairing probe on this base URL.

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
+    @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemote = false
 
     private var projectCount: Int {
         model.allProjects().count { $0.environment.config?.isScratch($0.project) != true }
@@ -105,6 +106,19 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("This phone").sectionLabelStyle()
+                }
+
+                Section {
+                    Toggle(isOn: $screenRemote) {
+                        SettingsRow(String(localized: "Screen remote"), symbol: "display")
+                    }
+                    .tint(Palette.accent)
+                    .accessibilityIdentifier("screenRemote")
+                } header: {
+                    Text("Experimental").sectionLabelStyle()
+                } footer: {
+                    Text("See the computer's screen and drive it like a trackpad, from the remote or the computer's settings. Needs a Helm that shares its screen.")
+                        .font(Typography.footnote)
                 }
 
                 Section {
@@ -219,9 +233,25 @@ struct EnvironmentDetailView: View {
     @Environment(Router.self) private var router
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemove = false
+    @AppStorage(PhonePreferences.screenRemoteKey) private var screenRemoteOn = false
+    @State private var showingScreen = false
 
     var body: some View {
         Form {
+            if screenRemoteOn, environment.config?.capability("screenRemote") == true {
+                Section {
+                    Button {
+                        showingScreen = true
+                    } label: {
+                        SettingsRow(String(localized: "Show the screen"), symbol: "display")
+                            .foregroundStyle(Palette.accentText)
+                    }
+                    .accessibilityIdentifier("showScreen")
+                }
+                .fullScreenCover(isPresented: $showingScreen) {
+                    ScreenRemoteView(environment: environment)
+                }
+            }
             Section {
                 row(String(localized: "Status"), environment.statusText)
                 row(String(localized: "Address"), environment.saved.baseURL.absoluteString, mono: true)
