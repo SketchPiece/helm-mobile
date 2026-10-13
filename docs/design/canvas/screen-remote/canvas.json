@@ -61,6 +61,41 @@
    "w": 390,
    "h": 844,
    "title": "E. One window, shaped for the phone: the Mac resizes it to fit"
+  },
+  "t0-now.html": {
+   "x": 0,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "Toolbar · Now: the bar sits on the Mac's Dock"
+  },
+  "t1-autohide.html": {
+   "x": 470,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "Toolbar · A. Hides once you touch the screen, a grabber brings it back"
+  },
+  "t2-edge-tab.html": {
+   "x": 940,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "Toolbar · B. A tab on the screen's edge, opens into a column"
+  },
+  "t3-floating.html": {
+   "x": 1410,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "Toolbar · C. One round button you can drag to any corner"
+  },
+  "t4-top.html": {
+   "x": 1880,
+   "y": 2200,
+   "w": 390,
+   "h": 844,
+   "title": "Toolbar · D. A slim strip where the status bar was"
   }
  },
  "order": [
@@ -71,7 +106,12 @@
   "b-split.html",
   "d-keyboard.html",
   "c-touch.html",
-  "e-window.html"
+  "e-window.html",
+  "t0-now.html",
+  "t1-autohide.html",
+  "t2-edge-tab.html",
+  "t3-floating.html",
+  "t4-top.html"
  ],
  "notes": {
   "t": {
@@ -87,6 +127,13 @@
    "text": "Phone screens. One mechanic underneath (cursor-centered viewport, gestures from CRD); they differ in where the finger goes",
    "kind": "title2",
    "maxW": 2860
+  },
+  "h2": {
+   "x": 0,
+   "y": 2120,
+   "text": "Toolbar: where it goes so it stops covering the Mac",
+   "kind": "title2",
+   "maxW": 2400
   }
  },
  "annotations": [
@@ -105,8 +152,8 @@
   },
   {
    "id": "claude-2",
-   "x": 1430,
-   "y": 1900,
+   "x": 2073,
+   "y": 1893,
    "w": 380,
    "color": "blue",
    "text": "My pick for portrait: B. The finger never sits on the picture, the trackpad and big mic match the existing Mac remote sheet, and holding the mic dictates into whatever field is under the cursor. Rotate to landscape and it becomes A′.",
@@ -123,6 +170,14 @@
    "w": 380,
    "color": "blue",
    "text": "C is a second mode behind the toolbar switch, like CRD. E is the Helm-only idea: stream one window and have the Mac resize it to phone shape, so nothing needs zooming. Good v2."
+  },
+  {
+   "id": "claude-4",
+   "x": 2400,
+   "y": 2200,
+   "w": 360,
+   "color": "blue",
+   "text": "My pick: A. Nothing on the picture while you drive, the grabber is where iOS already teaches a swipe up, and the bar comes back the moment you stop. B is the fallback if the grabber fights the Home indicator."
   }
  ],
  "designSystems": []
