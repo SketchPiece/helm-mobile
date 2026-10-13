@@ -1,6 +1,6 @@
 # Helm Mobile
 
-A native SwiftUI iPhone client for Helm (the T3 Code fork in `~/Documents/Projects/t3code`, branch `helm`).
+A native SwiftUI iPhone and iPad client for Helm (the T3 Code fork in `~/Documents/Projects/t3code`, branch `helm`).
 It pairs with Helm on a Mac over Tailscale or the LAN and speaks the server's WebSocket protocol
 directly. It replaces the React Native app with a native one; nothing on the Mac side changed.
 
@@ -12,7 +12,8 @@ xcodebuild -project HelmMobile.xcodeproj -scheme HelmMobile \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath build/dd build
 ```
 
-- iOS 26+, iPhone only. The bundle id comes from `APP_BUNDLE_ID` in `Base.xcconfig`
+- iOS 26+, iPhone and iPad. A regular-width window (iPad) puts Home in a sidebar beside the open thread, with a
+  menu bar, keyboard shortcuts and threads in windows of their own; a narrow one is the iPhone app. The bundle id comes from `APP_BUNDLE_ID` in `Base.xcconfig`
   (`com.sketchpiece.helm`, the push-enabled App ID the old React Native app used).
 - Push and Live Activity updates need a push-enabled App ID: set `APP_BUNDLE_ID`, `HELM_PUSH_ENABLED = YES`
   and `HELM_APP_ENTITLEMENTS = HelmMobile/HelmMobile.entitlements`, and put the Volna core relay URL
@@ -32,6 +33,7 @@ xcodebuild … test -only-testing:HelmMobileTests      # unit tests, no server n
 TEST_RUNNER_HELM_TEST_URL=http://localhost:13773 TEST_RUNNER_HELM_TEST_TOKEN=<bearer> \
   xcodebuild … test -only-testing:HelmMobileTests    # plus live protocol tests against a dev server
 xcodebuild … test -only-testing:HelmMobileUITests    # UI tour; screenshots land in /tmp/hm-ui
+xcodebuild … test -only-testing:HelmMobileUITests/IPadTourTests   # on an iPad simulator; /tmp/hm-ipad
 ```
 
 UI scenarios that drive real agents are opt-in: `HELM_LIVE_TURN=<project>`, `HELM_ANSWER=1` (a thread
