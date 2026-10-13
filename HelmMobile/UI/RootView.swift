@@ -309,17 +309,36 @@ private struct SplitRoot: View {
         }
     }
 
+    /// Plex type and a full-size amber button, so the empty right side reads as one calm block
+    /// rather than the system's large text over a small button.
     private var nothingOpen: some View {
-        ContentUnavailableView {
-            Label("No thread open", systemImage: "bubble.left.and.text.bubble.right")
-        } description: {
+        VStack(spacing: 0) {
+            Image(systemName: "bubble.left.and.text.bubble.right")
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(Palette.textMuted)
+                .padding(.bottom, 20)
+            Text("No thread open")
+                .font(Typography.sans(22, .semibold, relativeTo: .title2))
+                .foregroundStyle(Palette.text)
+                .padding(.bottom, 6)
             Text("Pick a thread on the left, or start a new one.")
-        } actions: {
-            Button("New thread") { router.startNewThread() }
-                .buttonStyle(.glassProminent)
-                .tint(Palette.accent)
-                .foregroundStyle(Palette.accentForeground)
+                .font(Typography.body)
+                .foregroundStyle(Palette.textMuted)
+                .padding(.bottom, 24)
+            Button {
+                router.startNewThread()
+            } label: {
+                Text("New thread")
+                    .font(Typography.bodyMedium)
+                    .foregroundStyle(Palette.accentForeground)
+                    .padding(.horizontal, 8)
+            }
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+            .tint(Palette.accent)
         }
+        .multilineTextAlignment(.center)
+        .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.canvas)
     }
