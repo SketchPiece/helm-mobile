@@ -1,0 +1,150 @@
+{
+ "v": 3,
+ "title": "Computers: one place to reach a Mac (screen, remote, new thread)",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0a-now-menu.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · the computer button is only a status menu"
+  },
+  "0b-now-settings.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · Control the computer lives in Settings"
+  },
+  "0c-now-remote.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · the screen button hides inside the nearby remote"
+  },
+  "a1-sheet.html": {
+   "x": 0,
+   "y": 1044,
+   "w": 390,
+   "h": 844,
+   "title": "A. The computer button opens Computers: what each Mac can do"
+  },
+  "a2-detail.html": {
+   "x": 470,
+   "y": 1044,
+   "w": 390,
+   "h": 844,
+   "title": "A. A Mac’s own page: its screen, its projects, then the plumbing"
+  },
+  "a3-settings.html": {
+   "x": 940,
+   "y": 1044,
+   "w": 390,
+   "h": 844,
+   "title": "A. Settings: the same Mac page, no toggle"
+  },
+  "b1-strip.html": {
+   "x": 0,
+   "y": 2088,
+   "w": 390,
+   "h": 844,
+   "title": "B. Computers on Home: a row of live screens above the threads"
+  },
+  "c1-thread.html": {
+   "x": 0,
+   "y": 3132,
+   "w": 390,
+   "h": 844,
+   "title": "C. Where you are: a thread opens its Mac’s screen"
+  },
+  "c2-pill.html": {
+   "x": 470,
+   "y": 3132,
+   "w": 390,
+   "h": 844,
+   "title": "C. Where you are: the bottom pill always reaches the Mac"
+  }
+ },
+ "order": [
+  "0a-now-menu.html",
+  "0b-now-settings.html",
+  "0c-now-remote.html",
+  "a1-sheet.html",
+  "a2-detail.html",
+  "a3-settings.html",
+  "b1-strip.html",
+  "c1-thread.html",
+  "c2-pill.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Computers: one place to reach a Mac (screen, remote, new thread)",
+   "kind": "title1",
+   "maxW": 2000
+  },
+  "h0": {
+   "x": 0,
+   "y": -70,
+   "text": "Now: three half-ways in",
+   "kind": "title2",
+   "maxW": 1600
+  },
+  "h1": {
+   "x": 0,
+   "y": 974,
+   "text": "A. The computer button opens Computers (recommended)",
+   "kind": "title2",
+   "maxW": 1600
+  },
+  "h2": {
+   "x": 0,
+   "y": 2018,
+   "text": "B. Computers on Home",
+   "kind": "title2",
+   "maxW": 1600
+  },
+  "h3": {
+   "x": 0,
+   "y": 3062,
+   "text": "C. Where you are: from a thread and from the bottom pill",
+   "kind": "title2",
+   "maxW": 1600
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1440,
+   "y": 1044,
+   "w": 380,
+   "color": "blue",
+   "to": {
+    "board": "a1-sheet.html",
+    "x": 200,
+    "y": 360
+   },
+   "text": "My pick: A. The computer button at the top already stands for “my Macs”; today it only shows status. A makes it the place where each Mac’s abilities live: Screen works anywhere, Remote lights up when the Mac is nearby, New thread starts there. Home stays about threads. C1 (the thread’s ⋯ menu) is a cheap shortcut to add on top later."
+  },
+  {
+   "id": "claude-2",
+   "x": 1440,
+   "y": 1500,
+   "w": 380,
+   "color": "blue",
+   "to": {
+    "board": "a1-sheet.html",
+    "x": 200,
+    "y": 260
+   },
+   "text": "The screen pictures need the Mac to send one still frame now and then; without them the cards are just name + buttons and it still works."
+  }
+ ],
+ "designSystems": []
+}

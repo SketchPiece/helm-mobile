@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap');
+:root{--canvas:#161310;--surface:#1F1B18;--raised:#26211D;--text:#EFE7D6;--muted:#A3968A;--ph:#8F8376;--border:#2A2420;--input:#302924;--accent:#E8A33D;--accentText:#F2B550;--done:#7DBE6A;--working:#6CC4B8}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:390px;height:844px;overflow:hidden;background:var(--canvas);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.phone{position:relative;width:390px;height:844px;overflow:hidden}
+.status{height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 32px 0 46px;font-weight:600;font-size:17px}
+.status .r{display:flex;gap:6px;align-items:center;font-size:12px}
+.batt{border:1.5px solid var(--text);border-radius:5px;padding:0 4px;font-size:11px;font-weight:600;background:var(--text);color:#000}
+.titlebar{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 0 20px;height:56px}
+.title{font-size:30px;font-weight:600;letter-spacing:-.3px}
+.glassbtn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);display:grid;place-items:center;color:var(--text);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.glassbtn svg{width:20px;height:20px}
+.chips{display:flex;gap:8px;padding:10px 16px 6px;overflow:hidden;white-space:nowrap}
+.chip{height:34px;padding:0 12px;border-radius:17px;background:var(--surface);display:flex;align-items:center;gap:6px;font-size:15px;font-weight:500;flex-shrink:0}
+.chip.sel{background:var(--text);color:var(--canvas)}
+.chip .n{color:var(--muted)}
+.pi{border-radius:23%;display:grid;place-items:center;flex-shrink:0}
+.pi svg{width:60%;height:60%}
+.row{display:flex;gap:12px;padding:10px 16px 0}
+.row .body{flex:1;min-width:0;border-bottom:1px solid var(--border);padding-bottom:14px}
+.row .l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.row .t{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .time{font-size:13px;color:var(--muted);flex-shrink:0}
+.row .time.working{color:var(--working)}
+.row .sub{font-size:14px;color:var(--muted);margin-top:4px}
+.row .sub .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px}
+.shelf{display:flex;justify-content:space-between;align-items:center;padding:26px 16px 6px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.7px;color:var(--muted);text-transform:uppercase}
+.shelf .c{color:var(--ph)}
+.home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--text);opacity:.9}
+.glass{background:rgba(48,41,36,.72);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--done);display:inline-block}
+.icon{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mutedtxt{color:var(--ph)}
+.fade{position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(to bottom,rgba(22,19,16,0),var(--canvas) 55%)}
+
+/* computers canvas */
+.sheet{position:absolute;left:0;right:0;bottom:0;top:58px;background:var(--surface);border-radius:30px 30px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.5);overflow:hidden}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.grab{width:38px;height:5px;border-radius:3px;background:#4a423b;margin:8px auto 0}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 6px 20px}
+.shead h2{font-size:22px;font-weight:600}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);padding:18px 20px 8px}
+.group{margin:0 16px;background:var(--raised);border-radius:18px;overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:50px;border-bottom:1px solid var(--border);font-size:16px}
+.li:last-child{border-bottom:0}
+.li .v{margin-left:auto;color:var(--muted);font-size:15px;display:flex;align-items:center;gap:6px}
+.li .ic{width:22px;color:var(--muted);display:grid;place-items:center}
+.li.acc{color:var(--accentText)} .li.acc .ic{color:var(--accentText)}
+.mac{margin:0 16px 12px;background:var(--raised);border-radius:20px;padding:14px}
+.mac .top{display:flex;align-items:center;gap:12px}
+.mac .name{font-size:17px;font-weight:600}
+.mac .st{font-size:13.5px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+.shot{border-radius:10px;overflow:hidden;background:#000;position:relative}
+.shot img{display:block;width:100%}
+.acts{display:flex;gap:8px;margin-top:12px}
+.act{flex:1;height:64px;border-radius:14px;background:var(--input);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:500}
+.act.pri{background:var(--accent);color:#161310}
+.act.off{opacity:.38}
+.act svg{width:22px;height:22px}
+.hint{font-size:12.5px;color:var(--ph);padding:8px 4px 0;line-height:1.4}
+.menu{position:absolute;width:270px;background:rgba(52,45,40,.94);backdrop-filter:blur(24px);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);overflow:hidden;border:1px solid rgba(255,255,255,.07)}
+.menu .mi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.07);font-size:16px}
+.menu .mi small{display:block;font-size:13px;color:var(--muted)}
+.menu .sep{height:8px;background:rgba(0,0,0,.25)}
+.mark{position:absolute;border:2px dashed #ff5a4f;border-radius:14px;pointer-events:none}
+.tag{position:absolute;background:#ff5a4f;color:#fff;font:600 12px/1.35 'IBM Plex Sans',system-ui,sans-serif;padding:5px 8px;border-radius:8px;max-width:200px}
+.tag.ok{background:var(--accent);color:#161310}
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 0;height:56px}
+.navbar .ttl{font-size:17px;font-weight:600}
