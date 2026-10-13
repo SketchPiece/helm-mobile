@@ -33,6 +33,16 @@ final class IPadTourTests: XCTestCase {
         // The sidebar stays, and another row replaces what's on the right.
         XCTAssertTrue(rows.firstMatch.isHittable, "the sidebar went away after opening a thread")
 
+        // Review changes opens beside the conversation, not over it.
+        let review = app.buttons["reviewChanges"]
+        if review.exists {
+            review.tap()
+            sleep(3)
+            shot("02b-landscape-changes-inspector")
+            review.tap()
+            sleep(1)
+        }
+
         app.buttons["newThread"].firstMatch.tap()
         sleep(2)
         shot("03-landscape-new-thread")

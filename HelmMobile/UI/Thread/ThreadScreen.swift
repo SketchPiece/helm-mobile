@@ -21,6 +21,7 @@ private struct ThreadContent: View {
     @State var session: ThreadSession
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     /// Programmatic scrolling goes through the reader's proxy: unlike ScrollPosition it
     /// materialises the target row of the lazy stack and lands on it reliably.
@@ -190,8 +191,16 @@ private struct ThreadContent: View {
         .sheet(isPresented: $showSettings) {
             ThreadSettingsSheet(environment: environment, session: session)
         }
-        .sheet(item: $reviewing) { checkpoint in
+        // A wide window shows the changes beside the conversation; a narrow one, over it.
+        .sheet(item: sizeClass == .regular ? .constant(nil) : $reviewing) { checkpoint in
             ChangesSheet(session: session, checkpoint: checkpoint)
+        }
+        .inspector(isPresented: Binding(get: { sizeClass == .regular && reviewing != nil },
+                                        set: { if !$0 { reviewing = nil } })) {
+            if let reviewing {
+                ChangesSheet(session: session, checkpoint: reviewing) { self.reviewing = nil }
+                    .inspectorColumnWidth(min: 340, ideal: 440, max: 600)
+            }
         }
         .sheet(isPresented: $snoozingCustom) {
             CustomSnoozeSheet { date in
@@ -490,6 +499,20 @@ private struct ThreadContent: View {
 
     @ToolbarContentBuilder
     private func toolbar(projection: ThreadProjection?) -> some ToolbarContent {
+        // Wide windows have room to show the changes beside the thread, so they get their own button.
+        if sizeClass == .regular, let checkpoint = projection?.latestCheckpointWithChanges {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    reviewing = reviewing == nil ? checkpoint : nil
+                } label: {
+                    Image(systemName: "plusminus")
+                }
+                .keyboardShortcut("i", modifiers: [.command, .option])
+                .accessibilityLabel("Review changes")
+                .accessibilityIdentifier("reviewChanges")
+            }
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+        }
         if let usage = projection?.contextUsage {
             ToolbarItem(placement: .topBarTrailing) {
                 ContextMeter(used: usage.used, max: usage.max,

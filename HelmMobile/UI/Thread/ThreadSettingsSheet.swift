@@ -217,6 +217,8 @@ struct ModelSettingsSections: View {
 struct ChangesSheet: View {
     let session: ThreadSession
     let checkpoint: Checkpoint
+    /// Closes the iPad inspector it sits in; a sheet dismisses itself.
+    var close: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var files: [DiffFile]?
     @State private var error: String?
@@ -238,11 +240,13 @@ struct ChangesSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) { dismiss() }
+                    Button(role: .close) { if let close { close() } else { dismiss() } }
                 }
             }
         }
-        .task {
+        .task(id: checkpoint.id) {
+            files = nil
+            error = nil
             do {
                 let diff = try await session.turnDiff(checkpoint: checkpoint)
                 files = await Task.detached { UnifiedDiff.parse(diff) }.value
