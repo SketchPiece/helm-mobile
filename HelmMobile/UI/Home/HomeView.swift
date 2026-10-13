@@ -6,6 +6,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
+    @Environment(\.isSidebar) private var isSidebar
 
     @State private var search = ""
     @State private var projectFilter: String?
@@ -259,7 +260,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("newThreadDraft")
-            .listRowBackground(Palette.canvas)
+            .listRowBackground(rowBackground(selected: router.path.first == .newThread && draft.key == router.newThreadDraftKey))
             .listRowSeparatorTint(Palette.border)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -286,7 +287,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("threadRow")
-            .listRowBackground(Palette.canvas)
+            .listRowBackground(rowBackground(selected: router.selectedThread == entry.ref))
             .listRowSeparatorTint(Palette.border)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .swipeActions(edge: .trailing, allowsFullSwipe: true) { trailingSwipe(entry) }
@@ -457,6 +458,18 @@ struct HomeView: View {
         }
     }
 
+    /// In the iPad sidebar, the row of what's open on the right is lit, like a selection in Mail.
+    private func rowBackground(selected: Bool) -> some View {
+        Palette.canvas.overlay {
+            if isSidebar, selected {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Palette.accent.opacity(0.16))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1)
+            }
+        }
+    }
+
     private func sectionHeader(_ title: String, count: Int) -> some View {
         HStack(spacing: 6) {
             Text(title)
@@ -474,7 +487,7 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("shelf-\(shelf == .snoozed ? "Snoozed" : "Settled")")
-        .listRowBackground(Palette.canvas)
+        .listRowBackground(rowBackground(selected: router.path.first == .shelf(shelf, projectId: projectFilter)))
         .listRowSeparatorTint(Palette.border)
         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
     }

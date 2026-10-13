@@ -52,6 +52,13 @@ extension UIColor {
 
 // IBM Plex everywhere, scaled with Dynamic Type so the phone's text size setting is the
 // accessibility control (no in-app slider). Unbounded is only for the Helm wordmark.
+/// Sizes that hold across screens.
+enum ContentWidth {
+    /// The widest a conversation runs (its text, cards and composer). On the iPhone it is the
+    /// screen; in a wide iPad window lines would otherwise stretch past what reads comfortably.
+    static let readable: CGFloat = 720
+}
+
 enum Typography {
     static func sans(_ size: CGFloat, _ weight: Font.Weight = .regular, relativeTo style: Font.TextStyle = .body) -> Font {
         let name = switch weight {

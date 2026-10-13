@@ -41,7 +41,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         PRODUCT_NAME: HelmMobile
         CODE_SIGN_ENTITLEMENTS: $(HELM_APP_ENTITLEMENTS)
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_FILE: HelmMobile/Info.plist
         GENERATE_INFOPLIST_FILE: NO
@@ -61,7 +61,7 @@ targets:
         PRODUCT_NAME: HelmWidgets
         # The app group the app writes the Usage widget's snapshot to.
         CODE_SIGN_ENTITLEMENTS: HelmWidgets/HelmWidgets.entitlements
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         INFOPLIST_FILE: HelmWidgets/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
@@ -87,7 +87,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).sharing
         PRODUCT_NAME: HelmShare
         CODE_SIGN_ENTITLEMENTS: HelmShare/HelmShare.entitlements
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         INFOPLIST_FILE: HelmShare/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES

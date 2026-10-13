@@ -107,6 +107,18 @@ final class Router {
     func push(_ ref: ThreadRef) {
         if path.last != .thread(ref) { path.append(.thread(ref)) }
     }
+
+    /// Leaves a thread that was deleted, archived or marked unread: back to what was under it.
+    /// (`dismiss()` can't do this on iPad, where the thread is the root of the detail column.)
+    func close(_ ref: ThreadRef) {
+        if path.last == .thread(ref) { path.removeLast() }
+    }
+
+    /// The thread open in the detail column on iPad, highlighted in the sidebar.
+    var selectedThread: ThreadRef? {
+        if case .thread(let ref)? = path.first { return ref }
+        return nil
+    }
 }
 
 enum SettingsDestination: Hashable { case usage }
@@ -127,19 +139,21 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @State private var router = Router()
     @AppStorage(AppBadge.enabledKey) private var appIconBadge = true
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         Group {
             if model.hasEnvironments && !UserDefaults.standard.bool(forKey: "showWelcome") {
-                NavigationStack(path: $router.path) {
-                    HomeView()
-                        .navigationDestination(for: Router.Route.self) { route in
-                            switch route {
-                            case .thread(let ref): ThreadScreen(ref: ref)
-                            case .newThread: NewThreadView()
-                            case .shelf(let shelf, let projectId): ShelfScreen(shelf: shelf, projectId: projectId)
-                            }
+                Group {
+                    // By the width the window has, never by device: a narrow iPad window is the iPhone app.
+                    if sizeClass == .regular {
+                        SplitRoot()
+                    } else {
+                        NavigationStack(path: $router.path) {
+                            HomeView()
+                                .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
                         }
+                    }
                 }
                 .sheet(isPresented: $router.showSettings, onDismiss: { router.settingsPath = [] }) {
                     SettingsView()
@@ -199,6 +213,78 @@ struct RootView: View {
         guard !model.environments.contains(where: { $0.saved.baseURL == target.baseURL }) else { return }
         _ = try? await model.pair(target)
     }
+}
+
+/// The screen a route shows, in the iPhone stack and in the iPad detail column alike.
+struct RouteView: View {
+    let route: Router.Route
+
+    var body: some View {
+        switch route {
+        case .thread(let ref): ThreadScreen(ref: ref)
+        case .newThread: NewThreadView()
+        case .shelf(let shelf, let projectId): ShelfScreen(shelf: shelf, projectId: projectId)
+        }
+    }
+}
+
+/// iPad and other wide windows: Home in the sidebar, the open screen beside it, like Mail.
+/// The router's path is the same as on the iPhone; its first route is the detail column's root,
+/// the rest is pushed on top of it (a subagent's thread, a shelf's row), so resizing the window
+/// between the two layouts keeps what is open.
+private struct SplitRoot: View {
+    @Environment(Router.self) private var router
+    @State private var columns = NavigationSplitViewVisibility.all
+
+    var body: some View {
+        NavigationSplitView(columnVisibility: $columns) {
+            HomeView()
+                .environment(\.isSidebar, true)
+                .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
+        } detail: {
+            NavigationStack(path: detailPath) {
+                Group {
+                    if let root = router.path.first {
+                        RouteView(route: root)
+                    } else {
+                        nothingOpen
+                    }
+                }
+                // Each opened screen starts fresh, as it does when pushed on the iPhone.
+                .id(router.path.first)
+                .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
+            }
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    private var detailPath: Binding<[Router.Route]> {
+        Binding {
+            Array(router.path.dropFirst())
+        } set: { tail in
+            router.path = Array(router.path.prefix(1)) + tail
+        }
+    }
+
+    private var nothingOpen: some View {
+        ContentUnavailableView {
+            Label("No thread open", systemImage: "bubble.left.and.text.bubble.right")
+        } description: {
+            Text("Pick a thread on the left, or start a new one.")
+        } actions: {
+            Button("New thread") { router.startNewThread() }
+                .buttonStyle(.glassProminent)
+                .tint(Palette.accent)
+                .foregroundStyle(Palette.accentForeground)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Palette.canvas)
+    }
+}
+
+extension EnvironmentValues {
+    /// Home is the iPad sidebar: the row of what's open beside it stays highlighted.
+    @Entry var isSidebar = false
 }
 
 /// First launch: what Helm is and how to connect it.

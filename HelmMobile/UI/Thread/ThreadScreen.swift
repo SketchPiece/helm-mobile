@@ -21,7 +21,6 @@ private struct ThreadContent: View {
     @State var session: ThreadSession
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
-    @Environment(\.dismiss) private var dismiss
 
     /// Programmatic scrolling goes through the reader's proxy: unlike ScrollPosition it
     /// materialises the target row of the lazy stack and lands on it reliably.
@@ -63,6 +62,7 @@ private struct ThreadContent: View {
     /// AppThread lacks, so it wins; the projection covers threads the shell no longer lists.
     private var summary: ThreadSummary? { environment.thread(session.threadId) ?? session.projection?.thread }
     private var project: Project? { environment.project(summary?.projectId) }
+    private var ref: ThreadRef { ThreadRef(environmentId: environment.id, threadId: session.threadId) }
 
     var body: some View {
         let projection = session.projection
@@ -116,6 +116,8 @@ private struct ThreadContent: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
+            .frame(maxWidth: ContentWidth.readable)
+            .frame(maxWidth: .infinity)
         }
         .onAppear { scrollProxy = proxy }
         }
@@ -231,7 +233,7 @@ private struct ThreadContent: View {
             if !leavesUnread { session.markVisited() }
             if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
         }
-        .onChange(of: session.isDeleted) { _, deleted in if deleted { dismiss() } }
+        .onChange(of: session.isDeleted) { _, deleted in if deleted { router.close(ref) } }
         .task(id: session.projection?.isWorking == true) { await moveOnAfterStart() }
     }
 
@@ -473,6 +475,8 @@ private struct ThreadContent: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 6)
+        .frame(maxWidth: ContentWidth.readable)
+        .frame(maxWidth: .infinity)
         // A taller composer (more lines, chips, cards) must not hide the newest message.
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _ in
             if followsBottom { scrollToBottom() }
@@ -585,7 +589,7 @@ private struct ThreadContent: View {
             do {
                 try await model.perform(action, on: ref)
                 // A delete may already have closed the screen when the stream reported it.
-                if thenDismiss, !session.isDeleted { dismiss() }
+                if thenDismiss, !session.isDeleted { router.close(ref) }
             } catch {
                 leavesUnread = false
                 actionError = error.localizedDescription
