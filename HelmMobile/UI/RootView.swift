@@ -280,26 +280,9 @@ private struct SplitRoot: View {
                 .id(router.path.first)
                 .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
             }
-            .inspector(isPresented: inspectorShown) {
-                if let review = router.reviewing, let environment = model.environment(review.ref.environmentId) {
-                    ChangesSheet(session: environment.threadSession(review.ref.threadId), checkpoint: review.checkpoint) {
-                        router.reviewing = nil
-                    }
-                    .inspectorColumnWidth(min: 340, ideal: 440, max: 600)
-                }
-            }
+            .changesInspector()
         }
         .navigationSplitViewStyle(.balanced)
-    }
-
-    /// The changes stay with their thread: moving to another one hides them.
-    private var inspectorShown: Binding<Bool> {
-        Binding {
-            guard let review = router.reviewing else { return false }
-            return router.path.last == .thread(review.ref)
-        } set: { shown in
-            if !shown { router.reviewing = nil }
-        }
     }
 
     private var detailPath: Binding<[Router.Route]> {
@@ -324,6 +307,65 @@ private struct SplitRoot: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.canvas)
     }
+}
+
+/// A thread in a window of its own on iPad: no sidebar, just the conversation, titled after it.
+struct ThreadWindow: View {
+    static let id = "thread"
+    let ref: ThreadRef?
+    @State private var router = Router()
+
+    var body: some View {
+        NavigationStack(path: $router.path) {
+            Group {
+                if let ref {
+                    ThreadScreen(ref: ref)
+                } else {
+                    ContentUnavailableView("No thread", systemImage: "bubble.left.and.text.bubble.right")
+                }
+            }
+            .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
+        }
+        .changesInspector(root: ref)
+        .sheet(isPresented: $router.showSettings) { SettingsView() }
+        .environment(router)
+        .focusedSceneValue(\.router, router)
+        .background { Palette.canvas.ignoresSafeArea() }
+    }
+}
+
+private struct ChangesInspector: ViewModifier {
+    /// The thread under the stack's routes, when it isn't one of them (a thread window's).
+    var root: ThreadRef?
+    @Environment(AppModel.self) private var model
+    @Environment(Router.self) private var router
+
+    func body(content: Content) -> some View {
+        content.inspector(isPresented: shown) {
+            if let review = router.reviewing, let environment = model.environment(review.ref.environmentId) {
+                ChangesSheet(session: environment.threadSession(review.ref.threadId), checkpoint: review.checkpoint) {
+                    router.reviewing = nil
+                }
+                .inspectorColumnWidth(min: 340, ideal: 440, max: 600)
+            }
+        }
+    }
+
+    /// The changes stay with their thread: moving to another one hides them.
+    private var shown: Binding<Bool> {
+        Binding {
+            guard let review = router.reviewing else { return false }
+            return router.path.last == .thread(review.ref) || (router.path.isEmpty && root == review.ref)
+        } set: { shown in
+            if !shown { router.reviewing = nil }
+        }
+    }
+}
+
+extension View {
+    /// The thread's changes beside it (iPad). It goes on the navigation stack, not inside it:
+    /// within the stack it took the thread's toolbar away.
+    func changesInspector(root: ThreadRef? = nil) -> some View { modifier(ChangesInspector(root: root)) }
 }
 
 extension EnvironmentValues {

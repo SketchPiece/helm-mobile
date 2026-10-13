@@ -23,15 +23,14 @@ struct HelmApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(model)
+            chrome(RootView())
                 .onAppear { PushService.shared.start() }
-                .preferredColorScheme(appearance.colorScheme)
-                .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap, diffWordWrap: diffWordWrap))
-                // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
-                .tint(Palette.text)
         }
         .commands { HelmCommands() }
+        // iPad: a thread in a window of its own ("Open in New Window").
+        WindowGroup(id: ThreadWindow.id, for: ThreadRef.self) { $ref in
+            chrome(ThreadWindow(ref: ref))
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 LaunchActions.shared.pickUpShares()
@@ -41,6 +40,18 @@ struct HelmApp: App {
                 model.backgrounded()
             }
         }
+    }
+}
+
+extension HelmApp {
+    /// What every window shares: the model, the appearance, code settings and the neutral tint.
+    private func chrome(_ content: some View) -> some View {
+        content
+            .environment(model)
+            .preferredColorScheme(appearance.colorScheme)
+            .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap, diffWordWrap: diffWordWrap))
+            // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
+            .tint(Palette.text)
     }
 }
 

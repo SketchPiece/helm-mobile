@@ -7,6 +7,8 @@ struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
     @Environment(\.isSidebar) private var isSidebar
+    @Environment(\.supportsMultipleWindows) private var supportsMultipleWindows
+    @Environment(\.openWindow) private var openWindow
 
     @State private var search = ""
     @State private var projectFilter: String?
@@ -338,8 +340,15 @@ struct HomeView: View {
     @ViewBuilder
     private func contextMenu(_ entry: ThreadListEntry, arrangement: Arrangement?, in entries: [ThreadListEntry]) -> some View {
         let thread = entry.thread
+        if supportsMultipleWindows {
+            Button { openWindow(id: ThreadWindow.id, value: entry.ref) } label: {
+                Label("Open in New Window", systemImage: "macwindow.badge.plus")
+            }
+        }
         if let environment = model.environment(entry.ref.environmentId), NearbyMacs.shared.contains(environment.id) {
             OpenOnComputerButton(environment: environment, threadId: entry.ref.threadId)
+        }
+        if supportsMultipleWindows || model.environment(entry.ref.environmentId).map({ NearbyMacs.shared.contains($0.id) }) == true {
             Divider()
         }
         if thread.isSettled {

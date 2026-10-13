@@ -65,6 +65,20 @@ final class IPadTourTests: XCTestCase {
         sleep(2)
         shot("04-portrait")
         XCUIDevice.shared.orientation = .landscapeLeft
+        sleep(1)
+    }
+
+    func testThreadInNewWindow() throws {
+        let rows = app.buttons.matching(identifier: "threadRow")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 20), "thread list never loaded")
+        rows.element(boundBy: max(0, rows.count - 1)).press(forDuration: 1.2)
+        let item = app.buttons["Open in New Window"]
+        XCTAssertTrue(item.waitForExistence(timeout: 3), "no Open in New Window in the row's menu")
+        item.tap()
+        sleep(4)
+        shot("05-thread-window")
+        XCTAssertTrue(app.textViews["composer"].waitForExistence(timeout: 5) || app.textFields["composer"].exists,
+                      "the new window doesn't show the thread")
     }
 }
 
