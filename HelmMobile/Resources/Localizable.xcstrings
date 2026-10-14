@@ -4035,6 +4035,16 @@
         }
       }
     },
+    "Hide sidebar": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть боковую панель"
+          }
+        }
+      }
+    },
     "Hide the keyboard": {},
     "High": {
       "localizations": {
@@ -7121,6 +7131,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Показать старые модели"
+          }
+        }
+      }
+    },
+    "Show sidebar": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать боковую панель"
           }
         }
       }

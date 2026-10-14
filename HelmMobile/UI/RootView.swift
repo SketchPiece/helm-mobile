@@ -282,7 +282,7 @@ private struct SplitRoot: View {
         NavigationSplitView(columnVisibility: $columns) {
             HomeView()
                 .environment(\.isSidebar, true)
-                // No sidebar button: the sidebar stays in landscape, and ⌃⌘S or a drag still hides it.
+                // The system's button would take a slot in the sidebar's header; ours sits in the detail's.
                 .toolbar(removing: .sidebarToggle)
                 // With a keyboard up the column stops above its shortcut bar; without this the split
                 // view's own grey shows through below the remote pill.
@@ -300,6 +300,11 @@ private struct SplitRoot: View {
                 }
                 // Each opened screen starts fresh, as it does when pushed on the iPhone.
                 .id(router.path.first)
+                // Like Claude's: at the detail's top left, where nothing else sits, so the sidebar's
+                // header keeps its room. Screens pushed on top show their back button there instead.
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) { sidebarToggle }
+                }
                 .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
             }
             .changesInspector()
@@ -307,6 +312,17 @@ private struct SplitRoot: View {
         .navigationSplitViewStyle(.balanced)
         // The hardware keyboard's bar grows the bottom safe area and would lift both columns.
         .ignoresHardwareKeyboardBar()
+    }
+
+    private var sidebarToggle: some View {
+        let hidden = columns == .detailOnly
+        return Button {
+            withAnimation { columns = hidden ? .all : .detailOnly }
+        } label: {
+            Image(systemName: "sidebar.left")
+        }
+        .accessibilityLabel(hidden ? "Show sidebar" : "Hide sidebar")
+        .accessibilityIdentifier("sidebarToggle")
     }
 
     private var detailPath: Binding<[Router.Route]> {
