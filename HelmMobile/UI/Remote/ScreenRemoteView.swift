@@ -9,6 +9,8 @@ struct ScreenRemoteView: View {
     @State private var remote: ScreenRemote
     @State private var viewport = ScreenViewport()
     @State private var showsNotice = true
+    /// Which side of the screen the toolbar lives on; the mini map takes the other one.
+    @AppStorage(PhonePreferences.screenToolbarLeadingKey) private var toolbarLeading = false
     @Environment(\.scenePhase) private var scenePhase
     private let close: () -> Void
 
@@ -30,10 +32,10 @@ struct ScreenRemoteView: View {
             case .live: EmptyView()
             }
         }
-        .overlay(alignment: .topTrailing) {
+        .overlay(alignment: toolbarLeading ? .topTrailing : .topLeading) {
             if viewport.isZoomedIn, remote.desktopSize != .zero {
                 ScreenMiniMap(desktop: remote.desktopSize, visible: viewport.visibleRect)
-                    .padding(.trailing, 14)
+                    .padding(.horizontal, 14)
                     .padding(.top, 8)
                     .transition(.opacity)
                     .allowsHitTesting(false)
@@ -42,20 +44,14 @@ struct ScreenRemoteView: View {
         .overlay(alignment: .top) {
             if showsNotice, let notice = remote.notice { noticeBanner(notice) }
         }
-        .overlay(alignment: .bottom) {
-            if viewport.keyboardShown {
-                EmptyView()
-            } else if viewport.toolbarHidden {
-                ScreenToolbarGrabber { viewport.toolbarHidden = false }
+        .overlay {
+            if !viewport.keyboardShown {
+                ScreenToolbarDock(remote: remote, viewport: viewport, leading: $toolbarLeading) { close() }
                     .transition(.opacity)
-            } else {
-                ScreenToolbar(remote: remote, viewport: viewport) { close() }
-                    .padding(.bottom, 8)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
-        .animation(.snappy(duration: 0.25), value: viewport.toolbarHidden)
+        .animation(.easeInOut(duration: 0.2), value: toolbarLeading)
         .animation(.easeInOut(duration: 0.2), value: viewport.keyboardShown)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
@@ -151,7 +147,7 @@ final class ScreenViewport {
     /// The part of the computer's screen on view, in its points.
     var visibleRect = CGRect.zero
     var keyboardShown = false
-    /// The toolbar steps aside once the screen is touched; the grabber at the bottom brings it back.
+    /// The toolbar folds into a tab on its edge once the screen is touched; the tab brings it back.
     var toolbarHidden = false
     /// Asks the canvas to show or hide the keyboard (it owns the first responder).
     var wantsKeyboard = false
@@ -223,7 +219,6 @@ final class ScreenRemoteController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         setNeedsUpdateOfPrefersPointerLocked()
-        setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
     }
 
     /// Trackpad mode: the iPad's pointer is hidden and its raw motion drives the computer's.
@@ -233,9 +228,8 @@ final class ScreenRemoteController: UIViewController {
 
     override var prefersPointerLocked: Bool { locksPointer }
     override var prefersStatusBarHidden: Bool { true }
+    // The toolbar lives on a side, so the bottom edge stays the system's and its indicator fades.
     override var prefersHomeIndicatorAutoHidden: Bool { true }
-    // A swipe up from the bottom reaches the grabber first, not the home screen.
-    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .bottom }
     override var childForStatusBarHidden: UIViewController? { nil }
 }
 
@@ -1022,14 +1016,14 @@ private struct ScreenMiniMap: View {
     }
 }
 
-/// Keyboard, zoom, a few Mac-only keys and close, floating at the bottom.
+/// Keyboard, zoom, a few Mac-only keys and close, in a column; the dock gives it its glass.
 private struct ScreenToolbar: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
     let close: () -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
+        VStack(spacing: 4) {
             button("keyboard", label: "Keyboard") { viewport.wantsKeyboard = true }
             button(viewport.isZoomedIn ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
@@ -1049,7 +1043,6 @@ private struct ScreenToolbar: View {
             button("xmark", label: "Close") { close() }
         }
         .padding(6)
-        .glassEffect(.regular, in: .capsule)
     }
 
     private func button(_ symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
@@ -1064,25 +1057,103 @@ private struct ScreenToolbar: View {
     }
 }
 
-/// What's left of the toolbar while it's away: a handle at the bottom; a tap or a swipe up brings it back.
-private struct ScreenToolbarGrabber: View {
-    let show: () -> Void
+/// The toolbar on a side of the screen. Once the screen is touched its column folds into a tab on
+/// that edge, the glass morphing from one into the other; a tap or a swipe in opens it again.
+/// The tab drags along the edge, or across to the other one.
+private struct ScreenToolbarDock: View {
+    let remote: ScreenRemote
+    let viewport: ScreenViewport
+    @Binding var leading: Bool
+    let close: () -> Void
+    /// The tab's height on the edge, as a fraction of the screen's.
+    @AppStorage(PhonePreferences.screenToolbarPositionKey) private var position = 0.5
+    /// Where the tab is while a finger drags it.
+    @State private var dragged: CGPoint?
+    @State private var columnHeight: CGFloat = 320
+    @Namespace private var glass
+
+    private static let tab = CGSize(width: 20, height: 96)
+    /// The tab's touch area reaches further in than it's drawn.
+    private static let tabTouch = CGSize(width: 44, height: 124)
+    private static let columnWidth: CGFloat = 60
+    private static let margin: CGFloat = 12
 
     var body: some View {
-        Capsule()
-            .fill(.white.opacity(0.75))
-            .frame(width: 44, height: 5)
-            .shadow(color: .black.opacity(0.5), radius: 2)
-            .frame(width: 120, height: 34)
+        GeometryReader { proxy in
+            let size = proxy.size
+            let insets = proxy.safeAreaInsets
+            GlassEffectContainer {
+                ZStack {
+                    if viewport.toolbarHidden {
+                        tab(in: size, insets: insets)
+                    } else {
+                        ScreenToolbar(remote: remote, viewport: viewport, close: close)
+                            .glassEffect(.regular, in: .capsule)
+                            .glassEffectID("toolbar", in: glass)
+                            .transition(.blurReplace)
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
+                            .position(x: leading ? Self.margin + Self.columnWidth / 2
+                                          : size.width - Self.margin - Self.columnWidth / 2,
+                                      y: clamped(position * size.height, half: columnHeight / 2, in: size.height))
+                    }
+                }
+                .frame(width: size.width, height: size.height)
+            }
+            .coordinateSpace(.named("dock"))
+        }
+        .animation(.spring(duration: 0.45, bounce: 0.22), value: viewport.toolbarHidden)
+    }
+
+    /// Flush with the screen's edge, past the safe area.
+    private func tab(in size: CGSize, insets: EdgeInsets) -> some View {
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: leading ? 0 : 12, bottomLeadingRadius: leading ? 0 : 12,
+            bottomTrailingRadius: leading ? 12 : 0, topTrailingRadius: leading ? 12 : 0)
+        let inward = (Self.tabTouch.width - Self.tab.width) / 2
+        let center = dragged ?? CGPoint(
+            x: leading ? -insets.leading + Self.tabTouch.width / 2 : size.width + insets.trailing - Self.tabTouch.width / 2,
+            y: clamped(position * size.height, half: Self.tabTouch.height / 2, in: size.height))
+        return Capsule()
+            .fill(.white.opacity(0.8))
+            .frame(width: 4, height: 36)
+            .frame(width: Self.tab.width, height: Self.tab.height)
+            .glassEffect(.regular, in: shape)
+            .glassEffectID("toolbar", in: glass)
+            .transition(.blurReplace)
+            .offset(x: leading ? -inward : inward)
+            .frame(width: Self.tabTouch.width, height: Self.tabTouch.height)
             .contentShape(.rect)
-            .onTapGesture(perform: show)
-            .gesture(DragGesture(minimumDistance: 8).onEnded { drag in
-                if drag.translation.height < -8 { show() }
-            })
+            .position(center)
+            .onTapGesture { viewport.toolbarHidden = false }
+            .gesture(DragGesture(minimumDistance: 6, coordinateSpace: .named("dock"))
+                .onChanged { dragged = $0.location }
+                .onEnded { drag in drop(drag, in: size) })
             .accessibilityElement()
             .accessibilityLabel("Show toolbar")
             .accessibilityAddTraits(.isButton)
-            .accessibilityAction { show() }
+            .accessibilityAction { viewport.toolbarHidden = false }
+    }
+
+    /// Past the middle it moves to the other edge; a short swipe in opens; otherwise it stays
+    /// on its edge at the new height.
+    private func drop(_ drag: DragGesture.Value, in size: CGSize) {
+        let across = leading ? drag.location.x > size.width / 2 : drag.location.x < size.width / 2
+        let inward = leading ? drag.translation.width : -drag.translation.width
+        withAnimation(.spring(duration: 0.45, bounce: 0.22)) {
+            dragged = nil
+            if across {
+                leading.toggle()
+                position = drag.location.y / max(size.height, 1)
+            } else if inward > 24, inward > abs(drag.translation.height) {
+                viewport.toolbarHidden = false
+            } else {
+                position = drag.location.y / max(size.height, 1)
+            }
+        }
+    }
+
+    private func clamped(_ y: CGFloat, half: CGFloat, in height: CGFloat) -> CGFloat {
+        min(max(y, half + Self.margin), max(height - half - Self.margin, half + Self.margin))
     }
 }
 
