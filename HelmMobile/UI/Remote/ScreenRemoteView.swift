@@ -531,6 +531,9 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     private func hideToolbar() {
         if !viewport.toolbarHidden { viewport.toolbarHidden = true }
     }
+    /// How far the hovering pointer has moved over the screen, and where it was last.
+    private var hoverTravel: CGFloat = 0
+    private var lastHover = CGPoint.zero
 
     /// Two fingers: a scroll, or in touch mode on a zoomed-in screen, moving the view.
     @objc private func scroll(_ pan: UIPanGestureRecognizer) {
@@ -712,11 +715,20 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     // MARK: Pencil and pointer
 
     /// Apple Pencil hovering, or in touch mode an iPad's pointer: the cursor goes where it points.
+    /// Moving it a little way over the screen puts the toolbar away; a little, so the pointer can
+    /// cross the gap from the tab to the column's buttons.
     @objc private func hover(_ hover: UIHoverGestureRecognizer) {
-        guard hover.state == .began || hover.state == .changed else { return }
+        let point = hover.location(in: self)
+        guard hover.state == .began || hover.state == .changed else {
+            hoverTravel = 0
+            return
+        }
         let pencil = hover.zOffset > 0 || hover.altitudeAngle > 0
         guard pencil || touchMode else { return }
-        remote.moveCursor(to: desktopPoint(hover.location(in: self)))
+        if hover.state == .began { hoverTravel = 0 } else { hoverTravel += hypot(point.x - lastHover.x, point.y - lastHover.y) }
+        lastHover = point
+        if hoverTravel > 40 { hideToolbar() }
+        remote.moveCursor(to: desktopPoint(point))
     }
 
     /// Apple Pencil, and in touch mode an iPad's trackpad or mouse clicks, are the computer's
