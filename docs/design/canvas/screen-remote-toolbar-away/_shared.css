@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{--accent:#E8A33D}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1180px;height:820px;overflow:hidden;position:relative;background:#000;color:#fff;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wp{position:absolute;inset:0;background:
+ radial-gradient(60% 90% at 58% -10%,#A8C995 0%,rgba(120,190,170,.0) 60%),
+ linear-gradient(115deg,#1B0A55 0%,#2A0E8C 30%,#2D49C9 55%,#4C9FB8 70%,#3155D0 85%,#2236C4 100%)}
+.wp:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 90px,rgba(140,220,190,.10) 90px 150px,rgba(255,255,255,0) 150px 260px)}
+.mb{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;gap:18px;padding:0 16px;font:500 13px -apple-system,'SF Pro Text',system-ui;color:#fff;background:rgba(0,0,0,.12)}
+.mb b{font-weight:700}.mb .r{margin-left:auto;opacity:.95}
+.cur{position:absolute;width:15px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.glass{background:rgba(40,40,60,.42);backdrop-filter:blur(20px) saturate(1.7);-webkit-backdrop-filter:blur(20px) saturate(1.7);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.22)}
+.tb{position:absolute;display:flex;align-items:center;gap:4px;padding:6px;border-radius:30px}
+.tb.col{flex-direction:column}
+.b{width:48px;height:48px;border-radius:24px;display:grid;place-items:center}
+.b.on{background:rgba(255,255,255,.2)}
+.ic{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:270px;height:5px;border-radius:3px;background:#fff}
+.lbl{position:absolute;font:12px 'IBM Plex Mono',monospace;color:#fff;background:rgba(0,0,0,.62);padding:4px 8px;border-radius:6px;white-space:nowrap;z-index:9}
+.arrow{position:absolute;border-left:1.5px dashed rgba(255,255,255,.75);z-index:8}
+.finger{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.75);z-index:8}

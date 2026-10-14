@@ -1,0 +1,147 @@
+{
+ "v": 3,
+ "title": "Screen remote: where the toolbar goes when it's away",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0a-now-away.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "Now · away: our grabber stacked on the Home indicator"
+  },
+  "0b-now-open.html": {
+   "x": 0,
+   "y": 940,
+   "w": 1180,
+   "h": 820,
+   "title": "Now · open: the bar at the bottom"
+  },
+  "aa-edge-away.html": {
+   "x": 1300,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "A · away: a tab on the right edge, nothing at the bottom"
+  },
+  "ab-edge-open.html": {
+   "x": 1300,
+   "y": 940,
+   "w": 1180,
+   "h": 820,
+   "title": "A · open: the same buttons in a column by the thumb"
+  },
+  "ba-home-away.html": {
+   "x": 2600,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "B · away: only the system Home indicator, no grabber of ours"
+  },
+  "bb-home-open.html": {
+   "x": 2600,
+   "y": 940,
+   "w": 1180,
+   "h": 820,
+   "title": "B · open: the bar rises from the bottom as now"
+  },
+  "ca-puck-away.html": {
+   "x": 3900,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "C · away: one round button in a corner, drag it to any corner"
+  },
+  "cb-puck-open.html": {
+   "x": 3900,
+   "y": 940,
+   "w": 1180,
+   "h": 820,
+   "title": "C · open: the bar unrolls from the button along the edge"
+  },
+  "da-top-away.html": {
+   "x": 5200,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "D · away: a tab hanging from the top edge, like the Mac's full-screen menu bar"
+  },
+  "db-top-open.html": {
+   "x": 5200,
+   "y": 940,
+   "w": 1180,
+   "h": 820,
+   "title": "D · open: the bar drops down at the top"
+  }
+ },
+ "order": [
+  "0a-now-away.html",
+  "0b-now-open.html",
+  "aa-edge-away.html",
+  "ab-edge-open.html",
+  "ba-home-away.html",
+  "bb-home-open.html",
+  "ca-puck-away.html",
+  "cb-puck-open.html",
+  "da-top-away.html",
+  "db-top-open.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Screen remote on iPad: where the toolbar goes when it's away",
+   "kind": "title1",
+   "maxW": 6400
+  },
+  "r1": {
+   "x": -560,
+   "y": 340,
+   "text": "Away",
+   "kind": "title2",
+   "maxW": 500
+  },
+  "r2": {
+   "x": -560,
+   "y": 1280,
+   "text": "Open",
+   "kind": "title2",
+   "maxW": 500
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1300,
+   "y": 1820,
+   "w": 420,
+   "color": "blue",
+   "text": "My pick: A. The bottom edge goes back to iOS (no deferral), so its Home indicator fades on its own and nothing sits at the bottom. The tab is where the thumb rests holding an iPad in landscape, and the column fits the tall side.",
+   "to": {
+    "board": "aa-edge-away.html",
+    "x": 1170,
+    "y": 410
+   }
+  },
+  {
+   "id": "claude-2",
+   "x": 2600,
+   "y": 1820,
+   "w": 420,
+   "color": "blue",
+   "text": "B is the least UI, but there's nothing to tap and the first swipe-up is ours, the second iOS's: easy to land on the home screen by accident."
+  },
+  {
+   "id": "claude-3",
+   "x": 3900,
+   "y": 1820,
+   "w": 420,
+   "color": "blue",
+   "text": "C covers the least of the Mac and can be moved off whatever it hides. Fine fallback if the edge tab feels too hidden."
+  }
+ ],
+ "designSystems": []
+}
