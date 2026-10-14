@@ -14,7 +14,7 @@ struct ScheduledTasksView: View {
     }
 
     var body: some View {
-        Form {
+        HelmForm {
             if model.environments.isEmpty {
                 Text("Connect a computer to see and create scheduled tasks.")
                     .foregroundStyle(Palette.textMuted)

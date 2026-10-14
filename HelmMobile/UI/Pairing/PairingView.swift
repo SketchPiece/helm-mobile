@@ -48,7 +48,7 @@ struct PairingView: View {
     }
 
     var body: some View {
-        Form {
+        HelmForm {
             if codeRequest != nil {
                 Section {
                     TextField("0000", text: $shownCode)

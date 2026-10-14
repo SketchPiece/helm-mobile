@@ -10,7 +10,7 @@ struct TailscaleSettingsView: View {
     private var tailscale: TailscaleService { model.tailscale }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 switch tailscale.state {
                 case .off:

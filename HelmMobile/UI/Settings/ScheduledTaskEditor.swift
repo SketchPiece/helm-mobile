@@ -36,7 +36,7 @@ struct ScheduledTaskEditor: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            HelmForm {
                 if let error {
                     Section {
                         Text(error).font(Typography.footnote).foregroundStyle(Palette.errorText)
@@ -161,7 +161,7 @@ struct ScheduledTaskEditor: View {
     }
 
     private var modelForm: some View {
-        Form {
+        HelmForm {
             if let config {
                 ModelSettingsSections(
                     config: config, selection: draft.modelSelection, runtimeMode: draft.runtimeMode,

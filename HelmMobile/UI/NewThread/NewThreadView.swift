@@ -97,7 +97,7 @@ struct NewThreadView: View {
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack {
-                Form {
+                HelmForm {
                     if let config = environment?.config {
                         ModelSettingsSections(
                             config: config, selection: selection, runtimeMode: runtimeMode,

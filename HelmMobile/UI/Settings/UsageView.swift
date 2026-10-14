@@ -27,7 +27,7 @@ struct UsageView: View {
     private var loadKey: String { "\(environment?.id ?? "")|\(days)|\(environment?.isLive == true)" }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 Picker("Show", selection: $tab) {
                     Text("Limits").tag(Tab.limits)
@@ -288,7 +288,7 @@ struct UsageView: View {
                 ForEach(totals.models.prefix(6)) { modelRow($0) }
                 if totals.models.count > 6 {
                     NavigationLink("All \(totals.models.count) models") {
-                        Form {
+                        HelmForm {
                             ForEach(totals.models) { modelRow($0) }
                         }
                         .font(Typography.body)

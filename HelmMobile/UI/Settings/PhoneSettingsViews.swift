@@ -43,7 +43,7 @@ struct CodeSettingsView: View {
     private var appearance: CodeAppearance { CodeAppearance(fontSize: fontSize, wordWrap: wordWrap) }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 MarkdownView(text: "```swift\nlet greeting = \"Hello from Helm\" // a long line shows how code wraps or scrolls\nprint(greeting)\n```")
                     .environment(\.codeAppearance, appearance)
@@ -101,7 +101,7 @@ private struct ChoiceForm<Option: Hashable & Identifiable>: View {
     let footer: String
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 ChoiceRows(options: options, selection: $selection, label: label, detail: detail)
             } header: {

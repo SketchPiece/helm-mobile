@@ -53,6 +53,20 @@ extension UIColor {
 // IBM Plex everywhere, scaled with Dynamic Type so the phone's text size setting is the
 // accessibility control (no in-app slider). Unbounded is only for the Helm wordmark.
 /// Sizes that hold across screens.
+/// A Form whose rows sit on the app's warm surface. The system's grouped rows are a cool grey
+/// that clashes with the canvas behind them. Callers still hide the scroll background and paint
+/// the canvas; a row's own `listRowBackground` wins over this one.
+struct HelmForm<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        Form {
+            Group { content }
+                .listRowBackground(Palette.surface)
+        }
+    }
+}
+
 enum ContentWidth {
     /// The widest a conversation runs (its text, cards and composer). On the iPhone it is the
     /// screen; in a wide iPad window lines would otherwise stretch past what reads comfortably.

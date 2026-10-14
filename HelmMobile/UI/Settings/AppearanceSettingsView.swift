@@ -23,7 +23,7 @@ struct AppearanceSettingsView: View {
     }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 Picker("Appearance", selection: $appearance) {
                     ForEach(Appearance.allCases) { Text($0.title).tag($0) }

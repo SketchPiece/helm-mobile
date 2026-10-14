@@ -12,7 +12,7 @@ struct ThreadSettingsSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            HelmForm {
                 if let config = environment.config, let thread {
                     ModelSettingsSections(
                         config: config,

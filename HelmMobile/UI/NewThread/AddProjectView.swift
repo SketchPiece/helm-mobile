@@ -229,7 +229,7 @@ private struct NewProjectForm: View {
     private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 TextField("Name", text: $name)
                     .font(Typography.body)
@@ -336,7 +336,7 @@ private struct CloneForm: View {
     private var failed: Bool { progress?.phase == "failed" || progress?.phase == "cancelled" }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 TextField("URL or owner/name", text: $input)
                     .font(Typography.mono(15))

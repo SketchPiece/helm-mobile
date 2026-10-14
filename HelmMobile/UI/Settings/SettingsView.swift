@@ -20,7 +20,7 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var router = router
         NavigationStack(path: $router.settingsPath) {
-            Form {
+            HelmForm {
                 Section {
                     ForEach(model.environments) { environment in
                         NavigationLink {
@@ -233,7 +233,7 @@ struct EnvironmentDetailView: View {
     @State private var confirmRemove = false
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 ComputerActions(environment: environment)
                     .listRowBackground(Color.clear)

@@ -19,7 +19,7 @@ struct CustomSnoozeSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            HelmForm {
                 Section {
                     Picker("Schedule type", selection: $mode) {
                         Text("Date and time").tag(Mode.date)
