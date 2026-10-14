@@ -1,0 +1,30 @@
+---
+title: G. How you get from the thread to each tool
+board: 1600x820
+---
+flowchart LR
+  thread([Thread]):::hl
+  drawer[Drawer on the phone<br>column on the iPad]:::hl
+  picker{Picker<br>empty state or +}
+  term[Terminal tab]
+  files[Files tab<br>tree + peek]
+  changes[Changes tab<br>today's Review]
+  termfull[Terminal full screen<br>key row, send to thread]
+  fileread[File, reading<br>gutter marks, ±]
+  fileedit[File, editing<br>Save = projects.writeFile]
+  ws[iPad workspace<br>tree · tabs · terminal · thread]
+  mac[(Mac<br>terminal.attach<br>projects.readFile)]:::ext
+
+  thread ==>|1. button or right-edge swipe| drawer
+  drawer --> picker
+  picker --> term
+  picker --> files
+  picker --> changes
+  term -->|⤢| termfull
+  files -->|tap a file, then ⤢| fileread
+  fileread -->|Edit| fileedit
+  drawer -->|⤢ on iPad| ws
+  termfull -.->|select output| thread
+  fileread -.->|ask about lines| thread
+  term -.- mac
+  files -.- mac

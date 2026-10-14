@@ -1,0 +1,135 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · terminal and files in a thread",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1760,
+   "h": 1100,
+   "title": "Now · a thread on the phone"
+  },
+  "a-drawer.html": {
+   "x": 1840,
+   "y": 0,
+   "w": 1760,
+   "h": 1180,
+   "title": "A. A drawer from the right edge (recommended)"
+  },
+  "b-pages.html": {
+   "x": 3680,
+   "y": 0,
+   "w": 1760,
+   "h": 1120,
+   "title": "B. The thread and its tools as pages"
+  },
+  "c-terminal.html": {
+   "x": 0,
+   "y": 1340,
+   "w": 1760,
+   "h": 1180,
+   "title": "C. Terminal at full size on the phone"
+  },
+  "d-editor-phone.html": {
+   "x": 1840,
+   "y": 1340,
+   "w": 1760,
+   "h": 1180,
+   "title": "D. A file: from the peek to an editor (phone)"
+  },
+  "e-ipad-panel.html": {
+   "x": 3680,
+   "y": 1340,
+   "w": 1660,
+   "h": 1060,
+   "title": "E. iPad: the tools in a column next to the thread"
+  },
+  "f-ipad-workspace.html": {
+   "x": 0,
+   "y": 2680,
+   "w": 1660,
+   "h": 1060,
+   "title": "F. iPad: the workspace (a light VS Code)"
+  },
+  "g-flow.mmd": {
+   "x": 1840,
+   "y": 2680,
+   "w": 1600,
+   "h": 820,
+   "title": "G. How you get from the thread to each tool"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-drawer.html",
+  "b-pages.html",
+  "c-terminal.html",
+  "d-editor-phone.html",
+  "e-ipad-panel.html",
+  "f-ipad-workspace.html",
+  "g-flow.mmd"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Helm Mobile · terminal and files in a thread",
+   "kind": "title1",
+   "maxW": 5400
+  },
+  "r0": {
+   "x": 0,
+   "y": -90,
+   "text": "Today, and how the tools come out (A or B)",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r1": {
+   "x": 0,
+   "y": 1250,
+   "text": "Inside A: terminal, a file, the iPad column",
+   "kind": "title2",
+   "maxW": 3000
+  },
+  "r2": {
+   "x": 0,
+   "y": 2590,
+   "text": "iPad workspace and the whole flow",
+   "kind": "title2",
+   "maxW": 3000
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 1840,
+   "y": 1200,
+   "w": 420,
+   "color": "blue",
+   "text": "Left edge → right is the system «back» on iPhone (the thread would close), so I moved the swipe to the right edge, pulling leftwards. If you really want it from the left, we would have to turn off back-swipe in threads.",
+   "to": {
+    "board": "a-drawer.html",
+    "x": 200,
+    "y": 420
+   }
+  },
+  {
+   "id": "claude-2",
+   "x": 5480,
+   "y": 0,
+   "w": 340,
+   "color": "blue",
+   "text": "I recommend A: one safe gesture, part of the thread stays visible, and it is the desktop panel's tabs 1:1. B is here for comparison.",
+   "to": {
+    "board": "b-pages.html",
+    "x": 1500,
+    "y": 200
+   }
+  }
+ ],
+ "designSystems": []
+}

@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Now · a thread on the phone</title>
+<meta name="board" content="1760x1100"><link rel="stylesheet" href="_shared.css">
+<style>html,body{width:1760px;height:1100px}</style></head><body><div class="board">
+<div class="cap"><span class="k">Now</span><span class="h">A thread today: chat only, nothing to look at the project with</span><span class="d">iPhone 17, 390×844pt. The Mac already serves a terminal and files to the desktop panel (<span class="mono">terminal.open / attach / write / resize</span>, <span class="mono">projects.listEntries / readFile / writeFile / searchContents</span>), and the phone already asks for <span class="mono">terminal:operate</span> and <span class="mono">filesystem:write</span> when it pairs. Nothing on the phone uses them yet.</span></div>
+<div class="row">
+<div class="pcol"><span class="plab">Thread</span><div class="phone "><div class="sb"><span>9:41</span><span class="di"></span><span class="r">●●● <span class="batt"></span></span></div><div class="nav">
+<div class="gbtn glass r"><svg class="ic" viewBox="0 0 24 24" style="width:19px;height:19px;"><path d="m15 5-7 7 7 7"/></svg></div>
+<div class="nt"><b>Почини редирект после логина</b><span>Волна · <span class="mono">fix/return-to</span></span></div>
+
+<div class="gbtn glass r"><svg class="ic" viewBox="0 0 24 24" style="width:19px;height:19px;"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></div></div><div class="navfade"></div><div class="tl">
+<div class="user">Почини редирект после логина, он кидает на /home вместо исходной страницы</div>
+<p>Нашёл причину: <code>AuthGate</code> сохраняет <code>returnTo</code> до того, как роутер успевает прочитать query.</p>
+<div class="tool">✓ Read src/auth/AuthGate.tsx</div>
+<div class="tool">✓ Edited src/auth/session.ts <span class="add">+12</span> <span class="del">−4</span></div>
+<p>Теперь <code>returnTo</code> берётся из URL в момент входа и проверяется, что он ведёт внутрь приложения.</p>
+<div class="chg"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 4v9M7.5 8.5h9M7.5 19h9"/></svg><span>3 files changed</span><span class="f"><span class="add">+31</span> <span class="del">−9</span></span><span class="btn">Review</span></div>
+<p>Все 48 тестов проходят. Можешь сам прогнать <code>npm test -- auth</code>.</p>
+</div><div class="fadeb"></div><div class="comp glass"><span class="ib"><svg class="ic" viewBox="0 0 24 24" style="width:19px;height:19px;"><path d="M12 5v14M5 12h14"/></svg></span><span class="ph">Ask the agent…</span><span class="ib disc"><svg class="ic" viewBox="0 0 24 24" style="width:17px;height:17px;"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" stroke="none"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span></div><div class="hi"><i></i></div></div><div class="say">To check what the agent did you read its words, open <b>Review</b> (a diff), or go to the Mac.</div></div>
+<div class="notes" style="width:420px">
+<div><h4>Desktop Helm, the thing to follow</h4><ul>
+<li>A <b>right panel</b> next to the thread with tabs. «+» picks a surface: <b>Browser B · Terminal T · Files F · Diff D · Pull request P</b>.</li>
+<li>Several terminals per thread, split side by side or stacked; tab name is what's running (<span class="mono">npm run dev</span>).</li>
+<li>Files: a tree with search, and a file opens as its own tab, with editing and save, plus preview for Markdown and CSV.</li>
+<li>Panel state is kept per thread: which tabs, which one is in front.</li>
+</ul></div>
+<div><h4>On the phone today</h4><ul>
+<li>No edge swipes on the thread at all. The <b>left</b> edge is the system's «back».</li>
+<li>iPad already has a right column: Review changes opens as an <span class="mono">.inspector</span> (340–600pt).</li>
+<li><span class="mono">filesystem.browse</span> is only used to pick a project folder; <span class="mono">@</span> search uses <span class="mono">projects.searchEntries</span>.</li>
+</ul></div>
+<div><h4>What this canvas decides</h4><ul class="q">
+<li>How the tools come out on the phone: a drawer from the edge (A) or pages next to the thread (B).</li>
+<li>How a file grows from a peek to an editor, on the phone and on the iPad.</li>
+</ul></div>
+</div></div></div></body></html>
