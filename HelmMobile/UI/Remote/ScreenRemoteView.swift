@@ -128,8 +128,11 @@ final class ScreenViewport {
     var zoom: CGFloat = 0
     /// The whole screen fits.
     var fitZoom: CGFloat = 0
-    /// The screen covers the phone's (in portrait, its height does): where it opens, as in the design's A.
+    /// The screen covers the phone's (in portrait, its height does).
     var fillZoom: CGFloat = 0
+    /// Settings' choice of how the screen opens.
+    let openZoom = UserDefaults.standard.string(forKey: PhonePreferences.screenOpenZoomKey)
+        .flatMap(ScreenOpenZoom.init(rawValue:)) ?? .fill
     /// The part of the computer's screen on view, in its points.
     var visibleRect = CGRect.zero
     var keyboardShown = false
@@ -142,6 +145,15 @@ final class ScreenViewport {
 
     var maxZoom: CGFloat { max(fitZoom, 2.5) }
     var isZoomedIn: Bool { fitZoom > 0 && zoom > fitZoom * 1.05 }
+
+    /// Where a screen opens, and a display switched to.
+    var openingZoom: CGFloat {
+        switch openZoom {
+        case .fill: min(fillZoom, maxZoom)
+        case .fit: fitZoom
+        case .actual: min(max(1, fitZoom), maxZoom)
+        }
+    }
 
     /// The toolbar's zoom button: the whole screen, or the phone covered.
     func toggleFit() {
@@ -239,6 +251,8 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     private var flingVelocity = CGPoint.zero
     private var dragLocation = CGPoint.zero
     private var pinchActive = false
+    /// The computer's screen size the zoom was last set for; another display opens afresh.
+    private var laidOutDesktop = CGSize.zero
     private let haptic = UIImpactFeedbackGenerator(style: .light)
 
     init(remote: ScreenRemote, viewport: ScreenViewport) {
@@ -280,6 +294,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        remote.viewSizeChanged(bounds.size)
         let size = remote.desktopSize
         guard size.width > 0, size.height > 0, bounds.width > 0 else { return }
         // Above the keyboard when it's up: the cursor should never sit under the keys.
@@ -287,13 +302,15 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         let available = CGSize(width: bounds.width, height: min(bounds.height, keyboardTop > 0 ? keyboardTop : bounds.height))
         let fit = min(available.width / size.width, available.height / size.height)
         let fill = max(available.width / size.width, available.height / size.height)
-        if viewport.fitZoom != fit {
-            // Opens covering the phone; the whole screen stays whole across rotation.
+        let newScreen = size != laidOutDesktop
+        if viewport.fitZoom != fit || newScreen {
+            // Opens as settings say; the whole screen stays whole across rotation.
             let wasFit = viewport.zoom > 0 && viewport.zoom <= viewport.fitZoom * 1.01
-            let opening = viewport.zoom == 0
+            let opening = viewport.zoom == 0 || newScreen
+            laidOutDesktop = size
             viewport.fitZoom = fit
             viewport.fillZoom = fill
-            if opening { viewport.zoom = min(fill, viewport.maxZoom) } else if wasFit { viewport.zoom = fit }
+            if opening { viewport.zoom = viewport.openingZoom } else if wasFit { viewport.zoom = fit }
         }
         let zoom = min(max(viewport.zoom, fit), viewport.maxZoom)
         let scaled = CGSize(width: size.width * zoom, height: size.height * zoom)
@@ -739,6 +756,10 @@ private struct ScreenToolbar: View {
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
                 withAnimation(.snappy) { viewport.toggleFit() }
             }
+            if remote.displays.count > 1 || (remote.canAddVirtual && remote.virtualDisplay == nil) {
+                ScreenDisplaysMenu(remote: remote, displays: remote.displays, shown: remote.shown)
+                    .equatable()
+            }
             ScreenKeysMenu(remote: remote)
                 .equatable()
             button("xmark", label: "Close") { close() }
@@ -803,6 +824,44 @@ private struct ScreenKeysMenu: View, @MainActor Equatable {
                 .contentShape(.rect)
         }
         .accessibilityLabel("More keys")
+    }
+}
+
+/// The computer's displays: one of them, all side by side, or one added for this iPad. Equatable
+/// on what it lists, so a cursor move doesn't rebuild the menu under the finger (AGENTS.md).
+private struct ScreenDisplaysMenu: View, @MainActor Equatable {
+    let remote: ScreenRemote
+    let displays: [ScreenRemote.Display]
+    let shown: ScreenRemote.Shown?
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.remote === rhs.remote && lhs.displays == rhs.displays && lhs.shown == rhs.shown
+    }
+
+    var body: some View {
+        Menu {
+            Picker("Display", selection: Binding(get: { shown }, set: { if let target = $0 { remote.show(target) } })) {
+                ForEach(displays) { display in
+                    Label(display.name, systemImage: display.isVirtual ? "ipad.landscape" : display.isMain ? "menubar.dockrectangle" : "display")
+                        .tag(Optional(ScreenRemote.Shown.display(display.id)))
+                }
+                if displays.count > 1 {
+                    Label("All displays", systemImage: "rectangle.split.3x1")
+                        .tag(Optional(ScreenRemote.Shown.all))
+                }
+            }
+            .pickerStyle(.inline)
+            if UIDevice.current.userInterfaceIdiom == .pad, !displays.contains(where: \.isVirtual) {
+                Button("Add a display for this iPad", systemImage: "plus.rectangle.on.rectangle") { remote.show(.virtual) }
+            }
+        } label: {
+            Image(systemName: "display.2")
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel("Displays")
     }
 }
 

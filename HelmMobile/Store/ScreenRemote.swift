@@ -22,6 +22,21 @@ final class ScreenRemote {
     /// Mac modifier keys, as the helper names them.
     enum Modifier: String, CaseIterable { case cmd, alt, ctrl, shift }
 
+    /// One of the computer's displays, in its global points.
+    struct Display: Identifiable, Equatable {
+        let id: Int
+        let name: String
+        let frame: CGRect
+        let isMain: Bool
+        /// The one the computer added for this iPad.
+        let isVirtual: Bool
+    }
+
+    /// What to show: a display, all of them side by side, or one the computer adds for this iPad.
+    enum Shown: Hashable {
+        case main, display(Int), all, virtual
+    }
+
     let environment: EnvironmentSession
     private(set) var phase = Phase.connecting
     /// The computer's display in points; zero until it says.
@@ -32,6 +47,17 @@ final class ScreenRemote {
     private(set) var notice: String?
     /// Bumped when the first picture arrives (the view fades the placeholder out).
     private(set) var framesShown = 0
+    /// The computer's displays; empty until it says (an older Helm never does).
+    private(set) var displays: [Display] = []
+    /// What the video shows now: `.display` or `.all`, nil until the computer says.
+    private(set) var shown: Shown?
+
+    /// What was asked for: settings' choice at first, then the toolbar's, kept across reconnects.
+    @ObservationIgnored private var wanted: Shown
+    /// The screen's size here in points; the separate display is made from it.
+    @ObservationIgnored private var viewSize = CGSize.zero
+    @ObservationIgnored private var sentVirtualSize = CGSize.zero
+    @ObservationIgnored private var resizeTask: Task<Void, Never>?
 
     /// Decodes and draws the video; the view places it.
     @ObservationIgnored let layer = AVSampleBufferDisplayLayer()
@@ -43,8 +69,20 @@ final class ScreenRemote {
 
     init(environment: EnvironmentSession) {
         self.environment = environment
+        wanted = switch ScreenDisplayChoice.current {
+        case .main: .main
+        case .virtual: .virtual
+        case .all: .all
+        }
         layer.videoGravity = .resize
     }
+
+    /// The computer can add a display for this iPad.
+    var canAddVirtual: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && !displays.isEmpty
+    }
+
+    var virtualDisplay: Display? { displays.first(where: \.isVirtual) }
 
     // MARK: Connection
 
@@ -60,8 +98,19 @@ final class ScreenRemote {
             task.maximumMessageSize = 16 * 1024 * 1024
             self.task = task
             task.resume()
-            // Twice the points: zooming in stays sharp up to Retina, capped for the network.
-            send(["t": "start", "maxWidth": 3024, "fps": 30, "bitrate": 8_000_000])
+            let quality = UserDefaults.standard.string(forKey: PhonePreferences.screenQualityKey)
+                .flatMap(ScreenQuality.init(rawValue:)) ?? .sharp
+            let stream = quality.stream
+            var start: [String: JSON] = [
+                "t": "start", "maxWidth": .number(Double(stream.maxWidth)), "fps": .number(Double(stream.fps)),
+                "bitrate": .number(Double(stream.bitrate)), "display": displayValue(wanted),
+                "name": .string("\(UIDevice.current.localizedModel) (Helm)"),
+            ]
+            if wanted == .virtual {
+                await waitForViewSize()
+                start["virtual"] = virtualSizeValue()
+            }
+            send(start)
             await receive(from: task)
         } catch {
             phase = .failed(error.localizedDescription)
@@ -113,12 +162,32 @@ final class ScreenRemote {
             desktopSize = CGSize(width: json["width"]?.double ?? 0, height: json["height"]?.double ?? 0)
             phase = .live
             if json["accessibility"]?.bool == false { notice = Self.accessibilityNotice }
+            if let id = json["display"]?.double {
+                shown = .display(Int(id))
+            } else if json["display"]?.string == "all" {
+                shown = .all
+            } else {
+                shown = nil
+                if wanted != .main {
+                    notice = String(localized: "Update Helm on the computer to pick its displays or add one for this iPad.")
+                }
+            }
+        case "displays":
+            displays = (json["displays"]?.array ?? []).compactMap { item in
+                guard let id = item["id"]?.double else { return nil }
+                return Display(id: Int(id), name: item["name"]?.string ?? "",
+                               frame: CGRect(x: item["x"]?.double ?? 0, y: item["y"]?.double ?? 0,
+                                             width: item["width"]?.double ?? 0, height: item["height"]?.double ?? 0),
+                               isMain: item["main"]?.bool ?? false, isVirtual: item["virtual"]?.bool ?? false)
+            }
         case "cursor":
             guard Date().timeIntervalSince(movedLocallyAt) > 0.4 else { return }
             cursor = CGPoint(x: json["x"]?.double ?? 0, y: json["y"]?.double ?? 0)
         case "error":
             switch json["code"]?.string {
             case "accessibility": notice = Self.accessibilityNotice
+            case "virtualDisplay":
+                notice = String(localized: "The computer couldn't add a display for this iPad, so it shows its main one.")
             case "screenRecording":
                 phase = .failed(String(localized: "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again."))
             default: phase = .failed(json["message"]?.string ?? String(localized: "The computer couldn't share its screen."))
@@ -129,6 +198,61 @@ final class ScreenRemote {
 
     private static var accessibilityNotice: String {
         String(localized: "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.")
+    }
+
+    // MARK: Displays
+
+    /// Switches what the video shows; the computer answers with a new picture and size.
+    func show(_ target: Shown) {
+        wanted = target
+        var command: [String: JSON] = ["t": "show", "display": displayValue(target)]
+        if target == .virtual { command["virtual"] = virtualSizeValue() }
+        send(command)
+    }
+
+    /// The screen here changed size (the iPad turned, or its window did): the separate display follows.
+    func viewSizeChanged(_ size: CGSize) {
+        guard size != viewSize else { return }
+        viewSize = size
+        guard virtualDisplay != nil, virtualSize != sentVirtualSize else { return }
+        resizeTask?.cancel()
+        resizeTask = Task { [weak self] in
+            // Once the rotation settles.
+            try? await Task.sleep(for: .milliseconds(400))
+            guard let self, !Task.isCancelled else { return }
+            var command: [String: JSON] = ["t": "virtualSize"]
+            command.merge(virtualSizeValue().object ?? [:]) { $1 }
+            send(command)
+        }
+    }
+
+    private func displayValue(_ target: Shown) -> JSON {
+        switch target {
+        case .main: .string("main")
+        case .display(let id): .number(Double(id))
+        case .all: .string("all")
+        case .virtual: .string("virtual")
+        }
+    }
+
+    /// The separate display in points: this screen's size, scaled up for more room if asked.
+    private var virtualSize: CGSize {
+        let scale = UserDefaults.standard.string(forKey: PhonePreferences.screenVirtualSizeKey)
+            .flatMap(ScreenVirtualSize.init(rawValue:))?.scale ?? 1
+        return CGSize(width: (viewSize.width * scale).rounded(), height: (viewSize.height * scale).rounded())
+    }
+
+    private func virtualSizeValue() -> JSON {
+        let size = virtualSize
+        sentVirtualSize = size
+        return .object(["width": .number(size.width), "height": .number(size.height)])
+    }
+
+    /// The view lays out a moment after the connection starts.
+    private func waitForViewSize() async {
+        for _ in 0..<20 where viewSize == .zero {
+            try? await Task.sleep(for: .milliseconds(50))
+        }
     }
 
     // MARK: Video

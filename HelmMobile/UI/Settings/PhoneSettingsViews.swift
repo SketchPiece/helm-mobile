@@ -103,26 +103,7 @@ private struct ChoiceForm<Option: Hashable & Identifiable>: View {
     var body: some View {
         Form {
             Section {
-                ForEach(options) { option in
-                    Button {
-                        selection = option
-                        UISelectionFeedbackGenerator().selectionChanged()
-                    } label: {
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(option[keyPath: label]).font(Typography.body).foregroundStyle(Palette.text)
-                                Text(option[keyPath: detail]).font(Typography.footnote).foregroundStyle(Palette.textMuted)
-                            }
-                            Spacer()
-                            if selection == option {
-                                Image(systemName: "checkmark").foregroundStyle(Palette.accentText)
-                            }
-                        }
-                        .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(selection == option ? .isSelected : [])
-                }
+                ChoiceRows(options: options, selection: $selection, label: label, detail: detail)
             } header: {
                 Text(header).sectionLabelStyle()
             } footer: {
@@ -133,5 +114,36 @@ private struct ChoiceForm<Option: Hashable & Identifiable>: View {
         .background(Palette.canvas)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// The options of one choice, each with its description and a checkmark on the chosen one.
+struct ChoiceRows<Option: Hashable & Identifiable>: View {
+    let options: [Option]
+    @Binding var selection: Option
+    let label: KeyPath<Option, String>
+    let detail: KeyPath<Option, String>
+
+    var body: some View {
+        ForEach(options) { option in
+            Button {
+                selection = option
+                UISelectionFeedbackGenerator().selectionChanged()
+            } label: {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(option[keyPath: label]).font(Typography.body).foregroundStyle(Palette.text)
+                        Text(option[keyPath: detail]).font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                    }
+                    Spacer()
+                    if selection == option {
+                        Image(systemName: "checkmark").foregroundStyle(Palette.accentText)
+                    }
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(selection == option ? .isSelected : [])
+        }
     }
 }

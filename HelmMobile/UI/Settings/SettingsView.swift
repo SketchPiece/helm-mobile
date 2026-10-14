@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(PhonePreferences.afterStartKey) private var afterStart = AfterStartBehavior.open
     @AppStorage(PhonePreferences.codeFontSizeKey) private var codeFontSize = 0
     @AppStorage(PhonePreferences.codeWordWrapKey) private var codeWordWrap = false
+    @AppStorage(PhonePreferences.screenDisplayKey) private var screenDisplay = ScreenDisplayChoice.main
 
     private var projectCount: Int {
         model.allProjects().count { $0.environment.config?.isScratch($0.project) != true }
@@ -96,6 +97,12 @@ struct SettingsView: View {
                         CodeSettingsView()
                     }
                     .accessibilityIdentifier("codeSettings")
+                    valueLink(String(localized: "Computer screen"),
+                              value: (ScreenDisplayChoice.available.contains(screenDisplay) ? screenDisplay : .main).title,
+                              symbol: "display") {
+                        ScreenRemoteSettingsView()
+                    }
+                    .accessibilityIdentifier("screenRemoteSettings")
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     } label: {

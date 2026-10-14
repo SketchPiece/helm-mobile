@@ -11,6 +11,11 @@ enum PhonePreferences {
     static let codeWordWrapKey = "codeWordWrap"
     /// On unless turned off: files are read on a phone, where sideways scrolling loses the line.
     static let diffWordWrapKey = "diffWordWrap"
+    /// The computer's screen (`ScreenRemotePreferences.swift`).
+    static let screenOpenZoomKey = "screenRemoteOpenZoom"
+    static let screenDisplayKey = "screenRemoteDisplay"
+    static let screenVirtualSizeKey = "screenRemoteVirtualSize"
+    static let screenQualityKey = "screenRemoteQuality"
 
     static let codeFontSizes = 8...18
     /// Code's size at the default Dynamic Type setting.
