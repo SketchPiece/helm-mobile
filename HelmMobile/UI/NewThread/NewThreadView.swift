@@ -81,8 +81,7 @@ struct NewThreadView: View {
             }
             composer
         }
-        .frame(maxWidth: ContentWidth.readable)
-        .frame(maxWidth: .infinity)
+        .readableColumn()
         .animation(.easeOut(duration: 0.15), value: focused && suggestions.isVisible)
         // Under the keyboard too: as it slides away the window would show white in the light theme.
         .background { Palette.canvas.ignoresSafeArea() }

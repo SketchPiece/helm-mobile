@@ -71,6 +71,26 @@ enum ContentWidth {
     /// The widest a conversation runs (its text, cards and composer). On the iPhone it is the
     /// screen; in a wide iPad window lines would otherwise stretch past what reads comfortably.
     static let readable: CGFloat = 720
+    /// The least room a wide window leaves on each side of the conversation. The hardware keyboard's
+    /// language pill sits in the bottom right corner, ~86 pt from the edge; the composer stays clear of it.
+    static let wideMargin: CGFloat = 86
+}
+
+extension View {
+    /// The conversation's column: at most `readable` wide, centred, and in a wide window at least
+    /// `wideMargin` from either edge.
+    func readableColumn() -> some View { modifier(ReadableColumn()) }
+}
+
+private struct ReadableColumn: ViewModifier {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: ContentWidth.readable)
+            .padding(.horizontal, sizeClass == .regular ? ContentWidth.wideMargin : 0)
+            .frame(maxWidth: .infinity)
+    }
 }
 
 enum Typography {

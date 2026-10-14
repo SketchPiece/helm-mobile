@@ -177,9 +177,9 @@ private struct ThreadContent: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
-            .padding(.bottom, 8)
-            .frame(maxWidth: ContentWidth.readable)
-            .frame(maxWidth: .infinity)
+            // A wide window has room to let the last message breathe above the composer.
+            .padding(.bottom, sizeClass == .regular ? 24 : 8)
+            .readableColumn()
             // Pins the drawn part to its first block, so new messages grow it at the bottom only.
             .onChange(of: shown.first?.id, initial: true) { _, id in
                 if let id { windowStart = WindowStart(id: id, index: startIndex) }
@@ -589,8 +589,7 @@ private struct ThreadContent: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 6)
-        .frame(maxWidth: ContentWidth.readable)
-        .frame(maxWidth: .infinity)
+        .readableColumn()
         // A taller composer (more lines, chips, cards) must not hide the newest message.
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _ in
             if followsBottom { scrollToBottom() }
