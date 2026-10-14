@@ -468,6 +468,9 @@ struct HomeView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 sidebarNewThread
             }
+            // The button draws its own circle; under the toolbar's glass the long press lifted the
+            // plus alone and left the circle empty.
+            .sharedBackgroundVisibility(.hidden)
         } else {
             DefaultToolbarItem(kind: .search, placement: .bottomBar)
             ToolbarSpacer(.fixed, placement: .bottomBar)
@@ -510,13 +513,16 @@ struct HomeView: View {
                 router.startNewThread()
             }
         } label: {
-            // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
             Image(systemName: "plus")
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(Palette.accentForeground)
+                .frame(width: 44, height: 44)
+                .glassEffect(.regular.tint(Palette.accent).interactive(), in: .circle)
+                .contentShape(.circle)
         }
-        .buttonStyle(.glassProminent)
-        .tint(Palette.accent)
+        .buttonStyle(.plain)
+        // The circle and the plus lift together.
+        .contentShape(.contextMenuPreview, .circle)
         .contextMenu {
             ForEach(NewThreadFanItem.recent(in: model)) { item in
                 switch item.kind {
