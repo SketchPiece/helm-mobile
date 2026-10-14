@@ -5,7 +5,7 @@ struct PerfDiagnosticsView: View {
     @AppStorage(PerfMonitor.enabledKey) private var enabled = false
     @State private var monitor = PerfMonitor.shared
     @State private var confirmDelete = false
-    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = false
+    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = true
     @AppStorage(PerfExperiments.windowKey) private var window = 30
     @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
     @AppStorage(PerfExperiments.noTextSelectionKey) private var noTextSelection = false

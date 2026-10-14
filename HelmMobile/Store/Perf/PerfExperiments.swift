@@ -19,7 +19,7 @@ enum PerfExperiments {
     static var summary: String {
         let defaults = UserDefaults.standard
         var on: [String] = []
-        if defaults.bool(forKey: lazyKey) { on.append("lazy") }
+        if defaults.object(forKey: lazyKey) as? Bool ?? true { on.append("lazy") }
         let window = defaults.object(forKey: windowKey) as? Int ?? 30
         on.append("window \(window == 0 ? "all" : String(window))")
         if defaults.bool(forKey: noTapKey) { on.append("no tap gesture") }

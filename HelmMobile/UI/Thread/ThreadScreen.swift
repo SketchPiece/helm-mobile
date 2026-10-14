@@ -47,7 +47,7 @@ private struct ThreadContent: View {
     /// holds the last `windowPage` blocks and reaching the top shows more (`revealEarlier`).
     @State private var windowStart: WindowStart?
     @State private var revealing = false
-    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = false
+    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = true
     @AppStorage(PerfExperiments.windowKey) private var windowSetting = 30
     @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
     @State private var expandedWork: Set<String> = []
