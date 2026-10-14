@@ -42,6 +42,11 @@ private struct ThreadContent: View {
     /// Offset and height right before an older page was merged; the next height change
     /// moves the offset by the growth so the rows on screen stay put.
     @State private var prependBase: ScrollMetrics?
+    /// The first block drawn. A plain stack draws every row it holds, and on a long thread that
+    /// made scrolling, and hit-testing for a trackpad most of all, stutter on an older iPad; so it
+    /// holds the last `windowPage` blocks and reaching the top shows more (`revealEarlier`).
+    @State private var windowStart: WindowStart?
+    @State private var revealing = false
     @State private var expandedWork: Set<String> = []
     @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
@@ -65,9 +70,8 @@ private struct ThreadContent: View {
     private var project: Project? { environment.project(summary?.projectId) }
     private var ref: ThreadRef { ThreadRef(environmentId: environment.id, threadId: session.threadId) }
 
-    var body: some View {
-        let projection = session.projection
-        let blocks = Perf.measure("thread.timeline", units: projection?.rows.count ?? 0) {
+    private func timelineBlocks(_ projection: ThreadProjection?) -> [TimelineBlock] {
+        Perf.measure("thread.timeline", units: projection?.rows.count ?? 0) {
             Timeline.folded(
                 Timeline.blocks(from: projection?.rows.map(\.item) ?? [], liveRunId: projection?.activeRun?.id),
                 runs: projection?.runs ?? [:],
@@ -76,14 +80,39 @@ private struct ThreadContent: View {
                 expanded: expandedRuns
             )
         }
+    }
+
+    struct WindowStart: Equatable {
+        var id: String
+        var index: Int
+        /// Everything, after a page of history arrived from the computer.
+        static let all = WindowStart(id: "", index: 0)
+    }
+
+    private static let windowPage = 30
+
+    /// Where the drawn part starts: the pinned block, or where it was if that block is gone
+    /// (a fold opened, a snapshot replaced the window), or the last page before anything is pinned.
+    private func windowStartIndex(_ blocks: [TimelineBlock]) -> Int {
+        guard let windowStart else { return max(0, blocks.count - Self.windowPage) }
+        if windowStart == .all { return 0 }
+        if let index = blocks.firstIndex(where: { $0.id == windowStart.id }) { return index }
+        return min(windowStart.index, max(0, blocks.count - 1))
+    }
+
+    var body: some View {
+        let projection = session.projection
+        let blocks = timelineBlocks(projection)
+        let startIndex = windowStartIndex(blocks)
+        let shown = blocks[startIndex...]
         ScrollViewReader { proxy in
         ScrollView {
             // A plain stack: a lazy one guesses the height of rows it hasn't drawn, so "scroll to
             // the newest message" stopped short or left blank rows. Folded turns keep it small.
             VStack(alignment: .leading, spacing: 18) {
-                if let projection, projection.history.hasMore || session.historyError != nil {
+                if let projection, startIndex > 0 || projection.history.hasMore || session.historyError != nil {
                     EarlierHistoryRow(isLoading: session.isLoadingHistory, error: session.historyError,
-                                      canLoad: projection.history.hasMore, load: loadEarlier)
+                                      canLoad: startIndex > 0 || projection.history.hasMore, load: loadEarlier)
                         .onScrollVisibilityChange(threshold: 0.5) { visible in
                             if visible, userScrolled, session.historyError == nil, !Self.manualHistory { loadEarlier() }
                         }
@@ -92,7 +121,7 @@ private struct ThreadContent: View {
                     lineage
                 }
                 let days = Timeline.dayBreaks(blocks)
-                ForEach(blocks) { block in
+                ForEach(shown) { block in
                     if let day = days[block.id] {
                         TimelineDivider(label: day)
                     }
@@ -121,6 +150,10 @@ private struct ThreadContent: View {
             .padding(.bottom, 8)
             .frame(maxWidth: ContentWidth.readable)
             .frame(maxWidth: .infinity)
+            // Pins the drawn part to its first block, so new messages grow it at the bottom only.
+            .onChange(of: shown.first?.id, initial: true) { _, id in
+                if let id { windowStart = WindowStart(id: id, index: startIndex) }
+            }
         }
         .onAppear { scrollProxy = proxy }
         }
@@ -394,15 +427,38 @@ private struct ThreadContent: View {
     }()
 
     private func loadEarlier() {
-        guard !session.isLoadingHistory else { return }
+        guard !session.isLoadingHistory, !revealing else { return }
+        let blocks = timelineBlocks(session.projection)
+        let start = windowStartIndex(blocks)
+        if start > 0 {
+            revealEarlier(blocks, from: start)
+            return
+        }
         Task {
             await session.loadEarlier {
-                // Land the page once the scroll view is at rest (a fling or the bounce at the top
-                // would override the correction), then shift by what it adds above.
-                for _ in 0..<60 where scrollPhase != .idle { try? await Task.sleep(for: .milliseconds(50)) }
+                await waitForRest()
                 prependBase = scrollMetrics
+                windowStart = .all
             }
         }
+    }
+
+    /// Draws the page of blocks above the drawn part; nothing to fetch.
+    private func revealEarlier(_ blocks: [TimelineBlock], from start: Int) {
+        revealing = true
+        Task {
+            await waitForRest()
+            prependBase = scrollMetrics
+            let index = max(0, start - Self.windowPage)
+            windowStart = WindowStart(id: blocks[index].id, index: index)
+            revealing = false
+        }
+    }
+
+    /// Land a page once the scroll view is at rest (a fling or the bounce at the top would
+    /// override the correction); `prependBase` then shifts the offset by what it adds above.
+    private func waitForRest() async {
+        for _ in 0..<60 where scrollPhase != .idle { try? await Task.sleep(for: .milliseconds(50)) }
     }
 
     private func scrollToBottom() {
