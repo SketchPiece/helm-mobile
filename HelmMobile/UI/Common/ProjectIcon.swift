@@ -9,18 +9,28 @@ struct ProjectIcon: View {
     let project: Project?
     let environment: EnvironmentSession?
     var size: CGFloat = 36
-    /// A favicon already at hand, for drawing the tile off screen (a menu's image).
-    var preloaded: UIImage?
 
     @State private var image: UIImage?
 
-    /// The tile as a picture, for menus, which only take images. The favicon comes from the cache.
+    /// The tile as a picture, for menus, which only take images. The favicon comes from the cache
+    /// and is drawn by hand: favicons rasterised by WebKit don't survive SwiftUI's ImageRenderer.
     static func menuImage(project: Project, environment: EnvironmentSession, size: CGFloat = 24) async -> UIImage? {
-        var favicon: UIImage?
-        if let key = cacheKey(project: project, environment: environment) {
-            favicon = await IconCache.shared.image(for: key)
+        if environment.config?.isScratch(project) != true, project.iconKind == nil,
+           let key = cacheKey(project: project, environment: environment),
+           let favicon = await IconCache.shared.image(for: key) {
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 3
+            let rect = CGRect(x: 0, y: 0, width: size, height: size)
+            return UIGraphicsImageRenderer(size: rect.size, format: format).image { _ in
+                UIBezierPath(roundedRect: rect, cornerRadius: size * 0.25).addClip()
+                // Fill the square, as the tile's scaledToFill does.
+                let scale = max(size / max(favicon.size.width, 1), size / max(favicon.size.height, 1))
+                let drawn = CGSize(width: favicon.size.width * scale, height: favicon.size.height * scale)
+                favicon.draw(in: CGRect(x: (size - drawn.width) / 2, y: (size - drawn.height) / 2,
+                                        width: drawn.width, height: drawn.height))
+            }.withRenderingMode(.alwaysOriginal)
         }
-        let renderer = ImageRenderer(content: ProjectIcon(project: project, environment: environment, size: size, preloaded: favicon))
+        let renderer = ImageRenderer(content: ProjectIcon(project: project, environment: environment, size: size))
         renderer.scale = 3
         return renderer.uiImage?.withRenderingMode(.alwaysOriginal)
     }
@@ -43,7 +53,7 @@ struct ProjectIcon: View {
             if project?.iconKind == "emoji", let emoji = project?.iconEmoji {
                 Palette.surfaceRaised
                 Text(emoji).font(.system(size: size * 0.55))
-            } else if project?.iconKind != "monogram", let image = image ?? preloaded {
+            } else if project?.iconKind != "monogram", let image {
                 Image(uiImage: image)
                     .resizable()
                     .interpolation(.high)

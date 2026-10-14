@@ -20,6 +20,16 @@ final class IPadTourTests: XCTestCase {
         try? XCUIScreen.main.screenshot().pngRepresentation.write(to: shots.appending(path: "\(name).png"))
     }
 
+    /// The sidebar's project switcher, open: each project should show its own tile.
+    func testProjectSwitcherMenu() throws {
+        let switcher = app.buttons["projectSwitcher"]
+        XCTAssertTrue(switcher.waitForExistence(timeout: 20), "no project switcher")
+        sleep(2)
+        switcher.tap()
+        sleep(1)
+        shot("05-project-switcher")
+    }
+
     func testSplitLayout() throws {
         let rows = app.buttons.matching(identifier: "threadRow")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 20), "thread list never loaded")
