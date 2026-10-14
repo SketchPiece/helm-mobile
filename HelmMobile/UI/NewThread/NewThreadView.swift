@@ -559,7 +559,9 @@ struct NewThreadView: View {
     }
 
     private func saveDraft() {
-        guard let draftKey else { return }
+        // While a thread starts the text stays on screen; clearing the attachments once it has
+        // started would otherwise write it back as a draft.
+        guard let draftKey, !sending else { return }
         Drafts.shared.save(text: text, files: draft.draftFiles, for: draftKey,
                            environmentId: environment?.id, projectId: draftKey == Drafts.unassignedNewThreadKey ? nil : projectId)
     }
@@ -592,6 +594,7 @@ struct NewThreadView: View {
                 self.error = error.localizedDescription
                 sending = false
                 // Gone back while it was starting: the text is still the draft.
+                saveDraft()
                 router.refreshNewThreadDraft()
             }
         }
