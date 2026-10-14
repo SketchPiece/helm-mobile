@@ -1942,6 +1942,26 @@
         }
       }
     },
+    "Away from home": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вне дома"
+          }
+        }
+      }
+    },
+    "Away from home: a lighter picture": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вне дома: картинка полегче"
+          }
+        }
+      }
+    },
     "Back": {
       "localizations": {
         "ru": {
@@ -6935,6 +6955,16 @@
         }
       }
     },
+    "Separate settings away from home": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отдельные настройки вне дома"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ru": {
@@ -8422,6 +8452,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Управлять как трекпадом"
+          }
+        }
+      }
+    },
+    "Used when the computer isn't on the network this device is on, so the picture comes through Tailscale from elsewhere, or when the device is on cellular. At home the settings above come back by themselves.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включаются, когда компьютер не в той же сети, что это устройство, и картинка идёт через Tailscale издалека, или когда устройство в мобильной сети. Дома сами возвращаются настройки выше."
           }
         }
       }

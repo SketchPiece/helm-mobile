@@ -16,6 +16,10 @@ struct ScreenRemoteSettingsView: View {
     @AppStorage(PhonePreferences.screenClickFeedbackKey) private var clickFeedback = true
     @AppStorage(PhonePreferences.screenSoundKey) private var sound = false
     @AppStorage(PhonePreferences.screenClipboardKey) private var clipboard = true
+    @AppStorage(PhonePreferences.screenAwayKey) private var away = true
+    @AppStorage(PhonePreferences.screenAwayQualityKey) private var awayQuality = ScreenQuality.awayStandard
+    @AppStorage(PhonePreferences.screenAwayFrameRateKey) private var awayFrameRate = ScreenFrameRate.awayStandard
+    @AppStorage(PhonePreferences.screenAwayResolutionKey) private var awayResolution = ScreenResolution.awayStandard
 
     /// The separate display is the iPad's: only there are its settings shown.
     private var hasSeparateDisplay: Bool { ScreenDisplayChoice.available.contains(.virtual) }
@@ -104,6 +108,26 @@ struct ScreenRemoteSettingsView: View {
                 Text("Settings apply the next time the screen opens.")
                     .font(Typography.footnote)
             }
+            Section {
+                Toggle("Separate settings away from home", isOn: $away)
+                if away {
+                    Picker("Quality", selection: $awayQuality) {
+                        ForEach(ScreenQuality.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Frame rate", selection: $awayFrameRate) {
+                        ForEach(ScreenFrameRate.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Resolution", selection: $awayResolution) {
+                        ForEach(ScreenResolution.allCases) { Text($0.title).tag($0) }
+                    }
+                }
+            } header: {
+                Text("Away from home").sectionLabelStyle()
+            } footer: {
+                Text("Used when the computer isn't on the network this device is on, so the picture comes through Tailscale from elsewhere, or when the device is on cellular. At home the settings above come back by themselves.")
+                    .font(Typography.footnote)
+            }
+            .tint(Palette.accent)
         }
         .font(Typography.body)
         .scrollContentBackground(.hidden)

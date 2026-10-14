@@ -77,6 +77,11 @@ struct ScreenRemoteView: View {
             Text("Connecting to \(remote.environment.label)…")
                 .font(Typography.subheadline)
                 .foregroundStyle(.white.opacity(0.8))
+            if remote.isAway {
+                Label("Away from home: a lighter picture", systemImage: "antenna.radiowaves.left.and.right")
+                    .font(Typography.footnote)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
             Button("Close") { close() }
                 .buttonStyle(.glass)
                 .padding(.top, 10)

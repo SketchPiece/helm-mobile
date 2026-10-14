@@ -58,6 +58,9 @@ final class ScreenRemote {
         let hotSpot: CGPoint
     }
 
+    /// This connection uses the away-from-home settings.
+    private(set) var isAway = false
+
     /// The computer's displays; empty until it says (an older Helm never does).
     private(set) var displays: [Display] = []
     /// What the video shows now: `.display` or `.all`, nil until the computer says.
@@ -89,6 +92,7 @@ final class ScreenRemote {
         case .all: .all
         }
         layer.videoGravity = .resize
+        NetworkPath.warmUp()
     }
 
     /// The computer can add a display for this iPad.
@@ -112,13 +116,11 @@ final class ScreenRemote {
             task.maximumMessageSize = 16 * 1024 * 1024
             self.task = task
             task.resume()
-            let defaults = UserDefaults.standard
-            let quality = defaults.string(forKey: PhonePreferences.screenQualityKey)
-                .flatMap(ScreenQuality.init(rawValue:)) ?? .standard
-            let fps = (defaults.string(forKey: PhonePreferences.screenFrameRateKey)
-                .flatMap(ScreenFrameRate.init(rawValue:)) ?? .auto).fps
-            let resolution = defaults.string(forKey: PhonePreferences.screenResolutionKey)
-                .flatMap(ScreenResolution.init(rawValue:)) ?? .retina
+            // Home or away: each has its own quality, frame rate and resolution.
+            let profile = ScreenStreamProfile.current(onThisNetwork: environment.isOnThisNetwork)
+            isAway = profile.isAway
+            let quality = profile.quality, resolution = profile.resolution
+            let fps = profile.frameRate.fps
             // The bitrate is per 60 frames a second: 120 gets twice as many bits.
             let bitrate = quality.megabitsPer60 * 1_000_000 * fps / 60
             var start: [String: JSON] = [

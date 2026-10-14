@@ -1,3 +1,4 @@
+import Network
 import SwiftUI
 
 /// How the computer's screen sits on the phone's when it opens (and when it switches displays).
@@ -248,4 +249,53 @@ enum ScreenCursorSpeed: String, CaseIterable, Identifiable {
         case .fast: String(localized: "Fast")
         }
     }
+}
+
+/// What the picture is made of for one connection: at home, or away (through Tailscale from
+/// another network, or on cellular), each with its own settings, as Sill does.
+struct ScreenStreamProfile {
+    let quality: ScreenQuality
+    let frameRate: ScreenFrameRate
+    let resolution: ScreenResolution
+    let isAway: Bool
+
+    @MainActor
+    static func current(onThisNetwork: Bool) -> ScreenStreamProfile {
+        let defaults = UserDefaults.standard
+        func read<Value: RawRepresentable>(_ key: String, _ fallback: Value) -> Value where Value.RawValue == String {
+            defaults.string(forKey: key).flatMap(Value.init(rawValue:)) ?? fallback
+        }
+        let separate = defaults.object(forKey: PhonePreferences.screenAwayKey) as? Bool ?? true
+        let away = separate && (!onThisNetwork || NetworkPath.isCellular)
+        if away {
+            return ScreenStreamProfile(
+                quality: read(PhonePreferences.screenAwayQualityKey, ScreenQuality.awayStandard),
+                frameRate: read(PhonePreferences.screenAwayFrameRateKey, ScreenFrameRate.awayStandard),
+                resolution: read(PhonePreferences.screenAwayResolutionKey, ScreenResolution.awayStandard),
+                isAway: true)
+        }
+        return ScreenStreamProfile(
+            quality: read(PhonePreferences.screenQualityKey, ScreenQuality.standard),
+            frameRate: read(PhonePreferences.screenFrameRateKey, ScreenFrameRate.auto),
+            resolution: read(PhonePreferences.screenResolutionKey, ScreenResolution.retina),
+            isAway: false)
+    }
+}
+
+extension ScreenQuality { static let awayStandard = ScreenQuality.saver }
+extension ScreenFrameRate { static let awayStandard = ScreenFrameRate.sixty }
+extension ScreenResolution { static let awayStandard = ScreenResolution.standard }
+
+/// Whether the phone's traffic goes over cellular now; watched from the first time it's asked.
+enum NetworkPath {
+    private static let monitor: NWPathMonitor = {
+        let monitor = NWPathMonitor()
+        monitor.start(queue: DispatchQueue(label: "helm.network-path"))
+        return monitor
+    }()
+
+    /// Starts watching, so the answer is ready by the time it's needed.
+    static func warmUp() { _ = monitor }
+
+    static var isCellular: Bool { monitor.currentPath.usesInterfaceType(.cellular) }
 }

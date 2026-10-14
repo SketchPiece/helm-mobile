@@ -25,6 +25,11 @@ enum PhonePreferences {
     static let screenFrameRateKey = "screenRemoteFrameRate"
     static let screenResolutionKey = "screenRemoteResolution"
     static let screenInputModeKey = "screenRemoteInputMode"
+    /// Away from home: on by default, with its own quality, frame rate and resolution.
+    static let screenAwayKey = "screenRemoteAway"
+    static let screenAwayQualityKey = "screenRemoteAwayQuality"
+    static let screenAwayFrameRateKey = "screenRemoteAwayFrameRate"
+    static let screenAwayResolutionKey = "screenRemoteAwayResolution"
 
     static let codeFontSizes = 8...18
     /// Code's size at the default Dynamic Type setting.

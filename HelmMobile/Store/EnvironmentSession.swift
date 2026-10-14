@@ -68,6 +68,10 @@ final class EnvironmentSession: Identifiable {
     /// The Mac's address on this network while the socket went there instead of the saved
     /// tailnet address (the built-in Tailscale node was not running yet); nil otherwise.
     @ObservationIgnored private var localBaseURL: URL?
+
+    /// The phone reaches this computer on the network it's on (found nearby, or connected by
+    /// its local address) rather than through Tailscale from elsewhere.
+    var isOnThisNetwork: Bool { localBaseURL != nil || NearbyMacs.shared.contains(id) }
     var isLive: Bool { status == .live }
 
     var logStatus: String {
