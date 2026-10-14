@@ -463,6 +463,11 @@ WebSocket that streams the Mac's screen (`apps/server/src/helm/screenRemoteRoute
 - phone → server, text JSON: `start {maxWidth,fps,bitrate}`, `keyframe`, `move {x,y}`,
   `button {b: left|right|middle, down, x, y}`, `scroll {dx,dy}` (pixels), `key {code, mods: [cmd|alt|ctrl|shift]}`
   (Mac virtual key codes), `text {s}`, `stop`.
+- Bringing a window to the iPad's display: `windows` is answered with
+  `{"t":"windows",windows:[{id,pid,app,title,display}],icons:{pid: png base64}}` (the other displays' windows,
+  front to back), then `{"t":"windowThumb",id,jpeg}` for each; `moveWindow {id}` moves one onto the virtual display
+  (through Accessibility), answered with `{"t":"windowMoved",id}` or an error with code `moveWindow`. The display's
+  keeper remembers where each window was and puts the ones still on it back before the display goes.
 
 Compatibility rule (`packages/client-runtime/src/connection/compatibility.ts:9-27`): if
 `orchestrationProtocolVersion ?? 1` is not 2, the client refuses (a server newer than the client means the client must

@@ -50,6 +50,10 @@ struct ScreenRemoteView: View {
                     .transition(.opacity)
             }
         }
+        .sheet(isPresented: Bindable(viewport).showsWindows) {
+            ScreenWindowPicker(remote: remote)
+        }
+        .onChange(of: remote.notice) { showsNotice = true }
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
         .animation(.easeInOut(duration: 0.2), value: toolbarLeading)
         .animation(.easeInOut(duration: 0.2), value: viewport.keyboardShown)
@@ -153,6 +157,8 @@ final class ScreenViewport {
     var wantsKeyboard = false
     /// Mac modifiers held for the next key (the accessory row's ⌘ ⌥ ⌃ ⇧).
     var modifiers: Set<ScreenRemote.Modifier> = []
+    /// The list of the other displays' windows, to bring one to this iPad's.
+    var showsWindows = false
 
     var maxZoom: CGFloat { max(fitZoom, 2.5) }
     var isZoomedIn: Bool { fitZoom > 0 && zoom > fitZoom * 1.05 }
@@ -1038,6 +1044,9 @@ private struct ScreenToolbar: View {
                 ScreenDisplaysMenu(remote: remote, displays: remote.displays, shown: remote.shown)
                     .equatable()
             }
+            if remote.virtualDisplay != nil {
+                button("macwindow.badge.plus", label: "Bring a window here") { viewport.showsWindows = true }
+            }
             ScreenKeysMenu(remote: remote)
                 .equatable()
             button("xmark", label: "Close") { close() }
@@ -1308,5 +1317,88 @@ private struct ScreenKeyRow: View {
                 .background(on ? Palette.accent : Color.white.opacity(0.18), in: .rect(cornerRadius: 7))
                 .foregroundStyle(on ? Palette.accentForeground : .white)
         }
+    }
+}
+
+/// The other displays' windows with a small picture of each; a tap moves one onto this iPad's
+/// display, and the computer puts it back when the display goes.
+private struct ScreenWindowPicker: View {
+    let remote: ScreenRemote
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let windows = remote.windows {
+                    if windows.isEmpty {
+                        ContentUnavailableView("No windows on the other displays", systemImage: "macwindow")
+                    } else {
+                        list(windows)
+                    }
+                } else {
+                    ProgressView()
+                }
+            }
+            .navigationTitle("Bring a window here")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+        .task { remote.listWindows() }
+    }
+
+    /// Grouped by display, in the computer's order.
+    private func list(_ windows: [ScreenRemote.RemoteWindow]) -> some View {
+        let displays = remote.displays.filter { display in windows.contains { $0.display == display.id } }
+        return List {
+            ForEach(displays) { display in
+                Section(display.name) {
+                    ForEach(windows.filter { $0.display == display.id }) { window in
+                        Button {
+                            remote.bringWindow(window)
+                            dismiss()
+                        } label: {
+                            row(window)
+                        }
+                        .foregroundStyle(Palette.text)
+                    }
+                }
+            }
+        }
+        .refreshable { remote.listWindows() }
+    }
+
+    private func row(_ window: ScreenRemote.RemoteWindow) -> some View {
+        HStack(spacing: 14) {
+            Group {
+                if let picture = remote.windowPictures[window.id] {
+                    Image(uiImage: picture).resizable().scaledToFit()
+                } else if let icon = remote.windowIcons[window.pid] {
+                    Image(uiImage: icon).resizable().scaledToFit().padding(14)
+                }
+            }
+            .frame(width: 112, height: 70)
+            .background(Palette.surfaceRaised, in: .rect(cornerRadius: 8))
+            .clipShape(.rect(cornerRadius: 8))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    if let icon = remote.windowIcons[window.pid] {
+                        Image(uiImage: icon).resizable().frame(width: 18, height: 18)
+                    }
+                    Text(window.app)
+                        .font(Typography.sans(13, relativeTo: .footnote))
+                        .foregroundStyle(Palette.textMuted)
+                }
+                Text(window.title.isEmpty ? window.app : window.title)
+                    .font(Typography.body)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
+        .contentShape(.rect)
     }
 }

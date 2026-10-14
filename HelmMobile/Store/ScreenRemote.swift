@@ -37,6 +37,16 @@ final class ScreenRemote {
         case main, display(Int), all, virtual
     }
 
+    /// A window on one of the computer's other displays, which can be brought to this iPad's.
+    struct RemoteWindow: Identifiable, Equatable {
+        let id: Int
+        let pid: Int
+        let app: String
+        let title: String
+        /// The display it's on.
+        let display: Int
+    }
+
     let environment: EnvironmentSession
     private(set) var phase = Phase.connecting
     /// The computer's display in points; zero until it says.
@@ -65,6 +75,13 @@ final class ScreenRemote {
     private(set) var displays: [Display] = []
     /// What the video shows now: `.display` or `.all`, nil until the computer says.
     private(set) var shown: Shown?
+
+    /// The other displays' windows, front to back; nil while the computer lists them.
+    private(set) var windows: [RemoteWindow]?
+    /// Each app's icon, by its process.
+    private(set) var windowIcons: [Int: UIImage] = [:]
+    /// A small picture of each window, as they come.
+    private(set) var windowPictures: [Int: UIImage] = [:]
 
     /// What was asked for: settings' choice at first, then the toolbar's, kept across reconnects.
     @ObservationIgnored private var wanted: Shown
@@ -217,6 +234,23 @@ final class ScreenRemote {
                                              width: item["width"]?.double ?? 0, height: item["height"]?.double ?? 0),
                                isMain: item["main"]?.bool ?? false, isVirtual: item["virtual"]?.bool ?? false)
             }
+        case "windows":
+            windowIcons = (json["icons"]?.object ?? [:]).reduce(into: [:]) { icons, entry in
+                if let pid = Int(entry.key), let base64 = entry.value.string,
+                   let data = Data(base64Encoded: base64), let image = UIImage(data: data) { icons[pid] = image }
+            }
+            windows = (json["windows"]?.array ?? []).compactMap { item in
+                guard let id = item["id"]?.double else { return nil }
+                return RemoteWindow(id: Int(id), pid: Int(item["pid"]?.double ?? 0), app: item["app"]?.string ?? "",
+                                    title: item["title"]?.string ?? "", display: Int(item["display"]?.double ?? 0))
+            }
+        case "windowThumb":
+            guard let id = json["id"]?.double, let base64 = json["jpeg"]?.string,
+                  let data = Data(base64Encoded: base64), let image = UIImage(data: data) else { return }
+            windowPictures[Int(id)] = image
+        case "windowMoved":
+            // Moved where this iPad can see it.
+            if let virtualDisplay, shown != .display(virtualDisplay.id) { show(.virtual) }
         case "cursor":
             guard Date().timeIntervalSince(movedLocallyAt) > 0.4 else { return }
             cursor = CGPoint(x: json["x"]?.double ?? 0, y: json["y"]?.double ?? 0)
@@ -225,6 +259,8 @@ final class ScreenRemote {
             case "accessibility": notice = Self.accessibilityNotice
             case "virtualDisplay":
                 notice = String(localized: "The computer couldn't add a display for this iPad, so it shows its main one.")
+            case "moveWindow":
+                notice = String(localized: "The window couldn't be brought to this iPad.")
             case "screenRecording":
                 phase = .failed(String(localized: "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again."))
             default: phase = .failed(json["message"]?.string ?? String(localized: "The computer couldn't share its screen."))
@@ -245,6 +281,18 @@ final class ScreenRemote {
         var command: [String: JSON] = ["t": "show", "display": displayValue(target)]
         if target == .virtual { command["virtual"] = virtualSizeValue() }
         send(command)
+    }
+
+    /// Asks the computer for its other displays' windows (`windows`, then their pictures).
+    func listWindows() {
+        windows = nil
+        windowPictures = [:]
+        send(["t": "windows"])
+    }
+
+    /// Moves a window onto this iPad's display; the computer puts it back when the display goes.
+    func bringWindow(_ window: RemoteWindow) {
+        send(["t": "moveWindow", "id": .number(Double(window.id))])
     }
 
     /// The screen here changed size (the iPad turned, or its window did): the separate display follows.

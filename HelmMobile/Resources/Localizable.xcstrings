@@ -2032,6 +2032,16 @@
         }
       }
     },
+    "Bring a window here": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перенести окно сюда"
+          }
+        }
+      }
+    },
     "Built-in": {
       "localizations": {
         "ru": {
@@ -5266,6 +5276,16 @@
         }
       }
     },
+    "No windows on the other displays": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На других дисплеях нет окон"
+          }
+        }
+      }
+    },
     "Nobody answered on the computer. Try again.": {},
     "Nobody at the computer": {
       "localizations": {
@@ -7904,6 +7924,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Весь экран — трекпад: палец двигает курсор, касание кликает там, где он стоит."
+          }
+        }
+      }
+    },
+    "The window couldn't be brought to this iPad.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не получилось перенести окно на этот iPad."
           }
         }
       }
