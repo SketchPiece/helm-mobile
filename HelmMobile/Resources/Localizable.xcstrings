@@ -1091,6 +1091,16 @@
       }
     },
     "100.64.0.1 or my-mac.tailnet.ts.net": {},
+    "120 on a ProMotion screen, 60 on others and in Low Power Mode.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 на экране ProMotion, 60 на остальных и в режиме энергосбережения."
+          }
+        }
+      }
+    },
     "15": {
       "shouldTranslate": false
     },
@@ -1117,12 +1127,32 @@
         }
       }
     },
+    "30 frames a second": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 кадров в секунду"
+          }
+        }
+      }
+    },
     "30d": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "30 д"
+          }
+        }
+      }
+    },
+    "60 frames a second": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 кадров в секунду"
           }
         }
       }
@@ -1193,6 +1223,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "На четверть больше места, всё чуть мельче."
+          }
+        }
+      }
+    },
+    "A tap clicks where you touch, a finger scrolls, touch and hold to drag. An iPad's trackpad or mouse points straight at the computer's screen, and Apple Pencil is a mouse.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Касание кликает там, где палец, палец прокручивает, касание с удержанием перетаскивает. Трекпад или мышь iPad указывают прямо на экран компьютера, а Apple Pencil работает как мышь."
           }
         }
       }
@@ -1738,6 +1778,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новым сообщением"
+          }
+        }
+      }
+    },
+    "As fast as the screen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как у экрана"
+          }
+        }
+      }
+    },
+    "As good as it gets, for a strong network.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучшее качество, для сильной сети."
           }
         }
       }
@@ -2819,6 +2879,16 @@
         }
       }
     },
+    "Crisper while scrolling and playing video.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чётче при прокрутке и в видео."
+          }
+        }
+      }
+    },
     "Current checkout": {
       "localizations": {
         "ru": {
@@ -3383,6 +3453,16 @@
         }
       }
     },
+    "Every pixel of the computer's screen: sharp when zoomed in.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый пиксель экрана компьютера: чётко даже при приближении."
+          }
+        }
+      }
+    },
     "Every week": {
       "localizations": {
         "ru": {
@@ -3453,6 +3533,16 @@
         }
       }
     },
+    "Fingers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Управление пальцами"
+          }
+        }
+      }
+    },
     "Finish logging in in the browser. This screen updates by itself.": {
       "localizations": {
         "ru": {
@@ -3494,12 +3584,12 @@
         }
       }
     },
-    "For a cellular connection: blurrier and fewer frames.": {
+    "For a cellular connection or a weak network: softer when things move.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для мобильной сети: размытее и меньше кадров."
+            "value": "Для мобильной сети или слабого Wi-Fi: в движении мягче."
           }
         }
       }
@@ -3560,6 +3650,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Найдено в этой сети"
+          }
+        }
+      }
+    },
+    "Frame rate": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Частота кадров"
           }
         }
       }
@@ -3630,16 +3730,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Полный доступ"
-          }
-        }
-      }
-    },
-    "Full resolution. Best on Wi-Fi.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Полное разрешение. Лучше всего по Wi-Fi."
           }
         }
       }
@@ -3766,6 +3856,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "В полтора раза больше места, всё мельче."
+          }
+        }
+      }
+    },
+    "Half the width and height: lighter, softer up close.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вдвое меньше по ширине и высоте: легче, но вблизи мягче."
           }
         }
       }
@@ -3906,6 +4006,16 @@
       }
     },
     "Hide the keyboard": {},
+    "High": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Высокое"
+          }
+        }
+      }
+    },
     "Hold to choose where your voice goes": {
       "localizations": {
         "ru": {
@@ -4436,6 +4546,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пометить непрочитанным"
+          }
+        }
+      }
+    },
+    "Maximum": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Максимум"
           }
         }
       }
@@ -6194,6 +6314,16 @@
         }
       }
     },
+    "Resolution": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешение"
+          }
+        }
+      }
+    },
     "Resolving deltas": {
       "localizations": {
         "ru": {
@@ -6230,6 +6360,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Продолжить само после сброса"
+          }
+        }
+      }
+    },
+    "Retina": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retina"
           }
         }
       }
@@ -6895,12 +7035,12 @@
         }
       }
     },
-    "Sharp": {
+    "Sharp text and smooth motion on Wi-Fi.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Чётко"
+            "value": "Чёткий текст и плавное движение по Wi-Fi."
           }
         }
       }
@@ -6965,6 +7105,16 @@
         }
       }
     },
+    "Smooth, and easier on the battery and the network.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Плавно и бережнее к батарее и сети."
+          }
+        }
+      }
+    },
     "Snooze": {
       "localizations": {
         "ru": {
@@ -7021,16 +7171,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отложен до %@"
-          }
-        }
-      }
-    },
-    "Softer when zoomed in, half the data.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Мягче при приближении, вдвое меньше трафика."
           }
         }
       }
@@ -7638,6 +7778,26 @@
         }
       }
     },
+    "The hand button on the toolbar switches while it's open. Three fingers swipe up for Mission Control, down for App Exposé, sideways between Spaces.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока экран открыт, режим переключает кнопка с рукой на панели. Тремя пальцами вверх — Mission Control, вниз — App Exposé, вбок — между пространствами."
+          }
+        }
+      }
+    },
+    "The least data and battery.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Меньше всего трафика и заряда."
+          }
+        }
+      }
+    },
     "The new thread opens, so you can follow the agent.": {
       "localizations": {
         "ru": {
@@ -7704,6 +7864,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сначала всегда открывается тред, чтобы было видно, что сообщение ушло. Если агент не начал работу за несколько секунд, вы остаётесь в треде."
+          }
+        }
+      }
+    },
+    "The whole screen is a trackpad: a finger moves the cursor, a tap clicks where it is.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Весь экран — трекпад: палец двигает курсор, касание кликает там, где он стоит."
           }
         }
       }
@@ -8016,6 +8186,36 @@
         }
       }
     },
+    "Touch": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Касание"
+          }
+        }
+      }
+    },
+    "Touch to click": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кликать касанием"
+          }
+        }
+      }
+    },
+    "Trackpad": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Трекпад"
+          }
+        }
+      }
+    },
     "Transcribing…": {
       "localizations": {
         "ru": {
@@ -8212,6 +8412,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Упёрлись в лимит"
+          }
+        }
+      }
+    },
+    "Use as a trackpad": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Управлять как трекпадом"
           }
         }
       }

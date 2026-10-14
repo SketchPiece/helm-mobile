@@ -47,6 +47,17 @@ final class ScreenRemote {
     private(set) var notice: String?
     /// Bumped when the first picture arrives (the view fades the placeholder out).
     private(set) var framesShown = 0
+    /// The computer's arrow as it is now (an I-beam over text, a hand over a link); nil draws a
+    /// plain arrow (an older Helm doesn't send it).
+    private(set) var cursorShape: CursorShape?
+
+    struct CursorShape: Equatable {
+        let image: UIImage
+        /// In the computer's points.
+        let size: CGSize
+        let hotSpot: CGPoint
+    }
+
     /// The computer's displays; empty until it says (an older Helm never does).
     private(set) var displays: [Display] = []
     /// What the video shows now: `.display` or `.all`, nil until the computer says.
@@ -101,12 +112,18 @@ final class ScreenRemote {
             task.maximumMessageSize = 16 * 1024 * 1024
             self.task = task
             task.resume()
-            let quality = UserDefaults.standard.string(forKey: PhonePreferences.screenQualityKey)
-                .flatMap(ScreenQuality.init(rawValue:)) ?? .sharp
-            let stream = quality.stream
+            let defaults = UserDefaults.standard
+            let quality = defaults.string(forKey: PhonePreferences.screenQualityKey)
+                .flatMap(ScreenQuality.init(rawValue:)) ?? .standard
+            let fps = (defaults.string(forKey: PhonePreferences.screenFrameRateKey)
+                .flatMap(ScreenFrameRate.init(rawValue:)) ?? .auto).fps
+            let resolution = defaults.string(forKey: PhonePreferences.screenResolutionKey)
+                .flatMap(ScreenResolution.init(rawValue:)) ?? .retina
+            // The bitrate is per 60 frames a second: 120 gets twice as many bits.
+            let bitrate = quality.megabitsPer60 * 1_000_000 * fps / 60
             var start: [String: JSON] = [
-                "t": "start", "maxWidth": .number(Double(stream.maxWidth)), "fps": .number(Double(stream.fps)),
-                "bitrate": .number(Double(stream.bitrate)), "display": displayValue(wanted),
+                "t": "start", "maxWidth": 4096, "fps": .number(Double(fps)), "bitrate": .number(Double(bitrate)),
+                "hevc": true, "maxScale": .number(Double(resolution.maxScale)), "display": displayValue(wanted),
                 "name": .string("\(UIDevice.current.localizedModel) (Helm)"),
                 "audio": .bool(UserDefaults.standard.bool(forKey: PhonePreferences.screenSoundKey)),
                 "clipboard": .bool(sharesClipboard),
@@ -180,6 +197,13 @@ final class ScreenRemote {
                     notice = String(localized: "Update Helm on the computer to pick its displays or add one for this iPad.")
                 }
             }
+        case "cursorShape":
+            guard let base64 = json["png"]?.string, let data = Data(base64Encoded: base64),
+                  let image = UIImage(data: data) else { return }
+            cursorShape = CursorShape(
+                image: image,
+                size: CGSize(width: json["width"]?.double ?? image.size.width, height: json["height"]?.double ?? image.size.height),
+                hotSpot: CGPoint(x: json["hotX"]?.double ?? 0, y: json["hotY"]?.double ?? 0))
         case "clipboard":
             // The computer copied something: it's here to paste.
             if sharesClipboard, let text = json["text"]?.string { UIPasteboard.general.string = text }
@@ -268,13 +292,15 @@ final class ScreenRemote {
 
     // MARK: Video
 
-    /// [u8 kind][payload]: 2 is SPS and PPS (`[count][u16 length + set]…`), 1 is a frame
-    /// (`[flags][u64 pts µs][AVCC]`).
+    /// [u8 kind][payload]: 2 is H.264's SPS and PPS, 4 HEVC's VPS, SPS and PPS (both
+    /// `[count][u16 length + set]…`), 1 a frame (`[flags][u64 pts µs][length-prefixed NALs]`),
+    /// 3 sound, 5 a keep-awake tick.
     private func handleBinary(_ data: Data) {
         guard let kind = data.first else { return }
         let payload = data.dropFirst()
         switch kind {
-        case 2: format = Self.format(from: payload)
+        case 2: format = Self.format(from: payload, hevc: false)
+        case 4: format = Self.format(from: payload, hevc: true)
         case 1:
             guard payload.count > 9, let format, let sample = Self.sample(Data(payload.dropFirst(9)), format: format) else { return }
             let renderer = layer.sampleBufferRenderer
@@ -290,7 +316,7 @@ final class ScreenRemote {
         }
     }
 
-    private static func format(from payload: Data.SubSequence) -> CMVideoFormatDescription? {
+    private static func format(from payload: Data.SubSequence, hevc: Bool) -> CMVideoFormatDescription? {
         var bytes = Array(payload)
         guard let count = bytes.first else { return nil }
         var sets: [[UInt8]] = []
@@ -311,9 +337,13 @@ final class ScreenRemote {
             return UnsafePointer(pointer)
         }
         defer { pointers.forEach { UnsafeMutablePointer(mutating: $0).deallocate() } }
-        let status = CMVideoFormatDescriptionCreateFromH264ParameterSets(
-            allocator: kCFAllocatorDefault, parameterSetCount: sets.count, parameterSetPointers: pointers,
-            parameterSetSizes: sets.map(\.count), nalUnitHeaderLength: 4, formatDescriptionOut: &format)
+        let status = hevc
+            ? CMVideoFormatDescriptionCreateFromHEVCParameterSets(
+                allocator: kCFAllocatorDefault, parameterSetCount: sets.count, parameterSetPointers: pointers,
+                parameterSetSizes: sets.map(\.count), nalUnitHeaderLength: 4, extensions: nil, formatDescriptionOut: &format)
+            : CMVideoFormatDescriptionCreateFromH264ParameterSets(
+                allocator: kCFAllocatorDefault, parameterSetCount: sets.count, parameterSetPointers: pointers,
+                parameterSetSizes: sets.map(\.count), nalUnitHeaderLength: 4, formatDescriptionOut: &format)
         return status == noErr ? format : nil
     }
 
@@ -367,9 +397,25 @@ final class ScreenRemote {
               "x": .number(cursor.x), "y": .number(cursor.y)])
     }
 
+    /// A trackpad scroll's stage: the fingers' (began, changed, ended), then the glide the phone
+    /// works out after they lift, which the computer shows as a real trackpad's momentum.
+    enum ScrollPhase: String {
+        case began, changed, ended, momentumBegan, momentum, momentumEnded
+    }
+
     /// Scrolls the computer by `dx`, `dy` pixels (positive `dy` moves the content down).
-    func scroll(dx: CGFloat, dy: CGFloat) {
-        send(["t": "scroll", "dx": .number(dx), "dy": .number(dy)])
+    func scroll(dx: CGFloat, dy: CGFloat, phase: ScrollPhase? = nil) {
+        var command: [String: JSON] = ["t": "scroll", "dx": .number(dx), "dy": .number(dy)]
+        if let phase { command["phase"] = .string(phase.rawValue) }
+        send(command)
+    }
+
+    /// Moves the cursor to a point on the computer's screen (touch mode, a pointer, a pencil).
+    func moveCursor(to point: CGPoint) {
+        guard desktopSize != .zero else { return }
+        cursor = CGPoint(x: min(max(0, point.x), desktopSize.width - 1), y: min(max(0, point.y), desktopSize.height - 1))
+        movedLocallyAt = Date()
+        send(["t": "move", "x": .number(cursor.x), "y": .number(cursor.y)])
     }
 
     /// This device's copied text onto the computer's clipboard, pasted at the cursor (⌘V).

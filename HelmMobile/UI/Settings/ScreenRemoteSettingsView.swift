@@ -7,7 +7,10 @@ struct ScreenRemoteSettingsView: View {
     @AppStorage(PhonePreferences.screenDisplayKey) private var display = ScreenDisplayChoice.main
     @AppStorage(PhonePreferences.screenVirtualSizeKey) private var virtualSize = ScreenVirtualSize.same
     @AppStorage(PhonePreferences.screenKeepDisplayKey) private var keepDisplay = ScreenKeepDisplay.short
-    @AppStorage(PhonePreferences.screenQualityKey) private var quality = ScreenQuality.sharp
+    @AppStorage(PhonePreferences.screenQualityKey) private var quality = ScreenQuality.standard
+    @AppStorage(PhonePreferences.screenFrameRateKey) private var frameRate = ScreenFrameRate.auto
+    @AppStorage(PhonePreferences.screenResolutionKey) private var resolution = ScreenResolution.retina
+    @AppStorage(PhonePreferences.screenInputModeKey) private var inputMode = ScreenInputMode.trackpad
     @AppStorage(PhonePreferences.screenCursorSpeedKey) private var cursorSpeed = ScreenCursorSpeed.normal
     @AppStorage(PhonePreferences.screenReverseScrollKey) private var reverseScroll = false
     @AppStorage(PhonePreferences.screenClickFeedbackKey) private var clickFeedback = true
@@ -51,6 +54,14 @@ struct ScreenRemoteSettingsView: View {
                     .font(Typography.footnote)
             }
             Section {
+                ChoiceRows(options: ScreenInputMode.allCases, selection: $inputMode, label: \.title, detail: \.detail)
+            } header: {
+                Text("Fingers").sectionLabelStyle()
+            } footer: {
+                Text("The hand button on the toolbar switches while it's open. Three fingers swipe up for Mission Control, down for App Exposé, sideways between Spaces.")
+                    .font(Typography.footnote)
+            }
+            Section {
                 Picker("Cursor speed", selection: $cursorSpeed) {
                     ForEach(ScreenCursorSpeed.allCases) { speed in
                         Text(speed.title).tag(speed)
@@ -75,6 +86,16 @@ struct ScreenRemoteSettingsView: View {
                     .font(Typography.footnote)
             }
             .tint(Palette.accent)
+            Section {
+                ChoiceRows(options: ScreenFrameRate.allCases, selection: $frameRate, label: \.title, detail: \.detail)
+            } header: {
+                Text("Frame rate").sectionLabelStyle()
+            }
+            Section {
+                ChoiceRows(options: ScreenResolution.allCases, selection: $resolution, label: \.title, detail: \.detail)
+            } header: {
+                Text("Resolution").sectionLabelStyle()
+            }
             Section {
                 ChoiceRows(options: ScreenQuality.allCases, selection: $quality, label: \.title, detail: \.detail)
             } header: {

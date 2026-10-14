@@ -53,6 +53,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan the pairing QR code shown by Helm on your Mac.</string>
 	<key>NSBonjourServices</key>

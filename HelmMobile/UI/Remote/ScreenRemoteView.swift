@@ -138,6 +138,11 @@ final class ScreenViewport {
         .flatMap(ScreenCursorSpeed.init(rawValue:)) ?? .normal).factor
     let scrollSign: CGFloat = UserDefaults.standard.bool(forKey: PhonePreferences.screenReverseScrollKey) ? -1 : 1
     let clickFeedback = UserDefaults.standard.object(forKey: PhonePreferences.screenClickFeedbackKey) as? Bool ?? true
+    /// Trackpad or touch: settings' choice, switched from the toolbar while open.
+    var inputMode = UserDefaults.standard.string(forKey: PhonePreferences.screenInputModeKey)
+        .flatMap(ScreenInputMode.init(rawValue:)) ?? .trackpad
+    /// Touch mode: the computer's point in the middle of the view (fingers pan and pinch it).
+    var touchCenter = CGPoint.zero
     /// The part of the computer's screen on view, in its points.
     var visibleRect = CGRect.zero
     var keyboardShown = false
@@ -216,7 +221,12 @@ final class ScreenRemoteController: UIViewController {
         setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
     }
 
-    override var prefersPointerLocked: Bool { true }
+    /// Trackpad mode: the iPad's pointer is hidden and its raw motion drives the computer's.
+    var locksPointer = true {
+        didSet { if locksPointer != oldValue { setNeedsUpdateOfPrefersPointerLocked() } }
+    }
+
+    override var prefersPointerLocked: Bool { locksPointer }
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
     // A swipe up from the bottom reaches the grabber first, not the home screen.
@@ -236,13 +246,21 @@ private struct ScreenCanvas: UIViewRepresentable {
 
     func updateUIView(_ view: ScreenCanvasView, context: Context) {
         // Read so SwiftUI calls back when they change; the view lays itself out from them.
-        _ = (remote.cursor, remote.desktopSize, viewport.zoom)
+        _ = (remote.cursor, remote.desktopSize, remote.cursorShape, viewport.zoom, viewport.touchCenter)
         view.setNeedsLayout()
         view.apply(wantsKeyboard: viewport.wantsKeyboard)
+        view.apply(inputMode: viewport.inputMode)
     }
 }
 
 /// The video, the cursor drawn over it, the gestures and the keyboard.
+///
+/// Two ways to drive it. Trackpad: the whole screen is a trackpad, the view keeps the cursor in
+/// the middle, an iPad's trackpad or mouse moves the cursor by its raw motion (pointer locked).
+/// Touch: a tap clicks where it lands, a finger scrolls, touch and hold drags, two fingers pan
+/// a zoomed-in screen, and an iPad's own pointer points straight at the computer's screen.
+/// In both, Apple Pencil is a mouse, scrolls glide with momentum the computer shows as a real
+/// trackpad's, and three fingers swipe for Mission Control, App Exposé and Spaces.
 final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, UIPointerInteractionDelegate {
     private let remote: ScreenRemote
     private let viewport: ScreenViewport
@@ -254,10 +272,21 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     private let keyboardEdge = UIView()
     private var fling: CADisplayLink?
     private var flingVelocity = CGPoint.zero
+    private var momentum: CADisplayLink?
+    private var momentumVelocity = CGPoint.zero
+    private var momentumStarted = false
     private var dragLocation = CGPoint.zero
     private var pinchActive = false
+    /// A two-finger scroll that turned into a pinch doesn't glide.
+    private var scrollPinched = false
+    /// Where the computer's screen sits in the view and at what zoom, as last laid out.
+    private var desktopOrigin = CGPoint.zero
+    private var laidOutZoom: CGFloat = 1
     /// The computer's screen size the zoom was last set for; another display opens afresh.
     private var laidOutDesktop = CGSize.zero
+    private var shownShape: ScreenRemote.CursorShape?
+    /// The button an iPad's pointer or Apple Pencil holds down.
+    private var pointerButton: ScreenRemote.Button?
     private let haptic = UIImpactFeedbackGenerator(style: .light)
 
     init(remote: ScreenRemote, viewport: ScreenViewport) {
@@ -290,10 +319,32 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     override func didMoveToWindow() {
         super.didMoveToWindow()
         hardwareKeyboardChanged()
+        apply(inputMode: viewport.inputMode, force: true)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    /// Three fingers are the computer's, not iPadOS's undo and copy gestures.
+    override var editingInteractionConfiguration: UIEditingInteractionConfiguration { .none }
+
+    private var touchMode: Bool { viewport.inputMode == .touch }
+    private var appliedMode: ScreenInputMode?
+
+    /// Trackpad mode locks the iPad's pointer so its raw motion drives the cursor; touch mode
+    /// lets it point at the screen.
+    func apply(inputMode: ScreenInputMode, force: Bool = false) {
+        guard force || inputMode != appliedMode else { return }
+        appliedMode = inputMode
+        var responder: UIResponder? = self
+        while let next = responder?.next {
+            if let controller = next as? ScreenRemoteController {
+                controller.locksPointer = inputMode == .trackpad
+                return
+            }
+            responder = next
+        }
+    }
 
     // MARK: Layout
 
@@ -315,38 +366,71 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
             laidOutDesktop = size
             viewport.fitZoom = fit
             viewport.fillZoom = fill
-            if opening { viewport.zoom = viewport.openingZoom } else if wasFit { viewport.zoom = fit }
+            if opening {
+                viewport.zoom = viewport.openingZoom
+                viewport.touchCenter = CGPoint(x: size.width / 2, y: size.height / 2)
+            } else if wasFit {
+                viewport.zoom = fit
+            }
         }
         let zoom = min(max(viewport.zoom, fit), viewport.maxZoom)
         let scaled = CGSize(width: size.width * zoom, height: size.height * zoom)
         let cursor = remote.cursor
-        // The cursor in the middle, unless that would show past the screen's edge.
+        // Trackpad: the cursor in the middle; touch: wherever the fingers moved the view. Never
+        // past the screen's edge.
+        let center = touchMode ? viewport.touchCenter : cursor
         func origin(_ length: CGFloat, _ room: CGFloat, _ at: CGFloat) -> CGFloat {
             if length <= room { return (room - length) / 2 }
             return min(0, max(room - length, room / 2 - at * zoom))
         }
-        let originPoint = CGPoint(x: origin(scaled.width, available.width, cursor.x),
-                                  y: origin(scaled.height, available.height, cursor.y))
+        let originPoint = CGPoint(x: origin(scaled.width, available.width, center.x),
+                                  y: origin(scaled.height, available.height, center.y))
+        desktopOrigin = originPoint
+        laidOutZoom = zoom
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         desktop.frame = CGRect(origin: originPoint, size: scaled)
         remote.layer.frame = desktop.bounds
         CATransaction.commit()
-        // The arrow at the size the computer draws it, scaled with the screen (the Mac's is
-        // about 24 points tall, the image's 29), never so small it gets lost; its tip (3, 2) on the cursor.
-        let arrowScale = min(max(zoom * 24 / 29, 0.4), 1)
         cursorTip = CGPoint(x: originPoint.x + cursor.x * zoom, y: originPoint.y + cursor.y * zoom)
-        cursorView.frame = CGRect(x: cursorTip.x - 3 * arrowScale, y: cursorTip.y - 2 * arrowScale,
-                                  width: 26 * arrowScale, height: 34 * arrowScale)
+        if let shape = remote.cursorShape {
+            // The computer's own arrow (an I-beam over text, a hand over a link), at its size
+            // on the screen, within reason; its hot spot on the cursor.
+            if shownShape != shape {
+                shownShape = shape
+                cursorView.image = shape.image
+            }
+            let scale = min(max(zoom, 0.6), 1.25)
+            cursorView.frame = CGRect(x: cursorTip.x - shape.hotSpot.x * scale, y: cursorTip.y - shape.hotSpot.y * scale,
+                                      width: shape.size.width * scale, height: shape.size.height * scale)
+        } else {
+            // The arrow at the size the computer draws it, scaled with the screen (the Mac's is
+            // about 24 points tall, the image's 29), never so small it gets lost; its tip (3, 2) on the cursor.
+            let arrowScale = min(max(zoom * 24 / 29, 0.4), 1)
+            cursorView.frame = CGRect(x: cursorTip.x - 3 * arrowScale, y: cursorTip.y - 2 * arrowScale,
+                                      width: 26 * arrowScale, height: 34 * arrowScale)
+        }
         let visible = CGRect(x: -originPoint.x / zoom, y: -originPoint.y / zoom,
                              width: available.width / zoom, height: available.height / zoom)
             .intersection(CGRect(origin: .zero, size: size))
         if viewport.visibleRect != visible { viewport.visibleRect = visible }
+        // Keep the touch view's center on what's shown, so panning back starts at once.
+        if touchMode, visible.width > 0 {
+            let shownCenter = CGPoint(x: visible.midX, y: visible.midY)
+            if hypot(shownCenter.x - viewport.touchCenter.x, shownCenter.y - viewport.touchCenter.y) > 0.5 {
+                viewport.touchCenter = shownCenter
+            }
+        }
         let keyboardUp = keyboardTop > 0 && keyboardTop < bounds.height - 1
         if viewport.keyboardShown != keyboardUp { viewport.keyboardShown = keyboardUp }
     }
 
     private var zoom: CGFloat { max(viewport.zoom, 0.01) }
+
+    /// A point in this view as a point on the computer's screen.
+    private func desktopPoint(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: (point.x - desktopOrigin.x) / laidOutZoom, y: (point.y - desktopOrigin.y) / laidOutZoom)
+    }
 
     // MARK: Gestures
 
@@ -356,26 +440,35 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         let scroll = UIPanGestureRecognizer(target: self, action: #selector(scroll(_:)))
         scroll.minimumNumberOfTouches = 2
         scroll.maximumNumberOfTouches = 2
-        // A trackpad's two-finger scroll or a mouse wheel: no touches, only scroll events.
+        let swipe = UIPanGestureRecognizer(target: self, action: #selector(threeFingers(_:)))
+        swipe.minimumNumberOfTouches = 3
+        swipe.maximumNumberOfTouches = 3
+        // A trackpad's two-finger scroll (it glides) or a mouse wheel's clicks: no touches, only scroll events.
+        let trackpadScroll = UIPanGestureRecognizer(target: self, action: #selector(trackpadScroll(_:)))
+        trackpadScroll.allowedScrollTypesMask = .continuous
+        trackpadScroll.allowedTouchTypes = []
         let wheel = UIPanGestureRecognizer(target: self, action: #selector(wheel(_:)))
-        wheel.allowedScrollTypesMask = .all
+        wheel.allowedScrollTypesMask = .discrete
         wheel.allowedTouchTypes = []
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinch(_:)))
-        let rightClick = UITapGestureRecognizer(target: self, action: #selector(rightClick))
+        let rightClick = UITapGestureRecognizer(target: self, action: #selector(rightClick(_:)))
         rightClick.numberOfTouchesRequired = 2
-        let click = UITapGestureRecognizer(target: self, action: #selector(click))
+        let click = UITapGestureRecognizer(target: self, action: #selector(click(_:)))
         click.require(toFail: rightClick)
         // Hold still, then move: drags with the button down (selecting text, moving windows).
         let drag = UILongPressGestureRecognizer(target: self, action: #selector(drag(_:)))
         drag.minimumPressDuration = 0.35
         drag.allowableMovement = 12
-        for recognizer in [move, scroll, pinch, rightClick, click, drag] as [UIGestureRecognizer] {
+        for recognizer in [move, scroll, swipe, pinch, rightClick, click, drag] as [UIGestureRecognizer] {
             recognizer.delegate = self
-            // Fingers only: a trackpad or mouse drives the cursor through GCMouse instead.
+            // Fingers only: a trackpad or mouse drives the cursor through GCMouse (trackpad mode)
+            // or as a pointer (touch mode), and Apple Pencil as a mouse; see the touch handlers.
             recognizer.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
             addGestureRecognizer(recognizer)
         }
+        addGestureRecognizer(trackpadScroll)
         addGestureRecognizer(wheel)
+        addGestureRecognizer(UIHoverGestureRecognizer(target: self, action: #selector(hover(_:))))
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -386,10 +479,17 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
             && pair.contains { ($0 as? UIPanGestureRecognizer)?.minimumNumberOfTouches == 2 }
     }
 
+    /// One finger: the cursor (trackpad) or a scroll (touch).
     @objc private func moveCursor(_ pan: UIPanGestureRecognizer) {
+        if touchMode {
+            // The content follows the finger, one to one.
+            scrollGesture(pan, factor: viewport.scrollSign / laidOutZoom)
+            return
+        }
         switch pan.state {
         case .began:
             stopFling()
+            stopMomentum()
             hideToolbar()
         case .changed:
             let delta = pan.translation(in: self)
@@ -430,17 +530,26 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         if !viewport.toolbarHidden { viewport.toolbarHidden = true }
     }
 
+    /// Two fingers: a scroll, or in touch mode on a zoomed-in screen, moving the view.
     @objc private func scroll(_ pan: UIPanGestureRecognizer) {
-        if pan.state == .began { hideToolbar() }
-        guard pan.state == .changed, !pinchActive else {
+        if touchMode, viewport.isZoomedIn {
+            if pan.state == .began { hideToolbar() }
+            guard pan.state == .changed, !pinchActive else {
+                pan.setTranslation(.zero, in: self)
+                return
+            }
+            let delta = pan.translation(in: self)
             pan.setTranslation(.zero, in: self)
+            viewport.touchCenter = CGPoint(x: viewport.touchCenter.x - delta.x / laidOutZoom,
+                                           y: viewport.touchCenter.y - delta.y / laidOutZoom)
             return
         }
-        let delta = pan.translation(in: self)
-        pan.setTranslation(.zero, in: self)
         // The content follows the fingers (unless settings reverse it), at the computer's own scale.
-        let factor = 2 * viewport.scrollSign / zoom.squareRoot()
-        remote.scroll(dx: delta.x * factor, dy: delta.y * factor)
+        scrollGesture(pan, factor: 2 * viewport.scrollSign / zoom.squareRoot())
+    }
+
+    @objc private func trackpadScroll(_ pan: UIPanGestureRecognizer) {
+        scrollGesture(pan, factor: 2 * viewport.scrollSign)
     }
 
     @objc private func wheel(_ pan: UIPanGestureRecognizer) {
@@ -450,31 +559,125 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         remote.scroll(dx: delta.x * 2 * viewport.scrollSign, dy: delta.y * 2 * viewport.scrollSign)
     }
 
+    /// A scroll as a trackpad's gesture: began, the moves, ended, then a glide worked out here
+    /// (macOS adds momentum below where posted events enter), so apps glide and rubber-band.
+    private func scrollGesture(_ pan: UIPanGestureRecognizer, factor: CGFloat) {
+        switch pan.state {
+        case .began:
+            stopMomentum()
+            stopFling()
+            hideToolbar()
+            scrollPinched = false
+            pan.setTranslation(.zero, in: self)
+            remote.scroll(dx: 0, dy: 0, phase: .began)
+        case .changed:
+            let delta = pan.translation(in: self)
+            pan.setTranslation(.zero, in: self)
+            if pinchActive {
+                scrollPinched = true
+                return
+            }
+            remote.scroll(dx: delta.x * factor, dy: delta.y * factor, phase: .changed)
+        case .ended:
+            remote.scroll(dx: 0, dy: 0, phase: .ended)
+            if !scrollPinched {
+                let velocity = pan.velocity(in: self)
+                startMomentum(CGPoint(x: velocity.x * factor, y: velocity.y * factor))
+            }
+        default:
+            remote.scroll(dx: 0, dy: 0, phase: .ended)
+        }
+    }
+
+    /// The glide after the fingers lift: 60 times a second, losing 4% each time (as Sill, after
+    /// macOS's own feel), in the computer's pixels a second.
+    private func startMomentum(_ velocity: CGPoint) {
+        stopMomentum()
+        guard hypot(velocity.x, velocity.y) > 150 else { return }
+        momentumVelocity = velocity
+        momentumStarted = false
+        let link = CADisplayLink(target: self, selector: #selector(stepMomentum(_:)))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 60, preferred: 60)
+        link.add(to: .main, forMode: .common)
+        momentum = link
+    }
+
+    @objc private func stepMomentum(_ link: CADisplayLink) {
+        let dt = link.targetTimestamp - link.timestamp
+        remote.scroll(dx: momentumVelocity.x * dt, dy: momentumVelocity.y * dt,
+                      phase: momentumStarted ? .momentum : .momentumBegan)
+        momentumStarted = true
+        let decay = pow(0.96, dt * 60)
+        momentumVelocity = CGPoint(x: momentumVelocity.x * decay, y: momentumVelocity.y * decay)
+        if hypot(momentumVelocity.x, momentumVelocity.y) < 18 { stopMomentum() }
+    }
+
+    private func stopMomentum() {
+        guard let momentum else { return }
+        momentum.invalidate()
+        self.momentum = nil
+        if momentumStarted { remote.scroll(dx: 0, dy: 0, phase: .momentumEnded) }
+        momentumStarted = false
+    }
+
+    /// Three fingers swipe as on a Mac's trackpad: up Mission Control, down App Exposé, sideways
+    /// the next or previous Space (through the computer's own shortcuts).
+    @objc private func threeFingers(_ pan: UIPanGestureRecognizer) {
+        if pan.state == .began {
+            stopMomentum()
+            hideToolbar()
+        }
+        guard pan.state == .ended else { return }
+        let travel = pan.translation(in: self)
+        guard max(abs(travel.x), abs(travel.y)) > 50 else { return }
+        if abs(travel.y) > abs(travel.x) {
+            remote.key(travel.y < 0 ? MacKeyCode.up : MacKeyCode.down, modifiers: [.ctrl])
+        } else {
+            remote.key(travel.x < 0 ? MacKeyCode.right : MacKeyCode.left, modifiers: [.ctrl])
+        }
+        if viewport.clickFeedback { haptic.impactOccurred() }
+    }
+
     @objc private func pinch(_ pinch: UIPinchGestureRecognizer) {
         switch pinch.state {
         case .began:
             pinchActive = false
+            stopMomentum()
             hideToolbar()
         case .changed:
             // Small spreads are a two-finger scroll; past that it's a zoom.
             if !pinchActive, abs(pinch.scale - 1) < 0.08 { return }
             pinchActive = true
-            viewport.zoom = min(max(viewport.zoom * pinch.scale, viewport.fitZoom), viewport.maxZoom)
+            let old = laidOutZoom
+            let new = min(max(viewport.zoom * pinch.scale, viewport.fitZoom), viewport.maxZoom)
+            if touchMode {
+                // The point between the fingers stays under them.
+                let location = pinch.location(in: self)
+                let pinned = desktopPoint(location)
+                let room = CGPoint(x: bounds.midX, y: bounds.midY)
+                let centerOffset = CGPoint(x: (room.x - location.x) / new, y: (room.y - location.y) / new)
+                if old > 0 { viewport.touchCenter = CGPoint(x: pinned.x + centerOffset.x, y: pinned.y + centerOffset.y) }
+            }
+            viewport.zoom = new
             pinch.scale = 1
         default: pinchActive = false
         }
     }
 
-    @objc private func click() {
+    @objc private func click(_ tap: UITapGestureRecognizer) {
         stopFling()
+        stopMomentum()
         hideToolbar()
+        if touchMode { remote.moveCursor(to: desktopPoint(tap.location(in: self))) }
         remote.click()
         guard viewport.clickFeedback else { return }
         haptic.impactOccurred(intensity: 0.6)
         ripple()
     }
 
-    @objc private func rightClick() {
+    @objc private func rightClick(_ tap: UITapGestureRecognizer) {
+        stopMomentum()
+        if touchMode { remote.moveCursor(to: desktopPoint(tap.location(in: self))) }
         remote.click(.right)
         guard viewport.clickFeedback else { return }
         haptic.impactOccurred()
@@ -486,16 +689,73 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         switch press.state {
         case .began:
             stopFling()
+            stopMomentum()
             dragLocation = location
             hideToolbar()
+            if touchMode { remote.moveCursor(to: desktopPoint(location)) }
             remote.press(down: true)
             if viewport.clickFeedback { haptic.impactOccurred(intensity: 1) }
         case .changed:
-            remote.moveCursor(by: CGPoint(x: (location.x - dragLocation.x) / zoom, y: (location.y - dragLocation.y) / zoom))
+            if touchMode {
+                remote.moveCursor(to: desktopPoint(location))
+            } else {
+                remote.moveCursor(by: CGPoint(x: (location.x - dragLocation.x) / zoom, y: (location.y - dragLocation.y) / zoom))
+            }
             dragLocation = location
         default:
             remote.press(down: false)
         }
+    }
+
+    // MARK: Pencil and pointer
+
+    /// Apple Pencil hovering, or in touch mode an iPad's pointer: the cursor goes where it points.
+    @objc private func hover(_ hover: UIHoverGestureRecognizer) {
+        guard hover.state == .began || hover.state == .changed else { return }
+        let pencil = hover.zOffset > 0 || hover.altitudeAngle > 0
+        guard pencil || touchMode else { return }
+        remote.moveCursor(to: desktopPoint(hover.location(in: self)))
+    }
+
+    /// Apple Pencil, and in touch mode an iPad's trackpad or mouse clicks, are the computer's
+    /// mouse: down where they touch, dragging, up. (Fingers go to the gestures above.)
+    private func pointerTouches(_ touches: Set<UITouch>, _ event: UIEvent?) -> UITouch? {
+        touches.first { $0.type == .pencil || ($0.type == .indirectPointer && touchMode) }
+    }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if let touch = pointerTouches(touches, event) {
+            stopMomentum()
+            hideToolbar()
+            let button: ScreenRemote.Button = event?.buttonMask.contains(.secondary) == true ? .right : .left
+            pointerButton = button
+            remote.moveCursor(to: desktopPoint(touch.location(in: self)))
+            remote.press(button, down: true)
+        }
+        super.touchesBegan(touches, with: event)
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if pointerButton != nil, let touch = pointerTouches(touches, event) {
+            remote.moveCursor(to: desktopPoint(touch.location(in: self)))
+        }
+        super.touchesMoved(touches, with: event)
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        releasePointer(touches, event)
+        super.touchesEnded(touches, with: event)
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        releasePointer(touches, event)
+        super.touchesCancelled(touches, with: event)
+    }
+
+    private func releasePointer(_ touches: Set<UITouch>, _ event: UIEvent?) {
+        guard let button = pointerButton, pointerTouches(touches, event) != nil else { return }
+        pointerButton = nil
+        remote.press(button, down: false)
     }
 
     /// A ring at the cursor, so a click is seen even when the screen doesn't change.
@@ -688,13 +948,17 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         ]
         for (button, name) in buttons {
             button?.pressedChangedHandler = { [weak self] _, _, pressed in
-                Task { @MainActor in self?.remote.press(name, down: pressed) }
+                Task { @MainActor in
+                    // In touch mode the pointer's clicks come as touches, where it points.
+                    guard let self, !self.touchMode else { return }
+                    self.remote.press(name, down: pressed)
+                }
             }
         }
     }
 
     private func mouseMoved(dx: CGFloat, dy: CGFloat) {
-        guard window != nil else { return }
+        guard window != nil, !touchMode else { return }
         stopFling()
         hideToolbar()
         // Raw counts get a little acceleration, like the Mac's own: slow moves stay precise.
@@ -765,6 +1029,11 @@ private struct ScreenToolbar: View {
             button(viewport.isZoomedIn ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
                 withAnimation(.snappy) { viewport.toggleFit() }
+            }
+            // Trackpad or touch, for this time; settings choose how it opens.
+            button(viewport.inputMode == .touch ? "hand.tap.fill" : "hand.tap",
+                   label: viewport.inputMode == .touch ? "Use as a trackpad" : "Touch to click") {
+                viewport.inputMode = viewport.inputMode == .touch ? .trackpad : .touch
             }
             if remote.displays.count > 1 || (remote.canAddVirtual && remote.virtualDisplay == nil) {
                 ScreenDisplaysMenu(remote: remote, displays: remote.displays, shown: remote.shown)
