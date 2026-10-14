@@ -285,6 +285,14 @@ final class ScreenUnlockTests: XCTestCase {
         XCTAssertNil(remote.unlockMessage)
     }
 
+    func testLockStateNamesTheUserUntilDisconnect() {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true,"user":"Andrew Liubkin"}"#)
+        XCTAssertEqual(remote.lockUser, "Andrew Liubkin")
+        remote.disconnect()
+        XCTAssertNil(remote.lockUser)
+    }
+
     func testRevocationAndDisconnectClearCapability() {
         let remote = makeRemote()
         remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true}"#)

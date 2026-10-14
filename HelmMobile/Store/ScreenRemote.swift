@@ -59,6 +59,8 @@ final class ScreenRemote {
     private(set) var isLocked: Bool?
     private(set) var lockStateAvailable = false
     private(set) var unlockEnabled = false
+    /// The Mac user's full name, for the login card (an older helper sends none).
+    private(set) var lockUser: String?
     private(set) var unlockInProgress = false
     private(set) var unlockMessage: String?
     @ObservationIgnored private var unlockTimeout: Task<Void, Never>?
@@ -216,6 +218,7 @@ final class ScreenRemote {
             isLocked = json["locked"]?.bool ?? true
             lockStateAvailable = json["available"]?.bool == true
             unlockEnabled = json["unlockEnabled"]?.bool == true
+            lockUser = json["user"]?.string
             if isLocked == false {
                 finishUnlock(message: nil)
             } else if !unlockEnabled, unlockInProgress {
@@ -343,6 +346,7 @@ final class ScreenRemote {
         isLocked = nil
         lockStateAvailable = false
         unlockEnabled = false
+        lockUser = nil
     }
 
     // MARK: Displays

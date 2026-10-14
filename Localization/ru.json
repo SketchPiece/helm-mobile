@@ -1006,12 +1006,9 @@
   "Mac is locked": "Mac заблокирован",
   "The Mac's lock state is unavailable. Reconnect and try again.": "Не удалось определить состояние блокировки Mac. Подключитесь заново.",
   "Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections.": "Включите «Разблокировка Mac с телефона» в Helm на Mac: Настройки → Подключения.",
-  "Select your user and click the password field on the Mac screen, then enter your password here.": "Выберите пользователя и нажмите на поле пароля на экране Mac, затем введите пароль здесь.",
   "Select your user and click the password field on the Mac screen, then try again.": "Выберите пользователя и нажмите на поле пароля на экране Mac, затем повторите попытку.",
-  "Mac password": "Пароль Mac",
   "Unlock Mac": "Разблокировать Mac",
   "Unlocking…": "Разблокировка…",
-  "Your password is sent to this Mac for this attempt and isn't saved.": "Пароль будет отправлен на этот Mac для одной попытки и не сохранится.",
   "Unlocking was turned off on the Mac.": "Разблокировка была выключена на Mac.",
   "The Mac is still locked. Check your password and try again.": "Mac по-прежнему заблокирован. Проверьте пароль и повторите попытку.",
   "An unlock attempt is already in progress.": "Попытка разблокировки уже выполняется.",
@@ -1024,5 +1021,10 @@
   "Mac unlocked": "Mac разблокирован",
   "Waiting for the Mac to confirm…": "Ждём подтверждения от Mac…",
   "Click the password field on the Mac, then unlock it from here.": "Нажмите на поле пароля на экране Mac, затем разблокируйте его отсюда.",
-  "Opens a field for the Mac's password": "Открывает поле для пароля Mac"
+  "Opens a field for the Mac's password": "Открывает поле для пароля Mac",
+  "Show the Mac's screen": "Показать экран Mac",
+  "Hides the password field to click on the Mac": "Скрывает поле пароля, чтобы нажать на экран Mac",
+  "Enter Password": "Введите пароль",
+  "The password field must be selected on the Mac.": "На Mac должно быть выбрано поле пароля.",
+  "Sent for this attempt only and never saved.": "Отправляется только для этой попытки и не сохраняется."
 }

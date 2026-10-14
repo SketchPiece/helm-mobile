@@ -3463,6 +3463,16 @@
         }
       }
     },
+    "Enter Password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введите пароль"
+          }
+        }
+      }
+    },
     "Enter a positive duration.": {
       "localizations": {
         "ru": {
@@ -4126,6 +4136,16 @@
       }
     },
     "Hide the keyboard": {},
+    "Hides the password field to click on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывает поле пароля, чтобы нажать на экран Mac"
+          }
+        }
+      }
+    },
     "High": {
       "localizations": {
         "ru": {
@@ -4630,22 +4650,22 @@
         }
       }
     },
+    "Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac"
+          }
+        }
+      }
+    },
     "Mac is locked": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Mac заблокирован"
-          }
-        }
-      }
-    },
-    "Mac password": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Пароль Mac"
           }
         }
       }
@@ -7105,16 +7125,6 @@
         }
       }
     },
-    "Select your user and click the password field on the Mac screen, then enter your password here.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выберите пользователя и нажмите на поле пароля на экране Mac, затем введите пароль здесь."
-          }
-        }
-      }
-    },
     "Select your user and click the password field on the Mac screen, then try again.": {
       "localizations": {
         "ru": {
@@ -7241,6 +7251,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отправляю…"
+          }
+        }
+      }
+    },
+    "Sent for this attempt only and never saved.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправляется только для этой попытки и не сохраняется."
           }
         }
       }
@@ -7431,6 +7451,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Показать исходник"
+          }
+        }
+      }
+    },
+    "Show the Mac's screen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать экран Mac"
           }
         }
       }
@@ -8214,6 +8244,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось отправить пароль. Проверьте подключение и повторите попытку."
+          }
+        }
+      }
+    },
+    "The password field must be selected on the Mac.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На Mac должно быть выбрано поле пароля."
           }
         }
       }
@@ -9313,16 +9353,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сообщение подождёт и уйдёт, когда закончится текущий ход."
-          }
-        }
-      }
-    },
-    "Your password is sent to this Mac for this attempt and isn't saved.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Пароль будет отправлен на этот Mac для одной попытки и не сохранится."
           }
         }
       }
