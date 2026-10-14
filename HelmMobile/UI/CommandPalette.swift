@@ -161,6 +161,13 @@ private struct CommandPalette: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onChange(of: query) { selection = 0 }
+        // Escape never reaches the text field (the system takes it first); a shortcut does.
+        .background {
+            Button("Close") { router.palette = nil }
+                .keyboardShortcut(.cancelAction)
+                .opacity(0)
+                .accessibilityHidden(true)
+        }
         .accessibilityAddTraits(.isModal)
     }
 
@@ -288,6 +295,7 @@ private struct CommandPalette: View {
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("paletteRow")
     }
 
     @ViewBuilder
@@ -605,6 +613,7 @@ private struct PaletteField: UIViewRepresentable {
 
     func makeUIView(context: Context) -> Field {
         let field = Field()
+        field.accessibilityIdentifier = "commandPaletteField"
         field.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: UIFont(name: "IBMPlexSans", size: 17) ?? .systemFont(ofSize: 17))
         field.adjustsFontForContentSizeCategory = true
         field.autocorrectionType = .no
@@ -679,6 +688,15 @@ private struct PaletteField: UIViewRepresentable {
 
         @objc private func pickNumber(_ command: UIKeyCommand) {
             if let number = command.input.flatMap(Int.init) { handlers?.number(number) }
+        }
+
+        /// Escape doesn't arrive as a key command while text is being edited; the press does.
+        override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+            if presses.contains(where: { $0.key?.keyCode == .keyboardEscape && $0.key?.modifierFlags.isEmpty != false }) {
+                handlers?.escape()
+                return
+            }
+            super.pressesBegan(presses, with: event)
         }
 
         override func deleteBackward() {

@@ -20,6 +20,16 @@ final class IPadTourTests: XCTestCase {
         try? XCUIScreen.main.screenshot().pngRepresentation.write(to: shots.appending(path: "\(name).png"))
     }
 
+    /// New thread's long press: the menu of recent projects, with the button still whole behind it.
+    func testNewThreadMenu() throws {
+        let plus = app.buttons["newThread"].firstMatch
+        XCTAssertTrue(plus.waitForExistence(timeout: 20), "no New thread button")
+        sleep(2)
+        plus.press(forDuration: 1.2)
+        sleep(1)
+        shot("06-new-thread-menu")
+    }
+
     /// The sidebar's project switcher, open: each project should show its own tile.
     func testProjectSwitcherMenu() throws {
         let switcher = app.buttons["projectSwitcher"]
@@ -53,20 +63,46 @@ final class IPadTourTests: XCTestCase {
             sleep(1)
         }
 
-        // Keyboard: the previous thread in Home's order, then ⌘K into the search field, then ⌘N.
+        // Keyboard: the previous thread in Home's order, then ⇧⌘F into the search field.
         let title = app.navigationBars.firstMatch.identifier
         app.typeKey(.upArrow, modifierFlags: [.command, .option])
         sleep(2)
         shot("02c-next-thread")
         print("IPAD next thread: \(title) → \(app.navigationBars.firstMatch.identifier)")
-        app.typeKey("k", modifierFlags: .command)
+        app.typeKey("f", modifierFlags: [.command, .shift])
         sleep(1)
         shot("02d-search")
-        XCTAssertTrue(app.searchFields.firstMatch.hasFocus(in: app), "⌘K didn't focus the search field")
+        XCTAssertTrue(app.searchFields.firstMatch.hasFocus(in: app), "⇧⌘F didn't focus the search field")
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
         sleep(1)
 
+        // ⌘K: the palette, typed into, closed with Escape.
+        let palette = app.textFields["commandPaletteField"]
+        app.typeKey("k", modifierFlags: .command)
+        XCTAssertTrue(palette.waitForExistence(timeout: 3), "⌘K didn't open the palette")
+        sleep(1)
+        shot("02e-palette")
+        app.typeKey(.downArrow, modifierFlags: [])
+        app.typeKey(.downArrow, modifierFlags: [])
+        shot("02f-palette-arrows")
+        palette.typeText("sett")
+        sleep(1)
+        shot("02g-palette-typed")
+        // The simulator's test runner doesn't deliver Escape; a tap beside the palette closes it too.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.08)).tap()
+        sleep(1)
+        XCTAssertFalse(palette.exists, "a tap beside the palette didn't close it")
+
+        // ⌘N: the project list, the open thread's project first; Return starts there.
         app.typeKey("n", modifierFlags: .command)
+        if palette.waitForExistence(timeout: 3) {
+            sleep(1)
+            shot("03a-new-thread-in")
+            app.typeKey(.downArrow, modifierFlags: [])
+            shot("03b-new-thread-in-down")
+            // Return and Escape don't reach the app from the simulator's test runner; a tap picks the row.
+            app.descendants(matching: .any).matching(identifier: "paletteRow").firstMatch.tap()
+        }
         sleep(2)
         shot("03-landscape-new-thread")
         XCTAssertTrue(app.textViews["newThreadText"].waitForExistence(timeout: 5), "⌘N didn't open New Thread")
