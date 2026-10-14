@@ -35,11 +35,11 @@ struct UserBubble: View {
                 Text(ContextReference.displayText(item.text))
                     .font(Typography.body)
                     .foregroundStyle(Palette.text)
-                    .textSelection(.enabled)
+                    .selectableText()
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(Palette.message, in: .rect(cornerRadius: 20, style: .continuous))
-                    .contextMenu {
+                    .messageContextMenu {
                         Button {
                             UIPasteboard.general.string = ClipboardText.markdown(item.text, context: item.raw["context"])
                         } label: { Label("Copy", systemImage: "doc.on.doc") }
@@ -197,7 +197,7 @@ struct WorkStepRow: View {
                     Text(detail)
                         .font(item.type == "reasoning" ? Typography.footnote : Typography.mono(12))
                         .foregroundStyle(Palette.textMuted)
-                        .textSelection(.enabled)
+                        .selectableText()
                         .padding(.leading, 24)
                 }
                 if showDetail, item.type == "subagent", let child = item.raw["childThreadId"]?.string, let environmentId {

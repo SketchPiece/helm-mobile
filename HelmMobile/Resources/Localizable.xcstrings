@@ -3043,6 +3043,16 @@
         }
       }
     },
+    "Each takes a part of the conversation away to see what makes scrolling slow. The last two apply after the app restarts. Recordings list what was on.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждый убирает часть переписки, чтобы найти, что тормозит скролл. Последние два включаются после перезапуска приложения. В записи видно, что было включено."
+          }
+        }
+      }
+    },
     "Earlier": {},
     "Edit": {
       "localizations": {
@@ -3210,6 +3220,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Каждую неделю"
+          }
+        }
+      }
+    },
+    "Experiments": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эксперименты"
           }
         }
       }
@@ -3980,6 +4000,16 @@
       }
     },
     "Later": {},
+    "Lazy conversation": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ленивая переписка"
+          }
+        }
+      }
+    },
     "Letters": {
       "localizations": {
         "ru": {
@@ -4177,6 +4207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Влит"
+          }
+        }
+      }
+    },
+    "Messages drawn": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сколько сообщений рисовать"
           }
         }
       }
@@ -4716,6 +4756,16 @@
         }
       }
     },
+    "No message menus": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без меню у сообщений"
+          }
+        }
+      }
+    },
     "No project": {
       "localizations": {
         "ru": {
@@ -4753,6 +4803,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Задач пока нет."
+          }
+        }
+      }
+    },
+    "No tap to hide the keyboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без тапа, прячущего клавиатуру"
+          }
+        }
+      }
+    },
+    "No text selection": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без выделения текста"
           }
         }
       }

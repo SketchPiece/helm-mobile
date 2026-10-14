@@ -16,7 +16,7 @@ struct MarkdownView: View {
         MarkdownBlocksView(blocks: blocks, depth: 0, spacing: 10)
             .font(Typography.body)
             .foregroundStyle(Palette.text)
-            .textSelection(.enabled)
+            .selectableText()
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -5,6 +5,11 @@ struct PerfDiagnosticsView: View {
     @AppStorage(PerfMonitor.enabledKey) private var enabled = false
     @State private var monitor = PerfMonitor.shared
     @State private var confirmDelete = false
+    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = false
+    @AppStorage(PerfExperiments.windowKey) private var window = 30
+    @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
+    @AppStorage(PerfExperiments.noTextSelectionKey) private var noTextSelection = false
+    @AppStorage(PerfExperiments.noContextMenusKey) private var noContextMenus = false
 
     var body: some View {
         Form {
@@ -15,6 +20,21 @@ struct PerfDiagnosticsView: View {
                 }
             } footer: {
                 Text("Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.")
+            }
+            Section {
+                Toggle("Lazy conversation", isOn: $lazyTimeline)
+                Picker("Messages drawn", selection: $window) {
+                    Text(verbatim: "10").tag(10)
+                    Text(verbatim: "30").tag(30)
+                    Text("All").tag(0)
+                }
+                Toggle("No tap to hide the keyboard", isOn: $noTapGesture)
+                Toggle("No text selection", isOn: $noTextSelection)
+                Toggle("No message menus", isOn: $noContextMenus)
+            } header: {
+                Text("Experiments").sectionLabelStyle()
+            } footer: {
+                Text("Each takes a part of the conversation away to see what makes scrolling slow. The last two apply after the app restarts. Recordings list what was on.")
             }
             if !monitor.reports.isEmpty {
                 Section {

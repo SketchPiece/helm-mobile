@@ -47,6 +47,9 @@ private struct ThreadContent: View {
     /// holds the last `windowPage` blocks and reaching the top shows more (`revealEarlier`).
     @State private var windowStart: WindowStart?
     @State private var revealing = false
+    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = false
+    @AppStorage(PerfExperiments.windowKey) private var windowSetting = 30
+    @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
     @State private var expandedWork: Set<String> = []
     @State private var expandedRuns: Set<String> = []
     @State private var showSettings = false
@@ -89,12 +92,21 @@ private struct ThreadContent: View {
         static let all = WindowStart(id: "", index: 0)
     }
 
-    private static let windowPage = 30
+    private var windowPage: Int { windowSetting > 0 ? windowSetting : 1_000_000 }
+
+    @ViewBuilder
+    private func timelineStack<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if lazyTimeline {
+            LazyVStack(alignment: .leading, spacing: 18, content: content)
+        } else {
+            VStack(alignment: .leading, spacing: 18, content: content)
+        }
+    }
 
     /// Where the drawn part starts: the pinned block, or where it was if that block is gone
     /// (a fold opened, a snapshot replaced the window), or the last page before anything is pinned.
     private func windowStartIndex(_ blocks: [TimelineBlock]) -> Int {
-        guard let windowStart else { return max(0, blocks.count - Self.windowPage) }
+        guard let windowStart else { return max(0, blocks.count - windowPage) }
         if windowStart == .all { return 0 }
         if let index = blocks.firstIndex(where: { $0.id == windowStart.id }) { return index }
         return min(windowStart.index, max(0, blocks.count - 1))
@@ -109,7 +121,7 @@ private struct ThreadContent: View {
         ScrollView {
             // A plain stack: a lazy one guesses the height of rows it hasn't drawn, so "scroll to
             // the newest message" stopped short or left blank rows. Folded turns keep it small.
-            VStack(alignment: .leading, spacing: 18) {
+            timelineStack {
                 if let projection, startIndex > 0 || projection.history.hasMore || session.historyError != nil {
                     EarlierHistoryRow(isLoading: session.isLoadingHistory, error: session.historyError,
                                       canLoad: startIndex > 0 || projection.history.hasMore, load: loadEarlier)
@@ -174,7 +186,7 @@ private struct ThreadContent: View {
         // Tapping the conversation puts the keyboard away, also when it is too short to scroll.
         .simultaneousGesture(TapGesture().onEnded {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        })
+        }, including: noTapGesture ? .none : .all)
         // Only the user's own scrolling decides whether we stop following the bottom: when their
         // drag (and its deceleration) ends away from the end, "↓" appears.
         .onScrollPhaseChange { old, phase in
@@ -326,7 +338,7 @@ private struct ThreadContent: View {
         case .assistant(let item):
             MarkdownView(text: item.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .contextMenu {
+                .messageContextMenu {
                     Button {
                         UIPasteboard.general.string = ClipboardText.markdown(item.text)
                     } label: { Label("Copy as Markdown", systemImage: "doc.on.doc") }
@@ -449,7 +461,7 @@ private struct ThreadContent: View {
         Task {
             await waitForRest()
             prependBase = scrollMetrics
-            let index = max(0, start - Self.windowPage)
+            let index = max(0, start - windowPage)
             windowStart = WindowStart(id: blocks[index].id, index: index)
             revealing = false
         }

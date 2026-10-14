@@ -891,5 +891,12 @@
   "Delete all recordings?": "Удалить все записи?",
   "All projects": "Все проекты",
   "%lld open": "открыто: %lld",
-  "New thread in %@": "Новый тред в «%@»"
+  "New thread in %@": "Новый тред в «%@»",
+  "Lazy conversation": "Ленивая переписка",
+  "Messages drawn": "Сколько сообщений рисовать",
+  "No tap to hide the keyboard": "Без тапа, прячущего клавиатуру",
+  "No text selection": "Без выделения текста",
+  "No message menus": "Без меню у сообщений",
+  "Experiments": "Эксперименты",
+  "Each takes a part of the conversation away to see what makes scrolling slow. The last two apply after the app restarts. Recordings list what was on.": "Каждый убирает часть переписки, чтобы найти, что тормозит скролл. Последние два включаются после перезапуска приложения. В записи видно, что было включено."
 }
