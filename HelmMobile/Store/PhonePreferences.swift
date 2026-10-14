@@ -16,6 +16,12 @@ enum PhonePreferences {
     static let screenDisplayKey = "screenRemoteDisplay"
     static let screenVirtualSizeKey = "screenRemoteVirtualSize"
     static let screenQualityKey = "screenRemoteQuality"
+    static let screenKeepDisplayKey = "screenRemoteKeepDisplay"
+    static let screenCursorSpeedKey = "screenRemoteCursorSpeed"
+    static let screenReverseScrollKey = "screenRemoteReverseScroll"
+    static let screenClickFeedbackKey = "screenRemoteClickFeedback"
+    static let screenSoundKey = "screenRemoteSound"
+    static let screenClipboardKey = "screenRemoteClipboard"
 
     static let codeFontSizes = 8...18
     /// Code's size at the default Dynamic Type setting.

@@ -117,3 +117,56 @@ enum ScreenQuality: String, CaseIterable, Identifiable {
         }
     }
 }
+
+/// How long the separate display stays once the screen is closed (the app goes to the
+/// background, the iPad locks), so a quick trip away finds the windows where they were.
+enum ScreenKeepDisplay: String, CaseIterable, Identifiable {
+    case never, short, long
+    var id: String { rawValue }
+
+    var seconds: Int {
+        switch self {
+        case .never: 0
+        case .short: 120
+        case .long: 600
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .never: String(localized: "Right away")
+        case .short: String(localized: "After 2 minutes")
+        case .long: String(localized: "After 10 minutes")
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .never: String(localized: "Its windows go back to the computer's displays as soon as the screen closes.")
+        case .short: String(localized: "Locking the iPad or a quick look at another app keeps the windows in place.")
+        case .long: String(localized: "For longer breaks. Until then, its windows aren't seen on the computer.")
+        }
+    }
+}
+
+/// How far the cursor goes for a finger's or a trackpad's move.
+enum ScreenCursorSpeed: String, CaseIterable, Identifiable {
+    case slow, normal, fast
+    var id: String { rawValue }
+
+    var factor: CGFloat {
+        switch self {
+        case .slow: 0.7
+        case .normal: 1
+        case .fast: 1.5
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .slow: String(localized: "Slow")
+        case .normal: String(localized: "Normal")
+        case .fast: String(localized: "Fast")
+        }
+    }
+}

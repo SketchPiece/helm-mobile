@@ -133,6 +133,11 @@ final class ScreenViewport {
     /// Settings' choice of how the screen opens.
     let openZoom = UserDefaults.standard.string(forKey: PhonePreferences.screenOpenZoomKey)
         .flatMap(ScreenOpenZoom.init(rawValue:)) ?? .fill
+    /// Settings' cursor speed, scroll direction and click feedback, read when the screen opens.
+    let cursorSpeed = (UserDefaults.standard.string(forKey: PhonePreferences.screenCursorSpeedKey)
+        .flatMap(ScreenCursorSpeed.init(rawValue:)) ?? .normal).factor
+    let scrollSign: CGFloat = UserDefaults.standard.bool(forKey: PhonePreferences.screenReverseScrollKey) ? -1 : 1
+    let clickFeedback = UserDefaults.standard.object(forKey: PhonePreferences.screenClickFeedbackKey) as? Bool ?? true
     /// The part of the computer's screen on view, in its points.
     var visibleRect = CGRect.zero
     var keyboardShown = false
@@ -389,10 +394,12 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         case .changed:
             let delta = pan.translation(in: self)
             pan.setTranslation(.zero, in: self)
-            remote.moveCursor(by: CGPoint(x: delta.x / zoom, y: delta.y / zoom))
+            let speed = viewport.cursorSpeed
+            remote.moveCursor(by: CGPoint(x: delta.x * speed / zoom, y: delta.y * speed / zoom))
         case .ended:
             let velocity = pan.velocity(in: self)
-            if hypot(velocity.x, velocity.y) > 300 { startFling(velocity) }
+            let speed = viewport.cursorSpeed
+            if hypot(velocity.x, velocity.y) > 300 { startFling(CGPoint(x: velocity.x * speed, y: velocity.y * speed)) }
         default: break
         }
     }
@@ -431,15 +438,16 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         }
         let delta = pan.translation(in: self)
         pan.setTranslation(.zero, in: self)
-        // The content follows the fingers, at the computer's own scale.
-        remote.scroll(dx: delta.x * 2 / zoom.squareRoot(), dy: delta.y * 2 / zoom.squareRoot())
+        // The content follows the fingers (unless settings reverse it), at the computer's own scale.
+        let factor = 2 * viewport.scrollSign / zoom.squareRoot()
+        remote.scroll(dx: delta.x * factor, dy: delta.y * factor)
     }
 
     @objc private func wheel(_ pan: UIPanGestureRecognizer) {
         guard pan.state == .changed else { return }
         let delta = pan.translation(in: self)
         pan.setTranslation(.zero, in: self)
-        remote.scroll(dx: delta.x * 2, dy: delta.y * 2)
+        remote.scroll(dx: delta.x * 2 * viewport.scrollSign, dy: delta.y * 2 * viewport.scrollSign)
     }
 
     @objc private func pinch(_ pinch: UIPinchGestureRecognizer) {
@@ -461,12 +469,14 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         stopFling()
         hideToolbar()
         remote.click()
+        guard viewport.clickFeedback else { return }
         haptic.impactOccurred(intensity: 0.6)
         ripple()
     }
 
     @objc private func rightClick() {
         remote.click(.right)
+        guard viewport.clickFeedback else { return }
         haptic.impactOccurred()
         ripple()
     }
@@ -479,7 +489,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
             dragLocation = location
             hideToolbar()
             remote.press(down: true)
-            haptic.impactOccurred(intensity: 1)
+            if viewport.clickFeedback { haptic.impactOccurred(intensity: 1) }
         case .changed:
             remote.moveCursor(by: CGPoint(x: (location.x - dragLocation.x) / zoom, y: (location.y - dragLocation.y) / zoom))
             dragLocation = location
@@ -689,7 +699,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         hideToolbar()
         // Raw counts get a little acceleration, like the Mac's own: slow moves stay precise.
         let speed = hypot(dx, dy)
-        let gain = 1 + min(speed / 6, 2.5)
+        let gain = (1 + min(speed / 6, 2.5)) * viewport.cursorSpeed
         remote.moveCursor(by: CGPoint(x: dx * gain, y: -dy * gain))
     }
 
@@ -812,6 +822,9 @@ private struct ScreenKeysMenu: View, @MainActor Equatable {
     var body: some View {
         Menu {
             Button("Right click", systemImage: "cursorarrow.click.2") { remote.click(.right) }
+            if remote.sharesClipboard {
+                Button("Paste from this \(UIDevice.current.localizedModel)", systemImage: "doc.on.clipboard") { remote.pasteFromDevice() }
+            }
             Button("Escape", systemImage: "escape") { remote.key(MacKeyCode.escape) }
             Button("Switch app (⌘Tab)", systemImage: "square.on.square") { remote.key(MacKeyCode.tab, modifiers: [.cmd]) }
             Button("Spotlight (⌘Space)", systemImage: "magnifyingglass") { remote.key(MacKeyCode.space, modifiers: [.cmd]) }

@@ -1177,6 +1177,26 @@
         }
       }
     },
+    "A point on the computer is a point here, as on its own screen.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Точка в точку, как на самом компьютере."
+          }
+        }
+      }
+    },
+    "A quarter more room, everything a little smaller.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На четверть больше места, всё чуть мельче."
+          }
+        }
+      }
+    },
     "A tool needs your input": {
       "localizations": {
         "ru": {
@@ -1289,6 +1309,26 @@
         }
       }
     },
+    "Actual size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Реальный размер"
+          }
+        }
+      }
+    },
+    "Add a display for this iPad": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить дисплей для этого iPad"
+          }
+        }
+      }
+    },
     "Add a name, prompt, project, model, a valid schedule, and the checkout path if needed.": {
       "localizations": {
         "ru": {
@@ -1379,6 +1419,26 @@
         }
       }
     },
+    "After 10 minutes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 10 минут"
+          }
+        }
+      }
+    },
+    "After 2 minutes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 2 минуты"
+          }
+        }
+      }
+    },
     "After starting a thread": {
       "localizations": {
         "ru": {
@@ -1461,6 +1521,26 @@
         }
       }
     },
+    "All displays": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все дисплеи"
+          }
+        }
+      }
+    },
+    "All of the computer's screen at once, small on a phone.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Весь экран компьютера сразу; на телефоне мелко."
+          }
+        }
+      }
+    },
     "All projects": {
       "localizations": {
         "ru": {
@@ -1481,7 +1561,16 @@
         }
       }
     },
-    "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again.": {},
+    "Allow Helm to record the screen on the computer: System Settings → Privacy & Security → Screen & System Audio Recording. Then try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите Helm записывать экран на компьютере: Системные настройки → Конфиденциальность и безопасность → Запись экрана и системного аудио. Потом попробуйте снова."
+          }
+        }
+      }
+    },
     "Allow for session": {
       "localizations": {
         "ru": {
@@ -1829,6 +1918,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Бейдж на иконке"
+          }
+        }
+      }
+    },
+    "Balanced": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбалансированно"
           }
         }
       }
@@ -2235,6 +2334,16 @@
       }
     },
     "Computer": {},
+    "Computer screen": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экран компьютера"
+          }
+        }
+      }
+    },
     "Computers": {
       "localizations": {
         "ru": {
@@ -2406,6 +2515,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Продолжить сейчас"
+          }
+        }
+      }
+    },
+    "Control": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Управление"
           }
         }
       }
@@ -2710,6 +2829,16 @@
         }
       }
     },
+    "Cursor speed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скорость курсора"
+          }
+        }
+      }
+    },
     "Custom font size": {
       "localizations": {
         "ru": {
@@ -2746,6 +2875,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тёмное"
+          }
+        }
+      }
+    },
+    "Data saver": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экономия трафика"
           }
         }
       }
@@ -2983,6 +3122,26 @@
         }
       }
     },
+    "Display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дисплей"
+          }
+        }
+      }
+    },
+    "Displays": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дисплеи"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "ru": {
@@ -3184,6 +3343,16 @@
         }
       }
     },
+    "Every display side by side, as they're arranged, so you can drag a window from one to another.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все дисплеи рядом, как они расставлены, чтобы перетаскивать окна с одного на другой."
+          }
+        }
+      }
+    },
     "Every hour": {
       "localizations": {
         "ru": {
@@ -3325,6 +3494,26 @@
         }
       }
     },
+    "For a cellular connection: blurrier and fewer frames.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для мобильной сети: размытее и меньше кадров."
+          }
+        }
+      }
+    },
+    "For longer breaks. Until then, its windows aren't seen on the computer.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для перерывов подольше. До тех пор окна с него на компьютере не видны."
+          }
+        }
+      }
+    },
     "Forked": {
       "localizations": {
         "ru": {
@@ -3445,6 +3634,16 @@
         }
       }
     },
+    "Full resolution. Best on Wi-Fi.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Полное разрешение. Лучше всего по Wi-Fi."
+          }
+        }
+      }
+    },
     "Go": {
       "localizations": {
         "ru": {
@@ -3557,6 +3756,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Агенты ждут тебя: %@"
+          }
+        }
+      }
+    },
+    "Half again the room, everything smaller.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В полтора раза больше места, всё мельче."
           }
         }
       }
@@ -3867,6 +4076,16 @@
         }
       }
     },
+    "It turns with the iPad and follows its window in Split View and Stage Manager.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поворачивается вместе с iPad и подстраивается под его окно в Split View и Stage Manager."
+          }
+        }
+      }
+    },
     "Its %lld threads are deleted for good. The folder on the Mac stays as it is.": {
       "localizations": {
         "en": {
@@ -3925,6 +4144,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Своя папка и своя ветка"
+          }
+        }
+      }
+    },
+    "Its windows go back to the computer's displays as soon as the screen closes.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Окна с него возвращаются на дисплеи компьютера, как только экран закрыт."
           }
         }
       }
@@ -4100,6 +4329,16 @@
         }
       }
     },
+    "Locking the iPad or a quick look at another app keeps the windows in place.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если заблокировать iPad или ненадолго уйти в другое приложение, окна останутся на месте."
+          }
+        }
+      }
+    },
     "Log in once and Helm reaches your computers by itself, even with the Tailscale VPN off or another VPN on.": {},
     "Log in to Tailscale": {
       "localizations": {
@@ -4157,6 +4396,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ищу Штурвал…"
+          }
+        }
+      }
+    },
+    "Main display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Основной дисплей"
           }
         }
       }
@@ -4307,6 +4556,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Другие настройки"
+          }
+        }
+      }
+    },
+    "More space": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Больше места"
+          }
+        }
+      }
+    },
+    "Most space": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Максимум места"
           }
         }
       }
@@ -4868,6 +5137,16 @@
         }
       }
     },
+    "Normal": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обычно"
+          }
+        }
+      }
+    },
     "Not asked yet": {
       "localizations": {
         "ru": {
@@ -5203,6 +5482,16 @@
         }
       }
     },
+    "Opens on": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывается на"
+          }
+        }
+      }
+    },
     "Opens the remote for the thread on your computer": {
       "localizations": {
         "ru": {
@@ -5374,6 +5663,16 @@
       }
     },
     "Paste a pairing link into the address field, or leave the code empty to approve this phone on the computer (Tailscale, same account).": {},
+    "Paste from this %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставить с этого %@"
+          }
+        }
+      }
+    },
     "Paste pairing link": {
       "localizations": {
         "ru": {
@@ -5480,6 +5779,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Закрепить"
+          }
+        }
+      }
+    },
+    "Pinch or use the toolbar's zoom button to change it while it's open.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока экран открыт, масштаб меняется щипком или кнопкой на панели."
           }
         }
       }
@@ -5610,6 +5919,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пулл-реквесты для этого проекта недоступны."
+          }
+        }
+      }
+    },
+    "Quality": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Качество"
           }
         }
       }
@@ -5814,6 +6133,16 @@
         }
       }
     },
+    "Remove the separate display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убирать отдельный дисплей"
+          }
+        }
+      }
+    },
     "Remove this computer": {},
     "Rename": {
       "localizations": {
@@ -5965,6 +6294,16 @@
         }
       }
     },
+    "Reverse scrolling": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обратная прокрутка"
+          }
+        }
+      }
+    },
     "Review Changes": {
       "localizations": {
         "ru": {
@@ -5985,12 +6324,32 @@
         }
       }
     },
+    "Right away": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сразу"
+          }
+        }
+      }
+    },
     "Right click": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Правый клик"
+          }
+        }
+      }
+    },
+    "Ring and tap on click": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кольцо и отклик при клике"
           }
         }
       }
@@ -6061,6 +6420,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Где запускать"
+          }
+        }
+      }
+    },
+    "Same as this iPad": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как у этого iPad"
           }
         }
       }
@@ -6235,6 +6604,16 @@
         }
       }
     },
+    "Scrolling moves the content with your fingers, like on this device; reversed, it moves like a mouse wheel. The cursor speed also applies to a trackpad or mouse.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прокрутка двигает содержимое вслед за пальцами, как на этом устройстве; обратная — как колесо мыши. Скорость курсора действует и на трекпад или мышь."
+          }
+        }
+      }
+    },
     "Search": {
       "localizations": {
         "ru": {
@@ -6396,12 +6775,42 @@
         }
       }
     },
+    "Separate display": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отдельный дисплей"
+          }
+        }
+      }
+    },
+    "Separate display size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер отдельного дисплея"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Настройки"
+          }
+        }
+      }
+    },
+    "Settings apply the next time the screen opens.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки применятся при следующем открытии экрана."
           }
         }
       }
@@ -6476,6 +6885,26 @@
         }
       }
     },
+    "Share the clipboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Общий буфер обмена"
+          }
+        }
+      }
+    },
+    "Sharp": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чётко"
+          }
+        }
+      }
+    },
     "Show": {
       "localizations": {
         "ru": {
@@ -6522,6 +6951,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Показать панель"
+          }
+        }
+      }
+    },
+    "Slow": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Медленно"
           }
         }
       }
@@ -6586,12 +7025,32 @@
         }
       }
     },
+    "Softer when zoomed in, half the data.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мягче при приближении, вдвое меньше трафика."
+          }
+        }
+      }
+    },
     "Something went wrong": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Что-то пошло не так"
+          }
+        }
+      }
+    },
+    "Sound and clipboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Звук и буфер обмена"
           }
         }
       }
@@ -6967,6 +7426,26 @@
         }
       }
     },
+    "Text and buttons the size of the iPad's own.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст и кнопки того же размера, что на самом iPad."
+          }
+        }
+      }
+    },
+    "Text copied on the computer is ready to paste here. To paste this device's text on the computer, use \"Paste from this device\" in the toolbar's menu.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст, скопированный на компьютере, можно сразу вставить здесь. Чтобы вставить на компьютере текст с этого устройства, выберите «Вставить с этого устройства» в меню на панели."
+          }
+        }
+      }
+    },
     "That address doesn't look right.": {
       "localizations": {
         "ru": {
@@ -7057,6 +7536,26 @@
         }
       }
     },
+    "The computer adds a display the size of this iPad, sharp at its own resolution. Move windows to it; when you close the screen, they go back to the others.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютер добавит дисплей размером с этот iPad, чёткий в его родном разрешении. Переносите на него окна; когда закроете экран, они вернутся на остальные дисплеи."
+          }
+        }
+      }
+    },
+    "The computer couldn't add a display for this iPad, so it shows its main one.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Компьютер не смог добавить дисплей для этого iPad, поэтому показан основной."
+          }
+        }
+      }
+    },
     "The computer couldn't share its screen.": {
       "localizations": {
         "ru": {
@@ -7087,8 +7586,28 @@
         }
       }
     },
+    "The computer's sound": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Звук компьютера"
+          }
+        }
+      }
+    },
     "The connection to the computer dropped.": {},
     "The conversation and its terminal history are removed from the computer.": {},
+    "The display with the menu bar.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дисплей со строкой меню."
+          }
+        }
+      }
+    },
     "The file is empty": {
       "localizations": {
         "ru": {
@@ -7165,6 +7684,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сброс уже прошёл. Продолжи тред сам."
+          }
+        }
+      }
+    },
+    "The screen covers the phone's; the view follows the cursor.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экран компьютера занимает весь экран телефона, вид следует за курсором."
           }
         }
       }
@@ -7657,6 +8186,16 @@
         }
       }
     },
+    "Update Helm on the computer to pick its displays or add one for this iPad.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновите Helm на компьютере, чтобы выбирать дисплеи или добавить дисплей для этого iPad."
+          }
+        }
+      }
+    },
     "Usage": {
       "localizations": {
         "ru": {
@@ -7927,6 +8466,16 @@
         }
       }
     },
+    "While it's open, the toolbar's display button switches between them.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока экран открыт, кнопка дисплеев на панели переключает их."
+          }
+        }
+      }
+    },
     "While the agent is working": {
       "localizations": {
         "ru": {
@@ -8088,12 +8637,32 @@
         }
       }
     },
+    "Zoom": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Масштаб"
+          }
+        }
+      }
+    },
     "Zoom in": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Приблизить"
+          }
+        }
+      }
+    },
+    "Zoomed in": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Крупно"
           }
         }
       }

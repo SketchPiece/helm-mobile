@@ -58,6 +58,9 @@ final class ScreenRemote {
     @ObservationIgnored private var viewSize = CGSize.zero
     @ObservationIgnored private var sentVirtualSize = CGSize.zero
     @ObservationIgnored private var resizeTask: Task<Void, Never>?
+    @ObservationIgnored private let audio = ScreenAudio()
+    /// Copied text goes both ways (settings).
+    @ObservationIgnored let sharesClipboard = UserDefaults.standard.object(forKey: PhonePreferences.screenClipboardKey) as? Bool ?? true
 
     /// Decodes and draws the video; the view places it.
     @ObservationIgnored let layer = AVSampleBufferDisplayLayer()
@@ -105,6 +108,10 @@ final class ScreenRemote {
                 "t": "start", "maxWidth": .number(Double(stream.maxWidth)), "fps": .number(Double(stream.fps)),
                 "bitrate": .number(Double(stream.bitrate)), "display": displayValue(wanted),
                 "name": .string("\(UIDevice.current.localizedModel) (Helm)"),
+                "audio": .bool(UserDefaults.standard.bool(forKey: PhonePreferences.screenSoundKey)),
+                "clipboard": .bool(sharesClipboard),
+                "keepDisplay": .number(Double((UserDefaults.standard.string(forKey: PhonePreferences.screenKeepDisplayKey)
+                    .flatMap(ScreenKeepDisplay.init(rawValue:)) ?? .short).seconds)),
             ]
             if wanted == .virtual {
                 await waitForViewSize()
@@ -123,6 +130,7 @@ final class ScreenRemote {
         task.cancel(with: .goingAway, reason: nil)
         self.task = nil
         format = nil
+        audio.stop()
         layer.sampleBufferRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
     }
 
@@ -172,6 +180,9 @@ final class ScreenRemote {
                     notice = String(localized: "Update Helm on the computer to pick its displays or add one for this iPad.")
                 }
             }
+        case "clipboard":
+            // The computer copied something: it's here to paste.
+            if sharesClipboard, let text = json["text"]?.string { UIPasteboard.general.string = text }
         case "displays":
             displays = (json["displays"]?.array ?? []).compactMap { item in
                 guard let id = item["id"]?.double else { return nil }
@@ -274,6 +285,7 @@ final class ScreenRemote {
             }
             renderer.enqueue(sample)
             if framesShown < 2 { framesShown += 1 }
+        case 3: audio.play(Data(payload))
         default: break
         }
     }
@@ -358,6 +370,19 @@ final class ScreenRemote {
     /// Scrolls the computer by `dx`, `dy` pixels (positive `dy` moves the content down).
     func scroll(dx: CGFloat, dy: CGFloat) {
         send(["t": "scroll", "dx": .number(dx), "dy": .number(dy)])
+    }
+
+    /// This device's copied text onto the computer's clipboard, pasted at the cursor (⌘V).
+    /// Reading it is what makes iOS ask once whether to allow pasting.
+    func pasteFromDevice() {
+        guard let text = UIPasteboard.general.string, !text.isEmpty else { return }
+        // The server takes commands up to 64 KB; longer text is typed instead.
+        guard text.utf8.count < 60_000 else {
+            type(text)
+            return
+        }
+        send(["t": "clipboard", "text": .string(text)])
+        key(9, modifiers: [.cmd])
     }
 
     /// Typed text goes as Unicode, whatever the computer's keyboard layout.

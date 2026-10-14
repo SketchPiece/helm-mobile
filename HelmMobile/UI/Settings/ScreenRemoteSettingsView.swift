@@ -1,14 +1,24 @@
 import SwiftUI
 
-/// Settings → Computer screen: how the computer's screen opens here, which display, and how sharp.
+/// Settings → Computer screen: how the computer's screen opens here, which display, how sharp,
+/// how it's driven, and its sound and clipboard.
 struct ScreenRemoteSettingsView: View {
     @AppStorage(PhonePreferences.screenOpenZoomKey) private var openZoom = ScreenOpenZoom.fill
     @AppStorage(PhonePreferences.screenDisplayKey) private var display = ScreenDisplayChoice.main
     @AppStorage(PhonePreferences.screenVirtualSizeKey) private var virtualSize = ScreenVirtualSize.same
+    @AppStorage(PhonePreferences.screenKeepDisplayKey) private var keepDisplay = ScreenKeepDisplay.short
     @AppStorage(PhonePreferences.screenQualityKey) private var quality = ScreenQuality.sharp
+    @AppStorage(PhonePreferences.screenCursorSpeedKey) private var cursorSpeed = ScreenCursorSpeed.normal
+    @AppStorage(PhonePreferences.screenReverseScrollKey) private var reverseScroll = false
+    @AppStorage(PhonePreferences.screenClickFeedbackKey) private var clickFeedback = true
+    @AppStorage(PhonePreferences.screenSoundKey) private var sound = false
+    @AppStorage(PhonePreferences.screenClipboardKey) private var clipboard = true
+
+    /// The separate display is the iPad's: only there are its settings shown.
+    private var hasSeparateDisplay: Bool { ScreenDisplayChoice.available.contains(.virtual) }
 
     var body: some View {
-        Form {
+        HelmForm {
             Section {
                 ChoiceRows(options: ScreenDisplayChoice.available, selection: $display, label: \.title, detail: \.detail)
             } header: {
@@ -17,7 +27,7 @@ struct ScreenRemoteSettingsView: View {
                 Text("While it's open, the toolbar's display button switches between them.")
                     .font(Typography.footnote)
             }
-            if display == .virtual, ScreenDisplayChoice.available.contains(.virtual) {
+            if hasSeparateDisplay {
                 Section {
                     ChoiceRows(options: ScreenVirtualSize.allCases, selection: $virtualSize, label: \.title, detail: \.detail)
                 } header: {
@@ -25,6 +35,11 @@ struct ScreenRemoteSettingsView: View {
                 } footer: {
                     Text("It turns with the iPad and follows its window in Split View and Stage Manager.")
                         .font(Typography.footnote)
+                }
+                Section {
+                    ChoiceRows(options: ScreenKeepDisplay.allCases, selection: $keepDisplay, label: \.title, detail: \.detail)
+                } header: {
+                    Text("Remove the separate display").sectionLabelStyle()
                 }
             }
             Section {
@@ -36,11 +51,36 @@ struct ScreenRemoteSettingsView: View {
                     .font(Typography.footnote)
             }
             Section {
+                Picker("Cursor speed", selection: $cursorSpeed) {
+                    ForEach(ScreenCursorSpeed.allCases) { speed in
+                        Text(speed.title).tag(speed)
+                    }
+                }
+                Toggle("Reverse scrolling", isOn: $reverseScroll)
+                Toggle("Ring and tap on click", isOn: $clickFeedback)
+            } header: {
+                Text("Control").sectionLabelStyle()
+            } footer: {
+                Text("Scrolling moves the content with your fingers, like on this device; reversed, it moves like a mouse wheel. The cursor speed also applies to a trackpad or mouse.")
+                    .font(Typography.footnote)
+            }
+            .tint(Palette.accent)
+            Section {
+                Toggle("The computer's sound", isOn: $sound)
+                Toggle("Share the clipboard", isOn: $clipboard)
+            } header: {
+                Text("Sound and clipboard").sectionLabelStyle()
+            } footer: {
+                Text("Text copied on the computer is ready to paste here. To paste this device's text on the computer, use \"Paste from this device\" in the toolbar's menu.")
+                    .font(Typography.footnote)
+            }
+            .tint(Palette.accent)
+            Section {
                 ChoiceRows(options: ScreenQuality.allCases, selection: $quality, label: \.title, detail: \.detail)
             } header: {
                 Text("Quality").sectionLabelStyle()
             } footer: {
-                Text("Applies the next time the screen opens.")
+                Text("Settings apply the next time the screen opens.")
                     .font(Typography.footnote)
             }
         }
