@@ -175,11 +175,15 @@ private struct ThreadContent: View {
         .onScrollGeometryChange(for: ScrollMetrics.self) {
             // `scrollTo(y:)` counts from the content's top, the offset from the top inset.
             ScrollMetrics(offset: $0.contentOffset.y + $0.contentInsets.top, height: $0.contentSize.height)
-        } action: { _, metrics in
+        } action: { old, metrics in
             scrollMetrics = metrics
             if let base = prependBase, metrics.height != base.height {
                 prependBase = nil
                 position.scrollTo(y: base.offset + metrics.height - base.height)
+            } else if prependBase == nil, followsBottom, scrollPhase == .idle, metrics.height != old.height {
+                // The lazy stack corrects its guessed row heights as rows draw; following the
+                // bottom, re-aim, or the view is left short of the end or past it on a blank screen.
+                scrollToBottom()
             }
         }
         .scrollDismissesKeyboard(.interactively)
@@ -270,6 +274,7 @@ private struct ThreadContent: View {
             Task {
                 try? await Task.sleep(for: .milliseconds(120))
                 scrollToBottom()
+                await settleAtBottom()
             }
         }
         // Keep the latest message in view when the keyboard (or the composer) grows.
