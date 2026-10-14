@@ -133,29 +133,47 @@ private struct ThreadContent: View {
                     lineage
                 }
                 let days = Timeline.dayBreaks(blocks)
-                ForEach(shown) { block in
+                let tailStart = max(shown.startIndex, shown.endIndex - Self.tailCount)
+                ForEach(shown[..<tailStart]) { block in
                     if let day = days[block.id] {
                         TimelineDivider(label: day)
                     }
                     blockView(block, projection: projection)
                         .id(block.id)
                 }
-                ForEach(session.outbox) { message in
-                    OutgoingBubble(message: message, session: session)
-                }
-                if let projection, projection.isWorking, !blocksEndWithLiveWork(blocks) {
-                    ThinkingRow()
-                }
-                // Visible exactly when the end of the conversation is on screen; also the target
-                // of "scroll to bottom" (scrolling to an id materialises the lazy rows, scrolling to
-                // the edge can leave them blank until the next touch).
-                Color.clear
-                    .frame(height: 1)
-                    .id(Self.bottomId)
-                    .onScrollVisibilityChange(threshold: 0.01) { visible in
-                        bottomVisible = visible
-                        if visible { followsBottom = true }
+                // The end of the conversation is one row, drawn whole: lazy rows there guessed
+                // their heights and were left undrawn after a jump, so opening or sending landed
+                // short of the end or on a blank screen until the next touch (on an older iPad).
+                VStack(alignment: .leading, spacing: 18) {
+                    ForEach(shown[tailStart...]) { block in
+                        if let day = days[block.id] {
+                            TimelineDivider(label: day)
+                        }
+                        blockView(block, projection: projection)
+                            .id(block.id)
                     }
+                    ForEach(session.outbox) { message in
+                        OutgoingBubble(message: message, session: session)
+                    }
+                    if let projection, projection.isWorking, !blocksEndWithLiveWork(blocks) {
+                        ThinkingRow()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // Visible exactly when the end of the conversation is on screen. It sits on this row
+                // rather than being a row of its own: the lazy stack kept a row after a growing one
+                // at its old place, so it showed as visible and scrolling to it went nowhere.
+                .overlay(alignment: .bottom) {
+                    Color.clear
+                        .frame(height: 1)
+                        .onScrollVisibilityChange(threshold: 0.01) { visible in
+                            bottomVisible = visible
+                            if visible { followsBottom = true }
+                        }
+                }
+                // The target of "scroll to bottom" (scrolling to an id materialises the lazy rows,
+                // scrolling to the edge can leave them blank until the next touch).
+                .id(Self.bottomId)
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -434,6 +452,8 @@ private struct ThreadContent: View {
     }
 
     private static let bottomId = "timeline-bottom"
+    /// Blocks at the end drawn as one row, outside the lazy stack's guessing.
+    private static let tailCount = 6
 
     /// UI tests measure a tapped load with `-manualHistory`: reaching the top doesn't load by itself.
     private static let manualHistory: Bool = {
