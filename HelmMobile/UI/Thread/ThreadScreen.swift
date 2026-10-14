@@ -507,13 +507,14 @@ private struct ThreadContent: View {
 
     /// The lazy stack guesses the height of rows it hasn't drawn, so a jump to the end lands short
     /// on a long thread (the rows above draw on the way and push the end down). Aim again until the
-    /// content height stops changing.
+    /// content height stops changing and the end is on screen: an animated jump across rows the
+    /// lazy stack only guessed can stop far up the conversation with the height already settled.
     private func settleAtBottom() async {
         var height: CGFloat = -1
-        for _ in 0..<8 {
+        for _ in 0..<12 {
             try? await Task.sleep(for: .milliseconds(150))
             guard followsBottom, scrollPhase != .interacting else { return }
-            if scrollMetrics.height == height { return }
+            if scrollMetrics.height == height, bottomVisible { return }
             height = scrollMetrics.height
             scrollToBottom()
         }
