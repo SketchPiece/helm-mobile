@@ -43,6 +43,7 @@ final class ThreadSession {
         self.environment = environment
         projection = cached?.projection
         savedAt = cached?.savedAt
+        lastSequence = cached?.sequence ?? 0
         checkedSavedCopy = cached != nil
         if cached == nil { restoreSavedCopy() }
     }
@@ -51,7 +52,7 @@ final class ThreadSession {
         subscription?.cancel()
         pendingSave?.cancel()
         // Cache once on the way out (not per streaming event: that copies the timeline).
-        if let projection { environment?.cache(projection, savedAt: savedAt ?? Date()) }
+        if let projection { environment?.cache(projection, savedAt: savedAt ?? Date(), sequence: lastSequence) }
         saveToDisk()
     }
 

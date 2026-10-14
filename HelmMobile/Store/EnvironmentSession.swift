@@ -51,6 +51,9 @@ final class EnvironmentSession: Identifiable {
         var projection: ThreadProjection
         /// When it was last in step with the server.
         var savedAt: Date
+        /// The last event it holds, so reopening the thread resumes from there (the server
+        /// replays the gap, or sends a snapshot if the gap is too big) instead of a full snapshot.
+        var sequence = 0
     }
 
     private struct WeakThread { weak var value: ThreadSession? }
@@ -511,9 +514,9 @@ final class EnvironmentSession: Identifiable {
     }
 
     /// Keeps a projection in memory for the next time the thread opens.
-    func cache(_ projection: ThreadProjection, savedAt: Date = Date()) {
+    func cache(_ projection: ThreadProjection, savedAt: Date = Date(), sequence: Int = 0) {
         let id = projection.thread.id
-        projectionCache[id] = CachedProjection(projection: projection, savedAt: savedAt)
+        projectionCache[id] = CachedProjection(projection: projection, savedAt: savedAt, sequence: sequence)
         cacheOrder.removeAll { $0 == id }
         cacheOrder.append(id)
         while cacheOrder.count > 30 { projectionCache[cacheOrder.removeFirst()] = nil }
