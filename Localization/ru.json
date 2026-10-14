@@ -1021,5 +1021,8 @@
   "Hides the password field to click on the Mac": "Скрывает поле пароля, чтобы нажать на экран Mac",
   "Enter Password": "Введите пароль",
   "The password field must be selected on the Mac.": "На Mac должно быть выбрано поле пароля.",
-  "Sent for this attempt only and never saved.": "Отправляется только для этой попытки и не сохраняется."
+  "Sent for this attempt only and never saved.": "Отправляется только для этой попытки и не сохраняется.",
+  "Mac is locked": "Mac заблокирован",
+  "Unlock": "Разблокировать",
+  "Opens a field for the Mac's password": "Открывает поле для пароля Mac"
 }

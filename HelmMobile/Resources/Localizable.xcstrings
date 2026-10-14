@@ -4650,6 +4650,16 @@
         }
       }
     },
+    "Mac is locked": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac заблокирован"
+          }
+        }
+      }
+    },
     "Mac unlocked": {
       "localizations": {
         "ru": {
@@ -5828,6 +5838,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть тред на телефоне"
+          }
+        }
+      }
+    },
+    "Opens a field for the Mac's password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывает поле для пароля Mac"
           }
         }
       }
@@ -8762,6 +8782,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Единицы"
+          }
+        }
+      }
+    },
+    "Unlock": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать"
           }
         }
       }

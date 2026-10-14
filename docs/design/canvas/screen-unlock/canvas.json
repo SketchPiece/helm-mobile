@@ -39,7 +39,7 @@
    "y": 960,
    "w": 1194,
    "h": 834,
-   "title": "Now · closed: the Mac's screen is usable, the lock on the toolbar brings the card back"
+   "title": "Now · closed: a small dialog in the middle, the Mac's screen around it takes taps"
   },
   "a5-iphone.html": {
    "x": 5176,
@@ -95,7 +95,7 @@
    "y": 900,
    "w": 520,
    "color": "blue",
-   "text": "No bar at the bottom anymore. The card comes up on its own while the Mac is locked. “Show the Mac's screen” hides it so you can click the password field on the Mac; the lock button on the toolbar brings it back."
+   "text": "The card comes up on its own while the Mac is locked. “Show the Mac's screen” hides it so you can click the password field on the Mac; a small dialog stays in the middle and brings the card back."
   }
  ],
  "designSystems": []
