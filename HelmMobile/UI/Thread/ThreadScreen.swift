@@ -167,6 +167,7 @@ private struct ThreadContent: View {
                     Color.clear
                         .frame(height: 1)
                         .onScrollVisibilityChange(threshold: 0.01) { visible in
+                            ScrollTrace.bottomVisible(visible)
                             bottomVisible = visible
                             if visible { followsBottom = true }
                         }
@@ -199,11 +200,12 @@ private struct ThreadContent: View {
             scrollMetrics = metrics
             if let base = prependBase, metrics.height != base.height {
                 prependBase = nil
+                ScrollTrace.log("prepend shift", "\(Int(metrics.height - base.height)) pt")
                 position.scrollTo(y: base.offset + metrics.height - base.height)
             } else if prependBase == nil, followsBottom, scrollPhase == .idle, metrics.height != old.height {
                 // The lazy stack corrects its guessed row heights as rows draw; following the
                 // bottom, re-aim, or the view is left short of the end or past it on a blank screen.
-                scrollToBottom()
+                scrollToBottom("height changed")
             }
         }
         .scrollDismissesKeyboard(.interactively)
@@ -215,15 +217,19 @@ private struct ThreadContent: View {
         // drag (and its deceleration) ends away from the end, "↓" appears.
         .onScrollPhaseChange { old, phase in
             Perf.scroll("timeline", phase)
+            ScrollTrace.phase(old, phase)
             scrollPhase = phase
             if phase == .interacting { userScrolled = true }
             if phase == .idle, old == .interacting || old == .decelerating {
                 followsBottom = bottomVisible
             }
         }
-        .onChange(of: contentSignature(blocks)) {
-            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
+        .onChange(of: contentSignature(blocks)) { old, new in
+            ScrollTrace.log("content", "\(old) → \(new)")
+            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("content (animated)") } }
         }
+        .modifier(ScrollTraceHooks(followsBottom: followsBottom, isWorking: projection?.isWorking == true,
+                                   startIndex: startIndex, blockCount: blocks.count))
         // Above the cards over the composer, when there are any (the overlay keeps to the safe
         // area the composer inset leaves). Otherwise it hangs right above the composer itself.
         .overlay(alignment: .bottomTrailing) {
@@ -290,22 +296,25 @@ private struct ThreadContent: View {
         }
         .onChange(of: projection != nil, initial: true) { _, loaded in
             guard loaded else { return }
+            ScrollTrace.log("loaded", "\(blocks.count) blocks")
             // The rebuilt scroll view starts at the bottom; one id scroll settles estimated row heights.
             Task {
                 try? await Task.sleep(for: .milliseconds(120))
-                scrollToBottom()
-                await settleAtBottom()
+                scrollToBottom("opened")
+                await settleAtBottom("opened")
             }
         }
         // Keep the latest message in view when the keyboard (or the composer) grows.
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
-            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom() } }
+            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("keyboard shown (animated)") } }
         }
         .onAppear {
+            ScrollTrace.thread(session.threadId, opened: true)
             session.markVisited()
             PushService.shared.visibleThread = ThreadRef(environmentId: environment.id, threadId: session.threadId)
         }
         .onDisappear {
+            ScrollTrace.thread(session.threadId, opened: false)
             if !leavesUnread { session.markVisited() }
             if PushService.shared.visibleThread?.threadId == session.threadId { PushService.shared.visibleThread = nil }
         }
@@ -501,7 +510,9 @@ private struct ThreadContent: View {
         for _ in 0..<60 where scrollPhase != .idle { try? await Task.sleep(for: .milliseconds(50)) }
     }
 
-    private func scrollToBottom() {
+    /// `reason` names the caller in the scroll trace.
+    private func scrollToBottom(_ reason: String) {
+        ScrollTrace.log("scrollToBottom", reason)
         scrollProxy?.scrollTo(Self.bottomId, anchor: .bottom)
     }
 
@@ -509,15 +520,22 @@ private struct ThreadContent: View {
     /// on a long thread (the rows above draw on the way and push the end down). Aim again until the
     /// content height stops changing and the end is on screen: an animated jump across rows the
     /// lazy stack only guessed can stop far up the conversation with the height already settled.
-    private func settleAtBottom() async {
+    private func settleAtBottom(_ reason: String) async {
         var height: CGFloat = -1
-        for _ in 0..<12 {
+        for attempt in 0..<12 {
             try? await Task.sleep(for: .milliseconds(150))
-            guard followsBottom, scrollPhase != .interacting else { return }
-            if scrollMetrics.height == height, bottomVisible { return }
+            guard followsBottom, scrollPhase != .interacting else {
+                ScrollTrace.log("settle stopped", "\(reason) #\(attempt): " + (followsBottom ? "user dragging" : "not following"))
+                return
+            }
+            if scrollMetrics.height == height, bottomVisible {
+                ScrollTrace.log("settle done", "\(reason) #\(attempt)")
+                return
+            }
             height = scrollMetrics.height
-            scrollToBottom()
+            scrollToBottom("settle \(reason) #\(attempt)")
         }
+        ScrollTrace.log("settle gave up", reason)
     }
 
     // MARK: Bottom
@@ -531,9 +549,10 @@ private struct ThreadContent: View {
 
     private var scrollToBottomButton: some View {
         Button {
+            ScrollTrace.log("↓ tapped")
             followsBottom = true
-            withAnimation { scrollToBottom() }
-            Task { await settleAtBottom() }
+            withAnimation { scrollToBottom("↓ (animated)") }
+            Task { await settleAtBottom("↓") }
         } label: {
             Image(systemName: "arrow.down")
                 .font(.system(size: 15, weight: .semibold))
@@ -575,11 +594,12 @@ private struct ThreadContent: View {
                 }
             }
             ThreadComposer(environment: environment, session: session) {
+                ScrollTrace.log("send", "working \(projection?.isWorking == true ? "yes" : "no"), outbox \(session.outbox.count), rows \(projection?.rows.count ?? 0)")
                 // Sending means "show me the end", also when the conversation was scrolled up.
                 followsBottom = true
-                withAnimation { scrollToBottom() }
+                withAnimation { scrollToBottom("send (animated)") }
                 // The bubble lands right after and the composer shrinks back as its text clears.
-                Task { await settleAtBottom() }
+                Task { await settleAtBottom("send") }
             }
             // Beside a working or offline pill (they sit in the middle), 8 pt above the composer.
             .overlay(alignment: .topTrailing) {
@@ -594,8 +614,9 @@ private struct ThreadContent: View {
         .padding(.bottom, 6)
         .readableColumn()
         // A taller composer (more lines, chips, cards) must not hide the newest message.
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _ in
-            if followsBottom { scrollToBottom() }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { old, new in
+            ScrollTrace.log("bottom stack", "\(Int(old)) → \(Int(new)) pt")
+            if followsBottom { scrollToBottom("bottom stack height") }
         }
         .animation(.easeOut(duration: 0.2), value: projection?.pendingRequests.count)
         .animation(.easeOut(duration: 0.2), value: summary?.backgroundTasks)
@@ -828,6 +849,24 @@ private struct SavedCopyNotice: View {
         .frame(minHeight: 30)
         .background(Palette.surface, in: .capsule)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// What the scroll trace (Settings → Performance) watches besides the calls in the thread itself.
+private struct ScrollTraceHooks: ViewModifier {
+    let followsBottom: Bool
+    let isWorking: Bool
+    let startIndex: Int
+    let blockCount: Int
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: ScrollGeometry.self) { $0 } action: { _, geometry in
+                ScrollTrace.geometry(geometry)
+            }
+            .onChange(of: followsBottom) { ScrollTrace.followsBottom(followsBottom) }
+            .onChange(of: isWorking) { ScrollTrace.log("working", isWorking ? "yes" : "no") }
+            .onChange(of: startIndex) { old, new in ScrollTrace.log("window start", "\(old) → \(new) of \(blockCount)") }
     }
 }
 

@@ -10,6 +10,7 @@ struct PerfDiagnosticsView: View {
     @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
     @AppStorage(PerfExperiments.noTextSelectionKey) private var noTextSelection = false
     @AppStorage(PerfExperiments.noContextMenusKey) private var noContextMenus = false
+    @AppStorage(ScrollTrace.enabledKey) private var scrollTrace = false
 
     var body: some View {
         Form {
@@ -20,6 +21,11 @@ struct PerfDiagnosticsView: View {
                 }
             } footer: {
                 Text("Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.")
+            }
+            Section {
+                Toggle(isOn: $scrollTrace) { Text(verbatim: "Record thread scrolling") }
+            } footer: {
+                Text(verbatim: "Logs what a thread's scroll view does and why: every jump to the end, sends, new content, the keyboard. Use the thread, tap the flag (or ⌃⌘F) right after something odd, then Save. The trace goes to Documents/Performance as scroll-….txt.")
             }
             Section {
                 Toggle("Lazy conversation", isOn: $lazyTimeline)
@@ -157,12 +163,17 @@ extension View {
 
 private struct PerfDiagnosticsModifier: ViewModifier {
     @AppStorage(PerfMonitor.enabledKey) private var enabled = false
+    @AppStorage(ScrollTrace.enabledKey) private var scrollTrace = false
 
     func body(content: Content) -> some View {
         content
             .overlay(alignment: .bottomLeading) {
                 if enabled { PerfHUD() }
             }
+            .overlay(alignment: .topTrailing) {
+                if scrollTrace { ScrollTraceHUD() }
+            }
             .onChange(of: enabled, initial: true) { PerfMonitor.shared.setEnabled(enabled) }
+            .onChange(of: scrollTrace, initial: true) { ScrollTrace.shared.setEnabled(scrollTrace) }
     }
 }
