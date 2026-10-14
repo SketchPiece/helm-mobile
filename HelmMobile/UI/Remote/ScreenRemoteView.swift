@@ -1058,7 +1058,8 @@ private struct ScreenToolbar: View {
 }
 
 /// The toolbar on a side of the screen. Once the screen is touched its column folds into a tab on
-/// that edge, the glass morphing from one into the other; a tap or a swipe in opens it again.
+/// that edge and a tap or a swipe in opens it again. It's one piece of glass whose frame and corners
+/// spring between the two, so the column visibly melts into the tab and grows back out of it.
 /// The tab drags along the edge, or across to the other one.
 private struct ScreenToolbarDock: View {
     let remote: ScreenRemote
@@ -1069,64 +1070,87 @@ private struct ScreenToolbarDock: View {
     @AppStorage(PhonePreferences.screenToolbarPositionKey) private var position = 0.5
     /// Where the tab is while a finger drags it.
     @State private var dragged: CGPoint?
+    /// Where on the tab the finger took it.
+    @State private var grab = CGSize.zero
     @State private var columnHeight: CGFloat = 320
-    @Namespace private var glass
 
     private static let tab = CGSize(width: 20, height: 96)
     /// The tab's touch area reaches further in than it's drawn.
     private static let tabTouch = CGSize(width: 44, height: 124)
     private static let columnWidth: CGFloat = 60
     private static let margin: CGFloat = 12
+    private static let spring = Animation.spring(duration: 0.5, bounce: 0.28)
 
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let insets = proxy.safeAreaInsets
-            GlassEffectContainer {
-                ZStack {
-                    if viewport.toolbarHidden {
-                        tab(in: size, insets: insets)
-                    } else {
-                        ScreenToolbar(remote: remote, viewport: viewport, close: close)
-                            .glassEffect(.regular, in: .capsule)
-                            .glassEffectID("toolbar", in: glass)
-                            .transition(.blurReplace)
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
-                            .position(x: leading ? Self.margin + Self.columnWidth / 2
-                                          : size.width - Self.margin - Self.columnWidth / 2,
-                                      y: clamped(position * size.height, half: columnHeight / 2, in: size.height))
-                    }
-                }
-                .frame(width: size.width, height: size.height)
+            let hidden = viewport.toolbarHidden
+            let frame = hidden ? tabFrame(in: size, insets: proxy.safeAreaInsets) : columnFrame(in: size)
+            ZStack {
+                Capsule()
+                    .fill(.white.opacity(0.8))
+                    .frame(width: 4, height: 36)
+                    .opacity(hidden ? 1 : 0)
+                ScreenToolbar(remote: remote, viewport: viewport, close: close)
+                    .fixedSize()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
+                    .scaleEffect(hidden ? 0.4 : 1, anchor: leading ? .leading : .trailing)
+                    .blur(radius: hidden ? 6 : 0)
+                    .opacity(hidden ? 0 : 1)
+                    // Out quickly before the glass shrinks; in once it has mostly grown.
+                    .animation(hidden ? .easeOut(duration: 0.12) : .easeOut(duration: 0.25).delay(0.1), value: hidden)
+                    .allowsHitTesting(!hidden)
+            }
+            .frame(width: frame.width, height: frame.height)
+            .glassEffect(.regular, in: shape(hidden: hidden))
+            .position(x: frame.midX, y: frame.midY)
+            .overlay {
+                if hidden { tabTouchArea(around: frame, in: size) }
             }
             .coordinateSpace(.named("dock"))
         }
-        .animation(.spring(duration: 0.45, bounce: 0.22), value: viewport.toolbarHidden)
+        .animation(Self.spring, value: viewport.toolbarHidden)
     }
 
-    /// Flush with the screen's edge, past the safe area.
-    private func tab(in size: CGSize, insets: EdgeInsets) -> some View {
-        let shape = UnevenRoundedRectangle(
-            topLeadingRadius: leading ? 0 : 12, bottomLeadingRadius: leading ? 0 : 12,
-            bottomTrailingRadius: leading ? 12 : 0, topTrailingRadius: leading ? 12 : 0)
-        let inward = (Self.tabTouch.width - Self.tab.width) / 2
+    /// Square on the edge it sits against, round on the other side; all round as a column.
+    private func shape(hidden: Bool) -> UnevenRoundedRectangle {
+        let round = Self.columnWidth / 2
+        let edge: CGFloat = hidden ? 0 : round, inner: CGFloat = hidden ? 12 : round
+        return UnevenRoundedRectangle(
+            topLeadingRadius: leading ? edge : inner, bottomLeadingRadius: leading ? edge : inner,
+            bottomTrailingRadius: leading ? inner : edge, topTrailingRadius: leading ? inner : edge)
+    }
+
+    /// Flush with the screen's edge, past the safe area; under the finger while dragged.
+    private func tabFrame(in size: CGSize, insets: EdgeInsets) -> CGRect {
         let center = dragged ?? CGPoint(
-            x: leading ? -insets.leading + Self.tabTouch.width / 2 : size.width + insets.trailing - Self.tabTouch.width / 2,
+            x: leading ? -insets.leading + Self.tab.width / 2 : size.width + insets.trailing - Self.tab.width / 2,
             y: clamped(position * size.height, half: Self.tabTouch.height / 2, in: size.height))
-        return Capsule()
-            .fill(.white.opacity(0.8))
-            .frame(width: 4, height: 36)
-            .frame(width: Self.tab.width, height: Self.tab.height)
-            .glassEffect(.regular, in: shape)
-            .glassEffectID("toolbar", in: glass)
-            .transition(.blurReplace)
-            .offset(x: leading ? -inward : inward)
+        return CGRect(x: center.x - Self.tab.width / 2, y: center.y - Self.tab.height / 2,
+                      width: Self.tab.width, height: Self.tab.height)
+    }
+
+    private func columnFrame(in size: CGSize) -> CGRect {
+        let x = leading ? Self.margin : size.width - Self.margin - Self.columnWidth
+        let y = clamped(position * size.height, half: columnHeight / 2, in: size.height) - columnHeight / 2
+        return CGRect(x: x, y: y, width: Self.columnWidth, height: columnHeight)
+    }
+
+    private func tabTouchArea(around frame: CGRect, in size: CGSize) -> some View {
+        let inward = (Self.tabTouch.width - Self.tab.width) / 2
+        return Color.clear
             .frame(width: Self.tabTouch.width, height: Self.tabTouch.height)
             .contentShape(.rect)
-            .position(center)
+            .position(x: frame.midX + (leading ? inward : -inward), y: frame.midY)
             .onTapGesture { viewport.toolbarHidden = false }
             .gesture(DragGesture(minimumDistance: 6, coordinateSpace: .named("dock"))
-                .onChanged { dragged = $0.location }
+                .onChanged { drag in
+                    // The tab follows the finger where it was grabbed, not snapped to its middle.
+                    if dragged == nil {
+                        grab = CGSize(width: drag.startLocation.x - frame.midX, height: drag.startLocation.y - frame.midY)
+                    }
+                    dragged = CGPoint(x: drag.location.x - grab.width, y: drag.location.y - grab.height)
+                }
                 .onEnded { drag in drop(drag, in: size) })
             .accessibilityElement()
             .accessibilityLabel("Show toolbar")
@@ -1139,15 +1163,16 @@ private struct ScreenToolbarDock: View {
     private func drop(_ drag: DragGesture.Value, in size: CGSize) {
         let across = leading ? drag.location.x > size.width / 2 : drag.location.x < size.width / 2
         let inward = leading ? drag.translation.width : -drag.translation.width
-        withAnimation(.spring(duration: 0.45, bounce: 0.22)) {
+        let y = (dragged?.y ?? drag.location.y) / max(size.height, 1)
+        withAnimation(Self.spring) {
             dragged = nil
             if across {
                 leading.toggle()
-                position = drag.location.y / max(size.height, 1)
+                position = y
             } else if inward > 24, inward > abs(drag.translation.height) {
                 viewport.toolbarHidden = false
             } else {
-                position = drag.location.y / max(size.height, 1)
+                position = y
             }
         }
     }
