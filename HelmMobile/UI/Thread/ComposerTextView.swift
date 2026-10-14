@@ -1,3 +1,4 @@
+import GameController
 import SwiftUI
 import UIKit
 
@@ -163,6 +164,17 @@ final class PastingTextView: UITextView {
     @objc private func commandReturn() { onSubmit?(returnKey == .send) }
 
     @objc private func newline() { insertText("\n") }
+
+    private lazy var systemShortcuts = (inputAssistantItem.leadingBarButtonGroups, inputAssistantItem.trailingBarButtonGroups)
+
+    /// With a hardware keyboard the shortcut buttons (undo, paste) widen the bar iPadOS keeps at
+    /// the bottom, which then covers the composer; the on-screen keyboard keeps them.
+    override func becomeFirstResponder() -> Bool {
+        let hardware = GCKeyboard.coalesced != nil
+        inputAssistantItem.leadingBarButtonGroups = hardware ? [] : systemShortcuts.0
+        inputAssistantItem.trailingBarButtonGroups = hardware ? [] : systemShortcuts.1
+        return super.becomeFirstResponder()
+    }
 
     override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if action == #selector(paste(_:)), UIPasteboard.general.hasImages { return true }

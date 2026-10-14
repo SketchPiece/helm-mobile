@@ -305,6 +305,8 @@ private struct SplitRoot: View {
             .changesInspector()
         }
         .navigationSplitViewStyle(.balanced)
+        // The hardware keyboard's bar grows the bottom safe area and would lift both columns.
+        .ignoresHardwareKeyboardBar()
     }
 
     private var detailPath: Binding<[Router.Route]> {

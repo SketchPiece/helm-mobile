@@ -232,6 +232,7 @@ private struct ThreadContent: View {
         }
         // Under the keyboard too: as it slides away the window would show white in the light theme.
         .background { Palette.canvas.ignoresSafeArea() }
+        .ignoresHardwareKeyboardBar()
         .navigationTitle(summary?.displayTitle ?? "")
         .navigationSubtitle(subtitle)
         .navigationBarTitleDisplayMode(.inline)
