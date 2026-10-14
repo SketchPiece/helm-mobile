@@ -12,28 +12,39 @@ struct ProjectIcon: View {
 
     @State private var image: UIImage?
 
-    /// The tile as a picture, for menus, which only take images. The favicon comes from the cache
-    /// and is drawn by hand: favicons rasterised by WebKit don't survive SwiftUI's ImageRenderer.
-    static func menuImage(project: Project, environment: EnvironmentSession, size: CGFloat = 24) async -> UIImage? {
-        if environment.config?.isScratch(project) != true, project.iconKind == nil,
-           let key = cacheKey(project: project, environment: environment),
-           let favicon = await IconCache.shared.image(for: key) {
-            let format = UIGraphicsImageRendererFormat()
-            format.scale = 3
-            let rect = CGRect(x: 0, y: 0, width: size, height: size)
-            return UIGraphicsImageRenderer(size: rect.size, format: format).image { _ in
-                UIBezierPath(roundedRect: rect, cornerRadius: size * 0.25).addClip()
-                // Fill the square, as the tile's scaledToFill does.
-                let scale = max(size / max(favicon.size.width, 1), size / max(favicon.size.height, 1))
-                let drawn = CGSize(width: favicon.size.width * scale, height: favicon.size.height * scale)
-                favicon.draw(in: CGRect(x: (size - drawn.width) / 2, y: (size - drawn.height) / 2,
-                                        width: drawn.width, height: drawn.height))
-            }.withRenderingMode(.alwaysOriginal)
-        }
+    /// The project's favicon as a menu image, from the cache, drawn by hand: favicons rasterised
+    /// by WebKit don't survive SwiftUI's ImageRenderer. Nil when there is none to show.
+    static func menuFavicon(project: Project, environment: EnvironmentSession, size: CGFloat = 24) async -> UIImage? {
+        guard environment.config?.isScratch(project) != true,
+              let key = cacheKey(project: project, environment: environment),
+              let favicon = await IconCache.shared.image(for: key)
+        else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 3
+        let rect = CGRect(x: 0, y: 0, width: size, height: size)
+        return UIGraphicsImageRenderer(size: rect.size, format: format).image { _ in
+            UIBezierPath(roundedRect: rect, cornerRadius: size * 0.25).addClip()
+            // Fill the square, as the tile's scaledToFill does.
+            let scale = max(size / max(favicon.size.width, 1), size / max(favicon.size.height, 1))
+            let drawn = CGSize(width: favicon.size.width * scale, height: favicon.size.height * scale)
+            favicon.draw(in: CGRect(x: (size - drawn.width) / 2, y: (size - drawn.height) / 2,
+                                    width: drawn.width, height: drawn.height))
+        }.withRenderingMode(.alwaysOriginal)
+    }
+
+    /// The tile without a favicon (monogram, emoji, or the scratch bubble) as a menu image, drawn
+    /// right away so a menu never waits on it. Kept per look, since menus redraw with the list.
+    static func menuTile(project: Project, environment: EnvironmentSession, size: CGFloat = 24) -> UIImage? {
+        let key = "\(project.id)|\(project.title)|\(project.iconKind ?? "")|\(project.iconEmoji ?? "")|\(project.iconColor ?? "")|\(environment.config?.isScratch(project) == true)"
+        if let cached = menuTiles[key] { return cached }
         let renderer = ImageRenderer(content: ProjectIcon(project: project, environment: environment, size: size))
         renderer.scale = 3
-        return renderer.uiImage?.withRenderingMode(.alwaysOriginal)
+        let image = renderer.uiImage?.withRenderingMode(.alwaysOriginal)
+        menuTiles[key] = image
+        return image
     }
+
+    private static var menuTiles: [String: UIImage] = [:]
 
     private static func cacheKey(project: Project, environment: EnvironmentSession) -> String? {
         guard let path = project.faviconPath, project.iconKind == nil else { return nil }

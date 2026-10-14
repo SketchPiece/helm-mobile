@@ -108,7 +108,8 @@ struct ProjectSwitcher: View, @MainActor Equatable {
             Section {
                 option(nil, title: String(localized: "All projects"), count: total, icon: nil)
                 ForEach(chips) { chip in
-                    option(chip.project.id, title: chip.project.title, count: chip.count, icon: icons[chip.project.id])
+                    option(chip.project.id, title: chip.project.title, count: chip.count,
+                           icon: icons[chip.project.id] ?? ProjectIcon.menuTile(project: chip.project, environment: chip.environment))
                 }
             }
             if let selected {
@@ -149,11 +150,12 @@ struct ProjectSwitcher: View, @MainActor Equatable {
         .buttonStyle(.plain)
         .accessibilityIdentifier("projectSwitcher")
         .task(id: chips.map(\.signature)) {
-            var icons: [String: UIImage] = [:]
+            // Favicons one by one as the cache hands them over; until then the drawn tile shows.
             for chip in chips {
-                icons[chip.project.id] = await ProjectIcon.menuImage(project: chip.project, environment: chip.environment)
+                if let favicon = await ProjectIcon.menuFavicon(project: chip.project, environment: chip.environment) {
+                    icons[chip.project.id] = favicon
+                }
             }
-            self.icons = icons
         }
     }
 
