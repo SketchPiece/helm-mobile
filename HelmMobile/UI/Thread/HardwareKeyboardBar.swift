@@ -1,3 +1,4 @@
+import GameController
 import SwiftUI
 import UIKit
 
@@ -12,6 +13,9 @@ final class HardwareKeyboardBar {
     private(set) var isShown = false
     /// Any keyboard is up, the bar or the on-screen one.
     private(set) var isActive = false
+    /// The window's bottom safe area (the home indicator's). UIKit's safe area leaves the keyboard
+    /// out, so this stays right even when SwiftUI's is caught with the bar in it.
+    private(set) var windowInset: CGFloat?
 
     /// The smallest on-screen keyboard is well over this.
     private static let maxBarHeight: CGFloat = 150
@@ -23,19 +27,36 @@ final class HardwareKeyboardBar {
             let screen = note.object as? UIScreen
             MainActor.assumeIsolated { Self.shared.update(frame: frame, screen: screen?.bounds) }
         }
+        // Moving focus or switching the keyboard's language sends a hide while the bar stays on
+        // screen, and the next frame change can come before or after it. With a hardware keyboard
+        // the bar is kept ignored through it (as Telegram does, which never reacts to the hide):
+        // with nothing at the bottom, ignoring it puts back the same resting inset anyway. Only
+        // a frame of the on-screen keyboard stops ignoring it.
         center.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated {
-                Self.shared.isShown = false
-                Self.shared.isActive = false
+                let shared = Self.shared
+                if GCKeyboard.coalesced == nil { shared.isShown = false }
+                shared.isActive = false
+                shared.readWindowInset()
             }
         }
     }
 
     private func update(frame: CGRect, screen: CGRect?) {
+        readWindowInset()
         let overlap = screen.map { frame.intersection($0).height } ?? frame.height
         let shown = overlap < Self.maxBarHeight
         if isShown != shown { isShown = shown }
         if !isActive { isActive = true }
+    }
+
+    private func readWindowInset() {
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)
+        guard let inset = window?.safeAreaInsets.bottom, inset != windowInset else { return }
+        windowInset = inset
     }
 }
 
@@ -49,12 +70,18 @@ extension View {
 private struct IgnoresHardwareKeyboardBar: ViewModifier {
     private var bar = HardwareKeyboardBar.shared
     /// The bottom safe area with no keyboard at all (the home indicator's), put back while the
-    /// bar's taller one is ignored.
-    @State private var restInset: CGFloat = 0
+    /// bar's taller one is ignored. Caught between a hide and the next show it can still hold the
+    /// bar, which only ever adds, so the smaller of it and the window's wins.
+    /// Unset when the screen opened with a keyboard already up.
+    @State private var restInset: CGFloat?
+
+    private var resting: CGFloat {
+        [restInset, bar.windowInset].compactMap(\.self).min() ?? 0
+    }
 
     func body(content: Content) -> some View {
         content
-            .safeAreaPadding(.bottom, bar.isShown ? restInset : 0)
+            .safeAreaPadding(.bottom, bar.isShown ? resting : 0)
             .ignoresSafeArea(bar.isShown ? .all : [], edges: .bottom)
             .onGeometryChange(for: CGFloat.self, of: \.safeAreaInsets.bottom) { inset in
                 if !bar.isActive { restInset = inset }
