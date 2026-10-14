@@ -130,8 +130,10 @@ final class Router {
     /// Changes shown in the inspector beside the thread they belong to (iPad).
     var reviewing: ChangesReview?
 
-    /// Home's search field is open (⌘K).
+    /// Home's search field is open (⇧⌘F).
     var isSearching = false
+    /// The command palette over the window (⌘K, ⌘N).
+    var palette: PaletteMode?
     /// Home's threads in the order shown (needing you, pinned, active), for Next and Previous Thread.
     var homeOrder: [ThreadRef] = []
 
@@ -188,7 +190,7 @@ struct RootView: View {
                             HomeView()
                                 .navigationDestination(for: Router.Route.self) { RouteView(route: $0) }
                         }
-                        // ⌘K searches Home, which here is under whatever is open.
+                        // ⇧⌘F searches Home, which here is under whatever is open.
                         .onChange(of: router.isSearching) { if router.isSearching { router.path = [] } }
                     }
                 }
@@ -205,6 +207,7 @@ struct RootView: View {
         .sheet(isPresented: $router.showPairing) {
             NavigationStack { PairingView() }
         }
+        .commandPalette()
         .environment(router)
         .focusedSceneValue(\.router, router)
         // Under the keyboard too: as it slides away the window would show white in the light theme.
@@ -387,6 +390,7 @@ struct ThreadWindow: View {
         }
         .changesInspector(root: ref)
         .sheet(isPresented: $router.showSettings) { SettingsView() }
+        .commandPalette()
         .environment(router)
         .focusedSceneValue(\.router, router)
         .background { Palette.canvas.ignoresSafeArea() }

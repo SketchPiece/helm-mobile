@@ -985,5 +985,22 @@
   "Separate settings away from home": "Отдельные настройки вне дома",
   "Away from home": "Вне дома",
   "Used when the computer isn't on the network this device is on, so the picture comes through Tailscale from elsewhere, or when the device is on cellular. At home the settings above come back by themselves.": "Включаются, когда компьютер не в той же сети, что это устройство, и картинка идёт через Tailscale издалека, или когда устройство в мобильной сети. Дома сами возвращаются настройки выше.",
-  "Away from home: a lighter picture": "Вне дома: картинка полегче"
+  "Away from home: a lighter picture": "Вне дома: картинка полегче",
+  "Actions": "Действия",
+  "Command Palette": "Палитра команд",
+  "Current thread": "Текущий тред",
+  "Navigate": "Перемещение",
+  "New Thread Without a Project": "Новый тред без проекта",
+  "New Thread in Current Project": "Новый тред в текущем проекте",
+  "New Thread…": "Новый тред…",
+  "New thread in…": "Новый тред в…",
+  "New thread without a project": "Новый тред без проекта",
+  "No matching commands, projects, or threads.": "Ничего не нашлось среди команд, проектов и тредов.",
+  "No matching projects.": "Таких проектов нет.",
+  "Pick": "По номеру",
+  "Recent threads": "Недавние треды",
+  "Scratch folder": "Папка без проекта",
+  "Search commands, projects, and threads…": "Команды, проекты и треды…",
+  "Search projects…": "Искать проекты…",
+  "Choose": "Выбрать"
 }

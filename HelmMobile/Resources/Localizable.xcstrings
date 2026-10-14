@@ -1329,6 +1329,16 @@
         }
       }
     },
+    "Actions": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действия"
+          }
+        }
+      }
+    },
     "Actions for %@": {
       "localizations": {
         "ru": {
@@ -2222,6 +2232,16 @@
         }
       }
     },
+    "Choose": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать"
+          }
+        }
+      }
+    },
     "Choose a project on this computer.": {},
     "Choose a valid date and time in the future.": {
       "localizations": {
@@ -2389,6 +2409,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Команда"
+          }
+        }
+      }
+    },
+    "Command Palette": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Палитра команд"
           }
         }
       }
@@ -2925,6 +2955,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Текущая копия"
+          }
+        }
+      }
+    },
+    "Current thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текущий тред"
           }
         }
       }
@@ -4770,6 +4810,16 @@
         }
       }
     },
+    "Navigate": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перемещение"
+          }
+        }
+      }
+    },
     "Needs an answer": {
       "localizations": {
         "ru": {
@@ -4831,6 +4881,36 @@
         }
       }
     },
+    "New Thread Without a Project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред без проекта"
+          }
+        }
+      }
+    },
+    "New Thread in Current Project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред в текущем проекте"
+          }
+        }
+      }
+    },
+    "New Thread…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред…"
+          }
+        }
+      }
+    },
     "New project": {
       "localizations": {
         "ru": {
@@ -4877,6 +4957,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новый тред в «%@»"
+          }
+        }
+      }
+    },
+    "New thread in…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред в…"
+          }
+        }
+      }
+    },
+    "New thread without a project": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред без проекта"
           }
         }
       }
@@ -5181,6 +5281,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сейчас лимитов нет."
+          }
+        }
+      }
+    },
+    "No matching commands, projects, or threads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не нашлось среди команд, проектов и тредов."
+          }
+        }
+      }
+    },
+    "No matching projects.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таких проектов нет."
           }
         }
       }
@@ -5913,6 +6033,16 @@
         }
       }
     },
+    "Pick": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По номеру"
+          }
+        }
+      }
+    },
     "Pick a folder that's already there": {
       "localizations": {
         "ru": {
@@ -6199,6 +6329,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Получение объектов"
+          }
+        }
+      }
+    },
+    "Recent threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недавние треды"
           }
         }
       }
@@ -6754,6 +6894,16 @@
         }
       }
     },
+    "Scratch folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка без проекта"
+          }
+        }
+      }
+    },
     "Screen": {
       "localizations": {
         "ru": {
@@ -6830,6 +6980,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поиск веток"
+          }
+        }
+      }
+    },
+    "Search commands, projects, and threads…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Команды, проекты и треды…"
+          }
+        }
+      }
+    },
+    "Search projects…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Искать проекты…"
           }
         }
       }
@@ -8171,6 +8341,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Тред откреплён"
+          }
+        }
+      }
+    },
+    "Threads": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Треды"
           }
         }
       }

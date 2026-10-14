@@ -23,13 +23,21 @@ struct OpenThreadActions {
 /// The iPad menu bar (and the shortcuts a hardware keyboard shows when ⌘ is held). Items that
 /// don't apply are disabled rather than hidden, as Apple asks.
 struct HelmCommands: Commands {
+    let model: AppModel
     @FocusedValue(\.router) private var router
     @FocusedValue(\.openThread) private var thread
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("New Thread") { router?.startNewThread() }
+            // As in Helm on the Mac: ⌘N asks which project, the one open first; ⇧⌘N doesn't ask.
+            Button("New Thread…") { router?.startNewThreadFromKeyboard(in: model) }
                 .keyboardShortcut("n")
+                .disabled(router == nil)
+            Button("New Thread in Current Project") { router?.startNewThreadHere(in: model) }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
+                .disabled(router == nil)
+            Button("New Thread Without a Project") { router?.startNewThreadWithoutProject(in: model) }
+                .keyboardShortcut("n", modifiers: [.command, .option])
                 .disabled(router == nil)
         }
         CommandGroup(replacing: .appSettings) {
@@ -61,9 +69,15 @@ struct HelmCommands: Commands {
                 .disabled(thread == nil)
         }
         CommandMenu("Go") {
-            Button("Search Threads") { router?.isSearching = true }
+            Button("Command Palette") { router?.togglePalette() }
                 .keyboardShortcut("k")
                 .disabled(router == nil)
+            Button("Search Threads") {
+                router?.palette = nil
+                router?.isSearching = true
+            }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .disabled(router == nil)
             Divider()
             Button("Next Thread") { router?.openAdjacent(1) }
                 .keyboardShortcut(.downArrow, modifiers: [.command, .option])

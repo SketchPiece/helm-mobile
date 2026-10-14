@@ -26,7 +26,7 @@ struct HelmApp: App {
             chrome(RootView())
                 .onAppear { PushService.shared.start() }
         }
-        .commands { HelmCommands() }
+        .commands { HelmCommands(model: model) }
         // iPad: a thread in a window of its own ("Open in New Window").
         WindowGroup(id: ThreadWindow.id, for: ThreadRef.self) { $ref in
             chrome(ThreadWindow(ref: ref))
