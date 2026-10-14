@@ -18,7 +18,11 @@ final class EnvironmentSession: Identifiable {
     private(set) var saved: SavedEnvironment
     private(set) var status: Status = .connecting
     private(set) var config: ServerConfig?
-    private(set) var shell = ShellState()
+    private(set) var shell = ShellState() {
+        didSet { shellRevision &+= 1 }
+    }
+    /// Bumped on every change to `shell`, so lists built from it can be reused until it changes.
+    @ObservationIgnored private(set) var shellRevision = 0
     private(set) var lastConnectedAt: Date?
     /// Themes this Mac publishes (`<state>/themes/*.json`), for Settings → Appearance.
     private(set) var themes: [HelmTheme] = []

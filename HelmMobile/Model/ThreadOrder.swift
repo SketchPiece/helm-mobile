@@ -108,14 +108,13 @@ extension ThreadSummary {
 extension [ThreadListEntry] {
     /// Pinned block: arranged threads by key, then keyless ones newest-created first.
     func sortedPinned() -> [ThreadListEntry] {
-        sorted { a, b in
-            switch (a.thread.pinOrderKey, b.thread.pinOrderKey) {
+        sorted(byKey: { OrderKey($0, key: $0.thread.pinOrderKey, date: $0.thread.createdAt ?? .distantPast) }) { a, b in
+            switch (a.key, b.key) {
             case let (ka?, kb?) where ka != kb: return ka < kb
             case (_?, nil): return true
             case (nil, _?): return false
             case (nil, nil):
-                let (da, db) = (a.thread.createdAt ?? .distantPast, b.thread.createdAt ?? .distantPast)
-                if da != db { return da > db }
+                if a.date != b.date { return a.date > b.date }
                 return a.identityPrecedes(b)
             default: return a.identityPrecedes(b)
             }
@@ -125,14 +124,13 @@ extension [ThreadListEntry] {
     /// Active list: keyless (new or reopened) threads first, newest anchor first, then the
     /// arranged ones by key. Activity moves neither group.
     func sortedActive() -> [ThreadListEntry] {
-        sorted { a, b in
-            switch (a.thread.activeOrderKey, b.thread.activeOrderKey) {
+        sorted(byKey: { OrderKey($0, key: $0.thread.activeOrderKey, date: $0.thread.activeAnchor) }) { a, b in
+            switch (a.key, b.key) {
             case let (ka?, kb?) where ka != kb: return ka < kb
             case (nil, _?): return true
             case (_?, nil): return false
             case (nil, nil):
-                let (da, db) = (a.thread.activeAnchor, b.thread.activeAnchor)
-                if da != db { return da > db }
+                if a.date != b.date { return a.date > b.date }
                 return a.identityPrecedes(b)
             default: return a.identityPrecedes(b)
             }
@@ -140,10 +138,32 @@ extension [ThreadListEntry] {
     }
 }
 
-extension ThreadListEntry {
+/// What the list orders by, taken out of a (large) entry once instead of in every comparison.
+private struct OrderKey {
+    var key: String?
+    var date: Date
+    var threadId: String
+    var environmentId: String
+
+    init(_ entry: ThreadListEntry, key: String?, date: Date) {
+        self.key = key
+        self.date = date
+        threadId = entry.ref.threadId
+        environmentId = entry.ref.environmentId
+    }
+
     /// Thread ids are only unique per environment; both break ties so every client agrees.
-    fileprivate func identityPrecedes(_ other: ThreadListEntry) -> Bool {
-        (ref.threadId, ref.environmentId) < (other.ref.threadId, other.ref.environmentId)
+    func identityPrecedes(_ other: OrderKey) -> Bool {
+        (threadId, environmentId) < (other.threadId, other.environmentId)
+    }
+}
+
+extension Array {
+    /// Sorted by a key computed once per element. Sorting the elements themselves copies and
+    /// moves them around; for thread list entries (dozens of fields each) that was most of the cost.
+    func sorted<Key>(byKey key: (Element) -> Key, by areInIncreasingOrder: (Key, Key) -> Bool) -> [Element] {
+        let keys = map(key)
+        return keys.indices.sorted { areInIncreasingOrder(keys[$0], keys[$1]) }.map { self[$0] }
     }
 }
 

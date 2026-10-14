@@ -111,7 +111,18 @@ final class ThreadSession {
         let stream = connection.stream("orchestration.subscribeThread", .object(payload))
         subscription = Task { [weak self] in
             do {
-                for try await item in stream { self?.apply(item) }
+                for try await item in stream {
+                    // A snapshot is built off the main thread (a long thread took ~75 ms on an
+                    // older iPad); the stream waits for it, so events still apply in order.
+                    var built: ThreadProjection?
+                    if item["kind"]?.string == "snapshot" {
+                        built = await Task.detached(priority: .userInitiated) {
+                            Perf.measure("thread.projection") { ThreadProjection(snapshot: item) }
+                        }.value
+                        guard !Task.isCancelled else { return }
+                    }
+                    self?.apply(item, snapshot: built)
+                }
             } catch RPCError.disconnected {
                 if !Task.isCancelled { self?.wentOffline() }
                 return  // the environment reconnects and resubscribes every open thread
@@ -136,16 +147,16 @@ final class ThreadSession {
         subscribe(on: connection)
     }
 
-    private func apply(_ item: JSON) {
+    private func apply(_ item: JSON, snapshot: ThreadProjection?) {
         let kind = item["kind"]?.string
-        Perf.measure("thread.apply.\(kind ?? "other")") { applyMeasured(item) }
+        Perf.measure("thread.apply.\(kind ?? "other")") { applyMeasured(item, snapshot: snapshot) }
         if kind == "snapshot" { Perf.mark("thread snapshot", "\(threadId.prefix(8)) \(projection?.rows.count ?? 0) rows") }
     }
 
-    private func applyMeasured(_ item: JSON) {
+    private func applyMeasured(_ item: JSON, snapshot: ThreadProjection?) {
         switch item["kind"]?.string {
         case "snapshot":
-            guard let next = Perf.measure("thread.projection", { ThreadProjection(snapshot: item) }) else { return }
+            guard let next = snapshot else { return }
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
             savedAt = nil

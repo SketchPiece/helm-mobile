@@ -8,3 +8,4 @@ release/
 .env
 Local.xcconfig
 Vendor/libtailscale/Libtailscale.xcframework/
+__pycache__/

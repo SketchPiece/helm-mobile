@@ -194,7 +194,26 @@ final class AppModel {
 
     // MARK: Thread list
 
+    /// Every view that lists threads asks for this, several times per update; it is built once per
+    /// change of any computer's list (reading each `shell` still registers the view's dependency).
     func allThreads() -> [ThreadListEntry] {
+        let key = environments.map { ThreadListKey(id: $0.id, revision: $0.shellRevision, label: $0.label, shell: $0.shell.sequence) }
+        if let cached = threadListCache, cached.key == key { return cached.entries }
+        let entries = Perf.measure("model.allThreads") { buildAllThreads() }
+        threadListCache = (key, entries)
+        return entries
+    }
+
+    private struct ThreadListKey: Equatable {
+        var id: String
+        var revision: Int
+        var label: String
+        var shell: Int
+    }
+
+    @ObservationIgnored private var threadListCache: (key: [ThreadListKey], entries: [ThreadListEntry])?
+
+    private func buildAllThreads() -> [ThreadListEntry] {
         environments.flatMap { environment in
             environment.shell.threads.values.compactMap { thread -> ThreadListEntry? in
                 guard !thread.isSubagent else { return nil }

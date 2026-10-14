@@ -638,13 +638,11 @@ struct HomeSections {
                 active.append(entry)
             }
         }
-        let byRecent: (ThreadListEntry, ThreadListEntry) -> Bool = {
-            ($0.thread.updatedAt ?? .distantPast) > ($1.thread.updatedAt ?? .distantPast)
-        }
-        attention.sort(by: byRecent)
+        let recent: (ThreadListEntry) -> Date = { $0.thread.updatedAt ?? .distantPast }
+        attention = attention.sorted(byKey: recent, by: >)
         pinned = pinned.sortedPinned()
         active = active.sortedActive()
-        snoozed.sort { ($0.thread.snoozedUntil ?? .distantFuture) < ($1.thread.snoozedUntil ?? .distantFuture) }
-        settled.sort(by: byRecent)
+        snoozed = snoozed.sorted(byKey: { $0.thread.snoozedUntil ?? .distantFuture }, by: <)
+        settled = settled.sorted(byKey: recent, by: >)
     }
 }
