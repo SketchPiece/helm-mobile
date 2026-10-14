@@ -9,8 +9,26 @@ struct ProjectIcon: View {
     let project: Project?
     let environment: EnvironmentSession?
     var size: CGFloat = 36
+    /// A favicon already at hand, for drawing the tile off screen (a menu's image).
+    var preloaded: UIImage?
 
     @State private var image: UIImage?
+
+    /// The tile as a picture, for menus, which only take images. The favicon comes from the cache.
+    static func menuImage(project: Project, environment: EnvironmentSession, size: CGFloat = 24) async -> UIImage? {
+        var favicon: UIImage?
+        if let key = cacheKey(project: project, environment: environment) {
+            favicon = await IconCache.shared.image(for: key)
+        }
+        let renderer = ImageRenderer(content: ProjectIcon(project: project, environment: environment, size: size, preloaded: favicon))
+        renderer.scale = 3
+        return renderer.uiImage?.withRenderingMode(.alwaysOriginal)
+    }
+
+    private static func cacheKey(project: Project, environment: EnvironmentSession) -> String? {
+        guard let path = project.faviconPath, project.iconKind == nil else { return nil }
+        return "\(environment.id)|\(project.workspaceRoot)|\(path)"
+    }
 
     var body: some View {
         if let project, environment?.config?.isScratch(project) == true {
@@ -25,7 +43,7 @@ struct ProjectIcon: View {
             if project?.iconKind == "emoji", let emoji = project?.iconEmoji {
                 Palette.surfaceRaised
                 Text(emoji).font(.system(size: size * 0.55))
-            } else if project?.iconKind != "monogram", let image {
+            } else if project?.iconKind != "monogram", let image = image ?? preloaded {
                 Image(uiImage: image)
                     .resizable()
                     .interpolation(.high)
@@ -66,11 +84,12 @@ struct ProjectIcon: View {
     ]
 
     private func load() async {
-        guard let project, let path = project.faviconPath, project.iconKind == nil, let environment else {
+        guard let project, let environment, let path = project.faviconPath,
+              let key = Self.cacheKey(project: project, environment: environment)
+        else {
             image = nil
             return
         }
-        let key = "\(environment.id)|\(project.workspaceRoot)|\(path)"
         if let cached = await IconCache.shared.image(for: key) {
             image = cached
             return

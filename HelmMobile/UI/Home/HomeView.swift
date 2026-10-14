@@ -150,6 +150,12 @@ struct HomeView: View {
         .toolbarTitleDisplayMode(.inlineLarge)
         .searchable(text: $search, isPresented: searchPresented, prompt: Text("Search"))
         .onChange(of: sections.order, initial: true) { _, order in router.homeOrder = order }
+        .onChange(of: projectFilter) { _, filter in
+            // A shelf open beside the sidebar follows its project switcher.
+            if isSidebar, case let .shelf(shelf, projectId)? = router.path.first, projectId != filter {
+                router.path[0] = .shelf(shelf, projectId: filter)
+            }
+        }
         .toolbar { toolbarContent }
         .refreshable { model.environments.forEach { $0.reconnectNow(reason: "pull to refresh") } }
         .task(id: nextWake) {

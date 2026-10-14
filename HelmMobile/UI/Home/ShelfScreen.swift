@@ -62,11 +62,13 @@ struct ShelfRow: View {
 /// Snoozed or Settled threads on their own screen: snoozed by when they wake, settled by day.
 /// Settled keeps growing, so it has its own search; snoozed threads are few enough to see at once.
 /// Project chips filter the shelf on its own; they start from Home's filter and don't change it.
+/// Beside the iPad sidebar there are no chips: the sidebar's project switcher filters the shelf too.
 struct ShelfScreen: View {
     let shelf: Router.Shelf
 
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
+    @Environment(\.followsSidebarFilter) private var followsSidebarFilter
     @State private var projectFilter: String?
     @State private var limit = 40
     @State private var search = ""
@@ -84,7 +86,7 @@ struct ShelfScreen: View {
         let entries = filtered(shelfEntries)
         List {
             // One project has nothing to choose between, unless the filter came from Home and needs "All".
-            if chips.count > 1 || (projectFilter != nil && chips.map(\.id) != [projectFilter]) {
+            if !followsSidebarFilter, chips.count > 1 || (projectFilter != nil && chips.map(\.id) != [projectFilter]) {
                 ProjectChips(chips: chips, selection: $projectFilter)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
                     .listRowBackground(Color.clear)

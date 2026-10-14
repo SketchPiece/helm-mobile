@@ -293,6 +293,7 @@ private struct SplitRoot: View {
                 Group {
                     if let root = router.path.first {
                         RouteView(route: root)
+                            .environment(\.followsSidebarFilter, true)
                     } else {
                         nothingOpen
                     }
@@ -411,6 +412,8 @@ extension View {
 extension EnvironmentValues {
     /// Home is the iPad sidebar: the row of what's open beside it stays highlighted.
     @Entry var isSidebar = false
+    /// Beside the iPad sidebar: a shelf takes the sidebar's project filter instead of showing its own.
+    @Entry var followsSidebarFilter = false
 }
 
 /// First launch: what Helm is and how to connect it.

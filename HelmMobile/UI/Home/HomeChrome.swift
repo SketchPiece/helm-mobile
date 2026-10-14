@@ -95,6 +95,8 @@ struct ProjectSwitcher: View, @MainActor Equatable {
     let total: Int
     let onSelect: (String?) -> Void
     let onAction: (ProjectChips.Chip, ProjectChips.Action) -> Void
+    /// Each project's tile as an image: a menu shows images, not views.
+    @State private var icons: [String: UIImage] = [:]
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.chips.map(\.signature) == rhs.chips.map(\.signature)
@@ -104,9 +106,9 @@ struct ProjectSwitcher: View, @MainActor Equatable {
     var body: some View {
         Menu {
             Section {
-                option(nil, title: String(localized: "All projects"), count: total)
+                option(nil, title: String(localized: "All projects"), count: total, icon: nil)
                 ForEach(chips) { chip in
-                    option(chip.project.id, title: chip.project.title, count: chip.count)
+                    option(chip.project.id, title: chip.project.title, count: chip.count, icon: icons[chip.project.id])
                 }
             }
             if let selected {
@@ -146,11 +148,23 @@ struct ProjectSwitcher: View, @MainActor Equatable {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityIdentifier("projectSwitcher")
+        .task(id: chips.map(\.signature)) {
+            var icons: [String: UIImage] = [:]
+            for chip in chips {
+                icons[chip.project.id] = await ProjectIcon.menuImage(project: chip.project, environment: chip.environment)
+            }
+            self.icons = icons
+        }
     }
 
     /// A toggle, so the menu marks the shown project itself.
-    private func option(_ id: String?, title: String, count: Int) -> some View {
+    private func option(_ id: String?, title: String, count: Int, icon: UIImage?) -> some View {
         Toggle(isOn: Binding(get: { selected?.project.id == id }, set: { if $0 { onSelect(id) } })) {
+            if let icon {
+                Image(uiImage: icon)
+            } else {
+                Image(systemName: "rectangle.stack")
+            }
             Text(title)
             Text("\(count) open")
         }
