@@ -1,0 +1,55 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · iPad: give the sidebar its own background?",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1600,
+   "h": 900,
+   "title": "Now · one background for both columns"
+  },
+  "a-surface.html": {
+   "x": 1680,
+   "y": 0,
+   "w": 1600,
+   "h": 900,
+   "title": "A. Sidebar on the surface tone (recommended)"
+  },
+  "b-darker.html": {
+   "x": 0,
+   "y": 1060,
+   "w": 1600,
+   "h": 900,
+   "title": "B. Sidebar darker than the thread"
+  },
+  "c-floating.html": {
+   "x": 1680,
+   "y": 1060,
+   "w": 1600,
+   "h": 900,
+   "title": "C. Floating glass panel, like iPadOS 26"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-surface.html",
+  "b-darker.html",
+  "c-floating.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Helm Mobile · iPad: give the sidebar its own background?",
+   "kind": "title1",
+   "maxW": 3280
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
