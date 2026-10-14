@@ -1672,6 +1672,16 @@
         }
       }
     },
+    "An unlock attempt is already in progress.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попытка разблокировки уже выполняется."
+          }
+        }
+      }
+    },
     "Answer the agent first.": {
       "localizations": {
         "ru": {
@@ -2309,6 +2319,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Очистить журнал подключения?"
+          }
+        }
+      }
+    },
+    "Click the password field on the Mac, then unlock it from here.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите на поле пароля на экране Mac, затем разблокируйте его отсюда."
           }
         }
       }
@@ -3423,6 +3443,16 @@
         }
       }
     },
+    "Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите «Разблокировка Mac с телефона» в Helm на Mac: Настройки → Подключения."
+          }
+        }
+      }
+    },
     "Enabled": {
       "localizations": {
         "ru": {
@@ -3439,6 +3469,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Укажи срок больше нуля."
+          }
+        }
+      }
+    },
+    "Enter a valid Mac password.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введите допустимый пароль Mac."
           }
         }
       }
@@ -4586,6 +4626,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ищу Штурвал…"
+          }
+        }
+      }
+    },
+    "Mac is locked": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac заблокирован"
+          }
+        }
+      }
+    },
+    "Mac password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароль Mac"
+          }
+        }
+      }
+    },
+    "Mac unlocked": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac разблокирован"
           }
         }
       }
@@ -5762,6 +5832,16 @@
         }
       }
     },
+    "Opens a field for the Mac's password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывает поле для пароля Mac"
+          }
+        }
+      }
+    },
     "Opens a new thread in Helm.": {
       "localizations": {
         "ru": {
@@ -6349,6 +6429,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переподключиться"
+          }
+        }
+      }
+    },
+    "Reconnect to the Mac before unlocking it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключитесь к Mac заново перед разблокировкой."
           }
         }
       }
@@ -7011,6 +7101,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ищу…"
+          }
+        }
+      }
+    },
+    "Select your user and click the password field on the Mac screen, then enter your password here.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите пользователя и нажмите на поле пароля на экране Mac, затем введите пароль здесь."
+          }
+        }
+      }
+    },
+    "Select your user and click the password field on the Mac screen, then try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите пользователя и нажмите на поле пароля на экране Mac, затем повторите попытку."
           }
         }
       }
@@ -7866,6 +7976,46 @@
         }
       }
     },
+    "The Mac couldn't accept the password. Try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac не смог принять пароль. Повторите попытку."
+          }
+        }
+      }
+    },
+    "The Mac didn't confirm unlocking. Check the connection and try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac не подтвердил разблокировку. Проверьте подключение и повторите попытку."
+          }
+        }
+      }
+    },
+    "The Mac is still locked. Check your password and try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac по-прежнему заблокирован. Проверьте пароль и повторите попытку."
+          }
+        }
+      }
+    },
+    "The Mac's lock state is unavailable. Reconnect and try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось определить состояние блокировки Mac. Подключитесь заново."
+          }
+        }
+      }
+    },
     "The agent compacts the conversation by itself when the window fills up.": {
       "localizations": {
         "ru": {
@@ -8054,6 +8204,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код не подошёл. Код работает один раз и живёт 5 минут."
+          }
+        }
+      }
+    },
+    "The password couldn't be sent. Check the connection and try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось отправить пароль. Проверьте подключение и повторите попытку."
           }
         }
       }
@@ -8596,6 +8756,46 @@
         }
       }
     },
+    "Unlock": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать"
+          }
+        }
+      }
+    },
+    "Unlock Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать Mac"
+          }
+        }
+      }
+    },
+    "Unlocking was turned off on the Mac.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировка была выключена на Mac."
+          }
+        }
+      }
+    },
+    "Unlocking…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировка…"
+          }
+        }
+      }
+    },
     "Unpin": {
       "localizations": {
         "ru": {
@@ -8772,6 +8972,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Жду подключения…"
+          }
+        }
+      }
+    },
+    "Waiting for the Mac to confirm…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждём подтверждения от Mac…"
           }
         }
       }
@@ -9103,6 +9313,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сообщение подождёт и уйдёт, когда закончится текущий ход."
+          }
+        }
+      }
+    },
+    "Your password is sent to this Mac for this attempt and isn't saved.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароль будет отправлен на этот Mac для одной попытки и не сохранится."
           }
         }
       }

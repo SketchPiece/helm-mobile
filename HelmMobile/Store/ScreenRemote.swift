@@ -55,6 +55,14 @@ final class ScreenRemote {
     private(set) var cursor = CGPoint.zero
     /// Something works only partly, e.g. the picture comes but the computer won't take clicks yet.
     private(set) var notice: String?
+    /// nil is an older helper which does not report session state.
+    private(set) var isLocked: Bool?
+    private(set) var lockStateAvailable = false
+    private(set) var unlockEnabled = false
+    private(set) var unlockInProgress = false
+    private(set) var unlockMessage: String?
+    @ObservationIgnored private var unlockTimeout: Task<Void, Never>?
+
     /// Bumped when the first picture arrives (the view fades the placeholder out).
     private(set) var framesShown = 0
     /// The computer's arrow as it is now (an I-beam over text, a hand over a link); nil draws a
@@ -159,6 +167,8 @@ final class ScreenRemote {
     }
 
     func disconnect() {
+        phase = .connecting
+        resetUnlockState()
         guard let task else { return }
         send(["t": "stop"])
         task.cancel(with: .goingAway, reason: nil)
@@ -176,9 +186,11 @@ final class ScreenRemote {
             } catch {
                 guard self.task === task else { return }
                 self.task = nil
+                resetUnlockState()
                 phase = .failed(closeReason(task) ?? String(localized: "The connection to the computer dropped."))
                 return
             }
+            guard self.task === task else { return }
             switch message {
             case .data(let data): handleBinary(data)
             case .string(let text): handleText(text)
@@ -197,9 +209,29 @@ final class ScreenRemote {
         return nil
     }
 
-    private func handleText(_ text: String) {
+    func handleText(_ text: String) {
         guard let json = try? JSON.parse(Data(text.utf8)) else { return }
         switch json["t"]?.string {
+        case "lockState":
+            isLocked = json["locked"]?.bool ?? true
+            lockStateAvailable = json["available"]?.bool == true
+            unlockEnabled = json["unlockEnabled"]?.bool == true
+            if isLocked == false {
+                finishUnlock(message: nil)
+            } else if !unlockEnabled, unlockInProgress {
+                finishUnlock(message: String(localized: "Unlocking was turned off on the Mac."))
+            }
+        case "unlockResult":
+            switch json["status"]?.string {
+            case "submitted": break // Only a lockState change confirms that macOS accepted the password.
+            case "unlocked", "notLocked": finishUnlock(message: nil)
+            case "disabled": finishUnlock(message: String(localized: "Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections."))
+            case "focusPassword": finishUnlock(message: String(localized: "Select your user and click the password field on the Mac screen, then try again."))
+            case "accessibility": finishUnlock(message: Self.accessibilityNotice)
+            case "stillLocked": finishUnlock(message: String(localized: "The Mac is still locked. Check your password and try again."))
+            case "busy": finishUnlock(message: String(localized: "An unlock attempt is already in progress."))
+            default: finishUnlock(message: String(localized: "The Mac couldn't accept the password. Try again."))
+            }
         case "info":
             desktopSize = CGSize(width: json["width"]?.double ?? 0, height: json["height"]?.double ?? 0)
             phase = .live
@@ -265,6 +297,52 @@ final class ScreenRemote {
 
     private static var accessibilityNotice: String {
         String(localized: "The computer won't take clicks and keys yet: allow Helm in System Settings → Privacy & Security → Accessibility.")
+    }
+
+    // MARK: Unlock
+
+    /// Dedicated ephemeral command: no draft, preferences, clipboard or Keychain storage.
+    func unlock(password: String) async {
+        guard isLocked == true, lockStateAvailable, unlockEnabled, !unlockInProgress else { return }
+        guard !password.isEmpty, password.utf16.count <= 1024,
+              !password.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else {
+            unlockMessage = String(localized: "Enter a valid Mac password.")
+            return
+        }
+        guard phase == .live, let socket = task else {
+            unlockMessage = String(localized: "Reconnect to the Mac before unlocking it.")
+            return
+        }
+        unlockInProgress = true
+        unlockMessage = nil
+        do {
+            let data = try JSON.object(["t": "unlock", "password": .string(password)]).data()
+            try await socket.send(.string(String(decoding: data, as: UTF8.self)))
+            guard task === socket, unlockInProgress else { return }
+            unlockTimeout?.cancel()
+            unlockTimeout = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(12))
+                guard !Task.isCancelled, let self, self.unlockInProgress else { return }
+                self.finishUnlock(message: String(localized: "The Mac didn't confirm unlocking. Check the connection and try again."))
+            }
+        } catch {
+            guard task === socket else { return }
+            finishUnlock(message: String(localized: "The password couldn't be sent. Check the connection and try again."))
+        }
+    }
+
+    private func finishUnlock(message: String?) {
+        unlockTimeout?.cancel()
+        unlockTimeout = nil
+        unlockInProgress = false
+        unlockMessage = message
+    }
+
+    private func resetUnlockState() {
+        finishUnlock(message: nil)
+        isLocked = nil
+        lockStateAvailable = false
+        unlockEnabled = false
     }
 
     // MARK: Displays

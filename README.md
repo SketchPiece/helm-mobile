@@ -53,6 +53,13 @@ work in each late frame, stalls with sampled main-thread stacks, timed work (`Pe
 `scripts/perf-report.py --pull` copies them off a connected device and names the app's frames
 from the dSYM (run `scripts/perf-report.py --keep-dsym` after each deploy so the dSYM is kept).
 
+## Unlocking a locked Mac
+
+In Helm on the Mac, enable **Settings → Connections → Unlock Mac from your phone**. Open
+screen remote on the phone or iPad, select your user and click the password field on the Mac
+screen, then enter your password in the unlock panel. The password is used for one attempt and is not saved.
+This requires an existing Mac session; it cannot log in after a restart or unlock FileVault.
+
 ## Localization
 
 English is the source; Russian lives in `Localization/ru.json` (plurals as `one/few/many/other`).

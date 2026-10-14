@@ -258,3 +258,64 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(store.theme.dark?[.canvas], RGBA(hex: 0x222222))
     }
 }
+
+
+@MainActor
+final class ScreenUnlockTests: XCTestCase {
+    private func makeRemote() -> ScreenRemote {
+        ScreenRemote(environment: EnvironmentSession(saved: SavedEnvironment(
+            id: "unlock-test", label: "Mac", baseURL: URL(string: "http://mac")!, pairedAt: Date())))
+    }
+
+    func testOlderHelperHasNoUnlockCapability() {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"info","width":100,"height":100}"#)
+        XCTAssertEqual(remote.phase, .live)
+        XCTAssertNil(remote.isLocked)
+        XCTAssertFalse(remote.unlockEnabled)
+    }
+
+    func testSubmissionIsNotProofOfUnlocking() {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true}"#)
+        remote.handleText(#"{"t":"unlockResult","status":"submitted"}"#)
+        XCTAssertEqual(remote.isLocked, true)
+        remote.handleText(#"{"t":"lockState","locked":false,"available":true,"unlockEnabled":true}"#)
+        XCTAssertEqual(remote.isLocked, false)
+        XCTAssertNil(remote.unlockMessage)
+    }
+
+    func testRevocationAndDisconnectClearCapability() {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true}"#)
+        XCTAssertTrue(remote.unlockEnabled)
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":false}"#)
+        XCTAssertFalse(remote.unlockEnabled)
+        remote.handleText(#"{"t":"unlockResult","status":"disabled"}"#)
+        XCTAssertNotNil(remote.unlockMessage)
+        remote.disconnect()
+        XCTAssertNil(remote.isLocked)
+        XCTAssertNil(remote.unlockMessage)
+        XCTAssertFalse(remote.unlockEnabled)
+    }
+
+    func testFailureKeepsTheMacLockedAndUnknownStateDoesNotEnableUnlock() {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true}"#)
+        remote.handleText(#"{"t":"unlockResult","status":"stillLocked"}"#)
+        XCTAssertEqual(remote.isLocked, true)
+        XCTAssertNotNil(remote.unlockMessage)
+        remote.handleText(#"{"t":"lockState","locked":true,"available":false,"unlockEnabled":true}"#)
+        XCTAssertFalse(remote.lockStateAvailable)
+    }
+
+    func testPasswordRequiresLiveConnectionAndValidInput() async {
+        let remote = makeRemote()
+        remote.handleText(#"{"t":"lockState","locked":true,"available":true,"unlockEnabled":true}"#)
+        await remote.unlock(password: "example")
+        XCTAssertFalse(remote.unlockInProgress)
+        XCTAssertNotNil(remote.unlockMessage)
+        await remote.unlock(password: "a\nb")
+        XCTAssertFalse(remote.unlockInProgress)
+    }
+}

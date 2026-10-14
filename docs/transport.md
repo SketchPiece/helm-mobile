@@ -463,6 +463,14 @@ WebSocket that streams the Mac's screen (`apps/server/src/helm/screenRemoteRoute
 - phone → server, text JSON: `start {maxWidth,fps,bitrate}`, `keyframe`, `move {x,y}`,
   `button {b: left|right|middle, down, x, y}`, `scroll {dx,dy}` (pixels), `key {code, mods: [cmd|alt|ctrl|shift]}`
   (Mac virtual key codes), `text {s}`, `stop`.
+- Locked session: the helper sends `lockState {locked,available,unlockEnabled}` on connection and
+  whenever the lock state or desktop-local consent changes. `available:false` denies input;
+  an older helper sends no lock state. `unlock {password}` is transient and answered with
+  `unlockResult {status}`: `submitted` is only delivery, `unlocked` confirms session state,
+  and `disabled`, `unavailable`, `notLocked`, `invalidPassword`, `accessibility`, `focusPassword`,
+  `busy`, or `stillLocked` explain why the attempt did not proceed or finish. Password input targets
+  loginwindow's focused secure field. Consent is desktop IPC only; ordinary input while locked
+  also requires it. The connection wakes the display and holds it awake until it ends.
 - Bringing a window to the iPad's display: `windows` is answered with
   `{"t":"windows",windows:[{id,pid,app,title,display}],icons:{pid: png base64}}` (the other displays' windows,
   front to back); `moveWindow {id}` moves one onto the virtual display
