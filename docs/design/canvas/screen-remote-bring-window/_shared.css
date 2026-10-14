@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{--accent:#E8A33D}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1180px;height:820px;overflow:hidden;position:relative;background:#000;color:#fff;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wp{position:absolute;inset:0;background:
+ radial-gradient(60% 90% at 58% -10%,#A8C995 0%,rgba(120,190,170,.0) 60%),
+ linear-gradient(115deg,#1B0A55 0%,#2A0E8C 30%,#2D49C9 55%,#4C9FB8 70%,#3155D0 85%,#2236C4 100%)}
+.wp:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 90px,rgba(140,220,190,.10) 90px 150px,rgba(255,255,255,0) 150px 260px)}
+.mb{position:absolute;left:0;right:0;top:0;height:24px;display:flex;align-items:center;gap:18px;padding:0 16px;font:500 13px -apple-system,'SF Pro Text',system-ui;color:#fff;background:rgba(0,0,0,.12)}
+.mb b{font-weight:700}.mb .r{margin-left:auto;opacity:.95}
+.cur{position:absolute;width:15px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.glass{background:rgba(40,40,60,.42);backdrop-filter:blur(20px) saturate(1.7);-webkit-backdrop-filter:blur(20px) saturate(1.7);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.22)}
+.tb{position:absolute;display:flex;align-items:center;gap:4px;padding:6px;border-radius:30px}
+.tb.col{flex-direction:column}
+.b{width:48px;height:48px;border-radius:24px;display:grid;place-items:center}
+.b.on{background:rgba(255,255,255,.2)}
+.ic{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:270px;height:5px;border-radius:3px;background:#fff}
+.lbl{position:absolute;font:12px 'IBM Plex Mono',monospace;color:#fff;background:rgba(0,0,0,.62);padding:4px 8px;border-radius:6px;white-space:nowrap;z-index:9}
+.arrow{position:absolute;border-left:1.5px dashed rgba(255,255,255,.75);z-index:8}
+.finger{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.75);z-index:8}
+/* bring a window */
+.col{right:16px;top:50%;transform:translateY(-50%);flex-direction:column}
+.b.hl{background:rgba(255,255,255,.22)}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+.ai{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font:600 14px -apple-system,system-ui;color:#fff;flex:none;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25)}
+.ai.s{width:20px;height:20px;border-radius:5px;font-size:11px}
+.ai.l{width:52px;height:52px;border-radius:13px;font-size:24px}
+.helm{background:linear-gradient(#2b2b2b,#111)}.disc{background:#5865F2}.arc{background:linear-gradient(135deg,#FF5F6D,#FFC371 50%,#3BC3FF)}
+.tg{background:#2AABEE}.op{background:#1A8CFF}.set{background:linear-gradient(#9a9a9f,#6b6b70)}.rem{background:#fff;color:#FF9500}
+.code{background:#1F9CF0}.spot{background:#1DB954}
+.sheet{position:absolute;background:#1C1C1E;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;color:#fff}
+.nav{height:54px;display:flex;align-items:center;justify-content:center;position:relative;font:600 17px -apple-system,system-ui;border-bottom:.5px solid rgba(255,255,255,.12)}
+.nav .l{position:absolute;left:18px;font-weight:400;color:var(--accent)}
+.sec{font:500 13px -apple-system,system-ui;color:rgba(235,235,245,.6);text-transform:uppercase;letter-spacing:.02em;padding:16px 20px 6px}
+.grp{margin:0 16px;background:#2C2C2E;border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:.5px solid rgba(255,255,255,.09)}
+.row:last-child{border-bottom:0}
+.th{width:112px;height:70px;border-radius:8px;flex:none;background:#3A3A3C;position:relative;overflow:hidden}
+.th i{position:absolute;left:0;right:0;top:0;height:9px;background:rgba(255,255,255,.18)}
+.th u{position:absolute;left:10px;right:30px;top:18px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);box-shadow:0 11px 0 rgba(255,255,255,.14),0 22px 0 rgba(255,255,255,.14),0 33px 0 rgba(255,255,255,.1)}
+.t1{font:400 17px -apple-system,system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t2{font:400 13px -apple-system,system-ui;color:rgba(235,235,245,.6);display:flex;align-items:center;gap:6px}
+.pop{position:absolute;border-radius:22px;overflow:hidden;color:#fff}
+.pglass{background:rgba(30,30,34,.62);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.15)}
+.ph{font:500 12px -apple-system,system-ui;color:rgba(235,235,245,.55);padding:12px 16px 4px;text-transform:uppercase;letter-spacing:.03em}
+.pr{display:flex;align-items:center;gap:11px;padding:7px 16px;font:400 15px -apple-system,system-ui;white-space:nowrap}
+.pr span{overflow:hidden;text-overflow:ellipsis}
+.pr em{font-style:normal;color:rgba(235,235,245,.5);margin-left:auto;padding-left:10px;font-size:13px}
+.pr.on{background:rgba(255,255,255,.12)}
+.sep{height:.5px;background:rgba(255,255,255,.12);margin:4px 0}
+.note{position:absolute;font:13px 'IBM Plex Mono',monospace;color:#fff;background:rgba(0,0,0,.66);padding:8px 11px;border-radius:8px;line-height:1.45;max-width:300px}

@@ -1,0 +1,55 @@
+{
+ "v": 3,
+ "title": "Bring a window here: a lighter list",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "Now: a sheet with a picture of every window"
+  },
+  "a-list.html": {
+   "x": 1260,
+   "y": 0,
+   "w": 1180,
+   "h": 820,
+   "title": "A. A short list beside the button"
+  },
+  "b-apps.html": {
+   "x": 0,
+   "y": 980,
+   "w": 1180,
+   "h": 820,
+   "title": "B. Apps, like the Dock"
+  },
+  "c-menu.html": {
+   "x": 1260,
+   "y": 980,
+   "w": 1180,
+   "h": 820,
+   "title": "C. The system menu"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-list.html",
+  "b-apps.html",
+  "c-menu.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Bring a window here: a lighter list",
+   "kind": "title1",
+   "maxW": 2440
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
