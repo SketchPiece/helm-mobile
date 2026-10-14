@@ -505,8 +505,8 @@ struct HomeView: View {
             }
         } label: {
             // The toolbar paints a prominent button's label white; the colour has to sit on the symbol.
-            Image(systemName: "square.and.pencil")
-                .font(.system(size: 17, weight: .semibold))
+            Image(systemName: "plus")
+                .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(Palette.accentForeground)
         }
         .buttonStyle(.glassProminent)
