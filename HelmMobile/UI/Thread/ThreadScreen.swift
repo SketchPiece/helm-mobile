@@ -478,6 +478,20 @@ private struct ThreadContent: View {
         scrollProxy?.scrollTo(Self.bottomId, anchor: .bottom)
     }
 
+    /// The lazy stack guesses the height of rows it hasn't drawn, so a jump to the end lands short
+    /// on a long thread (the rows above draw on the way and push the end down). Aim again until the
+    /// content height stops changing.
+    private func settleAtBottom() async {
+        var height: CGFloat = -1
+        for _ in 0..<8 {
+            try? await Task.sleep(for: .milliseconds(150))
+            guard followsBottom, scrollPhase != .interacting else { return }
+            if scrollMetrics.height == height { return }
+            height = scrollMetrics.height
+            scrollToBottom()
+        }
+    }
+
     // MARK: Bottom
 
     /// Full-width cards between the timeline and the composer.
@@ -491,11 +505,7 @@ private struct ThreadContent: View {
         Button {
             followsBottom = true
             withAnimation { scrollToBottom() }
-            // Lazy rows settle their real heights on the way; land precisely after.
-            Task {
-                try? await Task.sleep(for: .milliseconds(250))
-                scrollToBottom()
-            }
+            Task { await settleAtBottom() }
         } label: {
             Image(systemName: "arrow.down")
                 .font(.system(size: 15, weight: .semibold))
@@ -537,7 +547,11 @@ private struct ThreadContent: View {
                 }
             }
             ThreadComposer(environment: environment, session: session) {
+                // Sending means "show me the end", also when the conversation was scrolled up.
+                followsBottom = true
                 withAnimation { scrollToBottom() }
+                // The bubble lands right after and the composer shrinks back as its text clears.
+                Task { await settleAtBottom() }
             }
             // Beside a working or offline pill (they sit in the middle), 8 pt above the composer.
             .overlay(alignment: .topTrailing) {
