@@ -80,8 +80,6 @@ final class ScreenRemote {
     private(set) var windows: [RemoteWindow]?
     /// Each app's icon, by its process.
     private(set) var windowIcons: [Int: UIImage] = [:]
-    /// A small picture of each window, as they come.
-    private(set) var windowPictures: [Int: UIImage] = [:]
 
     /// What was asked for: settings' choice at first, then the toolbar's, kept across reconnects.
     @ObservationIgnored private var wanted: Shown
@@ -244,10 +242,6 @@ final class ScreenRemote {
                 return RemoteWindow(id: Int(id), pid: Int(item["pid"]?.double ?? 0), app: item["app"]?.string ?? "",
                                     title: item["title"]?.string ?? "", display: Int(item["display"]?.double ?? 0))
             }
-        case "windowThumb":
-            guard let id = json["id"]?.double, let base64 = json["jpeg"]?.string,
-                  let data = Data(base64Encoded: base64), let image = UIImage(data: data) else { return }
-            windowPictures[Int(id)] = image
         case "windowMoved":
             // Moved where this iPad can see it.
             if let virtualDisplay, shown != .display(virtualDisplay.id) { show(.virtual) }
@@ -283,10 +277,9 @@ final class ScreenRemote {
         send(command)
     }
 
-    /// Asks the computer for its other displays' windows (`windows`, then their pictures).
+    /// Asks the computer for its other displays' windows.
     func listWindows() {
         windows = nil
-        windowPictures = [:]
         send(["t": "windows"])
     }
 

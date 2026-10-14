@@ -50,9 +50,6 @@ struct ScreenRemoteView: View {
                     .transition(.opacity)
             }
         }
-        .sheet(isPresented: Bindable(viewport).showsWindows) {
-            ScreenWindowPicker(remote: remote)
-        }
         .onChange(of: remote.notice) { showsNotice = true }
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
         .animation(.easeInOut(duration: 0.2), value: toolbarLeading)
@@ -1045,7 +1042,8 @@ private struct ScreenToolbar: View {
                     .equatable()
             }
             if remote.virtualDisplay != nil {
-                button("macwindow.badge.plus", label: "Bring a window here") { viewport.showsWindows = true }
+                ScreenWindowsButton(remote: remote, viewport: viewport)
+                    .equatable()
             }
             ScreenKeysMenu(remote: remote)
                 .equatable()
@@ -1298,85 +1296,112 @@ private struct ScreenKeyRow: View {
     }
 }
 
-/// The other displays' windows with a small picture of each; a tap moves one onto this iPad's
-/// display, and the computer puts it back when the display goes.
-private struct ScreenWindowPicker: View {
+
+/// Brings a window from the computer's other displays to this iPad's: a short list beside the
+/// button, one line per window, grouped by display. Its own equatable view so a cursor move
+/// doesn't rebuild the popover under the finger (AGENTS.md).
+private struct ScreenWindowsButton: View, @MainActor Equatable {
     let remote: ScreenRemote
-    @Environment(\.dismiss) private var dismiss
+    @Bindable var viewport: ScreenViewport
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.remote === rhs.remote && lhs.viewport === rhs.viewport }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let windows = remote.windows {
-                    if windows.isEmpty {
-                        ContentUnavailableView("No windows on the other displays", systemImage: "macwindow")
-                    } else {
-                        list(windows)
-                    }
+        Button { viewport.showsWindows = true } label: {
+            Image(systemName: "macwindow.badge.plus")
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel("Bring a window here")
+        .popover(isPresented: $viewport.showsWindows, arrowEdge: .trailing) {
+            ScreenWindowList(remote: remote) { viewport.showsWindows = false }
+                .presentationCompactAdaptation(.popover)
+                .preferredColorScheme(.dark)
+        }
+    }
+}
+
+private struct ScreenWindowList: View {
+    let remote: ScreenRemote
+    let close: () -> Void
+
+    private static let width: CGFloat = 340
+    private static let rowHeight: CGFloat = 44
+    private static let headerHeight: CGFloat = 34
+
+    var body: some View {
+        Group {
+            if let windows = remote.windows {
+                if windows.isEmpty {
+                    Text("No windows on the other displays")
+                        .font(Typography.sans(15))
+                        .foregroundStyle(.secondary)
+                        .padding(24)
                 } else {
-                    ProgressView()
+                    list(windows)
                 }
-            }
-            .navigationTitle("Bring a window here")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
+            } else {
+                ProgressView().frame(width: Self.width, height: 120)
             }
         }
         .task { remote.listWindows() }
     }
 
-    /// Grouped by display, in the computer's order.
+    /// Grouped by display, in the computer's order; scrolls past what fits.
     private func list(_ windows: [ScreenRemote.RemoteWindow]) -> some View {
         let displays = remote.displays.filter { display in windows.contains { $0.display == display.id } }
-        return List {
-            ForEach(displays) { display in
-                Section(display.name) {
+        let height = CGFloat(windows.count) * Self.rowHeight + CGFloat(displays.count) * Self.headerHeight + 12
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(displays.enumerated()), id: \.element.id) { index, display in
+                    if index > 0 { Divider().padding(.vertical, 4) }
+                    Text(display.name.uppercased())
+                        .font(Typography.sans(12, .medium, relativeTo: .caption))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .frame(height: Self.headerHeight - 4, alignment: .bottom)
                     ForEach(windows.filter { $0.display == display.id }) { window in
-                        Button {
-                            remote.bringWindow(window)
-                            dismiss()
-                        } label: {
-                            row(window)
-                        }
-                        .foregroundStyle(Palette.text)
+                        row(window)
                     }
                 }
             }
+            .padding(.vertical, 6)
         }
-        .refreshable { remote.listWindows() }
+        .frame(width: Self.width, height: min(height, 560))
     }
 
     private func row(_ window: ScreenRemote.RemoteWindow) -> some View {
-        HStack(spacing: 14) {
-            Group {
-                if let picture = remote.windowPictures[window.id] {
-                    Image(uiImage: picture).resizable().scaledToFit()
-                } else if let icon = remote.windowIcons[window.pid] {
-                    Image(uiImage: icon).resizable().scaledToFit().padding(14)
-                }
-            }
-            .frame(width: 112, height: 70)
-            .background(Palette.surfaceRaised, in: .rect(cornerRadius: 8))
-            .clipShape(.rect(cornerRadius: 8))
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
+        Button {
+            remote.bringWindow(window)
+            close()
+        } label: {
+            HStack(spacing: 11) {
+                Group {
                     if let icon = remote.windowIcons[window.pid] {
-                        Image(uiImage: icon).resizable().frame(width: 18, height: 18)
+                        Image(uiImage: icon).resizable()
+                    } else {
+                        Image(systemName: "macwindow").foregroundStyle(.secondary)
                     }
+                }
+                .frame(width: 20, height: 20)
+                Text(window.title.isEmpty ? window.app : window.title)
+                    .font(Typography.sans(15))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                if !window.title.isEmpty {
                     Text(window.app)
                         .font(Typography.sans(13, relativeTo: .footnote))
-                        .foregroundStyle(Palette.textMuted)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                Text(window.title.isEmpty ? window.app : window.title)
-                    .font(Typography.body)
-                    .lineLimit(2)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, 16)
+            .frame(height: Self.rowHeight)
+            .contentShape(.rect)
         }
-        .padding(.vertical, 4)
-        .contentShape(.rect)
+        .buttonStyle(.plain)
     }
 }
