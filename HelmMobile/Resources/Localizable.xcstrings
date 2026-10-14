@@ -2323,16 +2323,6 @@
         }
       }
     },
-    "Click the password field on the Mac, then unlock it from here.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Нажмите на поле пароля на экране Mac, затем разблокируйте его отсюда."
-          }
-        }
-      }
-    },
     "Clone": {
       "localizations": {
         "ru": {
@@ -4660,16 +4650,6 @@
         }
       }
     },
-    "Mac is locked": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac заблокирован"
-          }
-        }
-      }
-    },
     "Mac unlocked": {
       "localizations": {
         "ru": {
@@ -5848,16 +5828,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть тред на телефоне"
-          }
-        }
-      }
-    },
-    "Opens a field for the Mac's password": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Открывает поле для пароля Mac"
           }
         }
       }
@@ -8796,16 +8766,6 @@
         }
       }
     },
-    "Unlock": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разблокировать"
-          }
-        }
-      }
-    },
     "Unlock Mac": {
       "localizations": {
         "ru": {
@@ -8822,16 +8782,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Разблокировка была выключена на Mac."
-          }
-        }
-      }
-    },
-    "Unlocking…": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разблокировка…"
           }
         }
       }

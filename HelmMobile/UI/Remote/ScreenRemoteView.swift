@@ -9,7 +9,7 @@ struct ScreenRemoteView: View {
     @State private var remote: ScreenRemote
     @State private var viewport = ScreenViewport()
     /// The login card is up over the Mac's screen (its password lives and dies with it); closed,
-    /// a slim bar at the bottom brings it back.
+    /// a lock button on the toolbar brings it back.
     @State private var showsUnlock = false
     @State private var showsUnlocked = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -51,38 +51,27 @@ struct ScreenRemoteView: View {
         }
         .overlay {
             if !viewport.keyboardShown {
-                ScreenToolbarDock(remote: remote, viewport: viewport, leading: $toolbarLeading) { close() }
+                ScreenToolbarDock(remote: remote, viewport: viewport, leading: $toolbarLeading, unlock: reopenUnlock) { close() }
                     .transition(.opacity)
             }
         }
         .overlay {
-            // Centred like the Mac's own login; closed, it leaves a bar low and small, so the Mac's
-            // login screen stays reachable above it. The keyboard's key row has the bottom while
-            // it's up for the Mac.
-            Group {
-                if remote.phase == .live, remote.isLocked == true, !viewport.wantsKeyboard {
-                    if showsUnlock, unlockUsable {
-                        ScreenLoginCard(remote: remote) { showsUnlock = false }
-                            .transition(.opacity)
-                    } else {
-                        ScreenLockPanel(remote: remote) { showsUnlock = true }
-                            .padding(.horizontal, 12)
-                            .padding(.bottom, 12)
-                            .frame(maxHeight: .infinity, alignment: .bottom)
-                            .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
-                    }
-                } else if showsUnlocked {
-                    unlockedBadge
-                        .padding(.bottom, 12)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
-                }
+            // Centred like the Mac's own login. The keyboard's key row has the screen while it's up
+            // for the Mac.
+            if remote.phase == .live, remote.isLocked == true, showsUnlock, !viewport.wantsKeyboard {
+                ScreenLoginCard(remote: remote) { showsUnlock = false }
+                    .transition(.opacity)
+            } else if showsUnlocked {
+                unlockedBadge
+                    .padding(.bottom, 12)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
         }
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .easeInOut(duration: 0.25), value: showsUnlock)
         .onChange(of: remote.isLocked) { was, locked in
             // Locked, the card comes up on its own, as the Mac's login does.
-            if locked == true, was != true { showsUnlock = unlockUsable }
+            if locked == true, was != true { showsUnlock = true }
             guard locked == false else { return }
             showsUnlock = false
             // Only the Mac reporting itself unlocked counts, never the password having been sent.
@@ -98,9 +87,8 @@ struct ScreenRemoteView: View {
             if phase != .live { showsUnlock = false }
         }
         .onChange(of: unlockUsable) { _, usable in
-            // Turned off on the Mac mid-way: the bar folds back and says where to turn it on;
-            // turned on while locked, the card comes up.
-            showsUnlock = usable && remote.isLocked == true
+            // Turned on on the Mac while locked: the card comes up with its field.
+            if usable, remote.isLocked == true { showsUnlock = true }
         }
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.15), value: remote.isLocked)
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.15), value: showsUnlocked)
@@ -125,6 +113,12 @@ struct ScreenRemoteView: View {
     }
 
     private var unlockUsable: Bool { remote.unlockEnabled && remote.lockStateAvailable }
+
+    /// Brings the login card back while the Mac is locked and it's been put away.
+    private var reopenUnlock: (() -> Void)? {
+        guard remote.phase == .live, remote.isLocked == true, !showsUnlock else { return nil }
+        return { showsUnlock = true }
+    }
 
     private var unlockedBadge: some View {
         Label("Mac unlocked", systemImage: "lock.open.fill")
@@ -1123,10 +1117,14 @@ private struct ScreenMiniMap: View {
 private struct ScreenToolbar: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
+    let unlock: (() -> Void)?
     let close: () -> Void
 
     var body: some View {
         VStack(spacing: 4) {
+            if let unlock {
+                button("lock.fill", label: "Unlock Mac", action: unlock)
+            }
             button("keyboard", label: "Keyboard") { viewport.wantsKeyboard = true }
             button(viewport.isZoomedIn ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
@@ -1173,6 +1171,7 @@ private struct ScreenToolbarDock: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
     @Binding var leading: Bool
+    let unlock: (() -> Void)?
     let close: () -> Void
     /// The tab's height on the edge, as a fraction of the screen's.
     @AppStorage(PhonePreferences.screenToolbarPositionKey) private var position = 0.5
@@ -1215,7 +1214,7 @@ private struct ScreenToolbarDock: View {
         let edgeX = leading ? 0 : size.width
         let columnX = edgeX + (leading ? 1 : -1) * (out * travel - Self.columnWidth / 2 - 8)
         return ZStack {
-            ScreenToolbar(remote: remote, viewport: viewport, close: close)
+            ScreenToolbar(remote: remote, viewport: viewport, unlock: unlock, close: close)
                 .glassEffect(.regular, in: .capsule)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
                 // Simultaneous and only past a short way, so taps still reach the buttons and menus.
@@ -1517,75 +1516,6 @@ private struct ScreenWindowList: View {
     }
 }
 
-/// The Mac is locked and the login card is closed: a slim glass bar at the bottom that says so
-/// and opens the card again.
-private struct ScreenLockPanel: View {
-    let remote: ScreenRemote
-    let open: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ScreenLockGlyph(failed: remote.unlockMessage != nil)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Mac is locked")
-                    .font(Typography.sans(15, .semibold, relativeTo: .subheadline))
-                    .accessibilityAddTraits(.isHeader)
-                detail
-                    .font(Typography.footnote)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            action
-        }
-        .accessibilityElement(children: .contain)
-        .foregroundStyle(.white)
-        .padding(12)
-        .frame(maxWidth: 520)
-        .glassEffect(.regular, in: .rect(cornerRadius: 22))
-        // Taps between the controls stay here instead of clicking the Mac underneath.
-        .contentShape(.rect(cornerRadius: 22))
-        .animation(.easeInOut(duration: 0.2), value: remote.unlockInProgress)
-        .animation(.easeInOut(duration: 0.2), value: remote.unlockMessage)
-        .onChange(of: remote.unlockMessage) { _, message in
-            if let message { AccessibilityNotification.Announcement(message).post() }
-        }
-    }
-
-    @ViewBuilder private var detail: some View {
-        if !remote.lockStateAvailable {
-            Text("The Mac's lock state is unavailable. Reconnect and try again.")
-                .foregroundStyle(.white.opacity(0.7))
-        } else if !remote.unlockEnabled {
-            Text("Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections.")
-                .foregroundStyle(.white.opacity(0.7))
-        } else if remote.unlockInProgress {
-            Text("Waiting for the Mac to confirm…")
-                .foregroundStyle(.white.opacity(0.7))
-        } else if let message = remote.unlockMessage {
-            Text(message).foregroundStyle(ScreenLockGlyph.problem)
-        } else {
-            Text("Click the password field on the Mac, then unlock it from here.")
-                .foregroundStyle(.white.opacity(0.7))
-        }
-    }
-
-    @ViewBuilder private var action: some View {
-        if remote.unlockInProgress {
-            // Already on its way to the Mac: nothing here can call it back, so nothing pretends to.
-            ProgressView()
-                .tint(.white)
-                .frame(width: 44, height: 44)
-                .accessibilityLabel("Unlocking…")
-        } else if remote.lockStateAvailable, remote.unlockEnabled {
-            Button(remote.unlockMessage == nil ? "Unlock" : "Try again", action: open)
-                .font(Typography.sans(15, .semibold, relativeTo: .subheadline))
-                .buttonStyle(.glassProminent)
-                .tint(Palette.accent)
-                .accessibilityHint("Opens a field for the Mac's password")
-        }
-    }
-}
-
 /// The Mac's login, from the phone, in the middle of the screen as on the Mac: the user's round
 /// picture, their name, a capsule for the password with the arrow inside, and a line under it.
 /// The password is this view's own state: gone when it closes, when it's sent, and when the app
@@ -1594,6 +1524,8 @@ private struct ScreenLoginCard: View {
     let remote: ScreenRemote
     let close: () -> Void
     @State private var password = ""
+    /// Why the last try didn't take.
+    private static let problem = Color(red: 1, green: 0.62, blue: 0.5)
     /// Bumped on each failed try; the field shakes, as the Mac's does.
     @State private var failures = 0
     @FocusState private var focused: Bool
@@ -1602,8 +1534,11 @@ private struct ScreenLoginCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var canSubmit: Bool {
-        !password.isEmpty && !remote.unlockInProgress && remote.unlockEnabled
+        !password.isEmpty && !remote.unlockInProgress && usable
     }
+
+    /// The Mac reports its lock and lets the phone unlock it; otherwise the card says why not.
+    private var usable: Bool { remote.lockStateAvailable && remote.unlockEnabled }
 
     /// Landscape on a phone, keyboard up: little room, so only what's needed.
     private var compact: Bool { verticalSizeClass == .compact }
@@ -1617,8 +1552,10 @@ private struct ScreenLoginCard: View {
                 .font(Typography.sans(compact ? 17 : 20, .semibold, relativeTo: .title3))
                 .lineLimit(1)
                 .accessibilityAddTraits(.isHeader)
-            field
-                .modifier(ShakeEffect(shakes: reduceMotion ? 0 : CGFloat(failures)))
+            if usable {
+                field
+                    .modifier(ShakeEffect(shakes: reduceMotion ? 0 : CGFloat(failures)))
+            }
             status
                 .font(Typography.footnote)
                 .multilineTextAlignment(.center)
@@ -1715,16 +1652,22 @@ private struct ScreenLoginCard: View {
         .frame(width: 260, height: 44)
         .glassEffect(.regular, in: .capsule)
         .overlay {
-            Capsule().strokeBorder(remote.unlockMessage != nil ? ScreenLockGlyph.problem.opacity(0.7) : .white.opacity(0.18))
+            Capsule().strokeBorder(remote.unlockMessage != nil ? Self.problem.opacity(0.7) : .white.opacity(0.18))
         }
         .animation(.easeInOut(duration: 0.15), value: password.isEmpty)
     }
 
     @ViewBuilder private var status: some View {
-        if remote.unlockInProgress {
+        if !remote.lockStateAvailable {
+            Text("The Mac's lock state is unavailable. Reconnect and try again.")
+                .foregroundStyle(.white.opacity(0.7))
+        } else if !remote.unlockEnabled {
+            Text("Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections.")
+                .foregroundStyle(.white.opacity(0.7))
+        } else if remote.unlockInProgress {
             Text("Waiting for the Mac to confirm…").foregroundStyle(.white.opacity(0.7))
         } else if let message = remote.unlockMessage {
-            Text(message).foregroundStyle(ScreenLockGlyph.problem)
+            Text(message).foregroundStyle(Self.problem)
         } else if !compact {
             VStack(spacing: 4) {
                 Text("The password field must be selected on the Mac.")
@@ -1754,22 +1697,5 @@ private struct ShakeEffect: GeometryEffect {
 
     func effectValue(size: CGSize) -> ProjectionTransform {
         ProjectionTransform(CGAffineTransform(translationX: 10 * sin(shakes * .pi * 4), y: 0))
-    }
-}
-
-/// The lock in its little well; it turns warm when the last try didn't take.
-private struct ScreenLockGlyph: View {
-    let failed: Bool
-
-    static let problem = Color(red: 1, green: 0.62, blue: 0.5)
-
-    var body: some View {
-        Image(systemName: failed ? "lock.trianglebadge.exclamationmark.fill" : "lock.fill")
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(failed ? Self.problem : .white)
-            .contentTransition(.symbolEffect(.replace))
-            .frame(width: 38, height: 38)
-            .background(.white.opacity(0.12), in: .circle)
-            .accessibilityHidden(true)
     }
 }

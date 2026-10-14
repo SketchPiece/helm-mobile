@@ -39,14 +39,21 @@
    "y": 960,
    "w": 1194,
    "h": 834,
-   "title": "Now · closed: Mac's screen usable, bar brings the card back"
+   "title": "Now · closed: the Mac's screen is usable, the lock on the toolbar brings the card back"
   },
   "a5-iphone.html": {
-   "x": 3882,
+   "x": 5176,
    "y": 0,
    "w": 390,
    "h": 844,
    "title": "Now · iPhone"
+  },
+  "a6-disabled.html": {
+   "x": 3882,
+   "y": 960,
+   "w": 1194,
+   "h": 834,
+   "title": "Now · unlocking turned off on the Mac"
   }
  },
  "order": [
@@ -55,7 +62,8 @@
   "a2-typing.html",
   "a3-wrong.html",
   "a4-folded.html",
-  "a5-iphone.html"
+  "a5-iphone.html",
+  "a6-disabled.html"
  ],
  "notes": {
   "t": {
@@ -63,7 +71,7 @@
    "y": -260,
    "text": "Screen remote · unlocking the Mac",
    "kind": "title1",
-   "maxW": 4300
+   "maxW": 5600
   },
   "h1": {
    "x": 0,
@@ -87,7 +95,7 @@
    "y": 900,
    "w": 520,
    "color": "blue",
-   "text": "The card comes up on its own while the Mac is locked. “Show the Mac's screen” hides it so you can click the password field on the Mac; the bar at the bottom brings it back."
+   "text": "No bar at the bottom anymore. The card comes up on its own while the Mac is locked. “Show the Mac's screen” hides it so you can click the password field on the Mac; the lock button on the toolbar brings it back."
   }
  ],
  "designSystems": []
