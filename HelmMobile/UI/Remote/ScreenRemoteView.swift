@@ -1079,7 +1079,8 @@ private struct ScreenToolbar: View {
 /// The toolbar on a side of the screen, put away like picture in picture: once the screen is
 /// touched the column slides off past the edge and leaves a tab with a chevron. Pulling the tab
 /// brings the column out under the finger (let go past halfway and it opens), a tap opens it
-/// outright, and the tab drags along the edge, or across to the other one.
+/// outright, and the tab drags along the edge, or across to the other one. The open column
+/// swipes back off the edge the same way.
 private struct ScreenToolbarDock: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
@@ -1129,7 +1130,17 @@ private struct ScreenToolbarDock: View {
             ScreenToolbar(remote: remote, viewport: viewport, close: close)
                 .glassEffect(.regular, in: .capsule)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
-                .allowsHitTesting(out > 0.99)
+                // Simultaneous and only past a short way, so taps still reach the buttons and menus.
+                .simultaneousGesture(DragGesture(minimumDistance: 12, coordinateSpace: .named("dock"))
+                    .updating($pull) { drag, pull, _ in
+                        let outward = leading ? -drag.translation.width : drag.translation.width
+                        pull = Pull(out: 1 - min(max(outward / travel, 0), 1), down: 0)
+                    }
+                    .onEnded { drag in
+                        let outward = leading ? -drag.predictedEndTranslation.width : drag.predictedEndTranslation.width
+                        if outward > travel / 2 { viewport.toolbarHidden = true }
+                    })
+                .allowsHitTesting(out > 0.99 || pull != nil)
                 .position(x: columnX, y: y)
             tab(at: CGPoint(x: edgeX, y: tabY), travel: travel, size: size)
                 .opacity(max(0, 1 - out * 2.5))
