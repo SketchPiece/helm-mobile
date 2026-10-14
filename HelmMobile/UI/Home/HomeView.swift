@@ -111,7 +111,7 @@ struct HomeView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Palette.canvas)
+        .background(background)
         .onScrollPhaseChange { _, phase in Perf.scroll(isSidebar ? "sidebar" : "home", phase) }
         .overlay { emptyState(entries: entries) }
         .undoToast()
@@ -547,9 +547,13 @@ struct HomeView: View {
         }
     }
 
+    /// The iPad sidebar sits one step lighter than the thread beside it, so the two columns part
+    /// without a line; the thread keeps the darkest tone as the page.
+    private var background: Color { isSidebar ? Palette.surface : Palette.canvas }
+
     /// In the iPad sidebar, the row of what's open on the right is lit, like a selection in Mail.
     private func rowBackground(selected: Bool) -> some View {
-        Palette.canvas.overlay {
+        background.overlay {
             if isSidebar, selected {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Palette.accent.opacity(0.16))

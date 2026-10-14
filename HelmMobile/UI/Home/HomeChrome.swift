@@ -143,7 +143,8 @@ struct ProjectSwitcher: View, @MainActor Equatable {
             .padding(.leading, 8)
             .padding(.trailing, 12)
             .frame(height: 44)
-            .background(Palette.surface, in: .rect(cornerRadius: 12))
+            // A step above the sidebar's own surface.
+            .background(Palette.surfaceRaised, in: .rect(cornerRadius: 12))
             .contentShape(.rect)
         }
         .menuStyle(.button)

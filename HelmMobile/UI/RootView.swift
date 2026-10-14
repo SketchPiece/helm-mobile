@@ -286,7 +286,7 @@ private struct SplitRoot: View {
                 .toolbar(removing: .sidebarToggle)
                 // With a keyboard up the column stops above its shortcut bar; without this the split
                 // view's own grey shows through below the remote pill.
-                .background { Palette.canvas.ignoresSafeArea() }
+                .background { Palette.surface.ignoresSafeArea() }
                 .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
         } detail: {
             NavigationStack(path: detailPath) {

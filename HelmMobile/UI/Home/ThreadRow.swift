@@ -55,6 +55,7 @@ struct ThreadRow: View {
     let entry: ThreadListEntry
     let environment: EnvironmentSession?
     var showsProject = true
+    @Environment(\.isSidebar) private var isSidebar
 
     var body: some View {
         let _ = Perf.count("body.ThreadRow")
@@ -72,7 +73,8 @@ struct ThreadRow: View {
                         Circle()
                             .fill(woke ? Palette.accentText : phase.color)
                             .frame(width: 13, height: 13)
-                            .overlay(Circle().stroke(Palette.canvas, lineWidth: 2.5))
+                            // The ring cuts the lamp out of the tile in the list's own colour.
+                            .overlay(Circle().stroke(isSidebar ? Palette.surface : Palette.canvas, lineWidth: 2.5))
                             .offset(x: 3, y: 3)
                     }
                 }
