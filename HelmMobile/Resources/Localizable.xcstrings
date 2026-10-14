@@ -3493,6 +3493,16 @@
         }
       }
     },
+    "Enter your password here, or click the password field on the Mac first.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введите пароль здесь или сначала нажмите на поле пароля на Mac."
+          }
+        }
+      }
+    },
     "Escape": {
       "localizations": {
         "ru": {

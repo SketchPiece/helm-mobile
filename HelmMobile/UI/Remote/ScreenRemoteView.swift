@@ -1516,28 +1516,39 @@ private struct ScreenLockedDialog: View {
     let open: () -> Void
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Image(systemName: "lock.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .frame(width: 44, height: 44)
+                .font(.system(size: 20, weight: .semibold))
+                .frame(width: 52, height: 52)
                 .background(.white.opacity(0.14), in: .circle)
+                .padding(.bottom, 4)
                 .accessibilityHidden(true)
             Text("Mac is locked")
-                .font(Typography.sans(17, .semibold, relativeTo: .headline))
+                .font(Typography.sans(18, .semibold, relativeTo: .headline))
                 .accessibilityAddTraits(.isHeader)
-            Button("Unlock", action: open)
-                .font(Typography.sans(15, .semibold, relativeTo: .subheadline))
-                .buttonStyle(.glassProminent)
-                .tint(Palette.accent)
-                .padding(.top, 2)
-                .accessibilityHint("Opens a field for the Mac's password")
+            Text("Enter your password here, or click the password field on the Mac first.")
+                .font(Typography.sans(14, .regular, relativeTo: .subheadline))
+                .foregroundStyle(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(action: open) {
+                Text("Unlock")
+                    .font(Typography.sans(16, .semibold, relativeTo: .body))
+                    .frame(maxWidth: .infinity, minHeight: 32)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(Palette.accent)
+            .padding(.top, 10)
+            .accessibilityHint("Opens a field for the Mac's password")
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 28)
-        .padding(.vertical, 20)
-        .glassEffect(.regular, in: .rect(cornerRadius: 26))
+        .padding(.horizontal, 26)
+        .padding(.top, 24)
+        .padding(.bottom, 20)
+        .frame(width: 300)
+        .glassEffect(.regular, in: .rect(cornerRadius: 28))
         // Taps on the dialog stay here instead of clicking the Mac underneath.
-        .contentShape(.rect(cornerRadius: 26))
+        .contentShape(.rect(cornerRadius: 28))
         .accessibilityElement(children: .contain)
     }
 }
