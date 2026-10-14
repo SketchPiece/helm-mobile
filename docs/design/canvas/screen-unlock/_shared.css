@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+:root{--accent:#E8A33D;--accentFg:#26211D;--problem:#FF9E80}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow:hidden;position:relative;background:#000;color:#fff;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+/* The Mac's own lock screen, as the video shows it */
+.mac{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 20% 10%,#6d5bd0 0%,transparent 55%),
+  radial-gradient(90% 80% at 85% 30%,#d06b8f 0%,transparent 60%),
+  radial-gradient(120% 100% at 50% 110%,#1f3c88 0%,transparent 60%),#2a2350;overflow:hidden}
+.mac .date{position:absolute;left:0;right:0;text-align:center;font-weight:500;color:rgba(255,255,255,.85)}
+.mac .time{position:absolute;left:0;right:0;text-align:center;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:-2px;font-family:-apple-system,'SF Pro Display',system-ui,sans-serif}
+.mac .who{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px}
+.mac .who .av{border-radius:50%;background:linear-gradient(#a7a7a7,#6b6b6b);display:grid;place-items:center;font-weight:500;font-family:-apple-system,system-ui;color:#fff}
+.mac .who .nm{font-weight:600;font-size:11px}
+.mac .who .pw{border-radius:99px;background:rgba(255,255,255,.22);color:rgba(255,255,255,.6);font-size:9px;display:flex;align-items:center;padding:0 9px}
+.status{position:absolute;top:0;left:0;right:0;height:32px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-size:14px;font-weight:600;z-index:9}
+.glass{background:rgba(40,36,32,.5);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2)}
+.tb{position:absolute;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:30px;z-index:6}
+.tb .b{width:44px;height:44px;border-radius:22px;display:grid;place-items:center}
+/* Helm's lock UI */
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:7}
+.login{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.avatar{width:92px;height:92px;border-radius:50%;background:linear-gradient(#9e9e9e,#6b6b6b);display:grid;place-items:center;font:500 35px -apple-system,'SF Pro Rounded',system-ui;border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.name{font-size:20px;font-weight:600}
+.field{width:260px;height:44px;border-radius:22px;display:flex;align-items:center;padding:0 4px 0 16px;font-size:15px}
+.field .ph{flex:1;text-align:left;color:rgba(255,255,255,.55)}
+.field .dots{flex:1;text-align:left;letter-spacing:3px;font-size:18px}
+.field .go{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.85);color:#3a3530;display:grid;place-items:center;margin-right:3px}
+.field.bad{border-color:rgba(255,158,128,.7)}
+.note{font-size:13px;line-height:1.4;color:rgba(255,255,255,.7);max-width:300px}
+.note.faint{color:rgba(255,255,255,.5)}
+.note.problem{color:var(--problem)}
+.link{font-size:14px;font-weight:500;color:rgba(255,255,255,.75);height:44px;display:grid;place-items:center}
+.bar{position:absolute;z-index:8;display:flex;align-items:center;gap:12px;padding:12px;border-radius:22px;width:520px;left:50%;transform:translateX(-50%)}
+.glyph{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;flex-shrink:0}
+.bar .t{flex:1;text-align:left}
+.bar .t b{display:block;font-size:15px;font-weight:600}
+.bar .t span{font-size:13px;color:rgba(255,255,255,.7)}
+.btn{height:38px;padding:0 16px;border-radius:19px;background:var(--accent);color:var(--accentFg);font-weight:600;font-size:15px;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.panel{position:absolute;z-index:8;left:50%;transform:translateX(-50%);width:460px;padding:16px;border-radius:26px;display:flex;flex-direction:column;gap:12px}
+.panel .row{display:flex;gap:12px;align-items:flex-start}
+.panel .x{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center}
+.panel .in{flex:1;height:46px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;padding:0 14px;color:rgba(255,255,255,.5);font-size:15px}
+.circle{width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accentFg);display:grid;place-items:center;opacity:.55}
+.kb{position:absolute;left:0;right:0;bottom:0;background:#2b2b2e;z-index:9;display:flex;flex-direction:column;gap:9px;padding:10px 6px 30px}
+.kb .r{display:flex;gap:6px;justify-content:center}
+.kb .k{height:44px;flex:1;max-width:84px;border-radius:7px;background:#5e5e62;display:grid;place-items:center;font-size:18px}
+.home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#fff;z-index:10}
+.callout{position:absolute;z-index:11;font:12px 'IBM Plex Sans';color:#26211D;background:#FBF6EC;border-radius:8px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:240px;line-height:1.35}

@@ -1,0 +1,94 @@
+{
+ "v": 3,
+ "title": "Screen remote · unlocking the Mac",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-before.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1194,
+   "h": 834,
+   "title": "Before · panel docked at the bottom"
+  },
+  "a1-card.html": {
+   "x": 1294,
+   "y": 0,
+   "w": 1194,
+   "h": 834,
+   "title": "Now · centered like the Mac's login"
+  },
+  "a2-typing.html": {
+   "x": 1294,
+   "y": 960,
+   "w": 1194,
+   "h": 834,
+   "title": "Now · typing, arrow appears inside"
+  },
+  "a3-wrong.html": {
+   "x": 2588,
+   "y": 0,
+   "w": 1194,
+   "h": 834,
+   "title": "Now · wrong password: field shakes, reason below"
+  },
+  "a4-folded.html": {
+   "x": 2588,
+   "y": 960,
+   "w": 1194,
+   "h": 834,
+   "title": "Now · closed: Mac's screen usable, bar brings the card back"
+  },
+  "a5-iphone.html": {
+   "x": 3882,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Now · iPhone"
+  }
+ },
+ "order": [
+  "0-before.html",
+  "a1-card.html",
+  "a2-typing.html",
+  "a3-wrong.html",
+  "a4-folded.html",
+  "a5-iphone.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Screen remote · unlocking the Mac",
+   "kind": "title1",
+   "maxW": 4300
+  },
+  "h1": {
+   "x": 0,
+   "y": -120,
+   "text": "Before",
+   "kind": "title2",
+   "maxW": 1194
+  },
+  "h2": {
+   "x": 1294,
+   "y": -120,
+   "text": "Now: centered, like the Mac's own login",
+   "kind": "title2",
+   "maxW": 2500
+  }
+ },
+ "annotations": [
+  {
+   "id": "claude-1",
+   "x": 0,
+   "y": 900,
+   "w": 520,
+   "color": "blue",
+   "text": "The card comes up on its own while the Mac is locked. “Show the Mac's screen” hides it so you can click the password field on the Mac; the bar at the bottom brings it back."
+  }
+ ],
+ "designSystems": []
+}
