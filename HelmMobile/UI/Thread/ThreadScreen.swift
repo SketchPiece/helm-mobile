@@ -161,16 +161,15 @@ private struct ThreadContent: View {
                             if visible { followsBottom = true }
                         }
                 }
-                // A wide window lets the last message breathe above the composer. The room is part
-                // of this row, so scrolling to it lands below the room, not short of it.
-                .padding(.bottom, sizeClass == .regular ? 16 : 0)
+                // Room between the last message and the composer. It is part of this row, so
+                // scrolling to it lands below the room, not short of it with the room under the composer.
+                .padding(.bottom, 16)
                 // The target of "scroll to bottom" (scrolling to an id materialises the lazy rows,
                 // scrolling to the edge can leave them blank until the next touch).
                 .id(Self.bottomId)
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
-            .padding(.bottom, 8)
             .readableColumn()
             // Pins the drawn part to its first block, so new messages grow it at the bottom only.
             .onChange(of: shown.first?.id, initial: true) { _, id in
