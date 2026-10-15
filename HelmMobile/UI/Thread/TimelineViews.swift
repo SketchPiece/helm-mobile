@@ -5,6 +5,7 @@ struct UserBubble: View {
     let item: TurnItem
     let environment: EnvironmentSession
     @State private var viewing: ChatAttachment?
+    @State private var selecting: SelectableText?
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
@@ -43,7 +44,11 @@ struct UserBubble: View {
                         Button {
                             UIPasteboard.general.string = ClipboardText.markdown(item.text, context: item.raw["context"])
                         } label: { Label("Copy", systemImage: "doc.on.doc") }
+                        Button {
+                            selecting = SelectableText(text: ClipboardText.markdown(item.text, context: item.raw["context"]))
+                        } label: { Label("Select text", systemImage: "selection.pin.in.out") }
                     }
+                    .sheet(item: $selecting) { SelectTextSheet(text: $0.text) }
             }
             let steered = item.inputIntent == "steer" || item.inputIntent == "promoted_queued_to_steer"
             let sentAt = item.startedAt ?? item.completedAt
