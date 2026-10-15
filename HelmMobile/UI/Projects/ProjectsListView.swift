@@ -9,7 +9,7 @@ struct ProjectsListView: View {
     @State private var deleting: ProjectDeletion?
 
     private var projects: [(environment: EnvironmentSession, project: Project)] {
-        let all = model.allProjects().filter { $0.environment.config?.isScratch($0.project) != true }
+        let all = model.allProjects().filter { !$0.environment.isScratch($0.project) }
         guard !query.isEmpty else { return all }
         return all.filter {
             $0.project.title.localizedCaseInsensitiveContains(query) || $0.project.workspaceRoot.localizedCaseInsensitiveContains(query)

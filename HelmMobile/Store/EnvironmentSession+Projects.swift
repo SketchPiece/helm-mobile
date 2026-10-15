@@ -13,7 +13,9 @@ extension EnvironmentSession {
     }
 
     /// `projects.ensureScratch`: the environment's "no project" workspace, made on first use.
+    /// Picked before the Mac is connected, it waits for the connection.
     func ensureScratchProject() async throws -> Project {
+        try await waitUntilLive(timeout: .seconds(60))
         let result = try await call("projects.ensureScratch", [:])
         guard let id = result["projectId"]?.string else { throw RPCError.defect("No project id") }
         return try await arrived(id)

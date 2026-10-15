@@ -7,6 +7,8 @@ struct SavedEnvironment: Codable, Identifiable, Hashable, Sendable {
     var label: String
     var baseURL: URL
     var pairedAt: Date
+    /// The Mac's "no project" folder as last seen, so it can be offered before the Mac connects.
+    var scratchWorkspaceRoot: String?
 }
 
 enum SavedEnvironments {

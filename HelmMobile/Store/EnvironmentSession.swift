@@ -74,6 +74,14 @@ final class EnvironmentSession: Identifiable {
     var isOnThisNetwork: Bool { localBaseURL != nil || NearbyMacs.shared.contains(id) }
     var isLive: Bool { status == .live }
 
+    /// The "no project" folder: from the config, or as last seen while the Mac isn't connected yet.
+    var scratchWorkspaceRoot: String? { config?.scratchWorkspaceRoot ?? saved.scratchWorkspaceRoot }
+    func isScratch(_ project: Project) -> Bool {
+        scratchWorkspaceRoot.map { project.workspaceRoot == $0 } ?? false
+    }
+    /// Has a "no project" folder, or hasn't said yet (not connected since this was remembered).
+    var offersScratch: Bool { scratchWorkspaceRoot != nil || config == nil }
+
     var logStatus: String {
         switch status {
         case .connecting: "connecting"
@@ -294,6 +302,10 @@ final class EnvironmentSession: Identifiable {
         if saved.label != config.label {
             saved.label = config.label
             AppModel.persistLabel(id: id, label: config.label)
+        }
+        if saved.scratchWorkspaceRoot != config.scratchWorkspaceRoot {
+            saved.scratchWorkspaceRoot = config.scratchWorkspaceRoot
+            AppModel.persistScratchRoot(id: id, root: config.scratchWorkspaceRoot)
         }
 
         var shellPayload: [String: JSON] = [:]

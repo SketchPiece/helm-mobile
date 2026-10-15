@@ -25,12 +25,13 @@ struct NewThreadFanItem: Identifiable {
         let entries = model.allThreads().sorted { ($0.thread.updatedAt ?? .distantPast) > ($1.thread.updatedAt ?? .distantPast) }
         for entry in entries where items.count < limit {
             guard let project = entry.project, let environment = model.environment(entry.ref.environmentId),
-                  environment.config?.isScratch(project) != true
+                  !environment.isScratch(project)
             else { continue }
             let item = NewThreadFanItem(kind: .project(environment, project))
             if seen.insert(item.id).inserted { items.append(item) }
         }
-        if let environment = model.environments.first(where: { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }) {
+        // Always there, even before the Mac connects.
+        if let environment = model.scratchEnvironment {
             items.append(NewThreadFanItem(kind: .project(environment, nil)))
         }
         if !model.allProjects().isEmpty {

@@ -49,7 +49,7 @@ struct NewThreadView: View {
         environment.map { $0.isLive && $0.config != nil && !$0.shell.projects.isEmpty } ?? false
     }
     /// "No project" threads run in the scratch folder, always in place.
-    private var isScratch: Bool { project.map { environment?.config?.isScratch($0) == true } ?? false }
+    private var isScratch: Bool { project.map { environment?.isScratch($0) == true } ?? false }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -451,7 +451,7 @@ struct NewThreadView: View {
             return
         }
         guard let environment = model.environment(target.environmentId) else { return }
-        if let scratch = environment.shell.projects.values.first(where: { environment.config?.isScratch($0) == true }) {
+        if let scratch = environment.shell.projects.values.first(where: { environment.isScratch($0) }) {
             projectId = scratch.id
             return
         }
@@ -735,14 +735,14 @@ struct ProjectPicker: View {
         .presentationDetents([.medium, .large])
     }
 
-    /// Connected Macs that can run a thread without a project.
+    /// Macs that can run a thread without a project, connected yet or not.
     private var scratchEnvironments: [EnvironmentSession] {
-        model.environments.filter { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }
+        model.environments.filter(\.offersScratch)
     }
 
     private func scratchRow(_ environment: EnvironmentSession) -> some View {
         let selected = environment.id == selectedEnvironment
-            && environment.project(selectedProject).map { environment.config?.isScratch($0) == true } == true
+            && environment.project(selectedProject).map { environment.isScratch($0) } == true
         return Button {
             pickScratch(on: environment)
         } label: {
@@ -781,7 +781,7 @@ struct ProjectPicker: View {
 
     /// Every project except the scratch ones, which have their own row.
     private var filtered: [(environment: EnvironmentSession, project: Project)] {
-        let all = model.allProjects().filter { $0.environment.config?.isScratch($0.project) != true }
+        let all = model.allProjects().filter { !$0.environment.isScratch($0.project) }
         guard !query.isEmpty else { return all }
         return all.filter { $0.project.title.localizedCaseInsensitiveContains(query) || $0.project.workspaceRoot.localizedCaseInsensitiveContains(query) }
     }

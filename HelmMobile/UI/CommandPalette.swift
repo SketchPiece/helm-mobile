@@ -35,7 +35,7 @@ extension Router {
             return nil
         }
         guard let environment = model.environment(environmentId), let project = environment.project(projectId) else { return nil }
-        return NewThreadOption(environment: environment, project: environment.config?.isScratch(project) == true ? nil : project)
+        return NewThreadOption(environment: environment, project: environment.isScratch(project) ? nil : project)
     }
 
     /// Where ⌘N can start: what's open first, then "no project", then every project, the latest worked in first.
@@ -43,11 +43,11 @@ extension Router {
         var options: [NewThreadOption] = []
         if let current = currentProject(in: model) { options.append(current) }
         if !options.contains(where: { $0.project == nil }),
-           let environment = model.environments.first(where: { $0.isLive && $0.config?.scratchWorkspaceRoot != nil })
+           let environment = model.scratchEnvironment
         {
             options.insert(NewThreadOption(environment: environment, project: nil), at: min(1, options.count))
         }
-        for (environment, project) in model.allProjects() where environment.config?.isScratch(project) != true {
+        for (environment, project) in model.allProjects() where !environment.isScratch(project) {
             let option = NewThreadOption(environment: environment, project: project)
             if !options.contains(where: { $0.id == option.id }) { options.append(option) }
         }
@@ -74,7 +74,7 @@ extension Router {
     /// ⌥⌘N: in the Mac's scratch folder.
     func startNewThreadWithoutProject(in model: AppModel) {
         palette = nil
-        guard let environment = model.environments.first(where: { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }) else {
+        guard let environment = model.scratchEnvironment else {
             return startNewThread()
         }
         startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: nil))
@@ -444,7 +444,7 @@ private struct CommandPalette: View {
     private var openProjectItems: [PaletteItem] {
         let threads = model.allThreads()
         return model.allProjects().compactMap { environment, project in
-            guard environment.config?.isScratch(project) != true else { return nil }
+            guard !environment.isScratch(project) else { return nil }
             let option = NewThreadOption(environment: environment, project: project)
             let latest = threads
                 .filter { $0.ref.environmentId == environment.id && $0.thread.projectId == project.id }
@@ -483,7 +483,7 @@ private struct CommandPalette: View {
             subtitle: nil, shortcut: "⌘N",
             effect: .open(.newThreadIn)
         ))
-        if current?.project != nil, model.environments.contains(where: { $0.isLive && $0.config?.scratchWorkspaceRoot != nil }) {
+        if current?.project != nil, model.scratchEnvironment != nil {
             items.append(PaletteItem(
                 id: "newScratch", icon: .symbol("text.bubble"),
                 title: Text("New thread without a project"),

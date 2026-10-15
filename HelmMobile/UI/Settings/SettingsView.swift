@@ -14,7 +14,7 @@ struct SettingsView: View {
     @AppStorage(PhonePreferences.screenDisplayKey) private var screenDisplay = ScreenDisplayChoice.main
 
     private var projectCount: Int {
-        model.allProjects().count { $0.environment.config?.isScratch($0.project) != true }
+        model.allProjects().count { !$0.environment.isScratch($0.project) }
     }
 
     var body: some View {

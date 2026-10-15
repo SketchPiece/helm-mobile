@@ -15,7 +15,7 @@ struct ProjectIcon: View {
     /// The project's favicon as a menu image, from the cache, drawn by hand: favicons rasterised
     /// by WebKit don't survive SwiftUI's ImageRenderer. Nil when there is none to show.
     static func menuFavicon(project: Project, environment: EnvironmentSession, size: CGFloat = 24) async -> UIImage? {
-        guard environment.config?.isScratch(project) != true,
+        guard !environment.isScratch(project),
               let key = cacheKey(project: project, environment: environment),
               let favicon = await IconCache.shared.image(for: key)
         else { return nil }
@@ -35,7 +35,7 @@ struct ProjectIcon: View {
     /// The tile without a favicon (monogram, emoji, or the scratch bubble) as a menu image, drawn
     /// right away so a menu never waits on it. Kept per look, since menus redraw with the list.
     static func menuTile(project: Project, environment: EnvironmentSession, size: CGFloat = 24) -> UIImage? {
-        let key = "\(project.id)|\(project.title)|\(project.iconKind ?? "")|\(project.iconEmoji ?? "")|\(project.iconColor ?? "")|\(environment.config?.isScratch(project) == true)"
+        let key = "\(project.id)|\(project.title)|\(project.iconKind ?? "")|\(project.iconEmoji ?? "")|\(project.iconColor ?? "")|\(environment.isScratch(project))"
         if let cached = menuTiles[key] { return cached }
         let renderer = ImageRenderer(content: ProjectIcon(project: project, environment: environment, size: size))
         renderer.scale = 3
@@ -52,7 +52,7 @@ struct ProjectIcon: View {
     }
 
     var body: some View {
-        if let project, environment?.config?.isScratch(project) == true {
+        if let project, environment?.isScratch(project) == true {
             ScratchIcon(size: size)
         } else {
             tile

@@ -97,6 +97,14 @@ final class AppModel {
         environment?.draftSync.schedule(key)
     }
 
+    static func persistScratchRoot(id: String, root: String?) {
+        var list = SavedEnvironments.load()
+        if let index = list.firstIndex(where: { $0.id == id }) {
+            list[index].scratchWorkspaceRoot = root
+            SavedEnvironments.save(list)
+        }
+    }
+
     static func persistLabel(id: String, label: String) {
         var list = SavedEnvironments.load()
         if let index = list.firstIndex(where: { $0.id == id }) {
@@ -229,6 +237,14 @@ final class AppModel {
 
     /// Projects across Macs, the latest worked in first, as the New thread fan has them: by their newest
     /// thread; projects without threads after those, by their own date.
+    /// Where "no project" starts: a connected Mac first, then one known to have the folder, then
+    /// one not heard from yet. Offered before the Mac connects; the folder is set up once it does.
+    var scratchEnvironment: EnvironmentSession? {
+        environments.first { $0.isLive && $0.scratchWorkspaceRoot != nil }
+            ?? environments.first { $0.scratchWorkspaceRoot != nil }
+            ?? environments.first { $0.config == nil }
+    }
+
     func allProjects() -> [(environment: EnvironmentSession, project: Project)] {
         var latest: [String: Date] = [:]
         for entry in allThreads() {
