@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{--canvas:#161310;--message:#221E1A;--text:#EFE7D6;--muted:#A3968A;--border:#2A2420;--accentText:#F2B550;--page:#0b0908;--done:#7DBE6A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1100px;height:760px;overflow:hidden;background:var(--page);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.board{padding:26px 32px;display:flex;flex-direction:column;gap:18px;height:100%}
+.cap{display:flex;flex-direction:column;gap:6px}
+.cap .k{font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;color:var(--accentText)}
+.cap .h{font-size:21px;font-weight:600}
+.cap .d{font-size:13.5px;line-height:1.45;color:#cfc6bb;max-width:1000px}
+.cap .d b{color:var(--text);font-weight:500}
+.screen{flex:1;background:var(--canvas);border-radius:18px;padding:22px 60px 0 60px;overflow:hidden;font-size:17px;line-height:1.55;position:relative}
+.screen p{margin-bottom:10px}
+code{font:15px 'IBM Plex Mono',monospace;background:var(--border);padding:0 3px;border-radius:3px}
+.acts{display:flex;align-items:center;color:var(--muted);margin:-2px 0 0 -9px}
+.acts .b{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.ic{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.user{display:flex;flex-direction:column;align-items:flex-end;margin:16px 0 18px 120px}
+.bubble{background:var(--message);border-radius:20px;padding:10px 14px}
+.meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:6px;padding-right:6px}
+.fold{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:15px;margin:6px 0 16px}
+.fold:after{content:"";flex:1;height:1px;background:var(--border)}
+.hover{background:#2a2420}
+.cursor{position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(239,231,214,.35);border:1px solid rgba(239,231,214,.6)}
+.tag{font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.6px;text-transform:uppercase;color:var(--accentText);margin-left:10px}

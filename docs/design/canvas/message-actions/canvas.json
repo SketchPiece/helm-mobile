@@ -1,0 +1,55 @@
+{
+ "v": 3,
+ "title": "Иконки действий под сообщениями",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0-now.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1100,
+   "h": 760,
+   "title": "Now"
+  },
+  "a-small.html": {
+   "x": 1180,
+   "y": 0,
+   "w": 1100,
+   "h": 760,
+   "title": "A. Smaller and even"
+  },
+  "b-last-hover.html": {
+   "x": 0,
+   "y": 920,
+   "w": 1100,
+   "h": 760,
+   "title": "B. Last answer only, others on hover"
+  },
+  "c-text-row.html": {
+   "x": 1180,
+   "y": 920,
+   "w": 1100,
+   "h": 760,
+   "title": "C. Quiet text row"
+  }
+ },
+ "order": [
+  "0-now.html",
+  "a-small.html",
+  "b-last-hover.html",
+  "c-text-row.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -240,
+   "text": "Иконки действий под сообщениями",
+   "kind": "title1",
+   "maxW": 2280
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
