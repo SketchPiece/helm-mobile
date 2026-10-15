@@ -20,6 +20,8 @@ final class ThreadSession {
     private(set) var savedAt: Date?
     /// Looked for a copy saved on this phone (found or not).
     private(set) var checkedSavedCopy = false
+    /// Snapshots from the server so far; the thread view checks what it shows after each.
+    private(set) var snapshotCount = 0
 
     struct OutgoingMessage: Identifiable, Hashable {
         var id: String  // messageId
@@ -160,6 +162,7 @@ final class ThreadSession {
             guard let next = snapshot else { return }
             lastSequence = item["snapshotSequence"]?.int ?? lastSequence
             projection = next
+            snapshotCount += 1
             savedAt = nil
             historyError = nil
             loadError = nil

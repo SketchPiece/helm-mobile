@@ -58,6 +58,8 @@ private struct ThreadContent: View {
     @State private var confirmingDelete = false
     /// "Mark as unread" leaves the thread; leaving must not mark it read again.
     @State private var leavesUnread = false
+    /// Which rows are on screen, for noticing a blank screen; an object, so it doesn't redraw the thread.
+    @State private var watch = BlankWatch()
 
     init(environment: EnvironmentSession, session: ThreadSession) {
         self.environment = environment
@@ -128,6 +130,7 @@ private struct ThreadContent: View {
                         TimelineDivider(label: day)
                     }
                     blockView(block, projection: projection, latestAnswer: latestAnswer)
+                        .onScrollVisibilityChange(threshold: 0.01) { watch.set(block.id, visible: $0) }
                         .id(block.id)
                 }
                 // The end of the conversation is one row, drawn whole: lazy rows there guessed
@@ -149,6 +152,7 @@ private struct ThreadContent: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onScrollVisibilityChange(threshold: 0.01) { watch.set(BlankWatch.tail, visible: $0) }
                 // Visible exactly when the end of the conversation is on screen. It sits on this row
                 // rather than being a row of its own: the lazy stack kept a row after a growing one
                 // at its old place, so it showed as visible and scrolling to it went nowhere.
@@ -183,7 +187,9 @@ private struct ThreadContent: View {
         .scrollPosition($position)
         .onScrollGeometryChange(for: ScrollMetrics.self) {
             // `scrollTo(y:)` counts from the content's top, the offset from the top inset.
-            ScrollMetrics(offset: $0.contentOffset.y + $0.contentInsets.top, height: $0.contentSize.height)
+            ScrollMetrics(offset: $0.contentOffset.y + $0.contentInsets.top, height: $0.contentSize.height,
+                          viewport: $0.containerSize.height, insetTop: $0.contentInsets.top,
+                          insetBottom: $0.contentInsets.bottom)
         } action: { old, metrics in
             scrollMetrics = metrics
             if let base = prependBase, metrics.height != base.height {
@@ -211,10 +217,16 @@ private struct ThreadContent: View {
             if phase == .idle, old == .interacting || old == .decelerating {
                 followsBottom = bottomVisible
             }
+            if phase == .idle { checkBlank("scroll ended") }
         }
         .onChange(of: contentSignature(blocks)) { old, new in
             ScrollTrace.log("content", "\(old) → \(new)")
             if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("content (animated)") } }
+            checkBlank("new content")
+        }
+        .onChange(of: session.snapshotCount) {
+            ThreadLog.record(logPrefix + "snapshot from the computer · " + stateLine())
+            checkBlank("snapshot")
         }
         .modifier(ScrollTraceHooks(followsBottom: followsBottom, isWorking: projection?.isWorking == true,
                                    startIndex: startIndex, blockCount: blocks.count))
@@ -290,6 +302,8 @@ private struct ThreadContent: View {
                 try? await Task.sleep(for: .milliseconds(120))
                 scrollToBottom("opened")
                 await settleAtBottom("opened")
+                ThreadLog.record(logPrefix + "opened · " + stateLine())
+                checkBlank("opened")
             }
         }
         // Keep the latest message in view when the keyboard (or the composer) grows.
@@ -512,6 +526,66 @@ private struct ThreadContent: View {
             scrollToBottom("settle \(reason) #\(attempt)")
         }
         ScrollTrace.log("settle gave up", reason)
+    }
+
+    // MARK: Blank screen
+
+    /// Why nothing of the conversation is on screen although it has blocks, or nil. The lazy stack
+    /// has left the screen blank until the next touch: offset past its content, or rows not drawn.
+    private func blankReason() -> String? {
+        guard session.projection != nil, scrollPhase == .idle, scrollMetrics.viewport > 0 else { return nil }
+        let blocks = timelineBlocks(session.projection)
+        guard !blocks.isEmpty else { return nil }
+        let metrics = scrollMetrics
+        let raw = metrics.offset - metrics.insetTop
+        if raw > metrics.height || raw + metrics.viewport < 0 { return "scrolled off the content" }
+        if watch.onScreen(of: shownIds(blocks)) == 0 { return "no row on screen" }
+        return nil
+    }
+
+    private func shownIds(_ blocks: [TimelineBlock]) -> Set<String> {
+        Set(blocks[windowStartIndex(blocks)...].map(\.id)).union([BlankWatch.tail])
+    }
+
+    /// A moment after `reason` (once things settle), if the screen is blank: log it and go back to
+    /// the end, nudging the offset if aiming alone doesn't bring the rows back.
+    private func checkBlank(_ reason: String) {
+        guard !watch.healing else { return }
+        watch.pending?.cancel()
+        watch.pending = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled, !watch.healing, let why = blankReason() else { return }
+            watch.healing = true
+            defer { watch.healing = false }
+            ThreadLog.record(logPrefix + "BLANK after \(reason): \(why) · " + stateLine())
+            ScrollTrace.log("BLANK", "\(reason): \(why)")
+            followsBottom = true
+            scrollToBottom("blank")
+            await settleAtBottom("blank")
+            if blankReason() != nil {
+                position.scrollTo(y: max(0, scrollMetrics.offset - 1))
+                try? await Task.sleep(for: .milliseconds(100))
+                scrollToBottom("blank, nudged")
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+            ThreadLog.record(logPrefix + (blankReason().map { "  still blank: \($0)" } ?? "  rows back") + " · " + stateLine())
+        }
+    }
+
+    private var logPrefix: String {
+        "\(session.threadId.prefix(8)) \(String((summary?.displayTitle ?? "").prefix(40))) · "
+    }
+
+    /// The scroll view's state for the thread log.
+    private func stateLine() -> String {
+        let blocks = timelineBlocks(session.projection)
+        let metrics = scrollMetrics
+        let raw = metrics.offset - metrics.insetTop
+        let gap = metrics.height + metrics.insetBottom - metrics.viewport - raw
+        return "\(blocks.count) blocks from #\(windowStartIndex(blocks)), rows on screen \(watch.onScreen(of: shownIds(blocks)))"
+            + ", end \(bottomVisible ? "✓" : "✗"), follows \(followsBottom ? "✓" : "✗")"
+            + String(format: ", offset %.0f, height %.0f, view %.0f, gap %.0f", raw, metrics.height, metrics.viewport, gap)
+            + (session.savedAt == nil ? ", live" : ", saved copy") + (environment.isLive ? "" : ", offline")
     }
 
     // MARK: Bottom
@@ -846,8 +920,28 @@ private struct ScrollTraceHooks: ViewModifier {
     }
 }
 
-/// Where the thread's scroll view is: content offset and content height.
+/// Where the thread's scroll view is: content offset (from the content's top) and content height,
+/// the scroll view's height and its insets.
 private struct ScrollMetrics: Equatable {
     var offset: CGFloat = 0
     var height: CGFloat = 0
+    var viewport: CGFloat = 0
+    var insetTop: CGFloat = 0
+    var insetBottom: CGFloat = 0
+}
+
+/// The thread's rows on screen and its pending blank-screen check.
+@MainActor
+private final class BlankWatch {
+    static let tail = "timeline-tail"
+    private var visible: Set<String> = []
+    var pending: Task<Void, Never>?
+    var healing = false
+
+    func set(_ id: String, visible isVisible: Bool) {
+        if isVisible { visible.insert(id) } else { visible.remove(id) }
+    }
+
+    /// Rows still in the timeline that are on screen (a replaced row never reports leaving).
+    func onScreen(of ids: Set<String>) -> Int { visible.intersection(ids).count }
 }
