@@ -928,6 +928,17 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         var unhandled = Set<UIPress>()
         for press in presses {
+            // iPadOS keeps ⌘Tab, so ⌥Tab stands in: ⌘ stays down on the Mac while ⌥ is held,
+            // and each Tab moves through its app switcher.
+            if let key = press.key, key.keyCode == .keyboardTab, key.modifierFlags.contains(.alternate),
+               !key.modifierFlags.contains(.command) {
+                if !appSwitching {
+                    appSwitching = true
+                    remote.modifier(.cmd, down: true)
+                }
+                remote.key(MacKeyCode.tab, modifiers: key.modifierFlags.contains(.shift) ? [.cmd, .shift] : [.cmd])
+                continue
+            }
             guard let key = press.key, let code = MacKeyCode.code(forHID: key.keyCode) else {
                 unhandled.insert(press)
                 continue
@@ -946,32 +957,23 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         if !unhandled.isEmpty { super.pressesBegan(unhandled, with: event) }
     }
 
-    /// ⌘Tab and ⌘Space go to the Mac rather than the iPad, asked for ahead of the system.
-    override var keyCommands: [UIKeyCommand]? {
-        Self.systemShortcuts
-    }
+    /// ⌥ is down after ⌥Tab, holding ⌘ on the Mac.
+    private var appSwitching = false
 
-    private static let systemShortcuts: [UIKeyCommand] = [
-        ("\t", UIKeyModifierFlags.command), ("\t", [.command, .shift]), (" ", .command),
-    ].map { input, flags in
-        let command = UIKeyCommand(input: input, modifierFlags: flags, action: #selector(systemShortcut(_:)))
-        command.wantsPriorityOverSystemBehavior = true
-        return command
-    }
-
-    @objc private func systemShortcut(_ command: UIKeyCommand) {
-        guard let input = command.input else { return }
-        var modifiers: Set<ScreenRemote.Modifier> = [.cmd]
-        if command.modifierFlags.contains(.shift) { modifiers.insert(.shift) }
-        remote.key(input == " " ? MacKeyCode.space : MacKeyCode.tab, modifiers: modifiers)
+    private func endAppSwitch() {
+        guard appSwitching else { return }
+        appSwitching = false
+        remote.modifier(.cmd, down: false)
     }
 
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        if presses.contains(where: { [.keyboardLeftAlt, .keyboardRightAlt].contains($0.key?.keyCode) }) { endAppSwitch() }
         for press in presses where press === repeatingPress { stopRepeat() }
         super.pressesEnded(presses, with: event)
     }
 
     override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        endAppSwitch()
         stopRepeat()
         super.pressesCancelled(presses, with: event)
     }
@@ -999,6 +1001,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     }
 
     override func resignFirstResponder() -> Bool {
+        endAppSwitch()
         let resigned = super.resignFirstResponder()
         if resigned, viewport.wantsKeyboard { viewport.wantsKeyboard = false }
         return resigned

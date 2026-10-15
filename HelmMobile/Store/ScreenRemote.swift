@@ -566,6 +566,11 @@ final class ScreenRemote {
         send(["t": "key", "code": .number(Double(code)), "mods": .array(modifiers.map { .string($0.rawValue) })])
     }
 
+    /// A modifier held on the Mac across keys until it's let go (⌘ through the app switcher).
+    func modifier(_ modifier: Modifier, down: Bool) {
+        send(["t": "modifier", "key": .string(modifier.rawValue), "down": .bool(down)])
+    }
+
     private func send(_ command: [String: JSON]) {
         guard let task, let data = try? JSON.object(command).data() else { return }
         task.send(.string(String(decoding: data, as: UTF8.self))) { _ in }
