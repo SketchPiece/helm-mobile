@@ -105,6 +105,7 @@ private struct ThreadContent: View {
         let blocks = timelineBlocks(projection)
         let startIndex = windowStartIndex(blocks)
         let shown = blocks[startIndex...]
+        let latestAnswer = blocks.last { if case .assistant = $0 { true } else { false } }?.id
         ScrollViewReader { proxy in
         ScrollView {
             // Lazy, so rows off screen aren't built or hit-tested: with a plain stack, trackpad
@@ -126,7 +127,7 @@ private struct ThreadContent: View {
                     if let day = days[block.id] {
                         TimelineDivider(label: day)
                     }
-                    blockView(block, projection: projection)
+                    blockView(block, projection: projection, latestAnswer: latestAnswer)
                         .id(block.id)
                 }
                 // The end of the conversation is one row, drawn whole: lazy rows there guessed
@@ -137,7 +138,7 @@ private struct ThreadContent: View {
                         if let day = days[block.id] {
                             TimelineDivider(label: day)
                         }
-                        blockView(block, projection: projection)
+                        blockView(block, projection: projection, latestAnswer: latestAnswer)
                             .id(block.id)
                     }
                     ForEach(session.outbox) { message in
@@ -354,18 +355,12 @@ private struct ThreadContent: View {
     // MARK: Blocks
 
     @ViewBuilder
-    private func blockView(_ block: TimelineBlock, projection: ThreadProjection?) -> some View {
+    private func blockView(_ block: TimelineBlock, projection: ThreadProjection?, latestAnswer: String?) -> some View {
         switch block {
         case .user(let item):
             UserBubble(item: item, environment: environment)
         case .assistant(let item):
-            VStack(alignment: .leading, spacing: 4) {
-                MarkdownView(text: item.text)
-                if !item.isStreaming {
-                    MessageActions(markdown: ClipboardText.markdown(item.text)).equatable()
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            AssistantMessage(item: item, isLatest: item.id == latestAnswer)
         case .work(let id, let items, let isLive):
             WorkGroupView(
                 items: items, isLive: isLive,

@@ -5,6 +5,7 @@ struct UserBubble: View {
     let item: TurnItem
     let environment: EnvironmentSession
     @State private var viewing: ChatAttachment?
+    @State private var hover = HoverFlag()
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -40,10 +41,14 @@ struct UserBubble: View {
             }
             let steered = item.inputIntent == "steer" || item.inputIntent == "promoted_queued_to_steer"
             let sentAt = item.startedAt ?? item.completedAt
-            if steered || sentAt != nil || !item.text.isEmpty {
+            let copyable = !item.text.isEmpty && HoverFlag.supported
+            if steered || sentAt != nil || copyable {
                 HStack(spacing: 6) {
-                    if !item.text.isEmpty {
-                        CopyIconButton(text: ClipboardText.markdown(item.text, context: item.raw["context"]), size: 12)
+                    if copyable {
+                        HoverReveal(hover: hover) {
+                            CopyIconButton(text: ClipboardText.markdown(item.text, context: item.raw["context"]), size: 11)
+                                .padding(.vertical, -8)
+                        }
                     }
                     if steered {
                         Label("Steered", systemImage: "arrow.turn.down.right").labelStyle(.tight)
@@ -59,8 +64,54 @@ struct UserBubble: View {
                 .padding(.trailing, 6)
             }
         }
+        .onHover { hover.isOn = $0 }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.leading, 40)
+    }
+}
+
+/// An agent's message. The newest answer keeps copy and share under it; on iPad the others show
+/// them while the pointer is over the message, in room kept for them so nothing moves.
+struct AssistantMessage: View {
+    let item: TurnItem
+    let isLatest: Bool
+    @State private var hover = HoverFlag()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            MarkdownView(text: item.text)
+            if !item.isStreaming, isLatest || HoverFlag.supported {
+                HoverReveal(hover: hover, always: isLatest) {
+                    MessageActions(markdown: ClipboardText.markdown(item.text)).equatable()
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onHover { hover.isOn = $0 }
+    }
+}
+
+/// Whether the pointer is over a message. A class, so only `HoverReveal` reads it and the
+/// message itself isn't rebuilt when the pointer passes.
+@MainActor @Observable
+final class HoverFlag {
+    var isOn = false
+    /// Only the iPad has a pointer; the phone never shows what waits for one.
+    static let supported = UIDevice.current.userInterfaceIdiom == .pad
+}
+
+/// Shows its content while `hover` is on (or `always`), keeping its room either way.
+struct HoverReveal<Content: View>: View {
+    let hover: HoverFlag
+    var always = false
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        let shown = always || hover.isOn
+        content
+            .opacity(shown ? 1 : 0)
+            .allowsHitTesting(shown)
+            .animation(.easeOut(duration: 0.15), value: shown)
     }
 }
 
@@ -70,7 +121,7 @@ struct MessageActions: View, Equatable {
 
     var body: some View {
         HStack(spacing: 0) {
-            CopyIconButton(text: markdown)
+            CopyIconButton(text: markdown, size: 12)
             Button {
                 UIPasteboard.general.string = ClipboardText.plain(markdown)
             } label: {
@@ -83,16 +134,16 @@ struct MessageActions: View, Equatable {
             .accessibilityLabel("Share")
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Palette.textMuted)
+        .foregroundStyle(Palette.textMuted.opacity(0.8))
         .padding(.leading, -9)
-        .padding(.vertical, -6)
+        .padding(.vertical, -7)
     }
 }
 
 /// Copies `text`; the icon turns into a checkmark for a moment.
 struct CopyIconButton: View {
     let text: String
-    var size: CGFloat = 14
+    var size: CGFloat = 13
     @State private var copied = false
 
     var body: some View {
@@ -105,7 +156,6 @@ struct CopyIconButton: View {
                 .messageActionIcon(size: size)
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Palette.textMuted)
         .accessibilityLabel(copied ? "Copied" : "Copy")
         .sensoryFeedback(.success, trigger: copied) { _, new in new }
         .task(id: copied) {
@@ -117,10 +167,11 @@ struct CopyIconButton: View {
 }
 
 private extension View {
-    /// A small icon with a touch area of about 32×32, wider than it is drawn.
-    func messageActionIcon(size: CGFloat = 14) -> some View {
-        self.font(.system(size: size, weight: .medium))
-            .frame(width: size + 18, height: size + 18)
+    /// A small icon with a 32×30 touch area, much larger than it is drawn. Sizes differ per symbol
+    /// so they look alike: `doc.on.doc` draws heavier than the others at the same size.
+    func messageActionIcon(size: CGFloat = 13) -> some View {
+        self.font(.system(size: size, weight: .regular))
+            .frame(width: 32, height: 30)
             .contentShape(.rect)
     }
 }
