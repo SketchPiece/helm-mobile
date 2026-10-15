@@ -3,16 +3,16 @@ import Observation
 import SwiftUI
 import UIKit
 
-/// Thread scroll trace (Settings → Performance → Record thread scrolling): what the thread's scroll
-/// view did and why, to chase "I sent a message and it landed somewhere odd".
-///
-/// Off by default, and then every call here is one bool check. On, it keeps the last ten minutes:
+/// Thread scroll trace: what the thread's scroll view did and why, to chase "I sent a message and it
+/// landed somewhere odd". Always on, keeping the last three minutes:
 /// - the scroll geometry on every change (offset, content height, how far from the end);
 /// - every programmatic jump to the end, with who asked for it;
 /// - sends, new content, the keyboard, the composer's height, scroll phases, "↓" coming and going;
-/// - flags: the HUD's flag button (or ⌃⌘F) marks "that was odd" right after it happened.
-/// "Save" writes `scroll-<date>.txt` (read it here) and `.json` next to the performance recordings,
-/// so `scripts/perf-report.py --pull` brings them to the Mac too.
+/// - flags: shaking the device, or the HUD's flag button (or ⌃⌘F), marks "that was odd";
+/// - what the thread itself catches (`caught`): a blank screen, a landing short of the end, a jump.
+/// A flag or a catch saves the minute before it (and a few seconds after) as `scroll-<date>.txt`
+/// (read it here) and `.json` next to the performance recordings, so `scripts/perf-report.py --pull`
+/// brings them to the Mac too. The HUD (Settings → Performance) only shows the counter and Save.
 @MainActor
 @Observable
 final class ScrollTrace {
@@ -57,15 +57,22 @@ final class ScrollTrace {
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var thread = ""
 
-    private static let keepSeconds = 600.0
-    private static let maxEvents = 80_000
+    @ObservationIgnored private var pendingSave: Task<Void, Never>?
+    @ObservationIgnored private var lastAutoSave = -Double.infinity
 
-    func setEnabled(_ on: Bool) {
-        guard on != Self.isOn, !AppModel.isUnitTestHost else { return }
-        Self.isOn = on
-        observers.forEach(NotificationCenter.default.removeObserver)
-        observers = []
-        guard on else { return }
+    private static let keepSeconds = 180.0
+    private static let maxEvents = 30_000
+    /// What a flag or a catch saves: this long before it, and `saveDelay` after it.
+    private static let windowSeconds = 60.0
+    private static let saveDelay = 3.0
+    /// At most one saved catch this often (a flag always saves); the newest `keepFiles` stay.
+    private static let catchInterval = 20.0
+    nonisolated private static let keepFiles = 40
+
+    /// Starts recording, once, at launch.
+    func start() {
+        guard !Self.isOn, !AppModel.isUnitTestHost else { return }
+        Self.isOn = true
         reset()
         let center = NotificationCenter.default
         for (name, label) in [(UIResponder.keyboardWillShowNotification, "will show"),
@@ -120,6 +127,7 @@ final class ScrollTrace {
         guard abs(next.offset - old.offset) >= 0.5 || abs(next.height - old.height) >= 0.5
             || abs(next.viewport - old.viewport) >= 0.5 || abs(next.insetBottom - old.insetBottom) >= 0.5 else { return }
         shared.state = next
+        shared.watchJumps(old, next)
         var changes: [String] = []
         if abs(next.height - old.height) >= 0.5 { changes.append(String(format: "height %+.0f", next.height - old.height)) }
         if abs(next.viewport - old.viewport) >= 0.5 { changes.append(String(format: "viewport %+.0f", next.viewport - old.viewport)) }
@@ -163,28 +171,89 @@ final class ScrollTrace {
     }
 
     func flag() {
+        guard Self.isOn else { return }
         flags += 1
         record("FLAG", "#\(flags) " + Self.wallClock(Date()))
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        ThreadLog.record("flagged #\(flags) (shake or ⚑)")
+        saveSoon("flag #\(flags)", always: true)
+    }
+
+    /// The thread noticed something wrong with its scrolling: noted, and the minute around it saved.
+    static func caught(_ what: @autoclosure () -> String) {
+        guard isOn else { return }
+        let what = what()
+        shared.record("CAUGHT", what)
+        shared.saveSoon(what, always: false)
+    }
+
+    /// Programmatic movement (not the user's finger) that went one way and straight back.
+    @ObservationIgnored private var lastMove: (t: Double, delta: Double)?
+
+    private func watchJumps(_ old: Snapshot, _ next: Snapshot) {
+        let delta = next.offset - old.offset
+        guard abs(delta) > 40, next.phase != "interacting", next.phase != "decelerating",
+              abs(next.height - old.height) < 0.5 else { return }
+        let now = PerfClock.now() - origin
+        if let last = lastMove, now - last.t < 1, last.delta.sign != delta.sign {
+            Self.caught(String(format: "jumped %+.0f then %+.0f pt", last.delta, delta))
+            lastMove = nil
+        } else {
+            lastMove = (now, delta)
+        }
+    }
+
+    /// Saves the window around the first flag or catch a few seconds later, so the aftermath is in.
+    private func saveSoon(_ reason: String, always: Bool) {
+        guard pendingSave == nil else { return }
+        let now = PerfClock.now() - origin
+        guard always || now - lastAutoSave > Self.catchInterval else { return }
+        pendingSave = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.saveDelay))
+            guard let self else { return }
+            self.pendingSave = nil
+            self.lastAutoSave = PerfClock.now() - self.origin
+            self.write(reason: reason, since: now - Self.windowSeconds)
+        }
     }
 
     // MARK: Saving
 
+    /// The HUD's Save: everything kept so far.
     func save() {
         guard !events.isEmpty else { return }
         record("save")
-        let taken = events
+        write(reason: "saved from the HUD", since: -.infinity)
+    }
+
+    private func write(reason: String, since: Double) {
+        let taken = events.filter { $0.t >= since }
+        guard let first = taken.first else { return }
+        let stamp = PerfReport.fileStamp(Date())
         let file = File(device: PerfMonitor.deviceSummary, environment: Self.environmentSummary,
-                        startedAt: startedAt, events: taken)
-        reset()
+                        startedAt: startedAt.addingTimeInterval(first.t), reason: reason, events: taken)
+        ThreadLog.record("scroll trace saved: \(reason) → scroll-\(stamp).txt")
         Task.detached(priority: .utility) {
             let directory = PerfMonitor.directory
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let base = directory.appendingPathComponent("scroll-\(PerfReport.fileStamp(Date()))")
+            let base = directory.appendingPathComponent("scroll-\(stamp)")
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
             if let json = try? encoder.encode(file) { try? json.write(to: base.appendingPathExtension("json")) }
             try? ScrollTraceReport.summary(file).write(to: base.appendingPathExtension("txt"), atomically: true, encoding: .utf8)
+            Self.pruneFiles(in: directory)
             await MainActor.run { PerfMonitor.shared.refreshReports() }
+        }
+    }
+
+    /// Keeps the newest `keepFiles` traces.
+    nonisolated private static func pruneFiles(in directory: URL) {
+        let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        let traces = files.filter { $0.lastPathComponent.hasPrefix("scroll-") && $0.pathExtension == "txt" }
+            .sorted { $0.lastPathComponent > $1.lastPathComponent }
+        for old in traces.dropFirst(keepFiles) {
+            try? FileManager.default.removeItem(at: old)
+            try? FileManager.default.removeItem(at: old.deletingPathExtension().appendingPathExtension("json"))
         }
     }
 
@@ -193,6 +262,8 @@ final class ScrollTrace {
         var device: String
         var environment: String
         var startedAt: Date
+        /// The flag or catch that saved it.
+        var reason: String?
         var events: [Event]
     }
 
@@ -222,6 +293,7 @@ enum ScrollTraceReport {
         out.append(file.device)
         out.append(file.environment)
         out.append("Started \(file.startedAt.formatted(date: .abbreviated, time: .standard)) (\(ScrollTrace.wallClock(file.startedAt)))")
+        if let reason = file.reason { out.append("Saved for: \(reason)") }
         out.append("gap = how far short of the end the view is (negative: past it). fb = follows the bottom, end = end marker visible.")
 
         let sends = events.indices.filter { events[$0].kind == "send" }
@@ -231,14 +303,14 @@ enum ScrollTraceReport {
             for index in sends { out.append(contentsOf: sendReport(events, from: index)) }
         }
 
-        let flags = events.indices.filter { events[$0].kind == "FLAG" }
+        let flags = events.indices.filter { events[$0].kind == "FLAG" || events[$0].kind == "CAUGHT" }
         if !flags.isEmpty {
             out.append("")
-            out.append("FLAGGED MOMENTS (the 6 s before each flag)")
+            out.append("FLAGGED AND CAUGHT MOMENTS (the 6 s before each)")
             for index in flags {
                 let flag = events[index]
                 out.append("")
-                out.append("⚑ \(flag.detail ?? "") at " + time(flag.t))
+                out.append((flag.kind == "FLAG" ? "⚑ " : "✱ caught: ") + "\(flag.detail ?? "") at " + time(flag.t))
                 let window = events[..<index].filter { $0.t >= flag.t - 6 }
                 out.append(contentsOf: lines(Array(window)).map { "   " + $0 })
             }
@@ -274,7 +346,7 @@ enum ScrollTraceReport {
                 continue
             }
             flush()
-            let label = event.kind == "geo" ? "  geo" : event.kind == "FLAG" ? "⚑ FLAG" : "▸ " + event.kind
+            let label = event.kind == "geo" ? "  geo" : event.kind == "FLAG" ? "⚑ FLAG" : event.kind == "CAUGHT" ? "✱ CAUGHT" : "▸ " + event.kind
             out.append(time(event.t) + "  " + label + (event.detail.map { " " + $0 } ?? "") + "   | " + state(event))
         }
         flush()
@@ -339,7 +411,6 @@ struct ScrollTraceHUD: View {
                 .padding(.leading, 8)
             Button {
                 trace.flag()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 VStack(spacing: 2) {
                     Image(systemName: "flag.fill")
@@ -381,5 +452,13 @@ struct ScrollTraceHUD: View {
         )
         .padding(.top, 70)
         .padding(.trailing, 12)
+    }
+}
+
+/// Shaking the device flags the moment in the scroll trace (and saves it), wherever the app is.
+extension UIWindow {
+    override open func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        if motion == .motionShake { MainActor.assumeIsolated { ScrollTrace.shared.flag() } }
+        super.motionEnded(motion, with: event)
     }
 }

@@ -18,9 +18,9 @@ struct PerfDiagnosticsView: View {
                 Text("Watches for late frames and a busy main thread and shows a counter on screen. Do what stutters, then tap Save on the counter: the recording goes to Documents/Performance as a summary and a JSON file for the Mac.")
             }
             Section {
-                Toggle(isOn: $scrollTrace) { Text(verbatim: "Record thread scrolling") }
+                Toggle(isOn: $scrollTrace) { Text(verbatim: "Scroll trace counter") }
             } footer: {
-                Text(verbatim: "Logs what a thread's scroll view does and why: every jump to the end, sends, new content, the keyboard. Use the thread, tap the flag (or ⌃⌘F) right after something odd, then Save. The trace goes to Documents/Performance as scroll-….txt.")
+                Text(verbatim: "What a thread's scroll view does and why is always kept for the last few minutes. Shake the device (or tap the counter's flag, ⌃⌘F) right after something odd: the minute before is saved as scroll-….txt below. Odd scrolling the app notices itself (a blank screen, a landing short of the end, a jump) is saved too, and threads.txt lists every thread opened and every save.")
             }
             if !monitor.reports.isEmpty {
                 Section {
@@ -154,6 +154,6 @@ private struct PerfDiagnosticsModifier: ViewModifier {
                 if scrollTrace { ScrollTraceHUD() }
             }
             .onChange(of: enabled, initial: true) { PerfMonitor.shared.setEnabled(enabled) }
-            .onChange(of: scrollTrace, initial: true) { ScrollTrace.shared.setEnabled(scrollTrace) }
+            .onAppear { ScrollTrace.shared.start() }
     }
 }

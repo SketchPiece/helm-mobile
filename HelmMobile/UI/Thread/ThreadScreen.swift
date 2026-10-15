@@ -302,6 +302,7 @@ private struct ThreadContent: View {
                 try? await Task.sleep(for: .milliseconds(120))
                 scrollToBottom("opened")
                 await settleAtBottom("opened")
+                checkLanded("opened")
                 ThreadLog.record(logPrefix + "opened · " + stateLine())
                 checkBlank("opened")
             }
@@ -526,6 +527,24 @@ private struct ThreadContent: View {
             scrollToBottom("settle \(reason) #\(attempt)")
         }
         ScrollTrace.log("settle gave up", reason)
+        ScrollTrace.caught("kept aiming at the end after \(reason) and gave up")
+    }
+
+    /// After a jump to the end has settled: is the end on screen? Logged and saved if not.
+    private func checkLanded(_ reason: String) {
+        guard followsBottom, scrollPhase == .idle, session.projection != nil else { return }
+        let gap = scrollGap
+        guard !bottomVisible || abs(gap) > 4 else { return }
+        let what = "\(reason) ended " + (gap >= 0 ? "\(Int(gap)) pt short of" : "\(Int(-gap)) pt past") + " the end"
+            + (bottomVisible ? "" : ", end not on screen")
+        ThreadLog.record(logPrefix + what + " · " + stateLine())
+        ScrollTrace.caught(what)
+    }
+
+    /// How far short of the end the view is; negative is past it.
+    private var scrollGap: CGFloat {
+        let metrics = scrollMetrics
+        return metrics.height + metrics.insetBottom - metrics.viewport - (metrics.offset - metrics.insetTop)
     }
 
     // MARK: Blank screen
@@ -554,11 +573,21 @@ private struct ThreadContent: View {
         watch.pending?.cancel()
         watch.pending = Task {
             try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled, !watch.healing, let why = blankReason() else { return }
+            guard !Task.isCancelled, !watch.healing else { return }
+            guard let why = blankReason() else {
+                // At rest and following the end, the end has to be on screen.
+                if followsBottom, scrollPhase == .idle, session.projection != nil, !bottomVisible {
+                    let what = "following the end after \(reason), but it isn't on screen"
+                    ThreadLog.record(logPrefix + what + " · " + stateLine())
+                    ScrollTrace.caught(what)
+                    scrollToBottom("end not on screen")
+                }
+                return
+            }
             watch.healing = true
             defer { watch.healing = false }
             ThreadLog.record(logPrefix + "BLANK after \(reason): \(why) · " + stateLine())
-            ScrollTrace.log("BLANK", "\(reason): \(why)")
+            ScrollTrace.caught("blank screen after \(reason): \(why)")
             followsBottom = true
             scrollToBottom("blank")
             await settleAtBottom("blank")
@@ -581,7 +610,7 @@ private struct ThreadContent: View {
         let blocks = timelineBlocks(session.projection)
         let metrics = scrollMetrics
         let raw = metrics.offset - metrics.insetTop
-        let gap = metrics.height + metrics.insetBottom - metrics.viewport - raw
+        let gap = scrollGap
         return "\(blocks.count) blocks from #\(windowStartIndex(blocks)), rows on screen \(watch.onScreen(of: shownIds(blocks)))"
             + ", end \(bottomVisible ? "✓" : "✗"), follows \(followsBottom ? "✓" : "✗")"
             + String(format: ", offset %.0f, height %.0f, view %.0f, gap %.0f", raw, metrics.height, metrics.viewport, gap)
@@ -602,7 +631,10 @@ private struct ThreadContent: View {
             ScrollTrace.log("↓ tapped")
             followsBottom = true
             withAnimation { scrollToBottom("↓ (animated)") }
-            Task { await settleAtBottom("↓") }
+            Task {
+                await settleAtBottom("↓")
+                checkLanded("↓")
+            }
         } label: {
             Image(systemName: "arrow.down")
                 .font(.system(size: 15, weight: .semibold))
@@ -649,7 +681,10 @@ private struct ThreadContent: View {
                 followsBottom = true
                 withAnimation { scrollToBottom("send (animated)") }
                 // The bubble lands right after and the composer shrinks back as its text clears.
-                Task { await settleAtBottom("send") }
+                Task {
+                    await settleAtBottom("send")
+                    checkLanded("send")
+                }
             }
             // Beside a working or offline pill (they sit in the middle), 8 pt above the composer.
             .overlay(alignment: .topTrailing) {
