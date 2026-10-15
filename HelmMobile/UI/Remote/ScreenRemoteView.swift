@@ -411,7 +411,6 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         guard force || inputMode != appliedMode else { return }
         appliedMode = inputMode
         pointerInteraction.invalidate()
-        if inputMode != .touch { pointerHovering = false }
         var responder: UIResponder? = self
         while let next = responder?.next {
             if let controller = next as? ScreenRemoteController {
@@ -795,12 +794,10 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         let point = hover.location(in: self)
         guard hover.state == .began || hover.state == .changed else {
             hoverTravel = 0
-            pointerHovering = false
             return
         }
         let pencil = hover.zOffset > 0 || hover.altitudeAngle > 0
         guard pencil || touchMode else { return }
-        if pointerHovering == pencil { pointerHovering = !pencil }
         if hover.state == .began { hoverTravel = 0 } else { hoverTravel += hypot(point.x - lastHover.x, point.y - lastHover.y) }
         lastHover = point
         if hoverTravel > 40 { hideToolbar() }
@@ -1027,14 +1024,11 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
 
     private lazy var pointerInteraction = UIPointerInteraction(delegate: self)
 
-    /// In touch mode the iPad's trackpad or mouse keeps its own pointer over the screen, and the
-    /// computer's arrow steps aside while it does; in trackpad mode the pointer is locked anyway.
-    private var pointerHovering = false {
-        didSet { if pointerHovering != oldValue { cursorView.isHidden = pointerHovering } }
-    }
-
+    /// The iPad's own pointer is hidden over the screen in both modes: the computer's arrow,
+    /// drawn here, is the one cursor (in touch mode it follows the pointer; in trackpad mode the
+    /// pointer is locked anyway).
     func pointerInteraction(_ interaction: UIPointerInteraction, styleFor region: UIPointerRegion) -> UIPointerStyle? {
-        touchMode ? nil : .hidden()
+        .hidden()
     }
 
     @objc private func mouseConnected(_ note: Notification) {
