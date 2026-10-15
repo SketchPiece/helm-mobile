@@ -566,11 +566,19 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
             stopFling()
             stopMomentum()
             hideToolbar()
+            if fingerDown > lastClick, fingerDown - lastClick < 0.35 {
+                tapDragging = true
+                remote.press(down: true)
+                if viewport.clickFeedback { haptic.impactOccurred(intensity: 1) }
+            }
         case .changed:
             let delta = pan.translation(in: self)
             pan.setTranslation(.zero, in: self)
             let speed = viewport.cursorSpeed
             remote.moveCursor(by: CGPoint(x: delta.x * speed / zoom, y: delta.y * speed / zoom))
+        case .ended where tapDragging, .cancelled where tapDragging, .failed where tapDragging:
+            tapDragging = false
+            remote.press(down: false)
         case .ended:
             let velocity = pan.velocity(in: self)
             let speed = viewport.cursorSpeed
@@ -748,10 +756,17 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         hideToolbar()
         if touchMode { remote.moveCursor(to: desktopPoint(tap.location(in: self))) }
         remote.click()
+        lastClick = CACurrentMediaTime()
         guard viewport.clickFeedback else { return }
         haptic.impactOccurred(intensity: 0.6)
         ripple()
     }
+
+    /// When the last tap clicked, when a finger last came down, and whether that finger is
+    /// dragging with the button held: tap, then touch again and move, like a laptop's trackpad.
+    private var lastClick: CFTimeInterval = 0
+    private var fingerDown: CFTimeInterval = 0
+    private var tapDragging = false
 
     @objc private func rightClick(_ tap: UITapGestureRecognizer) {
         stopMomentum()
@@ -811,6 +826,7 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if touches.contains(where: { $0.type == .direct }) { fingerDown = CACurrentMediaTime() }
         if let touch = pointerTouches(touches, event) {
             stopMomentum()
             hideToolbar()
@@ -1130,11 +1146,6 @@ private struct ScreenToolbar: View {
             button(viewport.isZoomedIn ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
                 withAnimation(.snappy) { viewport.toggleFit() }
-            }
-            // Trackpad or touch, for this time; settings choose how it opens.
-            button(viewport.inputMode == .touch ? "hand.tap.fill" : "hand.tap",
-                   label: viewport.inputMode == .touch ? "Use as a trackpad" : "Touch to click") {
-                viewport.inputMode = viewport.inputMode == .touch ? .trackpad : .touch
             }
             if remote.displays.count > 1 || (remote.canAddVirtual && remote.virtualDisplay == nil) {
                 ScreenDisplaysMenu(remote: remote, displays: remote.displays, shown: remote.shown)
