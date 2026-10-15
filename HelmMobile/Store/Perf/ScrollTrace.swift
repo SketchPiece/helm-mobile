@@ -202,7 +202,6 @@ final class ScrollTrace {
         return String(format: "window %.0f×%.0f", window.width, window.height)
             + " · size class \(scene?.traitCollection.horizontalSizeClass == .regular ? "regular" : "compact")"
             + " · hardware keyboard \(GCKeyboard.coalesced != nil ? "yes" : "no")"
-            + " · experiments: \(PerfExperiments.summary)"
     }
 
     nonisolated static func wallClock(_ date: Date) -> String {

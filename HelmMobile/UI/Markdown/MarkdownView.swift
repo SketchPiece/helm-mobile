@@ -26,7 +26,7 @@ struct MarkdownView: View {
         }
         .font(Typography.body)
         .foregroundStyle(Palette.text)
-        .selectableText()
+        .textSelection(.enabled)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

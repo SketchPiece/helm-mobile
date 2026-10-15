@@ -5,10 +5,6 @@ struct PerfDiagnosticsView: View {
     @AppStorage(PerfMonitor.enabledKey) private var enabled = false
     @State private var monitor = PerfMonitor.shared
     @State private var confirmDelete = false
-    @AppStorage(PerfExperiments.lazyKey) private var lazyTimeline = true
-    @AppStorage(PerfExperiments.windowKey) private var window = 30
-    @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
-    @AppStorage(PerfExperiments.noTextSelectionKey) private var noTextSelection = false
     @AppStorage(ScrollTrace.enabledKey) private var scrollTrace = false
 
     var body: some View {
@@ -25,20 +21,6 @@ struct PerfDiagnosticsView: View {
                 Toggle(isOn: $scrollTrace) { Text(verbatim: "Record thread scrolling") }
             } footer: {
                 Text(verbatim: "Logs what a thread's scroll view does and why: every jump to the end, sends, new content, the keyboard. Use the thread, tap the flag (or ⌃⌘F) right after something odd, then Save. The trace goes to Documents/Performance as scroll-….txt.")
-            }
-            Section {
-                Toggle("Lazy conversation", isOn: $lazyTimeline)
-                Picker("Messages drawn", selection: $window) {
-                    Text(verbatim: "10").tag(10)
-                    Text(verbatim: "30").tag(30)
-                    Text("All").tag(0)
-                }
-                Toggle("No tap to hide the keyboard", isOn: $noTapGesture)
-                Toggle("No text selection", isOn: $noTextSelection)
-            } header: {
-                Text("Experiments").sectionLabelStyle()
-            } footer: {
-                Text("Each takes a part of the conversation away to see what makes scrolling slow. The last one applies after the app restarts. Recordings list what was on.")
             }
             if !monitor.reports.isEmpty {
                 Section {

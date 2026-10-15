@@ -166,7 +166,6 @@ final class PerfMonitor {
         return "\(machine) · \(device.systemName) \(device.systemVersion) · \(hertz) Hz"
             + " · Helm \(version) (\(build)) · low power \(ProcessInfo.processInfo.isLowPowerModeEnabled ? "on" : "off")"
             + " · thermal \(ProcessInfo.processInfo.thermalState.rawValue)"
-            + " · experiments: \(PerfExperiments.summary)"
     }
 
     static var machine: String {

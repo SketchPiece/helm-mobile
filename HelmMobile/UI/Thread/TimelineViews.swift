@@ -254,7 +254,7 @@ struct WorkStepRow: View {
                     Text(detail)
                         .font(item.type == "reasoning" ? Typography.footnote : Typography.mono(12))
                         .foregroundStyle(Palette.textMuted)
-                        .selectableText()
+                        .textSelection(.enabled)
                         .padding(.leading, 24)
                 }
                 if showDetail, item.type == "subagent", let child = item.raw["childThreadId"]?.string, let environmentId {
