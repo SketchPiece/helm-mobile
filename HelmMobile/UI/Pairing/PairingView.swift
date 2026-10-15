@@ -116,6 +116,10 @@ struct PairingView: View {
                 }
             }
 
+            if !model.tailscale.isRunning {
+                tailscaleSection
+            }
+
             if DataScannerViewController.isSupported {
                 Section {
                     Button {
@@ -211,6 +215,59 @@ struct PairingView: View {
         .task { await discover() }
         // The local network answers later (and only once iOS has asked to allow it).
         .onChange(of: NearbyMacs.shared.environmentIds) { Task { await discover() } }
+        // Logged in to Tailscale here: its computers join the list, reachable from anywhere.
+        .onChange(of: model.tailscale.peers.filter(\.isComputer).map(\.address)) { Task { await discover() } }
+        .onChange(of: model.tailscale.authURL) { _, url in
+            if url != nil { model.tailscale.openLogin() }
+        }
+        .onAppear { model.tailscale.watch() }
+        .onDisappear { model.tailscale.unwatch() }
+    }
+
+    /// Log in to the built-in Tailscale node without leaving pairing: paired over Tailscale, the
+    /// Mac stays reachable away from this network, which a local-network pairing is not.
+    @ViewBuilder
+    private var tailscaleSection: some View {
+        Section {
+            switch model.tailscale.state {
+            case .off, .running:
+                Button {
+                    model.tailscale.start()
+                } label: {
+                    Label("Log in to Tailscale", systemImage: "person.badge.key")
+                        .font(Typography.bodyMedium)
+                }
+                .accessibilityIdentifier("pairingTailscaleLogin")
+            case .starting:
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Starting Tailscale…").foregroundStyle(Palette.textMuted)
+                }
+            case .needsLogin(let url):
+                Button {
+                    model.tailscale.openLogin(force: true)
+                } label: {
+                    Label("Open login again", systemImage: "safari")
+                }
+                .disabled(url == nil)
+            case .failed(let message):
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .labelStyle(.tight)
+                    .font(Typography.footnote)
+                    .foregroundStyle(Palette.errorText)
+                Button("Try again") { model.tailscale.start() }
+            }
+        } header: {
+            Text("Tailscale").sectionLabelStyle()
+        } footer: {
+            if case .needsLogin = model.tailscale.state {
+                Text("Finish logging in in the browser. Your computers show up here once you're in.")
+                    .font(Typography.footnote)
+            } else {
+                Text("Log in with the computer's Tailscale account to reach it from anywhere, not only on this Wi-Fi. No VPN app needed.")
+                    .font(Typography.footnote)
+            }
+        }
     }
 
     /// Probes for Helm: the Macs baked into this build, every online computer the built-in

@@ -3673,6 +3673,16 @@
         }
       }
     },
+    "Finish logging in in the browser. Your computers show up here once you're in.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закончите вход в браузере. Как только войдёте, ваши компьютеры появятся здесь."
+          }
+        }
+      }
+    },
     "Folder on the Mac": {
       "localizations": {
         "ru": {
@@ -4596,6 +4606,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Войти в Tailscale"
+          }
+        }
+      }
+    },
+    "Log in with the computer's Tailscale account to reach it from anywhere, not only on this Wi-Fi. No VPN app needed.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Войдите тем же аккаунтом Tailscale, что и на компьютере, чтобы подключаться к нему откуда угодно, а не только из этой Wi-Fi сети. Приложение VPN не нужно."
           }
         }
       }
