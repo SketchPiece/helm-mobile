@@ -946,6 +946,26 @@ final class ScreenCanvasView: UIView, UIKeyInput, UIGestureRecognizerDelegate, U
         if !unhandled.isEmpty { super.pressesBegan(unhandled, with: event) }
     }
 
+    /// ⌘Tab and ⌘Space go to the Mac rather than the iPad, asked for ahead of the system.
+    override var keyCommands: [UIKeyCommand]? {
+        Self.systemShortcuts
+    }
+
+    private static let systemShortcuts: [UIKeyCommand] = [
+        ("\t", UIKeyModifierFlags.command), ("\t", [.command, .shift]), (" ", .command),
+    ].map { input, flags in
+        let command = UIKeyCommand(input: input, modifierFlags: flags, action: #selector(systemShortcut(_:)))
+        command.wantsPriorityOverSystemBehavior = true
+        return command
+    }
+
+    @objc private func systemShortcut(_ command: UIKeyCommand) {
+        guard let input = command.input else { return }
+        var modifiers: Set<ScreenRemote.Modifier> = [.cmd]
+        if command.modifierFlags.contains(.shift) { modifiers.insert(.shift) }
+        remote.key(input == " " ? MacKeyCode.space : MacKeyCode.tab, modifiers: modifiers)
+    }
+
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         for press in presses where press === repeatingPress { stopRepeat() }
         super.pressesEnded(presses, with: event)
