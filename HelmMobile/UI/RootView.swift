@@ -290,6 +290,8 @@ private struct SplitRoot: View {
                 // With a keyboard up the column stops above its shortcut bar; without this the split
                 // view's own grey shows through below the remote pill.
                 .background { Palette.surface.ignoresSafeArea() }
+                // The column keeps its own safe area: without this the bar lifts the remote pill.
+                .ignoresHardwareKeyboardBar()
                 .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
         } detail: {
             NavigationStack(path: detailPath) {
