@@ -2689,16 +2689,6 @@
         }
       }
     },
-    "Copy all": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скопировать всё"
-          }
-        }
-      }
-    },
     "Copy as Markdown": {
       "localizations": {
         "ru": {
@@ -3362,12 +3352,12 @@
         }
       }
     },
-    "Each takes a part of the conversation away to see what makes scrolling slow. The last two apply after the app restarts. Recordings list what was on.": {
+    "Each takes a part of the conversation away to see what makes scrolling slow. The last one applies after the app restarts. Recordings list what was on.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Каждый убирает часть переписки, чтобы найти, что тормозит скролл. Последние два включаются после перезапуска приложения. В записи видно, что было включено."
+            "value": "Каждый убирает часть переписки, чтобы найти, что тормозит скролл. Последний включается после перезапуска приложения. В записи видно, что было включено."
           }
         }
       }
@@ -5425,16 +5415,6 @@
         }
       }
     },
-    "No message menus": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Без меню у сообщений"
-          }
-        }
-      }
-    },
     "No project": {
       "localizations": {
         "ru": {
@@ -7151,16 +7131,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ищу…"
-          }
-        }
-      }
-    },
-    "Select text": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выделить текст"
           }
         }
       }

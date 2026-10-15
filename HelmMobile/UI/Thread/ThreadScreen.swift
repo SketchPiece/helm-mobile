@@ -55,7 +55,6 @@ private struct ThreadContent: View {
     @State private var showSettings = false
     @State private var reviewing: Checkpoint?
     @State private var snoozingCustom = false
-    @State private var selectingText: SelectableText?
     @State private var actionError: String?
     @State private var renaming = false
     @State private var renameText = ""
@@ -275,7 +274,6 @@ private struct ThreadContent: View {
         .sheet(item: $reviewing) { checkpoint in
             ChangesSheet(session: session, checkpoint: checkpoint)
         }
-        .sheet(item: $selectingText) { SelectTextSheet(text: $0.text) }
         .sheet(isPresented: $snoozingCustom) {
             CustomSnoozeSheet { date in
                 try await model.perform(.snooze(date), on: ThreadRef(environmentId: environment.id, threadId: session.threadId))
@@ -373,22 +371,13 @@ private struct ThreadContent: View {
         case .user(let item):
             UserBubble(item: item, environment: environment)
         case .assistant(let item):
-            MarkdownView(text: item.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .messageContextMenu {
-                    Button {
-                        UIPasteboard.general.string = ClipboardText.markdown(item.text)
-                    } label: { Label("Copy as Markdown", systemImage: "doc.on.doc") }
-                    Button {
-                        UIPasteboard.general.string = ClipboardText.plain(ClipboardText.markdown(item.text))
-                    } label: { Label("Copy as plain text", systemImage: "text.alignleft") }
-                    Button {
-                        selectingText = SelectableText(text: ClipboardText.plain(ClipboardText.markdown(item.text)))
-                    } label: { Label("Select text", systemImage: "selection.pin.in.out") }
-                    ShareLink(item: ClipboardText.markdown(item.text)) {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                    }
+            VStack(alignment: .leading, spacing: 4) {
+                MarkdownView(text: item.text)
+                if !item.isStreaming {
+                    MessageActions(markdown: ClipboardText.markdown(item.text)).equatable()
                 }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         case .work(let id, let items, let isLive):
             WorkGroupView(
                 items: items, isLive: isLive,

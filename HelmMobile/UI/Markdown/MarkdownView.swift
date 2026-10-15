@@ -1,75 +1,89 @@
 import SwiftUI
 import UIKit
 
-/// Renders an assistant message. Parsing happens once per `MarkdownView` value, and every block
-/// is an equatable view, so a streaming update only re-renders the blocks whose text changed.
+/// Renders an assistant message. Parsing happens once per `MarkdownView` value, and every segment
+/// is an equatable view, so a streaming update only re-renders the segments whose text changed.
+/// Prose (paragraphs, headings, lists) runs together as one selectable text, so a selection can
+/// cross paragraphs; code blocks, tables, quotes and rules are their own views.
 struct MarkdownView: View {
     let text: String
-    private let blocks: [MarkdownBlock]
+    private let segments: [MarkdownSegment]
 
     init(text: String) {
         self.text = text
-        self.blocks = Perf.measure("markdown.parse", units: text.utf8.count) { MarkdownParser.parse(text) }
+        self.segments = Perf.measure("markdown.parse", units: text.utf8.count) {
+            MarkdownSegment.split(MarkdownParser.parse(text))
+        }
     }
 
     var body: some View {
-        MarkdownBlocksView(blocks: blocks, depth: 0, spacing: 10)
-            .font(Typography.body)
-            .foregroundStyle(Palette.text)
-            .selectableText()
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-private struct MarkdownBlocksView: View {
-    let blocks: [MarkdownBlock]
-    /// List nesting depth, which picks the bullet glyph.
-    let depth: Int
-    let spacing: CGFloat
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: spacing) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-                MarkdownBlockView(block: block, depth: depth, isFirst: index == 0)
+        let style = MarkdownText.Style.current
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                MarkdownSegmentView(segment: segment, style: style)
                     .equatable()
             }
         }
+        .font(Typography.body)
+        .foregroundStyle(Palette.text)
+        .selectableText()
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct MarkdownBlockView: View, Equatable {
-    let block: MarkdownBlock
-    let depth: Int
-    let isFirst: Bool
+enum MarkdownSegment: Hashable {
+    case prose([MarkdownBlock])
+    case quote([MarkdownBlock])
+    case code(language: String?, code: String)
+    case table(header: [String], rows: [[String]])
+    case rule
+
+    static func split(_ blocks: [MarkdownBlock]) -> [MarkdownSegment] {
+        var segments: [MarkdownSegment] = []
+        var prose: [MarkdownBlock] = []
+        func flush() {
+            if !prose.isEmpty { segments.append(.prose(prose)) }
+            prose.removeAll()
+        }
+        for block in blocks {
+            switch block {
+            case let .codeBlock(language, code): flush(); segments.append(.code(language: language, code: code))
+            case let .table(header, rows): flush(); segments.append(.table(header: header, rows: rows))
+            case let .blockquote(inner): flush(); segments.append(.quote(inner))
+            case .thematicBreak: flush(); segments.append(.rule)
+            default: prose.append(block)
+            }
+        }
+        flush()
+        return segments
+    }
+}
+
+private struct MarkdownSegmentView: View, Equatable {
+    let segment: MarkdownSegment
+    let style: MarkdownText.Style
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    nonisolated static func == (a: Self, b: Self) -> Bool { a.segment == b.segment && a.style == b.style }
 
     var body: some View {
-        switch block {
-        case let .heading(level, text):
-            let size: CGFloat = level == 1 ? 22 : level == 2 ? 19 : 17
-            Text(MarkdownInline.render(text, size: size, weight: .semibold))
-                .font(Typography.sans(size, .semibold, relativeTo: level <= 2 ? .title3 : .headline))
-                .padding(.top, isFirst ? 0 : 4)
-                .accessibilityAddTraits(.isHeader)
-        case let .paragraph(text):
-            Text(MarkdownInline.render(text, size: 17))
-                .lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true)
-        case let .codeBlock(language, code):
-            MarkdownCodeBlock(language: language, code: code)
-        case let .bulletList(items):
-            MarkdownList(items: items, start: nil, depth: depth)
-        case let .orderedList(start, items):
-            MarkdownList(items: items, start: start, depth: depth)
-        case let .blockquote(blocks):
-            MarkdownBlocksView(blocks: blocks, depth: depth, spacing: 8)
-                .foregroundStyle(Palette.textMuted)
+        switch segment {
+        case let .prose(blocks):
+            SelectableTextView(text: MarkdownText.attributed(blocks, style: style, typeSize: typeSize), linkColor: style.link)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case let .quote(blocks):
+            SelectableTextView(text: MarkdownText.attributed(blocks, style: style, typeSize: typeSize, color: style.muted),
+                               linkColor: style.link)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 13)
                 .background(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 1.5).fill(Palette.border).frame(width: 3)
                 }
+        case let .code(language, code):
+            MarkdownCodeBlock(language: language, code: code)
         case let .table(header, rows):
             MarkdownTable(header: header, rows: rows)
-        case .thematicBreak:
+        case .rule:
             Rectangle()
                 .fill(Palette.border)
                 .frame(height: 1)
@@ -123,6 +137,7 @@ private struct MarkdownCodeBlock: View {
     let language: String?
     let code: String
     @Environment(\.codeAppearance) private var appearance
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var copied = false
 
     var body: some View {
@@ -149,10 +164,10 @@ private struct MarkdownCodeBlock: View {
                 .accessibilityLabel(copied ? "Copied" : "Copy code")
             }
             if appearance.wordWrap {
-                codeText.fixedSize(horizontal: false, vertical: true)
+                SelectableTextView(text: codeText)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    codeText.fixedSize(horizontal: true, vertical: true)
+                    SelectableTextView(text: codeText, wraps: false)
                 }
             }
         }
@@ -167,53 +182,14 @@ private struct MarkdownCodeBlock: View {
         }
     }
 
-    private var codeText: some View {
-        Text(verbatim: code)
-            .font(appearance.font())
-            .foregroundStyle(Palette.codeText)
-            .lineSpacing(2)
-    }
-}
-
-// MARK: Lists
-
-private struct MarkdownList: View {
-    let items: [MarkdownBlock.ListItem]
-    /// `nil` for a bullet list.
-    let start: Int?
-    let depth: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    marker(for: item, at: index)
-                    MarkdownBlocksView(blocks: item.blocks, depth: depth + 1, spacing: 6)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func marker(for item: MarkdownBlock.ListItem, at index: Int) -> some View {
-        if let checked = item.checked {
-            Text(Image(systemName: checked ? "checkmark.square.fill" : "square"))
-                .font(.system(size: 15))
-                .foregroundStyle(checked ? Palette.accentText : Palette.textMuted)
-                .frame(minWidth: 18)
-        } else if let start {
-            // The widest number reserves the column, so labels align on their trailing edge.
-            ZStack(alignment: .trailing) {
-                Text(verbatim: "\(start + items.count - 1).").hidden()
-                Text(verbatim: "\(start + index).")
-            }
-            .monospacedDigit()
-            .foregroundStyle(Palette.textMuted)
-        } else {
-            Text(verbatim: depth == 0 ? "•" : depth == 1 ? "◦" : "▪")
-                .foregroundStyle(Palette.textMuted)
-                .frame(width: 12)
-        }
+    private var codeText: NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = 2
+        let font = appearance.fontSize.flatMap { UIFont(name: "IBMPlexMono-Regular", size: $0) }
+            ?? MarkdownText.font("IBMPlexMono-Regular", PhonePreferences.defaultCodeFontSize, .footnote, typeSize)
+        return NSAttributedString(string: code, attributes: [
+            .font: font, .foregroundColor: UIColor(Palette.codeText), .paragraphStyle: paragraph,
+        ])
     }
 }
 

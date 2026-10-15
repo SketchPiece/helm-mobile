@@ -9,7 +9,6 @@ struct PerfDiagnosticsView: View {
     @AppStorage(PerfExperiments.windowKey) private var window = 30
     @AppStorage(PerfExperiments.noTapKey) private var noTapGesture = false
     @AppStorage(PerfExperiments.noTextSelectionKey) private var noTextSelection = false
-    @AppStorage(PerfExperiments.noContextMenusKey) private var noContextMenus = false
     @AppStorage(ScrollTrace.enabledKey) private var scrollTrace = false
 
     var body: some View {
@@ -36,11 +35,10 @@ struct PerfDiagnosticsView: View {
                 }
                 Toggle("No tap to hide the keyboard", isOn: $noTapGesture)
                 Toggle("No text selection", isOn: $noTextSelection)
-                Toggle("No message menus", isOn: $noContextMenus)
             } header: {
                 Text("Experiments").sectionLabelStyle()
             } footer: {
-                Text("Each takes a part of the conversation away to see what makes scrolling slow. The last two apply after the app restarts. Recordings list what was on.")
+                Text("Each takes a part of the conversation away to see what makes scrolling slow. The last one applies after the app restarts. Recordings list what was on.")
             }
             if !monitor.reports.isEmpty {
                 Section {

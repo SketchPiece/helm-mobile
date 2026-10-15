@@ -5,7 +5,7 @@ struct UserBubble: View {
     let item: TurnItem
     let environment: EnvironmentSession
     @State private var viewing: ChatAttachment?
-    @State private var selecting: SelectableText?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
@@ -33,27 +33,18 @@ struct UserBubble: View {
                 }
             }
             if !item.text.isEmpty {
-                Text(ContextReference.displayText(item.text))
-                    .font(Typography.body)
-                    .foregroundStyle(Palette.text)
-                    .selectableText()
+                SelectableTextView(text: MarkdownText.plain(ContextReference.displayText(item.text), color: Palette.text, typeSize: typeSize))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(Palette.message, in: .rect(cornerRadius: 20, style: .continuous))
-                    .messageContextMenu {
-                        Button {
-                            UIPasteboard.general.string = ClipboardText.markdown(item.text, context: item.raw["context"])
-                        } label: { Label("Copy", systemImage: "doc.on.doc") }
-                        Button {
-                            selecting = SelectableText(text: ClipboardText.markdown(item.text, context: item.raw["context"]))
-                        } label: { Label("Select text", systemImage: "selection.pin.in.out") }
-                    }
-                    .sheet(item: $selecting) { SelectTextSheet(text: $0.text) }
             }
             let steered = item.inputIntent == "steer" || item.inputIntent == "promoted_queued_to_steer"
             let sentAt = item.startedAt ?? item.completedAt
-            if steered || sentAt != nil {
+            if steered || sentAt != nil || !item.text.isEmpty {
                 HStack(spacing: 6) {
+                    if !item.text.isEmpty {
+                        CopyIconButton(text: ClipboardText.markdown(item.text, context: item.raw["context"]), size: 12)
+                    }
                     if steered {
                         Label("Steered", systemImage: "arrow.turn.down.right").labelStyle(.tight)
                         if sentAt != nil { Text(verbatim: "·") }
@@ -70,6 +61,67 @@ struct UserBubble: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.leading, 40)
+    }
+}
+
+/// Under an agent's message: copy it, copy it without Markdown, share it.
+struct MessageActions: View, Equatable {
+    let markdown: String
+
+    var body: some View {
+        HStack(spacing: 0) {
+            CopyIconButton(text: markdown)
+            Button {
+                UIPasteboard.general.string = ClipboardText.plain(markdown)
+            } label: {
+                Image(systemName: "text.alignleft").messageActionIcon()
+            }
+            .accessibilityLabel("Copy as plain text")
+            ShareLink(item: markdown) {
+                Image(systemName: "square.and.arrow.up").messageActionIcon()
+            }
+            .accessibilityLabel("Share")
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Palette.textMuted)
+        .padding(.leading, -9)
+        .padding(.vertical, -6)
+    }
+}
+
+/// Copies `text`; the icon turns into a checkmark for a moment.
+struct CopyIconButton: View {
+    let text: String
+    var size: CGFloat = 14
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = text
+            copied = true
+        } label: {
+            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                .contentTransition(.symbolEffect(.replace))
+                .messageActionIcon(size: size)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Palette.textMuted)
+        .accessibilityLabel(copied ? "Copied" : "Copy")
+        .sensoryFeedback(.success, trigger: copied) { _, new in new }
+        .task(id: copied) {
+            guard copied else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            copied = false
+        }
+    }
+}
+
+private extension View {
+    /// A small icon with a touch area of about 32×32, wider than it is drawn.
+    func messageActionIcon(size: CGFloat = 14) -> some View {
+        self.font(.system(size: size, weight: .medium))
+            .frame(width: size + 18, height: size + 18)
+            .contentShape(.rect)
     }
 }
 
