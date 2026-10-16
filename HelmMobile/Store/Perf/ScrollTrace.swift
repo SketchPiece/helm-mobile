@@ -193,13 +193,21 @@ final class ScrollTrace {
     /// Programmatic movement (not the user's finger) that went one way and straight back.
     @ObservationIgnored private var lastMove: (t: Double, delta: Double)?
 
+    @ObservationIgnored private var lastLayoutChange = -Double.infinity
+
     private func watchJumps(_ old: Snapshot, _ next: Snapshot) {
         let delta = next.offset - old.offset
-        // Insets and the viewport move the offset too (the keyboard, the composer, the bars).
-        guard abs(delta) > 40, next.phase != "interacting", next.phase != "decelerating",
-              abs(next.height - old.height) < 0.5, abs(next.viewport - old.viewport) < 0.5,
-              abs(next.insetTop - old.insetTop) < 0.5, abs(next.insetBottom - old.insetBottom) < 0.5 else { return }
         let now = PerfClock.now() - origin
+        // Insets and the viewport move the offset too (the keyboard, the composer, the bars), in
+        // the same change or in the one right after it.
+        if abs(next.height - old.height) >= 0.5 || abs(next.viewport - old.viewport) >= 0.5
+            || abs(next.insetTop - old.insetTop) >= 0.5 || abs(next.insetBottom - old.insetBottom) >= 0.5 {
+            lastLayoutChange = now
+            lastMove = nil
+            return
+        }
+        guard abs(delta) > 40, next.phase != "interacting", next.phase != "decelerating",
+              now - lastLayoutChange > 0.15 else { return }
         if let last = lastMove, now - last.t < 1, last.delta.sign != delta.sign {
             Self.caught(String(format: "jumped %+.0f then %+.0f pt", last.delta, delta))
             lastMove = nil

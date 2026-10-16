@@ -130,7 +130,6 @@ private struct ThreadContent: View {
                         TimelineDivider(label: day)
                     }
                     blockView(block, projection: projection, latestAnswer: latestAnswer)
-                        .onScrollVisibilityChange(threshold: 0.01) { watch.set(block.id, visible: $0) }
                         .id(block.id)
                 }
                 // The end of the conversation is one row, drawn whole: lazy rows there guessed
@@ -152,7 +151,6 @@ private struct ThreadContent: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .onScrollVisibilityChange(threshold: 0.01) { watch.set(BlankWatch.tail, visible: $0) }
                 // Visible exactly when the end of the conversation is on screen. It sits on this row
                 // rather than being a row of its own: the lazy stack kept a row after a growing one
                 // at its old place, so it showed as visible and scrolling to it went nowhere.
@@ -560,7 +558,9 @@ private struct ThreadContent: View {
 
     /// After a jump to the end has settled: is the end on screen? Logged and saved if not.
     private func checkLanded(_ reason: String) {
-        guard followsBottom, scrollPhase == .idle, session.projection != nil else { return }
+        // A conversation shorter than the screen sits at the top, short of the composer.
+        guard followsBottom, scrollPhase == .idle, session.projection != nil,
+              scrollMetrics.height > scrollMetrics.viewport else { return }
         let gap = scrollGap
         guard !bottomVisible || abs(gap) > 4 else { return }
         let what = "\(reason) ended " + (gap >= 0 ? "\(Int(gap)) pt short of" : "\(Int(-gap)) pt past") + " the end"
@@ -586,12 +586,9 @@ private struct ThreadContent: View {
         if raw > metrics.height || raw + metrics.viewport + metrics.insetTop + metrics.insetBottom < 0 {
             return "scrolled off the content"
         }
-        if watch.onScreen(of: shownIds(blocks)) == 0 { return "no row on screen" }
+        // Not "no row reports being visible": on the iPhone rows on screen reported none, so the
+        // thread was pulled to the end from under the user's finger.
         return nil
-    }
-
-    private func shownIds(_ blocks: [TimelineBlock]) -> Set<String> {
-        Set(blocks[windowStartIndex(blocks)...].map(\.id)).union([BlankWatch.tail])
     }
 
     /// A moment after `reason` (once things settle), if the screen is blank: log it and go back to
@@ -639,7 +636,7 @@ private struct ThreadContent: View {
         let metrics = scrollMetrics
         let raw = metrics.offset - metrics.insetTop
         let gap = scrollGap
-        return "\(blocks.count) blocks from #\(windowStartIndex(blocks)), rows on screen \(watch.onScreen(of: shownIds(blocks)))"
+        return "\(blocks.count) blocks from #\(windowStartIndex(blocks)), "
             + ", end \(bottomVisible ? "✓" : "✗"), follows \(followsBottom ? "✓" : "✗")"
             + String(format: ", offset %.0f, height %.0f, view %.0f, gap %.0f", raw, metrics.height, metrics.viewport, gap)
             + (session.savedAt == nil ? ", live" : ", saved copy") + (environment.isLive ? "" : ", offline")
@@ -996,21 +993,12 @@ private struct ScrollMetrics: Equatable {
     var gap: CGFloat { height - viewport - offset }
 }
 
-/// The thread's rows on screen and its pending blank-screen check.
+/// The thread's pending blank-screen check and what a fold compares against.
 @MainActor
 private final class BlankWatch {
-    static let tail = "timeline-tail"
-    private var visible: Set<String> = []
     var pending: Task<Void, Never>?
     var healing = false
     /// Blocks at the last content change, and how far short of the end the view was then.
     var blockCount = 0
     var gapBefore: CGFloat = 0
-
-    func set(_ id: String, visible isVisible: Bool) {
-        if isVisible { visible.insert(id) } else { visible.remove(id) }
-    }
-
-    /// Rows still in the timeline that are on screen (a replaced row never reports leaving).
-    func onScreen(of ids: Set<String>) -> Int { visible.intersection(ids).count }
 }
