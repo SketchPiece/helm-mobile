@@ -206,8 +206,9 @@ final class ScrollTrace {
             lastMove = nil
             return
         }
+        // Above the top the offset bounces back by itself.
         guard abs(delta) > 40, next.phase != "interacting", next.phase != "decelerating",
-              now - lastLayoutChange > 0.15 else { return }
+              now - lastLayoutChange > 0.15, min(old.offset, next.offset) > -next.insetTop + 1 else { return }
         if let last = lastMove, now - last.t < 1, last.delta.sign != delta.sign {
             Self.caught(String(format: "jumped %+.0f then %+.0f pt", last.delta, delta))
             lastMove = nil

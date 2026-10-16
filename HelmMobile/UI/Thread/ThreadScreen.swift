@@ -60,6 +60,8 @@ private struct ThreadContent: View {
     @State private var leavesUnread = false
     /// Which rows are on screen, for noticing a blank screen; an object, so it doesn't redraw the thread.
     @State private var watch = BlankWatch()
+    /// Bumped to build the lazy stack afresh when it has stopped drawing (see `redrawEnd`).
+    @State private var stackGeneration = 0
 
     init(environment: EnvironmentSession, session: ThreadSession) {
         self.environment = environment
@@ -170,6 +172,7 @@ private struct ThreadContent: View {
                 // scrolling to the edge can leave them blank until the next touch).
                 .id(Self.bottomId)
             }
+            .id(stackGeneration)
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .readableColumn()
@@ -636,9 +639,11 @@ private struct ThreadContent: View {
 
     /// At the end by the numbers but with the end not drawn (seen after a turn folded mid-jump):
     /// aiming at the end again is a no-op there, so step away and back to make the lazy stack draw,
-    /// a point first, then half a screen.
+    /// a point first, then half a screen. A conversation shorter than the screen can't step, and
+    /// one that still isn't drawn gets the lazy stack built afresh.
     private func redrawEnd() async {
-        for step in [1, scrollMetrics.viewport / 2] {
+        let canStep = scrollMetrics.height > scrollMetrics.viewport
+        for step in canStep ? [1, scrollMetrics.viewport / 2] : [] {
             guard followsBottom, scrollPhase != .interacting, !bottomVisible else { return }
             ScrollTrace.log("redraw end", "step back \(Int(step)) pt")
             position.scrollTo(y: max(0, scrollMetrics.offset - step))
@@ -646,6 +651,12 @@ private struct ThreadContent: View {
             scrollToBottom("redraw end")
             try? await Task.sleep(for: .milliseconds(300))
         }
+        guard followsBottom, scrollPhase != .interacting, !bottomVisible else { return }
+        ScrollTrace.log("redraw end", "rebuilding the stack")
+        stackGeneration += 1
+        try? await Task.sleep(for: .milliseconds(100))
+        scrollToBottom("rebuilt")
+        await settleAtBottom("rebuilt")
     }
 
     private var logPrefix: String {
