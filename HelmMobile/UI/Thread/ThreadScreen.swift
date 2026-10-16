@@ -217,11 +217,21 @@ private struct ThreadContent: View {
             if phase == .idle, old == .interacting || old == .decelerating {
                 followsBottom = bottomVisible
             }
-            if phase == .idle { checkBlank("scroll ended") }
+            if phase == .idle {
+                watch.gapBefore = scrollGap
+                checkBlank("scroll ended")
+            }
         }
         .onChange(of: contentSignature(blocks)) { old, new in
             ScrollTrace.log("content", "\(old) → \(new)")
-            if followsBottom { withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("content (animated)") } }
+            if followsBottom {
+                withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("content (animated)") }
+            } else if blocks.count < watch.blockCount {
+                refollowAfterFold(gapBefore: watch.gapBefore)
+            }
+            // The geometry has already changed by now, so after a fold this is the folded height.
+            if blocks.count >= watch.blockCount { watch.gapBefore = scrollGap }
+            watch.blockCount = blocks.count
             checkBlank("new content")
         }
         .onChange(of: session.snapshotCount) {
@@ -530,6 +540,24 @@ private struct ThreadContent: View {
         ScrollTrace.caught("kept aiming at the end after \(reason) and gave up")
     }
 
+    /// A finished turn folds its work into one row. With the view a little short of the end the
+    /// rows moved under it and it was left far up in rows the lazy stack only guessed, often blank:
+    /// back to the end, where the answer is. Further up, it is only noted, to see how often.
+    private func refollowAfterFold(gapBefore: CGFloat) {
+        guard gapBefore < scrollMetrics.viewport else {
+            ScrollTrace.caught("a turn folded while the view was \(Int(gapBefore)) pt short of the end")
+            ThreadLog.record(logPrefix + "folded while \(Int(gapBefore)) pt short of the end · " + stateLine())
+            return
+        }
+        ScrollTrace.log("folded near the end", "\(Int(gapBefore)) pt short; back to the end")
+        followsBottom = true
+        scrollToBottom("folded near the end")
+        Task {
+            await settleAtBottom("folded")
+            checkLanded("folded")
+        }
+    }
+
     /// After a jump to the end has settled: is the end on screen? Logged and saved if not.
     private func checkLanded(_ reason: String) {
         guard followsBottom, scrollPhase == .idle, session.projection != nil else { return }
@@ -541,11 +569,9 @@ private struct ThreadContent: View {
         ScrollTrace.caught(what)
     }
 
-    /// How far short of the end the view is; negative is past it.
-    private var scrollGap: CGFloat {
-        let metrics = scrollMetrics
-        return metrics.height + metrics.insetBottom - metrics.viewport - (metrics.offset - metrics.insetTop)
-    }
+    /// How far short of the end the view is; negative is past it. The container height leaves out
+    /// both insets, and at the end the content's bottom sits at the bottom inset's top edge.
+    private var scrollGap: CGFloat { scrollMetrics.gap }
 
     // MARK: Blank screen
 
@@ -557,7 +583,9 @@ private struct ThreadContent: View {
         guard !blocks.isEmpty else { return nil }
         let metrics = scrollMetrics
         let raw = metrics.offset - metrics.insetTop
-        if raw > metrics.height || raw + metrics.viewport < 0 { return "scrolled off the content" }
+        if raw > metrics.height || raw + metrics.viewport + metrics.insetTop + metrics.insetBottom < 0 {
+            return "scrolled off the content"
+        }
         if watch.onScreen(of: shownIds(blocks)) == 0 { return "no row on screen" }
         return nil
     }
@@ -963,6 +991,9 @@ private struct ScrollMetrics: Equatable {
     var viewport: CGFloat = 0
     var insetTop: CGFloat = 0
     var insetBottom: CGFloat = 0
+
+    /// How far short of the end the view is; negative is past it.
+    var gap: CGFloat { height - viewport - offset }
 }
 
 /// The thread's rows on screen and its pending blank-screen check.
@@ -972,6 +1003,9 @@ private final class BlankWatch {
     private var visible: Set<String> = []
     var pending: Task<Void, Never>?
     var healing = false
+    /// Blocks at the last content change, and how far short of the end the view was then.
+    var blockCount = 0
+    var gapBefore: CGFloat = 0
 
     func set(_ id: String, visible isVisible: Bool) {
         if isVisible { visible.insert(id) } else { visible.remove(id) }

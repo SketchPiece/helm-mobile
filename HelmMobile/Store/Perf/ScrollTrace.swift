@@ -34,8 +34,9 @@ final class ScrollTrace {
         var followsBottom = true
         /// The software keyboard's height over the window, 0 when it's down.
         var keyboard = 0.0
-        /// How far short of the end the view is; negative is past the end.
-        var gap: Double { height + insetBottom - viewport - offset }
+        /// How far short of the end the view is; negative is past the end. The viewport leaves out
+        /// both insets, and the raw offset starts at minus the top inset.
+        var gap: Double { height - viewport - insetTop - offset }
     }
 
     struct Event: Codable, Sendable {
@@ -125,12 +126,14 @@ final class ScrollTrace {
         next.insetBottom = geometry.contentInsets.bottom
         let old = shared.state
         guard abs(next.offset - old.offset) >= 0.5 || abs(next.height - old.height) >= 0.5
-            || abs(next.viewport - old.viewport) >= 0.5 || abs(next.insetBottom - old.insetBottom) >= 0.5 else { return }
+            || abs(next.viewport - old.viewport) >= 0.5 || abs(next.insetTop - old.insetTop) >= 0.5
+            || abs(next.insetBottom - old.insetBottom) >= 0.5 else { return }
         shared.state = next
         shared.watchJumps(old, next)
         var changes: [String] = []
         if abs(next.height - old.height) >= 0.5 { changes.append(String(format: "height %+.0f", next.height - old.height)) }
         if abs(next.viewport - old.viewport) >= 0.5 { changes.append(String(format: "viewport %+.0f", next.viewport - old.viewport)) }
+        if abs(next.insetTop - old.insetTop) >= 0.5 { changes.append(String(format: "top inset %+.0f", next.insetTop - old.insetTop)) }
         if abs(next.insetBottom - old.insetBottom) >= 0.5 { changes.append(String(format: "inset %+.0f", next.insetBottom - old.insetBottom)) }
         if abs(next.offset - old.offset) >= 0.5 { changes.append(String(format: "offset %+.0f", next.offset - old.offset)) }
         shared.record("geo", changes.joined(separator: " "))
@@ -192,8 +195,10 @@ final class ScrollTrace {
 
     private func watchJumps(_ old: Snapshot, _ next: Snapshot) {
         let delta = next.offset - old.offset
+        // Insets and the viewport move the offset too (the keyboard, the composer, the bars).
         guard abs(delta) > 40, next.phase != "interacting", next.phase != "decelerating",
-              abs(next.height - old.height) < 0.5 else { return }
+              abs(next.height - old.height) < 0.5, abs(next.viewport - old.viewport) < 0.5,
+              abs(next.insetTop - old.insetTop) < 0.5, abs(next.insetBottom - old.insetBottom) < 0.5 else { return }
         let now = PerfClock.now() - origin
         if let last = lastMove, now - last.t < 1, last.delta.sign != delta.sign {
             Self.caught(String(format: "jumped %+.0f then %+.0f pt", last.delta, delta))
