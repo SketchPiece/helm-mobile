@@ -8,8 +8,8 @@
 # go command fetches that toolchain on its own (GOTOOLCHAIN below).
 set -eu
 
-LIBTAILSCALE_COMMIT=59d4bb82744915815178e0f0776d60026a397ee7
-GO_TOOLCHAIN=go1.25.5
+LIBTAILSCALE_COMMIT=d1dc45d039edb7759ecbee6ba2aea0c4bca884b8
+GO_TOOLCHAIN=go1.27.1
 
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$HERE/Vendor/libtailscale/Libtailscale.xcframework"
