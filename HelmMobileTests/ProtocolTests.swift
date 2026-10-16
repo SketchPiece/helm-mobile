@@ -535,6 +535,25 @@ final class PushPayloadTests: XCTestCase {
         XCTAssertNil(HelmLink.linkedThreadId(from: URL(string: "https://v1/abc")!))
     }
 
+    /// As the Mac writes it: URLSearchParams, so spaces are "+".
+    func testAssistantCitationsInMessageText() throws {
+        let href = "t3-citation://v1/env%201/thr/msg?text=%D0%BC%D0%BE%D0%B6%D0%B5%D1%88%D1%8C+%D0%B4%D0%BE%D0%B1%D0%B0%D0%B2%D0%B8%D1%82%D1%8C%3F&start=3&end=12&prefix=&suffix=+next&comment=a+%2B+b"
+        let text = "see [Assistant quote](\(href)) and [Assistant quote](t3-citation://v1/e/t/m?text=x&start=0&end=1&prefix=&suffix=)!"
+        let matches = AssistantCitation.matches(in: text)
+        XCTAssertEqual(matches.count, 2)
+        let first = try XCTUnwrap(matches.first?.citation)
+        XCTAssertEqual(first.environmentId, "env 1")
+        XCTAssertEqual(first.messageId, "msg")
+        XCTAssertEqual(first.text, "можешь добавить?")
+        XCTAssertEqual(first.comment, "a + b")
+        XCTAssertEqual(first.label, "a + b")
+        XCTAssertEqual(matches[1].citation.label, "x")
+        XCTAssertEqual(ContextReference.displayText(text), "see “a + b” and “x”!")
+        XCTAssertEqual(ClipboardText.markdown(text), "see можешь добавить?\nComment: a + b and x!")
+        XCTAssertNil(AssistantCitation(url: URL(string: "t3-citation://v1/e/t?text=x")!))
+        XCTAssertNil(AssistantCitation(url: URL(string: "t3-citation://v1/e/t/m?text=+")!))
+    }
+
     /// The core pushes content-state as {name, props: "<JSON string>"}.
     func testCoreContentStateDecodesAndOrdersRows() throws {
         let props = """

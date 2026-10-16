@@ -4,7 +4,9 @@ import Foundation
 enum ClipboardText {
     /// The message as Markdown a reader can use anywhere: a `t3-context://` chip becomes a link
     /// to its pull request when the record has one, otherwise its label. Ordinary links stay.
+    /// A quote of an earlier answer becomes the quoted text.
     static func markdown(_ text: String, context: JSON? = nil) -> String {
+        let text = AssistantCitation.replacing(in: text) { $0.plainText }
         guard text.contains("t3-context://") else { return text }
         var records: [String: JSON] = [:]
         for record in context?["records"]?.array ?? [] {

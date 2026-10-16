@@ -7,6 +7,7 @@ struct UserBubble: View {
     @State private var viewing: ChatAttachment?
     @State private var hover = HoverFlag()
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
@@ -34,7 +35,7 @@ struct UserBubble: View {
                 }
             }
             if !item.text.isEmpty {
-                SelectableTextView(text: MarkdownText.plain(ContextReference.displayText(item.text), color: Palette.text, typeSize: typeSize))
+                SelectableTextView(text: MarkdownText.userMessage(item.text, color: Palette.text, typeSize: typeSize, scheme: colorScheme))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(Palette.message, in: .rect(cornerRadius: 20, style: .continuous))

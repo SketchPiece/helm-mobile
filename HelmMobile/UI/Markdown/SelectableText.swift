@@ -58,9 +58,15 @@ struct SelectableTextView: UIViewRepresentable {
 
         /// A tapped link goes through SwiftUI's `openURL`, so a thread can open links to other
         /// threads (`t3-thread://`) in the app instead of handing them to iOS, which can't open them.
+        /// A chip drawn as an image carries its link too.
         func textView(_ textView: UITextView, primaryActionFor textItem: UITextItem,
                       defaultAction: UIAction) -> UIAction? {
-            guard case .link(let url) = textItem.content, let openURL else { return defaultAction }
+            let url: URL? = switch textItem.content {
+            case .link(let url): url
+            case .textAttachment: textView.textStorage.attribute(.link, at: textItem.range.location, effectiveRange: nil) as? URL
+            default: nil
+            }
+            guard let url, let openURL else { return defaultAction }
             return UIAction { _ in openURL(url) }
         }
     }
@@ -98,6 +104,22 @@ enum MarkdownText {
             .foregroundColor: UIColor(color),
             .paragraphStyle: paragraph,
         ])
+    }
+
+    /// The user's message: plain text, with each quote of an answer drawn as a chip in the line,
+    /// as on the Mac. A tap on the chip opens the link (the thread scrolls to the quoted answer).
+    @MainActor static func userMessage(_ text: String, color: Color, typeSize: DynamicTypeSize, scheme: ColorScheme) -> NSAttributedString {
+        let matches = AssistantCitation.matches(in: text)
+        guard !matches.isEmpty else { return plain(ContextReference.displayText(text), color: color, typeSize: typeSize) }
+        let out = NSMutableAttributedString()
+        var cursor = text.startIndex
+        for match in matches {
+            out.append(plain(ContextReference.displayText(String(text[cursor..<match.range.lowerBound])), color: color, typeSize: typeSize))
+            out.append(CitationChip.string(match.citation, url: match.url, typeSize: typeSize, scheme: scheme))
+            cursor = match.range.upperBound
+        }
+        out.append(plain(ContextReference.displayText(String(text[cursor...])), color: color, typeSize: typeSize))
+        return out
     }
 
     static func attributed(_ blocks: [MarkdownBlock], style: Style, typeSize: DynamicTypeSize,
@@ -248,5 +270,60 @@ enum MarkdownText {
             }
             return out
         }
+    }
+}
+
+/// A quote of an earlier answer inside the user's message: a quote mark and the quote (or the
+/// comment on it) in a small rounded box, drawn into the text as an image. Images are kept, so a
+/// message redrawn on every update from the Mac doesn't redraw its chips or relayout its text.
+@MainActor
+enum CitationChip {
+    private static var cache: [String: NSAttributedString] = [:]
+
+    static func string(_ citation: AssistantCitation, url: URL, typeSize: DynamicTypeSize, scheme: ColorScheme) -> NSAttributedString {
+        let traits = UITraitCollection(userInterfaceStyle: scheme == .dark ? .dark : .light)
+        let text = UIColor(Palette.text).resolvedColor(with: traits)
+        let accent = UIColor(Palette.accentText).resolvedColor(with: traits)
+        let key = "\(url.absoluteString)|\(typeSize)|\(text)|\(accent)"
+        if let cached = cache[key] { return cached }
+
+        let body = MarkdownText.font("IBMPlexSans-Regular", 17, .body, typeSize)
+        let font = body.withSize(round(body.pointSize * 0.88))
+        let symbol = UIImage(systemName: "quote.opening",
+                             withConfiguration: UIImage.SymbolConfiguration(font: font.withSize(font.pointSize * 0.8)))?
+            .withTintColor(accent, renderingMode: .alwaysOriginal)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingTail
+        let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: text, .paragraphStyle: paragraph]
+        let label = citation.label as NSString
+        let symbolSize = symbol?.size ?? .zero
+        let (inset, gap, margin): (CGFloat, CGFloat, CGFloat) = (8, 5, 2)
+        // At most as wide as the narrowest bubble (an iPhone's), where the text can't wrap it.
+        let textWidth = min(ceil(label.size(withAttributes: attributes).width),
+                            270 - inset * 2 - symbolSize.width - gap - margin * 2)
+        let height = ceil(font.lineHeight + 6)
+        let box = CGRect(x: margin, y: 0, width: inset * 2 + symbolSize.width + gap + textWidth, height: height)
+        let size = CGSize(width: box.width + margin * 2, height: height)
+        let image = UIGraphicsImageRenderer(size: size, format: UIGraphicsImageRendererFormat(for: traits)).image { _ in
+            let path = UIBezierPath(roundedRect: box.insetBy(dx: 0.5, dy: 0.5), cornerRadius: 7)
+            accent.withAlphaComponent(0.12).setFill()
+            path.fill()
+            accent.withAlphaComponent(0.45).setStroke()
+            path.lineWidth = 1
+            path.stroke()
+            symbol?.draw(at: CGPoint(x: box.minX + inset, y: (height - symbolSize.height) / 2))
+            label.draw(with: CGRect(x: box.minX + inset + symbolSize.width + gap, y: (height - font.lineHeight) / 2,
+                                    width: textWidth, height: font.lineHeight),
+                       options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine], attributes: attributes, context: nil)
+        }
+        let attachment = NSTextAttachment(image: image)
+        attachment.bounds = CGRect(x: 0, y: round((body.capHeight - height) / 2), width: size.width, height: height)
+        let chip = NSMutableAttributedString(attachment: attachment)
+        let line = NSMutableParagraphStyle()
+        line.lineSpacing = 2
+        chip.addAttributes([.link: url, .font: body, .paragraphStyle: line], range: NSRange(location: 0, length: chip.length))
+        if cache.count > 200 { cache.removeAll() }
+        cache[key] = chip
+        return chip
     }
 }

@@ -186,7 +186,13 @@ private struct ThreadContent: View {
         .environment(\.threadEnvironmentId, environment.id)
         // Links to other threads open here, on top of this one, so Back returns.
         .environment(\.openURL, OpenURLAction { url in
-            if let threadId = HelmLink.linkedThreadId(from: url) {
+            if let citation = AssistantCitation(url: url) {
+                if citation.threadId == session.threadId, citation.environmentId == environment.id {
+                    revealMessage(citation.messageId)
+                } else {
+                    router.push(ThreadRef(environmentId: citation.environmentId, threadId: citation.threadId))
+                }
+            } else if let threadId = HelmLink.linkedThreadId(from: url) {
                 router.push(ThreadRef(environmentId: environment.id, threadId: threadId))
             } else if [HelmLink.scheme, "t3code"].contains(url.scheme), let target = HelmLink.thread(from: url) {
                 router.push(ThreadRef(environmentId: target.environmentId, threadId: target.threadId))
@@ -526,6 +532,23 @@ private struct ThreadContent: View {
     /// override the correction); `prependBase` then shifts the offset by what it adds above.
     private func waitForRest() async {
         for _ in 0..<60 where scrollPhase != .idle { try? await Task.sleep(for: .milliseconds(50)) }
+    }
+
+    /// Scrolls to a message of this thread (the answer a quote came from), opening its folded turn
+    /// and drawing the blocks down from it if it is above the drawn part.
+    private func revealMessage(_ messageId: String) {
+        guard let item = session.projection?.rows.map(\.item).first(where: { $0.raw["messageId"]?.string == messageId })
+        else { return }
+        if let runId = item.runId { expandedRuns.insert(runId) }
+        let blocks = timelineBlocks(session.projection)
+        guard let index = blocks.firstIndex(where: { $0.items.contains { $0.id == item.id } }) else { return }
+        if index < windowStartIndex(blocks) { windowStart = WindowStart(id: blocks[index].id, index: index) }
+        followsBottom = false
+        Task {
+            // A frame for the opened fold and the wider window to reach the lazy stack.
+            try? await Task.sleep(for: .milliseconds(50))
+            withAnimation { scrollProxy?.scrollTo(blocks[index].id, anchor: .top) }
+        }
     }
 
     /// `reason` names the caller in the scroll trace.

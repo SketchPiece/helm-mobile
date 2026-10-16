@@ -87,10 +87,11 @@ enum ContextReference {
         "[\(Self.label(label, kind: kind))](\(href(kind: kind, contextId: contextId)))"
     }
 
-    /// Message text for a bubble: context links show as their label, and `@` file links as the
-    /// file name. Other Markdown links stay as written.
+    /// Message text for a bubble: context links show as their label, `@` file links as the
+    /// file name and quotes of an answer as the quote. Other Markdown links stay as written.
     static func displayText(_ text: String) -> String {
         guard text.contains("](") else { return text }
+        let text = AssistantCitation.replacing(in: text) { "“\($0.label)”" }
         return text.replacing(/!?\[([^\]\n]{0,512})\]\(([^\s)]{1,2048})\)/, with: { match in
             let label = String(match.1), destination = String(match.2)
             if destination.hasPrefix("t3-context://") { return label }
