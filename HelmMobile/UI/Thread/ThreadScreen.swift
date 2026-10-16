@@ -636,7 +636,7 @@ private struct ThreadContent: View {
         let metrics = scrollMetrics
         let raw = metrics.offset - metrics.insetTop
         let gap = scrollGap
-        return "\(blocks.count) blocks from #\(windowStartIndex(blocks)), "
+        return "\(blocks.count) blocks from #\(windowStartIndex(blocks))"
             + ", end \(bottomVisible ? "✓" : "✗"), follows \(followsBottom ? "✓" : "✗")"
             + String(format: ", offset %.0f, height %.0f, view %.0f, gap %.0f", raw, metrics.height, metrics.viewport, gap)
             + (session.savedAt == nil ? ", live" : ", saved copy") + (environment.isLive ? "" : ", offline")
