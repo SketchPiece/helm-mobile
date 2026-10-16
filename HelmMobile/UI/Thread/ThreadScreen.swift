@@ -222,7 +222,12 @@ private struct ThreadContent: View {
         }
         .onChange(of: contentSignature(blocks)) { old, new in
             ScrollTrace.log("content", "\(old) → \(new)")
-            if followsBottom {
+            if followsBottom, blocks.count < watch.blockCount {
+                // A finished turn folding under an animated jump left the lazy rows undrawn at the
+                // end (a blank screen on the iPhone): no animation for a fold.
+                scrollToBottom("folded")
+                Task { await settleAtBottom("folded") }
+            } else if followsBottom {
                 withAnimation(.easeOut(duration: 0.2)) { scrollToBottom("content (animated)") }
             } else if blocks.count < watch.blockCount {
                 refollowAfterFold(gapBefore: watch.gapBefore)
@@ -602,10 +607,13 @@ private struct ThreadContent: View {
             guard let why = blankReason() else {
                 // At rest and following the end, the end has to be on screen.
                 if followsBottom, scrollPhase == .idle, session.projection != nil, !bottomVisible {
+                    watch.healing = true
+                    defer { watch.healing = false }
                     let what = "following the end after \(reason), but it isn't on screen"
                     ThreadLog.record(logPrefix + what + " · " + stateLine())
                     ScrollTrace.caught(what)
-                    scrollToBottom("end not on screen")
+                    await redrawEnd()
+                    ThreadLog.record(logPrefix + (bottomVisible ? "  end back on screen" : "  end still not on screen") + " · " + stateLine())
                 }
                 return
             }
@@ -623,6 +631,20 @@ private struct ThreadContent: View {
                 try? await Task.sleep(for: .milliseconds(500))
             }
             ThreadLog.record(logPrefix + (blankReason().map { "  still blank: \($0)" } ?? "  rows back") + " · " + stateLine())
+        }
+    }
+
+    /// At the end by the numbers but with the end not drawn (seen after a turn folded mid-jump):
+    /// aiming at the end again is a no-op there, so step away and back to make the lazy stack draw,
+    /// a point first, then half a screen.
+    private func redrawEnd() async {
+        for step in [1, scrollMetrics.viewport / 2] {
+            guard followsBottom, scrollPhase != .interacting, !bottomVisible else { return }
+            ScrollTrace.log("redraw end", "step back \(Int(step)) pt")
+            position.scrollTo(y: max(0, scrollMetrics.offset - step))
+            try? await Task.sleep(for: .milliseconds(60))
+            scrollToBottom("redraw end")
+            try? await Task.sleep(for: .milliseconds(300))
         }
     }
 
