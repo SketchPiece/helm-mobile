@@ -529,6 +529,10 @@ final class PushPayloadTests: XCTestCase {
         XCTAssertEqual(HelmLink.thread(from: url)?.threadId, "t")
         XCTAssertEqual(HelmLink.thread(from: URL(string: "t3code://threads/e/t")!)?.environmentId, "e")
         XCTAssertNil(HelmLink.url(forPath: "/"))
+        XCTAssertEqual(HelmLink.linkedThreadId(from: URL(string: "t3-thread://v1/abc-123")!), "abc-123")
+        XCTAssertNil(HelmLink.linkedThreadId(from: URL(string: "t3-thread://v2/abc")!))
+        XCTAssertNil(HelmLink.linkedThreadId(from: URL(string: "t3-thread://v1/")!))
+        XCTAssertNil(HelmLink.linkedThreadId(from: URL(string: "https://v1/abc")!))
     }
 
     /// The core pushes content-state as {name, props: "<JSON string>"}.

@@ -184,6 +184,17 @@ private struct ThreadContent: View {
         .onAppear { scrollProxy = proxy }
         }
         .environment(\.threadEnvironmentId, environment.id)
+        // Links to other threads open here, on top of this one, so Back returns.
+        .environment(\.openURL, OpenURLAction { url in
+            if let threadId = HelmLink.linkedThreadId(from: url) {
+                router.push(ThreadRef(environmentId: environment.id, threadId: threadId))
+            } else if [HelmLink.scheme, "t3code"].contains(url.scheme), let target = HelmLink.thread(from: url) {
+                router.push(ThreadRef(environmentId: target.environmentId, threadId: target.threadId))
+            } else {
+                return .systemAction
+            }
+            return .handled
+        })
         .defaultScrollAnchor(.bottom, for: .initialOffset)
         .scrollPosition($position)
         .onScrollGeometryChange(for: ScrollMetrics.self) {

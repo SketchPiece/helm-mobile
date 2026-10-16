@@ -100,6 +100,15 @@ enum HelmLink {
         return thread(fromParts: path.split(separator: "/").map(String.init))
     }
 
+    /// `t3-thread://v1/<thread>`, the link an agent writes to point at another thread. It carries
+    /// no environment: the thread is on the same computer as the message that links to it.
+    static func linkedThreadId(from url: URL) -> String? {
+        guard url.scheme == "t3-thread", url.host(percentEncoded: true) == "v1" else { return nil }
+        let parts = url.path(percentEncoded: true).split(separator: "/")
+        guard parts.count == 1, let thread = parts[0].removingPercentEncoding, !thread.isEmpty else { return nil }
+        return thread
+    }
+
     private static func thread(fromParts parts: [String]) -> (environmentId: String, threadId: String)? {
         guard parts.count == 3, parts[0] == "threads",
               let environment = parts[1].removingPercentEncoding, let thread = parts[2].removingPercentEncoding,

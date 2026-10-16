@@ -19,6 +19,7 @@ struct SelectableTextView: UIViewRepresentable {
         view.textContainerInset = .zero
         view.textContainer.lineFragmentPadding = 0
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.delegate = context.coordinator
         if !wraps {
             view.textContainer.widthTracksTextView = false
             view.textContainer.size = CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
@@ -27,6 +28,7 @@ struct SelectableTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: UITextView, context: Context) {
+        context.coordinator.openURL = context.environment.openURL
         if let linkColor { view.linkTextAttributes = [.foregroundColor: UIColor(linkColor)] }
         if !view.attributedText.isEqual(to: text) { view.attributedText = text }
     }
@@ -48,10 +50,19 @@ struct SelectableTextView: UIViewRepresentable {
 
     func makeCoordinator() -> SizeCache { SizeCache() }
 
-    final class SizeCache {
+    final class SizeCache: NSObject, UITextViewDelegate {
         var text: NSAttributedString?
         var limit: CGFloat = 0
         var size: CGSize?
+        var openURL: OpenURLAction?
+
+        /// A tapped link goes through SwiftUI's `openURL`, so a thread can open links to other
+        /// threads (`t3-thread://`) in the app instead of handing them to iOS, which can't open them.
+        func textView(_ textView: UITextView, primaryActionFor textItem: UITextItem,
+                      defaultAction: UIAction) -> UIAction? {
+            guard case .link(let url) = textItem.content, let openURL else { return defaultAction }
+            return UIAction { _ in openURL(url) }
+        }
     }
 }
 
