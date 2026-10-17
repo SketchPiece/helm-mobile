@@ -1,0 +1,92 @@
+{
+ "v": 3,
+ "title": "Helm Mobile · iPad project picker and ⌘K",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "0a-now-palette.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1640,
+   "h": 1000,
+   "title": "Now · ⌘K palette"
+  },
+  "0b-now-sheet.html": {
+   "x": 1720,
+   "y": 0,
+   "w": 1640,
+   "h": 1000,
+   "title": "Now · project sheet"
+  },
+  "a-card.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1640,
+   "h": 1000,
+   "title": "A. One picker card for tap and ⌘N (recommended)"
+  },
+  "b-popover.html": {
+   "x": 0,
+   "y": 2480,
+   "w": 1640,
+   "h": 1000,
+   "title": "B. A popover from where you tapped"
+  },
+  "c-grid.html": {
+   "x": 1720,
+   "y": 2480,
+   "w": 1640,
+   "h": 1000,
+   "title": "C. Project grid"
+  },
+  "d-palette.html": {
+   "x": 1720,
+   "y": 1240,
+   "w": 1640,
+   "h": 1000,
+   "title": "D. ⌘K in the same style"
+  }
+ },
+ "order": [
+  "0a-now-palette.html",
+  "0b-now-sheet.html",
+  "a-card.html",
+  "b-popover.html",
+  "c-grid.html",
+  "d-palette.html"
+ ],
+ "notes": {
+  "t": {
+   "x": 0,
+   "y": -260,
+   "text": "Helm Mobile · iPad: one project picker for touch and keyboard, ⌘K to match",
+   "kind": "title1",
+   "maxW": 3360
+  },
+  "n": {
+   "x": 0,
+   "y": -80,
+   "text": "Now",
+   "kind": "title2",
+   "maxW": 1600
+  },
+  "r": {
+   "x": 0,
+   "y": 1160,
+   "text": "Recommended: A for picking a project + D for ⌘K",
+   "kind": "title2",
+   "maxW": 3360
+  },
+  "o": {
+   "x": 0,
+   "y": 2400,
+   "text": "Other options for the picker",
+   "kind": "title2",
+   "maxW": 3360
+  }
+ },
+ "annotations": [],
+ "designSystems": []
+}
