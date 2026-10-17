@@ -441,6 +441,8 @@ private struct ThreadContent: View {
                     review(checkpoint)
                 }
             }
+        case .page(_, let render):
+            HtmlRenderCard(render: render, environment: environment)
         case .error(let item):
             ErrorCard(item: item)
         case .notice(let item):

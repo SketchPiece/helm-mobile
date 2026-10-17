@@ -12,13 +12,15 @@ enum TimelineBlock: Identifiable, Hashable {
     case changes(TurnItem)
     case error(TurnItem)
     case notice(TurnItem)
+    /// A page the agent published with `html_render`, drawn in the reply like on the desktop.
+    case page(TurnItem, HtmlRender)
     /// A finished turn's work, folded: "Worked for 3m 12s". `key` toggles it open.
     case fold(key: String, label: String, expanded: Bool)
 
     var id: String {
         switch self {
         case .user(let item), .assistant(let item), .plan(let item), .todo(let item), .changes(let item),
-             .error(let item), .notice(let item):
+             .error(let item), .notice(let item), .page(let item, _):
             item.id
         case .work(let id, _, _):
             "work:\(id)"
@@ -31,7 +33,7 @@ enum TimelineBlock: Identifiable, Hashable {
     var items: [TurnItem] {
         switch self {
         case .user(let item), .assistant(let item), .plan(let item), .todo(let item), .changes(let item),
-             .error(let item), .notice(let item):
+             .error(let item), .notice(let item), .page(let item, _):
             [item]
         case .work(_, let items, _):
             items
@@ -113,7 +115,12 @@ enum Timeline {
                 flushWork()
                 blocks.append(.notice(item))
             default:
-                pendingWork.append(item)
+                if let render = HtmlRender(item: item) {
+                    flushWork()
+                    blocks.append(.page(item, render))
+                } else {
+                    pendingWork.append(item)
+                }
             }
         }
         flushWork()
@@ -186,7 +193,7 @@ enum Timeline {
             let toHide = group.indices.filter { index in
                 if keep.contains(index) { return false }
                 switch blocks[index] {
-                case .changes, .plan: return false
+                case .changes, .plan, .page: return false
                 case .notice(let item): return !["notification", "handoff", "compaction", "fork"].contains(item.type)
                 default: return true
                 }
