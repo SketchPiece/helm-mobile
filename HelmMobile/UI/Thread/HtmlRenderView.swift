@@ -210,6 +210,10 @@ struct HtmlPageWebView: UIViewRepresentable {
         webView.scrollView.isScrollEnabled = !nested
         webView.scrollView.bounces = !nested
         webView.scrollView.showsVerticalScrollIndicator = !nested
+        if nested {
+            // A scroll view's edge blur would smear the page's top and bottom rows in the thread.
+            for effect in [webView.scrollView.topEdgeEffect, webView.scrollView.bottomEdgeEffect] { effect.isHidden = true }
+        }
         webView.accessibilityLabel = title
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
