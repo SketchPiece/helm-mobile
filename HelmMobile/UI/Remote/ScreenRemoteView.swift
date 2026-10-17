@@ -14,8 +14,9 @@ struct ScreenRemoteView: View {
     @State private var showsUnlocked = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsNotice = true
-    /// Which side of the screen the toolbar lives on; the mini map takes the other one.
-    @AppStorage(PhonePreferences.screenToolbarLeadingKey) private var toolbarLeading = false
+    /// Which edge of the screen the toolbar lives on; the mini map keeps to a corner away from it.
+    @AppStorage(PhonePreferences.screenToolbarEdgeKey) private var toolbarEdge: ScreenToolbarEdge =
+        UserDefaults.standard.bool(forKey: PhonePreferences.screenToolbarLeadingKey) ? .leading : .trailing
     @Environment(\.scenePhase) private var scenePhase
     private let close: () -> Void
 
@@ -37,7 +38,7 @@ struct ScreenRemoteView: View {
             case .live: EmptyView()
             }
         }
-        .overlay(alignment: toolbarLeading ? .topTrailing : .topLeading) {
+        .overlay(alignment: miniMapCorner) {
             if viewport.isZoomedIn, remote.desktopSize != .zero {
                 ScreenMiniMap(desktop: remote.desktopSize, visible: viewport.visibleRect)
                     .padding(.horizontal, 14)
@@ -51,7 +52,7 @@ struct ScreenRemoteView: View {
         }
         .overlay {
             if !viewport.keyboardShown {
-                ScreenToolbarDock(remote: remote, viewport: viewport, leading: $toolbarLeading,
+                ScreenToolbarDock(remote: remote, viewport: viewport, edge: $toolbarEdge,
                                   unlock: reopenUnlock) { close() }
                     .transition(.opacity)
             }
@@ -95,7 +96,7 @@ struct ScreenRemoteView: View {
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.15), value: showsUnlocked)
         .onChange(of: remote.notice) { showsNotice = true }
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
-        .animation(.easeInOut(duration: 0.2), value: toolbarLeading)
+        .animation(.easeInOut(duration: 0.2), value: toolbarEdge)
         .animation(.easeInOut(duration: 0.2), value: viewport.keyboardShown)
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
@@ -110,6 +111,14 @@ struct ScreenRemoteView: View {
             case .active where remote.phase != .live: Task { await remote.connect() }
             default: break
             }
+        }
+    }
+
+    private var miniMapCorner: Alignment {
+        switch toolbarEdge {
+        case .leading: .topTrailing
+        case .trailing, .bottom: .topLeading
+        case .top: .bottomLeading
         }
     }
 
@@ -1162,16 +1171,19 @@ private struct ScreenMiniMap: View {
     }
 }
 
-/// Keyboard, zoom, a few Mac-only keys and close, in a column; the dock gives it its glass.
+/// Keyboard, zoom, a few Mac-only keys and close, in a column or a row; the dock gives it its glass.
 private struct ScreenToolbar: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
+    let axis: Axis
     /// Set while the Mac is locked and its login card is put away; gone once it unlocks.
     let unlock: (() -> Void)?
     let close: () -> Void
 
     var body: some View {
-        VStack(spacing: 4) {
+        // One layout either way, so turning keeps the buttons and menus (and a drag on them).
+        let layout = axis == .vertical ? AnyLayout(VStackLayout(spacing: 4)) : AnyLayout(HStackLayout(spacing: 4))
+        layout {
             if let unlock {
                 button("lock.fill", label: "Unlock", tint: Palette.accent, action: unlock)
                     .accessibilityHint("Opens a field for the Mac's password")
@@ -1195,6 +1207,7 @@ private struct ScreenToolbar: View {
             button("xmark", label: "Close") { close() }
         }
         .padding(6)
+        .animation(.spring(duration: 0.4, bounce: 0.2), value: axis)
     }
 
     private func button(_ symbol: String, label: LocalizedStringKey, tint: Color = .white,
@@ -1206,42 +1219,84 @@ private struct ScreenToolbar: View {
                 .frame(width: 48, height: 48)
                 .contentShape(.rect)
         }
+        .buttonStyle(ScreenToolbarButtonStyle())
         .accessibilityLabel(Text(label))
     }
 }
 
-/// The toolbar on a side of the screen, put away like picture in picture: once the screen is
-/// touched the column slides off past the edge and leaves a tab with a chevron. Pulling the tab
-/// brings the column out under the finger (let go past halfway and it opens), a tap opens it
-/// outright, and the tab drags along the edge, or across to the other one. The open column
-/// swipes back off the edge the same way.
+/// A toolbar button gives under the finger: it shrinks a little behind a soft light, and springs
+/// back.
+private struct ScreenToolbarButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Circle().fill(.white.opacity(configuration.isPressed ? 0.2 : 0)).padding(2))
+            .scaleEffect(configuration.isPressed ? 0.88 : 1)
+            .animation(.spring(duration: 0.3, bounce: 0.45), value: configuration.isPressed)
+    }
+}
+
+/// Which edge of the screen the toolbar lives on: a column on the sides, a row on the top and
+/// bottom.
+enum ScreenToolbarEdge: String {
+    case leading, trailing, top, bottom
+
+    var isSide: Bool { self == .leading || self == .trailing }
+
+    /// Into the screen, away from the edge.
+    var inward: CGVector {
+        switch self {
+        case .leading: CGVector(dx: 1, dy: 0)
+        case .trailing: CGVector(dx: -1, dy: 0)
+        case .top: CGVector(dx: 0, dy: 1)
+        case .bottom: CGVector(dx: 0, dy: -1)
+        }
+    }
+
+    /// The edge nearest a point on a screen of this size.
+    static func nearest(to point: CGPoint, in size: CGSize) -> Self {
+        let distances: [(Self, CGFloat)] = [(.leading, point.x), (.trailing, size.width - point.x),
+                                            (.top, point.y), (.bottom, size.height - point.y)]
+        return distances.min { $0.1 < $1.1 }?.0 ?? .trailing
+    }
+}
+
+/// The toolbar on an edge of the screen, put away like picture in picture: once the screen is
+/// touched it slides off past the edge and leaves a tab with a chevron. Pulling the tab brings the
+/// toolbar out under the finger (let go past halfway and it opens), a tap opens it outright, and
+/// the tab drags along the edge, or over to another one. The open toolbar is carried anywhere on
+/// the screen and lands on the edge nearest where it's let go, a column on the sides and a row on
+/// the top and bottom; thrown off the edge, it's put away.
 private struct ScreenToolbarDock: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
-    @Binding var leading: Bool
+    @Binding var edge: ScreenToolbarEdge
     let unlock: (() -> Void)?
     let close: () -> Void
-    /// The tab's height on the edge, as a fraction of the screen's.
+    /// Where the toolbar sits along its edge, as a fraction of the edge's length.
     @AppStorage(PhonePreferences.screenToolbarPositionKey) private var position = 0.5
-    /// A finger on the tab: how far the column is out (0 put away, 1 open) and how far it moved
-    /// along the edge. A cancelled drag lets go by itself.
-    @GestureState(resetTransaction: Transaction(animation: Self.spring)) private var pull: Pull?
-    @State private var columnHeight: CGFloat = 320
+    /// A finger on the toolbar or its tab. A cancelled drag lets go by itself.
+    @GestureState(resetTransaction: Transaction(animation: Self.spring)) private var drag: Drag?
+    @State private var toolbarSize = CGSize(width: 60, height: 320)
 
-    private struct Pull: Equatable {
-        var out: CGFloat
-        var down: CGFloat
+    private enum Drag: Equatable {
+        /// The open toolbar, picked up at one point and carried to another.
+        case toolbar(start: CGPoint, location: CGPoint)
+        /// The tab: how far the toolbar is out (0 put away, 1 open) and how far it moved along
+        /// the edge.
+        case tab(out: CGFloat, along: CGFloat)
     }
 
+    /// The tab's size on a side edge; turned on the top and bottom.
     private static let tab = CGSize(width: 22, height: 76)
     /// The tab's touch area reaches further in than it's drawn.
     private static let tabTouch = CGSize(width: 44, height: 110)
-    private static let columnWidth: CGFloat = 60
+    /// The toolbar's depth from its edge, the column's width or the row's height.
+    private static let thickness: CGFloat = 60
     private static let margin: CGFloat = 12
     private static let spring = Animation.spring(duration: 0.45, bounce: 0.2)
 
     var body: some View {
-        // The whole screen, edges included; the column keeps out of the safe area's sides itself.
+        // The whole screen, edges included; the toolbar keeps out of the safe area itself.
         GeometryReader { safe in
             let insets = safe.safeAreaInsets
             GeometryReader { proxy in
@@ -1253,82 +1308,196 @@ private struct ScreenToolbarDock: View {
     }
 
     private func content(size: CGSize, insets: EdgeInsets) -> some View {
-        let out = pull?.out ?? (viewport.toolbarHidden ? 0 : 1)
-        let y = clamped(position * size.height + (pull?.down ?? 0), half: columnHeight / 2, in: size.height)
-        let tabY = clamped(position * size.height + (pull?.down ?? 0), half: Self.tabTouch.height / 2, in: size.height)
-        let inset = leading ? insets.leading : insets.trailing
-        // From just past the edge to its place beside it.
-        let travel = inset + Self.margin + Self.columnWidth + 8
-        let edgeX = leading ? 0 : size.width
-        let columnX = edgeX + (leading ? 1 : -1) * (out * travel - Self.columnWidth / 2 - 8)
+        let carried: (start: CGPoint, location: CGPoint)? = if case .toolbar(let start, let location) = drag { (start, location) } else { nil }
+        let tabPull: (out: CGFloat, along: CGFloat)? = if case .tab(let out, let along) = drag { (out, along) } else { nil }
+        let out = carried != nil ? 1 : tabPull?.out ?? (viewport.toolbarHidden ? 0 : 1)
+        let along = position * length(of: edge, in: size) + (tabPull?.along ?? 0)
+        let rest = point(on: edge, along: clampedAlong(along, half: half(on: edge), on: edge, size: size, insets: insets),
+                         inward: out * travel(edge, insets) - Self.thickness / 2 - 8, in: size)
+        // Carried, it turns into a row or a column as it nears an edge, the button picked up staying
+        // under the finger.
+        let shape = carried.map { ScreenToolbarEdge.nearest(to: $0.location, in: size) } ?? edge
+        let center = carried.map { $0.location - grab(from: $0.start, rest: rest, turnedTo: shape) } ?? rest
+        let tabAlong = clampedAlong(along, half: Self.tabTouch.height / 2, on: edge, size: size, insets: insets)
         return ZStack {
-            ScreenToolbar(remote: remote, viewport: viewport, unlock: unlock, close: close)
+            ScreenToolbar(remote: remote, viewport: viewport, axis: shape.isSide ? .vertical : .horizontal,
+                          unlock: unlock, close: close)
                 .glassEffect(.regular, in: .capsule)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { toolbarSize = $0 }
+                // Picked up, it lifts off the screen.
+                .scaleEffect(carried != nil ? 1.06 : 1)
+                .shadow(color: .black.opacity(carried != nil ? 0.3 : 0), radius: 18, y: 8)
+                .animation(.spring(duration: 0.3, bounce: 0.3), value: carried != nil)
                 // Simultaneous and only past a short way, so taps still reach the buttons and menus.
                 .simultaneousGesture(DragGesture(minimumDistance: 12, coordinateSpace: .named("dock"))
-                    .updating($pull) { drag, pull, _ in
-                        let outward = leading ? -drag.translation.width : drag.translation.width
-                        pull = Pull(out: 1 - min(max(outward / travel, 0), 1), down: 0)
-                    }
-                    .onEnded { drag in
-                        let outward = leading ? -drag.predictedEndTranslation.width : drag.predictedEndTranslation.width
-                        if outward > travel / 2 { viewport.toolbarHidden = true }
+                    .updating($drag) { value, drag, _ in drag = .toolbar(start: value.startLocation, location: value.location) }
+                    .onEnded { value in
+                        let shape = ScreenToolbarEdge.nearest(to: value.location, in: size)
+                        let end = value.predictedEndLocation - grab(from: value.startLocation, rest: rest, turnedTo: shape)
+                        land(at: end, in: size, insets: insets)
                     })
-                .allowsHitTesting(out > 0.99 || pull != nil)
-                .position(x: columnX, y: y)
-            tab(at: CGPoint(x: edgeX, y: tabY), travel: travel, size: size)
+                .allowsHitTesting(out > 0.99 || drag != nil)
+                .position(center)
+            tab(at: point(on: edge, along: tabAlong, inward: tabInset(insets) + Self.tabTouch.width / 2, in: size),
+                size: size, insets: insets)
                 .opacity(max(0, 1 - out * 2.5))
-                .allowsHitTesting(out < 0.01 || pull != nil)
+                .allowsHitTesting(out < 0.01 || drag != nil)
         }
         .coordinateSpace(.named("dock"))
     }
 
-    /// Flush with the edge, square against it, a chevron pointing in.
-    private func tab(at edge: CGPoint, travel: CGFloat, size: CGSize) -> some View {
+    /// The top and bottom tabs keep clear of the Dynamic Island and the home indicator; the side
+    /// ones sit on the edge.
+    private func tabInset(_ insets: EdgeInsets) -> CGFloat {
+        switch edge {
+        case .leading, .trailing: 0
+        case .top: insets.top
+        case .bottom: insets.bottom
+        }
+    }
+
+    /// Flush with the edge, square against it, a chevron pointing in; a pill when kept off it.
+    private func tab(at center: CGPoint, size: CGSize, insets: EdgeInsets) -> some View {
+        let flush = tabInset(insets) == 0
         let shape = UnevenRoundedRectangle(
-            topLeadingRadius: leading ? 0 : 11, bottomLeadingRadius: leading ? 0 : 11,
-            bottomTrailingRadius: leading ? 11 : 0, topTrailingRadius: leading ? 11 : 0)
-        return Image(systemName: leading ? "chevron.compact.right" : "chevron.compact.left")
+            topLeadingRadius: !flush || edge == .trailing || edge == .bottom ? 11 : 0,
+            bottomLeadingRadius: !flush || edge == .trailing || edge == .top ? 11 : 0,
+            bottomTrailingRadius: !flush || edge == .leading || edge == .top ? 11 : 0,
+            topTrailingRadius: !flush || edge == .leading || edge == .bottom ? 11 : 0)
+        let chevron = switch edge {
+        case .leading: "chevron.compact.right"
+        case .trailing: "chevron.compact.left"
+        case .top: "chevron.compact.down"
+        case .bottom: "chevron.compact.up"
+        }
+        let drawn = edge.isSide ? Self.tab : CGSize(width: Self.tab.height, height: Self.tab.width)
+        let touch = edge.isSide ? Self.tabTouch : CGSize(width: Self.tabTouch.height, height: Self.tabTouch.width)
+        let alignment: Alignment = switch edge {
+        case .leading: .leading
+        case .trailing: .trailing
+        case .top: .top
+        case .bottom: .bottom
+        }
+        let travel = travel(edge, insets)
+        return Image(systemName: chevron)
             .font(.system(size: 22, weight: .semibold))
             .foregroundStyle(.white.opacity(0.85))
-            .frame(width: Self.tab.width, height: Self.tab.height)
+            .frame(width: drawn.width, height: drawn.height)
             .glassEffect(.regular, in: shape)
-            .frame(width: Self.tabTouch.width, height: Self.tabTouch.height, alignment: leading ? .leading : .trailing)
+            .frame(width: touch.width, height: touch.height, alignment: alignment)
             .contentShape(.rect)
-            .position(x: edge.x + (leading ? 1 : -1) * Self.tabTouch.width / 2, y: edge.y)
+            .position(center)
             .onTapGesture { viewport.toolbarHidden = false }
             .gesture(DragGesture(minimumDistance: 6, coordinateSpace: .named("dock"))
-                .updating($pull) { drag, pull, _ in
-                    let inward = leading ? drag.translation.width : -drag.translation.width
-                    pull = Pull(out: min(max(inward / travel, 0), 1), down: drag.translation.height)
+                .updating($drag) { value, drag, _ in
+                    let inward = inwardPart(of: value.translation, from: edge)
+                    drag = .tab(out: min(max(inward / travel, 0), 1), along: alongPart(of: value.translation, on: edge))
                 }
-                .onEnded { drag in drop(drag, travel: travel, in: size) })
+                .onEnded { value in drop(value, in: size, insets: insets) })
             .accessibilityElement()
             .accessibilityLabel("Show toolbar")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { viewport.toolbarHidden = false }
     }
 
-    /// Thrown or pulled past halfway, it opens; carried past the screen's middle, it moves to the
-    /// other edge; otherwise it goes back, at the new height.
-    private func drop(_ drag: DragGesture.Value, travel: CGFloat, in size: CGSize) {
-        let across = leading ? drag.location.x > size.width / 2 : drag.location.x < size.width / 2
-        let inward = leading ? drag.predictedEndTranslation.width : -drag.predictedEndTranslation.width
-        let y = (position * size.height + drag.translation.height) / max(size.height, 1)
+    /// From the toolbar's middle to where the finger holds it: the same place on its buttons when
+    /// it's turned from a column to a row or back (it's as long either way).
+    private func grab(from start: CGPoint, rest: CGPoint, turnedTo shape: ScreenToolbarEdge) -> CGSize {
+        let offset = CGSize(width: start.x - rest.x, height: start.y - rest.y)
+        let along = alongPart(of: offset, on: edge)
+        let across = edge.isSide ? offset.width : offset.height
+        return shape.isSide ? CGSize(width: across, height: along) : CGSize(width: along, height: across)
+    }
+
+    /// The open toolbar let go, headed for `end`: it lands on the edge nearest there, at that place
+    /// along it. Thrown out past that edge, it's put away there.
+    private func land(at end: CGPoint, in size: CGSize, insets: EdgeInsets) {
+        let inside = CGPoint(x: min(max(end.x, 0), size.width), y: min(max(end.y, 0), size.height))
+        let target = ScreenToolbarEdge.nearest(to: inside, in: size)
+        let depth: CGFloat = switch target {
+        case .leading: end.x
+        case .trailing: size.width - end.x
+        case .top: end.y
+        case .bottom: size.height - end.y
+        }
+        let travel = travel(target, insets)
+        let along = target.isSide ? inside.y : inside.x
         withAnimation(Self.spring) {
-            position = min(max(y, 0), 1)
-            if across {
-                leading.toggle()
-            } else if inward > travel / 2 {
-                viewport.toolbarHidden = false
+            edge = target
+            position = along / max(length(of: target, in: size), 1)
+            if depth < travel / 2 - Self.thickness / 2 - 8 { viewport.toolbarHidden = true }
+        }
+    }
+
+    /// The tab let go: carried to another edge, it moves there; thrown or pulled in past halfway,
+    /// it opens; otherwise it goes back, at its new place along the edge.
+    private func drop(_ value: DragGesture.Value, in size: CGSize, insets: EdgeInsets) {
+        let target = ScreenToolbarEdge.nearest(to: value.location, in: size)
+        let inward = inwardPart(of: value.predictedEndTranslation, from: edge)
+        withAnimation(Self.spring) {
+            if target != edge {
+                let along = target.isSide ? value.location.y : value.location.x
+                edge = target
+                position = min(max(along / max(length(of: target, in: size), 1), 0), 1)
+            } else {
+                let along = position * length(of: edge, in: size) + alongPart(of: value.translation, on: edge)
+                position = min(max(along / max(length(of: edge, in: size), 1), 0), 1)
+                if inward > travel(edge, insets) / 2 { viewport.toolbarHidden = false }
             }
         }
     }
 
-    private func clamped(_ y: CGFloat, half: CGFloat, in height: CGFloat) -> CGFloat {
-        min(max(y, half + Self.margin), max(height - half - Self.margin, half + Self.margin))
+    // MARK: Geometry
+
+    /// From just past the edge to the toolbar's place beside it.
+    private func travel(_ edge: ScreenToolbarEdge, _ insets: EdgeInsets) -> CGFloat {
+        let inset = switch edge {
+        case .leading: insets.leading
+        case .trailing: insets.trailing
+        case .top: insets.top
+        case .bottom: insets.bottom
+        }
+        return inset + Self.margin + Self.thickness + 8
     }
+
+    private func length(of edge: ScreenToolbarEdge, in size: CGSize) -> CGFloat {
+        edge.isSide ? size.height : size.width
+    }
+
+    /// Half the toolbar's length along an edge.
+    private func half(on edge: ScreenToolbarEdge) -> CGFloat {
+        (edge.isSide ? toolbarSize.height : toolbarSize.width) / 2
+    }
+
+    /// A point `along` the edge and `inward` from it.
+    private func point(on edge: ScreenToolbarEdge, along: CGFloat, inward: CGFloat, in size: CGSize) -> CGPoint {
+        switch edge {
+        case .leading: CGPoint(x: inward, y: along)
+        case .trailing: CGPoint(x: size.width - inward, y: along)
+        case .top: CGPoint(x: along, y: inward)
+        case .bottom: CGPoint(x: along, y: size.height - inward)
+        }
+    }
+
+    private func inwardPart(of translation: CGSize, from edge: ScreenToolbarEdge) -> CGFloat {
+        translation.width * edge.inward.dx + translation.height * edge.inward.dy
+    }
+
+    private func alongPart(of translation: CGSize, on edge: ScreenToolbarEdge) -> CGFloat {
+        edge.isSide ? translation.height : translation.width
+    }
+
+    /// Kept on the screen, clear of the safe area's ends of the edge.
+    private func clampedAlong(_ value: CGFloat, half: CGFloat, on edge: ScreenToolbarEdge, size: CGSize,
+                              insets: EdgeInsets) -> CGFloat {
+        let start = (edge.isSide ? insets.top : insets.leading) + Self.margin + half
+        let end = length(of: edge, in: size) - (edge.isSide ? insets.bottom : insets.trailing) - Self.margin - half
+        return min(max(value, start), max(end, start))
+    }
+}
+
+private func - (point: CGPoint, offset: CGSize) -> CGPoint {
+    CGPoint(x: point.x - offset.width, y: point.y - offset.height)
 }
 
 /// Mac shortcuts with no key on the phone. Its own equatable view so a cursor move doesn't
@@ -1478,6 +1647,7 @@ private struct ScreenWindowsButton: View, @MainActor Equatable {
                 .frame(width: 48, height: 48)
                 .contentShape(.rect)
         }
+        .buttonStyle(ScreenToolbarButtonStyle())
         .accessibilityLabel("Bring a window here")
         .popover(isPresented: $viewport.showsWindows, arrowEdge: .trailing) {
             ScreenWindowList(remote: remote) { viewport.showsWindows = false }
@@ -1753,3 +1923,4 @@ private struct ShakeEffect: GeometryEffect {
         ProjectionTransform(CGAffineTransform(translationX: 10 * sin(shakes * .pi * 4), y: 0))
     }
 }
+

@@ -25,7 +25,9 @@ enum PhonePreferences {
     static let screenFrameRateKey = "screenRemoteFrameRate"
     static let screenResolutionKey = "screenRemoteResolution"
     static let screenInputModeKey = "screenRemoteInputMode"
-    /// The screen remote's toolbar: on the left edge rather than the right, and how far down.
+    /// The screen remote's toolbar: which edge it's on, and how far along it. The edge was once
+    /// only left or right (`screenToolbarLeadingKey`), read while the new key is unset.
+    static let screenToolbarEdgeKey = "screenRemoteToolbarEdge"
     static let screenToolbarLeadingKey = "screenRemoteToolbarLeading"
     static let screenToolbarPositionKey = "screenRemoteToolbarPosition"
     /// Away from home: on by default, with its own quality, frame rate and resolution.
