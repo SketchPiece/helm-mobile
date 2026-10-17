@@ -1370,19 +1370,25 @@ private struct ScreenDisplaysMenu: View, @MainActor Equatable {
         lhs.remote === rhs.remote && lhs.displays == rhs.displays && lhs.shown == rhs.shown
     }
 
+    private func item(_ title: String, symbol: String, target: ScreenRemote.Shown) -> some View {
+        Button { remote.show(target) } label: {
+            Text(title)
+            if shown == target { Text("Shown") }
+            Image(systemName: symbol)
+        }
+    }
+
     var body: some View {
         Menu {
-            Picker("Display", selection: Binding(get: { shown }, set: { if let target = $0 { remote.show(target) } })) {
-                ForEach(displays) { display in
-                    Label(display.name, systemImage: display.isVirtual ? "ipad.landscape" : display.isMain ? "menubar.dockrectangle" : "display")
-                        .tag(Optional(ScreenRemote.Shown.display(display.id)))
-                }
-                if displays.count > 1 {
-                    Label("All displays", systemImage: "rectangle.split.3x1")
-                        .tag(Optional(ScreenRemote.Shown.all))
-                }
+            // Buttons rather than an inline Picker: a picked row's checkmark takes the place of its icon,
+            // so the shown display lost its icon. It's marked with a subtitle instead.
+            ForEach(displays) { display in
+                item(display.name, symbol: display.isVirtual ? "ipad.landscape" : display.isMain ? "menubar.dockrectangle" : "display",
+                     target: .display(display.id))
             }
-            .pickerStyle(.inline)
+            if displays.count > 1 {
+                item(String(localized: "All displays"), symbol: "rectangle.split.3x1", target: .all)
+            }
             if UIDevice.current.userInterfaceIdiom == .pad, !displays.contains(where: \.isVirtual) {
                 Button("Add a display for this iPad", systemImage: "plus.rectangle.on.rectangle") { remote.show(.virtual) }
             }

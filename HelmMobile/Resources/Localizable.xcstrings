@@ -7425,6 +7425,16 @@
         }
       }
     },
+    "Shown": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На экране"
+          }
+        }
+      }
+    },
     "Slow": {
       "localizations": {
         "ru": {
