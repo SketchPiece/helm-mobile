@@ -1018,5 +1018,10 @@
   "Mac is locked": "Mac заблокирован",
   "Unlock": "Разблокировать",
   "Opens a field for the Mac's password": "Открывает поле для пароля Mac",
-  "Enter your password here, or click the password field on the Mac first.": "Введите пароль здесь или сначала нажмите на поле пароля на Mac."
+  "Enter your password here, or click the password field on the Mac first.": "Введите пароль здесь или сначала нажмите на поле пароля на Mac.",
+  "This thread": "Этот тред",
+  "Go to": "Перейти",
+  "Within row": "По строке",
+  "Add": "Добавить",
+  "New thread in": "Новый тред в"
 }

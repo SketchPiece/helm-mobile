@@ -1,3 +1,4 @@
+import GameController
 import SwiftUI
 
 /// What the command palette shows: everything (⌘K), or straight to picking a project for a new
@@ -58,6 +59,7 @@ extension Router {
     func startNewThreadFromKeyboard(in model: AppModel) {
         let options = newThreadOptions(in: model)
         if options.count > 1 {
+            paletteByTouch = false
             palette = .newThreadIn
         } else {
             palette = nil
@@ -81,11 +83,19 @@ extension Router {
     }
 
     func togglePalette() {
+        paletteByTouch = false
         palette = palette == nil ? .root : nil
+    }
+
+    /// The project list for a new thread, opened by a tap (New Thread's project, "All projects…"): on
+    /// iPad the palette's list rather than the phone's sheet, so a tap and ⌘N pick from the same place.
+    func pickProject() {
+        paletteByTouch = true
+        palette = .newThreadIn
     }
 }
 
-/// One row of the palette.
+/// One row or chip of the palette.
 private struct PaletteItem: Identifiable {
     enum Icon {
         case symbol(String)
@@ -104,13 +114,26 @@ private struct PaletteItem: Identifiable {
     /// What typing matches, the title first.
     var terms: [String]
     var subtitle: String?
+    /// The subtitle is a folder path.
+    var monoSubtitle = false
     var shortcut: String?
+    /// The project New Thread is writing in.
+    var checked = false
+    /// A project of the list: Edit and Delete in its context menu.
+    var editable: (EnvironmentSession, Project)?
     var effect: Effect
 }
 
 private struct PaletteSection: Identifiable {
+    enum Style {
+        case rows
+        /// Short choices side by side: where to start a thread, places to go.
+        case chips
+    }
+
     var id: String
-    var title: String
+    var title: String?
+    var style: Style = .rows
     var items: [PaletteItem]
 }
 
@@ -125,7 +148,7 @@ private struct CommandPaletteHost: ViewModifier {
     func body(content: Content) -> some View {
         content.overlay {
             if let mode = router.palette {
-                CommandPalette(startMode: mode)
+                CommandPalette(startMode: mode, byTouch: router.paletteByTouch)
                     // ⌘N while ⌘K is open goes to the project list, fresh.
                     .id(mode)
                     .transition(.opacity)
@@ -137,14 +160,23 @@ private struct CommandPaletteHost: ViewModifier {
 
 private struct CommandPalette: View {
     let startMode: PaletteMode
+    /// Opened by a tap: the field isn't focused and the keyboard hints stay hidden, unless a
+    /// keyboard is attached.
+    let byTouch: Bool
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
     @FocusedValue(\.openThread) private var thread
     @State private var mode: PaletteMode?
     @State private var query = ""
     @State private var selection = 0
+    @State private var hasKeyboard = GCKeyboard.coalesced != nil
+    @State private var showAdd = false
+    @State private var editing: ProjectEditing?
+    @State private var deleting: ProjectDeletion?
 
     private var current: PaletteMode { mode ?? startMode }
+    /// Shortcuts and the hint footer: only when there are keys to press.
+    private var showsKeys: Bool { hasKeyboard || !byTouch }
 
     var body: some View {
         let sections = sections
@@ -155,12 +187,16 @@ private struct CommandPalette: View {
                     .ignoresSafeArea()
                     .onTapGesture { router.palette = nil }
                 card(sections: sections, items: items, height: proxy.size.height)
-                    .frame(maxWidth: min(600, proxy.size.width - 32))
+                    .frame(maxWidth: min(620, proxy.size.width - 32))
                     .padding(.top, min(96, proxy.size.height * 0.1))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onChange(of: query) { selection = 0 }
+        .onReceive(NotificationCenter.default.publisher(for: .GCKeyboardDidConnect)) { _ in hasKeyboard = true }
+        .onReceive(NotificationCenter.default.publisher(for: .GCKeyboardDidDisconnect)) { _ in
+            hasKeyboard = GCKeyboard.coalesced != nil
+        }
         // Escape never reaches the text field (the system takes it first); a shortcut does.
         .background {
             Button("Close") { router.palette = nil }
@@ -168,6 +204,17 @@ private struct CommandPalette: View {
                 .opacity(0)
                 .accessibilityHidden(true)
         }
+        .sheet(isPresented: $showAdd) {
+            AddProjectSheet(environmentId: router.currentProject(in: model)?.environment.id) { environment, project in
+                showAdd = false
+                router.palette = nil
+                router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project.id))
+            }
+        }
+        .sheet(item: $editing) { editing in
+            ProjectEditSheet(environment: editing.environment, project: editing.project)
+        }
+        .projectDeletionAlert($deleting)
         .accessibilityAddTraits(.isModal)
     }
 
@@ -195,7 +242,9 @@ private struct CommandPalette: View {
                     placeholder: current == .root
                         ? String(localized: "Search commands, projects, and threads…")
                         : String(localized: "Search projects…"),
-                    onMove: { move($0, count: items.count) },
+                    focusesOnAppear: showsKeys,
+                    onMove: { move($0, sections: sections) },
+                    onSideways: { sideways($0, sections: sections) },
                     onSubmit: { if items.indices.contains(selection) { perform(items[selection]) } },
                     onEscape: { router.palette = nil },
                     onBackspaceWhenEmpty: { back() },
@@ -205,6 +254,23 @@ private struct CommandPalette: View {
                     }
                 )
                 .frame(height: 28)
+                if current == .newThreadIn {
+                    Button { showAdd = true } label: {
+                        Label("Add", systemImage: "plus")
+                            .labelStyle(.tight)
+                            .font(Typography.footnote.weight(.medium))
+                            .foregroundStyle(Palette.text)
+                            .padding(.horizontal, 12)
+                            .frame(height: 32)
+                            .background(Palette.text.opacity(0.06), in: .capsule)
+                            .padding(.vertical, 6)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.vertical, -6)
+                    .accessibilityLabel("Add project")
+                    .accessibilityIdentifier("addProject")
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -217,14 +283,16 @@ private struct CommandPalette: View {
                     .padding(.vertical, 28)
             } else {
                 list(sections: sections, items: items)
-                    .frame(maxHeight: min(460, height * 0.6))
+                    .frame(maxHeight: min(560, height * 0.68))
             }
-            Divider().overlay(Palette.border)
-            footer
+            if showsKeys {
+                Divider().overlay(Palette.border)
+                footer(chips: sections.contains { $0.style == .chips })
+            }
         }
-        .background(Palette.surface, in: .rect(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Palette.border, lineWidth: 1))
-        .clipShape(.rect(cornerRadius: 18, style: .continuous))
+        .background(Palette.surface, in: .rect(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Palette.border, lineWidth: 1))
+        .clipShape(.rect(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.25), radius: 30, y: 12)
     }
 
@@ -234,19 +302,27 @@ private struct CommandPalette: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(sections) { section in
-                        Text(section.title)
-                            .font(Typography.sectionHeader)
-                            .foregroundStyle(Palette.textMuted)
-                            .padding(.horizontal, 12)
-                            .padding(.top, 10)
-                            .padding(.bottom, 4)
-                        ForEach(section.items) { item in
-                            row(item, selected: item.id == selectedId)
-                                .id(item.id)
-                                .onTapGesture { perform(item) }
-                                .onHover { inside in
-                                    if inside, let index = items.firstIndex(where: { $0.id == item.id }) { selection = index }
+                        if let title = section.title {
+                            Text(title)
+                                .font(Typography.sectionHeader)
+                                .foregroundStyle(Palette.textMuted)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 10)
+                                .padding(.bottom, 6)
+                        }
+                        switch section.style {
+                        case .rows:
+                            ForEach(section.items) { item in
+                                interactive(row(item, selected: item.id == selectedId), item, items: items)
+                            }
+                        case .chips:
+                            ChipFlow(spacing: 8) {
+                                ForEach(section.items) { item in
+                                    interactive(chip(item, selected: item.id == selectedId), item, items: items)
                                 }
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.bottom, 4)
                         }
                     }
                 }
@@ -260,25 +336,52 @@ private struct CommandPalette: View {
         }
     }
 
+    private func interactive(_ view: some View, _ item: PaletteItem, items: [PaletteItem]) -> some View {
+        view
+            .id(item.id)
+            .onTapGesture { perform(item) }
+            .onHover { inside in
+                if inside, let index = items.firstIndex(where: { $0.id == item.id }) { selection = index }
+            }
+            .contextMenu {
+                if let (environment, project) = item.editable {
+                    Button("Edit project…", systemImage: "pencil") {
+                        editing = ProjectEditing(environment: environment, project: project)
+                    }
+                    Divider()
+                    Button("Delete project…", systemImage: "trash", role: .destructive) {
+                        deleting = ProjectDeletion(environment: environment, project: project, in: model)
+                    }
+                }
+            }
+    }
+
     private func row(_ item: PaletteItem, selected: Bool) -> some View {
-        HStack(spacing: 12) {
-            icon(item.icon)
-                .frame(width: 26, height: 26)
+        // Projects and threads are 52pt, with a picture and a second line; commands 44pt.
+        let tall = item.subtitle != nil
+        return HStack(spacing: 12) {
+            icon(item.icon, size: tall ? 30 : 24)
+                .frame(width: 30, height: 30)
             VStack(alignment: .leading, spacing: 2) {
                 item.title
-                    .font(Typography.subheadline)
+                    .font(tall ? Typography.body : Typography.subheadline)
                     .foregroundStyle(Palette.text)
                     .lineLimit(1)
                 if let subtitle = item.subtitle {
                     Text(subtitle)
-                        .font(Typography.caption)
+                        .font(item.monoSubtitle ? Typography.mono(12) : Typography.caption)
                         .foregroundStyle(Palette.textMuted)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
             }
             Spacer(minLength: 8)
-            if let shortcut = item.shortcut {
+            if item.checked {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Palette.accentText)
+            }
+            if showsKeys, let shortcut = item.shortcut {
                 Text(verbatim: shortcut)
                     .font(Typography.footnote)
                     .foregroundStyle(Palette.textMuted)
@@ -290,27 +393,60 @@ private struct CommandPalette: View {
             }
         }
         .padding(.horizontal, 10)
-        .frame(minHeight: 44)
-        .background(selected ? Palette.text.opacity(0.08) : .clear, in: .rect(cornerRadius: 10, style: .continuous))
+        .frame(minHeight: tall ? 52 : 44)
+        .background(selected ? Palette.text.opacity(0.07) : .clear, in: .rect(cornerRadius: 12, style: .continuous))
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("paletteRow")
     }
 
+    private func chip(_ item: PaletteItem, selected: Bool) -> some View {
+        HStack(spacing: 8) {
+            icon(item.icon, size: 22)
+            item.title
+                .font(Typography.subheadline.weight(.medium))
+                .foregroundStyle(Palette.text)
+                .lineLimit(1)
+            if showsKeys, let shortcut = item.shortcut {
+                Text(verbatim: shortcut)
+                    .font(Typography.caption)
+                    .foregroundStyle(Palette.textMuted)
+            }
+            if case .open = item.effect {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Palette.textMuted)
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 44)
+        .background(selected ? Palette.accent.opacity(0.22) : Palette.text.opacity(0.05),
+                    in: .rect(cornerRadius: 12, style: .continuous))
+        .overlay {
+            if selected {
+                RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Palette.accent.opacity(0.75), lineWidth: 1.5)
+            }
+        }
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("paletteChip")
+    }
+
     @ViewBuilder
-    private func icon(_ icon: PaletteItem.Icon) -> some View {
+    private func icon(_ icon: PaletteItem.Icon, size: CGFloat) -> some View {
         switch icon {
         case .symbol(let name):
             Image(systemName: name)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(Palette.textMuted)
         case .project(let environment, let project?):
-            ProjectIcon(project: project, environment: environment, size: 24)
+            ProjectIcon(project: project, environment: environment, size: size)
         case .project(_, nil):
-            ScratchIcon(size: 24)
+            ScratchIcon(size: size)
         case .thread(let entry, let environment):
-            ProjectIcon(project: entry.project, environment: environment, size: 24)
+            ProjectIcon(project: entry.project, environment: environment, size: size)
                 .grayscale(entry.thread.isSettled ? 1 : 0)
                 .opacity(entry.thread.isSettled ? 0.5 : 1)
                 .overlay(alignment: .bottomTrailing) {
@@ -326,9 +462,10 @@ private struct CommandPalette: View {
         }
     }
 
-    private var footer: some View {
+    private func footer(chips: Bool) -> some View {
         HStack(spacing: 16) {
             hint("↑↓", "Navigate")
+            if chips { hint("←→", "Within row") }
             hint("↵", "Choose")
             if current == .newThreadIn { hint("⌘1–9", "Pick") }
             if mode != nil { hint("⌫", "Back") }
@@ -352,9 +489,35 @@ private struct CommandPalette: View {
 
     // MARK: Behaviour
 
-    private func move(_ step: Int, count: Int) {
-        guard count > 0 else { return }
-        selection = (selection + step + count) % count
+    /// What ↑↓ step through: each row on its own, a section of chips as one line.
+    private func lines(_ sections: [PaletteSection]) -> [Range<Int>] {
+        var lines: [Range<Int>] = []
+        var start = 0
+        for section in sections {
+            switch section.style {
+            case .rows:
+                lines += (start..<start + section.items.count).map { $0..<$0 + 1 }
+            case .chips:
+                if !section.items.isEmpty { lines.append(start..<start + section.items.count) }
+            }
+            start += section.items.count
+        }
+        return lines
+    }
+
+    /// Up and down: to the next line, the first chip of a row of chips.
+    private func move(_ step: Int, sections: [PaletteSection]) {
+        let lines = lines(sections)
+        guard !lines.isEmpty else { return }
+        let line = lines.firstIndex { $0.contains(selection) } ?? 0
+        selection = lines[(line + step + lines.count) % lines.count].lowerBound
+    }
+
+    /// Left and right: along a row of chips. False when the selection is a row, so the field moves its caret.
+    private func sideways(_ step: Int, sections: [PaletteSection]) -> Bool {
+        guard let line = lines(sections).first(where: { $0.contains(selection) }), line.count > 1 else { return false }
+        selection = line.lowerBound + (selection - line.lowerBound + step + line.count) % line.count
+        return true
     }
 
     private func back() {
@@ -382,23 +545,42 @@ private struct CommandPalette: View {
         let words = query.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
         switch current {
         case .newThreadIn:
-            let projects = filter(projectItems, words)
-            return projects.isEmpty ? [] : [PaletteSection(id: "projects", title: String(localized: "Projects"), items: projects)]
+            let projects = projectItems
+            guard words.isEmpty else {
+                let found = filter(projects, words)
+                return found.isEmpty ? [] : [PaletteSection(id: "projects", title: String(localized: "Projects"), items: found)]
+            }
+            // What's open and "no project" on top, then the rest.
+            let top = projects.prefix { item in
+                guard case .project(_, let project) = item.icon else { return false }
+                return project == nil || item.id == projects.first?.id
+            }
+            let rest = projects.dropFirst(top.count)
+            return [
+                PaletteSection(id: "top", title: nil, items: Array(top)),
+                PaletteSection(id: "projects", title: String(localized: "All projects"), items: Array(rest)),
+            ].filter { !$0.items.isEmpty }
         case .root:
-            var sections: [PaletteSection] = []
-            let actions = filter(actionItems, words)
-            if !actions.isEmpty { sections.append(PaletteSection(id: "actions", title: String(localized: "Actions"), items: actions)) }
-            if words.isEmpty {
-                let recent = recentThreads.map(threadItem)
-                if !recent.isEmpty {
-                    sections.append(PaletteSection(id: "recent", title: String(localized: "Recent threads"), items: recent))
-                }
-            } else {
+            guard words.isEmpty else {
+                var sections: [PaletteSection] = []
+                let actions = filter(newThreadActions + threadActions + placeActions, words)
+                if !actions.isEmpty { sections.append(PaletteSection(id: "actions", title: String(localized: "Actions"), items: actions)) }
                 let projects = filter(openProjectItems, words)
                 if !projects.isEmpty { sections.append(PaletteSection(id: "projects", title: String(localized: "Projects"), items: projects)) }
                 let threads = filter(allThreadItems, words).prefix(40)
                 if !threads.isEmpty { sections.append(PaletteSection(id: "threads", title: String(localized: "Threads"), items: Array(threads))) }
+                return sections
             }
+            var sections = [PaletteSection(id: "start", title: String(localized: "New thread in"), style: .chips, items: startChips)]
+            let actions = threadActions
+            if !actions.isEmpty {
+                sections.append(PaletteSection(id: "thread", title: String(localized: "This thread"), style: .chips, items: actions))
+            }
+            let recent = recentThreads.map(threadItem)
+            if !recent.isEmpty {
+                sections.append(PaletteSection(id: "recent", title: String(localized: "Recent threads"), items: recent))
+            }
+            sections.append(PaletteSection(id: "go", title: String(localized: "Go to"), style: .chips, items: placeActions))
             return sections
         }
     }
@@ -420,24 +602,54 @@ private struct CommandPalette: View {
     private var showsComputer: Bool { model.environments.count > 1 }
 
     private func projectSubtitle(_ option: NewThreadOption) -> String? {
-        let place = option.project?.workspaceRoot ?? String(localized: "Scratch folder")
+        let place = option.project.map { FolderPath.short($0.workspaceRoot) } ?? String(localized: "Scratch folder")
         return showsComputer ? "\(option.environment.label) · \(place)" : place
     }
 
-    /// ⌘N's list, ⌘1–9 on the first nine.
+    /// ⌘N's list (and a tap on New Thread's project), ⌘1–9 on the first nine.
     private var projectItems: [PaletteItem] {
-        router.newThreadOptions(in: model).enumerated().map { index, option in
-            let name = option.project?.title ?? String(localized: "No project")
+        let current = router.currentProject(in: model)
+        let inNewThread = router.path.last == .newThread
+        return router.newThreadOptions(in: model).enumerated().map { index, option in
+            let name = option.project?.title ?? String(localized: "No project — just a task")
             return PaletteItem(
                 id: "new|\(option.id)",
                 icon: .project(option.environment, option.project),
                 title: Text(verbatim: name),
                 terms: option.project == nil ? [name, "none", "without project", "scratch"] : [name, option.environment.label],
                 subtitle: projectSubtitle(option),
+                monoSubtitle: option.project != nil,
                 shortcut: index < 9 ? "⌘\(index + 1)" : nil,
+                checked: inNewThread && option.id == current?.id,
+                editable: option.project.map { (option.environment, $0) },
                 effect: .run { [router] in router.startNewThread(in: option.target) }
             )
         }
+    }
+
+    /// ⌘K's first line: the project of what's open, no project, the latest ones, then the whole list.
+    private var startChips: [PaletteItem] {
+        let current = router.currentProject(in: model)
+        var chips = router.newThreadOptions(in: model).prefix(4).map { option in
+            let name = option.project?.title ?? String(localized: "No project")
+            let shortcut: String? = option.id == current?.id ? "⇧⌘N" : option.project == nil ? "⌥⌘N" : nil
+            return PaletteItem(
+                id: "start|\(option.id)",
+                icon: .project(option.environment, option.project),
+                title: Text(verbatim: name),
+                terms: [name],
+                shortcut: shortcut,
+                effect: .run { [router] in router.startNewThread(in: option.target) }
+            )
+        }
+        chips.append(PaletteItem(
+            id: "newIn", icon: .symbol("folder"),
+            title: Text("All projects"),
+            terms: [String(localized: "All projects")],
+            shortcut: "⌘N",
+            effect: .open(.newThreadIn)
+        ))
+        return chips
     }
 
     /// Typed in ⌘K: a project opens its latest thread, or New Thread there if it has none.
@@ -455,7 +667,7 @@ private struct CommandPalette: View {
                 title: Text(verbatim: project.title),
                 terms: [project.title, environment.label],
                 subtitle: projectSubtitle(option),
-                shortcut: nil,
+                monoSubtitle: true,
                 effect: .run { [router] in
                     if let latest { router.open(latest.ref) } else { router.startNewThread(in: option.target) }
                 }
@@ -463,7 +675,8 @@ private struct CommandPalette: View {
         }
     }
 
-    private var actionItems: [PaletteItem] {
+    /// Typed in ⌘K, the ways to start a thread as commands.
+    private var newThreadActions: [PaletteItem] {
         var items: [PaletteItem] = []
         let current = router.currentProject(in: model)
         if let current {
@@ -472,7 +685,7 @@ private struct CommandPalette: View {
                 id: "newHere", icon: .symbol("square.and.pencil"),
                 title: Text("New thread in \(Text(verbatim: name).fontWeight(.semibold))"),
                 terms: [String(localized: "New thread in \(name)"), "new thread", "create"],
-                subtitle: nil, shortcut: "⇧⌘N",
+                shortcut: "⇧⌘N",
                 effect: .run { [router, model] in router.startNewThreadHere(in: model) }
             ))
         }
@@ -480,7 +693,7 @@ private struct CommandPalette: View {
             id: "newIn", icon: .symbol("folder.badge.plus"),
             title: Text("New thread in…"),
             terms: [String(localized: "New thread in…"), "new thread", "project", "create"],
-            subtitle: nil, shortcut: "⌘N",
+            shortcut: "⌘N",
             effect: .open(.newThreadIn)
         ))
         if current?.project != nil, model.scratchEnvironment != nil {
@@ -488,73 +701,84 @@ private struct CommandPalette: View {
                 id: "newScratch", icon: .symbol("text.bubble"),
                 title: Text("New thread without a project"),
                 terms: [String(localized: "New thread without a project"), "new thread", "no project", "scratch"],
-                subtitle: nil, shortcut: "⌥⌘N",
+                shortcut: "⌥⌘N",
                 effect: .run { [router, model] in router.startNewThreadWithoutProject(in: model) }
             ))
         }
-        if let thread {
-            if thread.isWorking {
-                items.append(PaletteItem(
-                    id: "stop", icon: .symbol("stop.circle"), title: Text("Stop Agent"),
-                    terms: [String(localized: "Stop Agent"), "interrupt"], subtitle: nil, shortcut: "⌘.",
-                    effect: .run { thread.stop() }
-                ))
-            }
-            if thread.hasChanges {
-                let title = thread.isReviewing ? String(localized: "Hide Changes") : String(localized: "Review Changes")
-                items.append(PaletteItem(
-                    id: "review", icon: .symbol("plus.forwardslash.minus"), title: Text(verbatim: title),
-                    terms: [title, "diff"], subtitle: nil, shortcut: "⌥⌘I",
-                    effect: .run { thread.toggleReview() }
-                ))
-            }
-            let settle = thread.isSettled ? String(localized: "Reopen") : String(localized: "Settle")
+        return items
+    }
+
+    /// What can be done to the open thread.
+    private var threadActions: [PaletteItem] {
+        guard let thread else { return [] }
+        var items: [PaletteItem] = []
+        if thread.isWorking {
             items.append(PaletteItem(
-                id: "settle", icon: .symbol(thread.isSettled ? "arrow.uturn.backward" : "checkmark.circle"),
-                title: Text(verbatim: settle), terms: [settle, "done", "archive"], subtitle: nil, shortcut: "⇧⌘E",
-                effect: .run { thread.perform(thread.isSettled ? .unsettle : .settle) }
-            ))
-            let pin = thread.isPinned ? String(localized: "Unpin") : String(localized: "Pin")
-            items.append(PaletteItem(
-                id: "pin", icon: .symbol(thread.isPinned ? "pin.slash" : "pin"),
-                title: Text(verbatim: pin), terms: [pin], subtitle: nil, shortcut: nil,
-                effect: .run { thread.perform(thread.isPinned ? .unpin : .pin) }
-            ))
-            items.append(PaletteItem(
-                id: "unread", icon: .symbol("circle.badge"), title: Text("Mark as Unread"),
-                terms: [String(localized: "Mark as Unread")], subtitle: nil, shortcut: "⇧⌘U",
-                effect: .run { thread.markUnread() }
+                id: "stop", icon: .symbol("stop.circle"), title: Text("Stop Agent"),
+                terms: [String(localized: "Stop Agent"), "interrupt"], shortcut: "⌘.",
+                effect: .run { thread.stop() }
             ))
         }
+        if thread.hasChanges {
+            let title = thread.isReviewing ? String(localized: "Hide Changes") : String(localized: "Review Changes")
+            items.append(PaletteItem(
+                id: "review", icon: .symbol("plus.forwardslash.minus"), title: Text(verbatim: title),
+                terms: [title, "diff"], shortcut: "⌥⌘I",
+                effect: .run { thread.toggleReview() }
+            ))
+        }
+        let settle = thread.isSettled ? String(localized: "Reopen") : String(localized: "Settle")
         items.append(PaletteItem(
-            id: "search", icon: .symbol("magnifyingglass"), title: Text("Search Threads"),
-            terms: [String(localized: "Search Threads"), "find"], subtitle: nil, shortcut: "⇧⌘F",
-            effect: .run { [router] in router.isSearching = true }
+            id: "settle", icon: .symbol(thread.isSettled ? "arrow.uturn.backward" : "checkmark.circle"),
+            title: Text(verbatim: settle), terms: [settle, "done", "archive"], shortcut: "⇧⌘E",
+            effect: .run { thread.perform(thread.isSettled ? .unsettle : .settle) }
+        ))
+        let pin = thread.isPinned ? String(localized: "Unpin") : String(localized: "Pin")
+        items.append(PaletteItem(
+            id: "pin", icon: .symbol(thread.isPinned ? "pin.slash" : "pin"),
+            title: Text(verbatim: pin), terms: [pin],
+            effect: .run { thread.perform(thread.isPinned ? .unpin : .pin) }
         ))
         items.append(PaletteItem(
-            id: "snoozed", icon: .symbol("moon.zzz"), title: Text("Snoozed"),
-            terms: [String(localized: "Snoozed"), "later"], subtitle: nil, shortcut: nil,
-            effect: .run { [router] in router.openShelf(.snoozed, projectId: nil) }
-        ))
-        items.append(PaletteItem(
-            id: "settled", icon: .symbol("checkmark.circle"), title: Text("Settled"),
-            terms: [String(localized: "Settled"), "done", "archive"], subtitle: nil, shortcut: nil,
-            effect: .run { [router] in router.openShelf(.settled, projectId: nil) }
-        ))
-        items.append(PaletteItem(
-            id: "usage", icon: .symbol("gauge.with.dots.needle.50percent"), title: Text("Usage"),
-            terms: [String(localized: "Usage"), "limits"], subtitle: nil, shortcut: nil,
-            effect: .run { [router] in
-                router.settingsPath = [.usage]
-                router.showSettings = true
-            }
-        ))
-        items.append(PaletteItem(
-            id: "settings", icon: .symbol("gearshape"), title: Text("Settings"),
-            terms: [String(localized: "Settings"), "preferences"], subtitle: nil, shortcut: "⌘,",
-            effect: .run { [router] in router.showSettings = true }
+            id: "unread", icon: .symbol("circle.badge"), title: Text("Mark as Unread"),
+            terms: [String(localized: "Mark as Unread")], shortcut: "⇧⌘U",
+            effect: .run { thread.markUnread() }
         ))
         return items
+    }
+
+    /// Places to go: search, the shelves, usage, settings.
+    private var placeActions: [PaletteItem] {
+        [
+            PaletteItem(
+                id: "search", icon: .symbol("magnifyingglass"), title: Text("Search Threads"),
+                terms: [String(localized: "Search Threads"), "find"], shortcut: "⇧⌘F",
+                effect: .run { [router] in router.isSearching = true }
+            ),
+            PaletteItem(
+                id: "snoozed", icon: .symbol("moon.zzz"), title: Text("Snoozed"),
+                terms: [String(localized: "Snoozed"), "later"],
+                effect: .run { [router] in router.openShelf(.snoozed, projectId: nil) }
+            ),
+            PaletteItem(
+                id: "settled", icon: .symbol("checkmark.circle"), title: Text("Settled"),
+                terms: [String(localized: "Settled"), "done", "archive"],
+                effect: .run { [router] in router.openShelf(.settled, projectId: nil) }
+            ),
+            PaletteItem(
+                id: "usage", icon: .symbol("gauge.with.dots.needle.50percent"), title: Text("Usage"),
+                terms: [String(localized: "Usage"), "limits"],
+                effect: .run { [router] in
+                    router.settingsPath = [.usage]
+                    router.showSettings = true
+                }
+            ),
+            PaletteItem(
+                id: "settings", icon: .symbol("gearshape"), title: Text("Settings"),
+                terms: [String(localized: "Settings"), "preferences"], shortcut: "⌘,",
+                effect: .run { [router] in router.showSettings = true }
+            ),
+        ]
     }
 
     /// Home's order (needing you, pinned, active), as the sidebar shows them.
@@ -588,7 +812,6 @@ private struct CommandPalette: View {
             title: Text(verbatim: entry.thread.displayTitle),
             terms: [entry.thread.displayTitle, project ?? "", entry.thread.branch ?? ""],
             subtitle: subtitle.joined(separator: " · "),
-            shortcut: nil,
             effect: .run { [router] in router.open(entry.ref) }
         )
     }
@@ -600,12 +823,57 @@ private struct CommandPalette: View {
     }()
 }
 
+/// Chips left to right, wrapping onto the next line when the row is full.
+private struct ChipFlow: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(width: proposal.width ?? .infinity, subviews: subviews)
+        let width = rows.map { $0.reduce(0) { $0 + $1.width } + spacing * CGFloat(max($0.count - 1, 0)) }.max() ?? 0
+        let height = rows.map { $0.map(\.height).max() ?? 0 }.reduce(0, +) + spacing * CGFloat(max(rows.count - 1, 0))
+        return CGSize(width: proposal.width ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        var index = 0
+        for row in arrange(width: bounds.width, subviews: subviews) {
+            var x = bounds.minX
+            for size in row {
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+                index += 1
+            }
+            y += (row.map(\.height).max() ?? 0) + spacing
+        }
+    }
+
+    private func arrange(width: CGFloat, subviews: Subviews) -> [[CGSize]] {
+        var rows: [[CGSize]] = [[]]
+        var x: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(ProposedViewSize(width: width, height: nil))
+            if x > 0, x + size.width > width {
+                rows.append([])
+                x = 0
+            }
+            rows[rows.count - 1].append(size)
+            x += size.width + spacing
+        }
+        return rows
+    }
+}
+
 /// The palette's search field: a UIKit one, so the arrows, Return, Escape and ⌘1–9 reach the
 /// palette before the text field (or the system) takes them.
 private struct PaletteField: UIViewRepresentable {
     @Binding var text: String
     var placeholder: String
+    /// Takes the keyboard as it appears; opened by a tap it waits for one, so no on-screen keyboard covers the list.
+    var focusesOnAppear = true
     var onMove: (Int) -> Void
+    /// Left and right; false lets the field move its caret.
+    var onSideways: (Int) -> Bool
     var onSubmit: () -> Void
     var onEscape: () -> Void
     var onBackspaceWhenEmpty: () -> Void
@@ -626,7 +894,7 @@ private struct PaletteField: UIViewRepresentable {
         field.setContentHuggingPriority(.defaultLow, for: .horizontal)
         field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         // On screen first, then focused: an off-window field can't take the keyboard.
-        DispatchQueue.main.async { field.becomeFirstResponder() }
+        if focusesOnAppear { DispatchQueue.main.async { field.becomeFirstResponder() } }
         return field
     }
 
@@ -639,7 +907,7 @@ private struct PaletteField: UIViewRepresentable {
             string: placeholder, attributes: [.foregroundColor: UIColor(Palette.placeholder)]
         )
         field.handlers = Field.Handlers(
-            move: onMove, escape: onEscape, backspaceWhenEmpty: onBackspaceWhenEmpty, number: onNumber
+            move: onMove, sideways: onSideways, escape: onEscape, backspaceWhenEmpty: onBackspaceWhenEmpty, number: onNumber
         )
     }
 
@@ -660,6 +928,7 @@ private struct PaletteField: UIViewRepresentable {
     final class Field: UITextField {
         struct Handlers {
             var move: (Int) -> Void
+            var sideways: (Int) -> Bool
             var escape: () -> Void
             var backspaceWhenEmpty: () -> Void
             var number: (Int) -> Void
@@ -675,6 +944,11 @@ private struct PaletteField: UIViewRepresentable {
                 UIKeyCommand(input: "n", modifierFlags: .control, action: #selector(down)),
                 UIKeyCommand(input: UIKeyCommand.inputEscape, modifierFlags: [], action: #selector(escape)),
             ]
+            // Along a row of chips, while there's no text for the caret to move in.
+            if text?.isEmpty ?? true {
+                commands.append(UIKeyCommand(input: UIKeyCommand.inputLeftArrow, modifierFlags: [], action: #selector(left)))
+                commands.append(UIKeyCommand(input: UIKeyCommand.inputRightArrow, modifierFlags: [], action: #selector(right)))
+            }
             for number in 1...9 {
                 commands.append(UIKeyCommand(input: "\(number)", modifierFlags: .command, action: #selector(pickNumber(_:))))
             }
@@ -685,6 +959,8 @@ private struct PaletteField: UIViewRepresentable {
         @objc private func up() { handlers?.move(-1) }
         @objc private func down() { handlers?.move(1) }
         @objc private func escape() { handlers?.escape() }
+        @objc private func left() { _ = handlers?.sideways(-1) }
+        @objc private func right() { _ = handlers?.sideways(1) }
 
         @objc private func pickNumber(_ command: UIKeyCommand) {
             if let number = command.input.flatMap(Int.init) { handlers?.number(number) }

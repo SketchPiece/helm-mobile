@@ -134,6 +134,9 @@ final class Router {
     var isSearching = false
     /// The command palette over the window (⌘K, ⌘N).
     var palette: PaletteMode?
+    /// The palette was opened by a tap: its search field waits for one too, so the on-screen keyboard
+    /// doesn't come up over the list.
+    var paletteByTouch = false
     /// Home's threads in the order shown (needing you, pinned, active), for Next and Previous Thread.
     var homeOrder: [ThreadRef] = []
 

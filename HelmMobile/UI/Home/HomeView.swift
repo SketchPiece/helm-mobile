@@ -532,7 +532,7 @@ struct HomeView: View {
                     }
                 case .allProjects:
                     Divider()
-                    Button("All projects…", systemImage: "folder") { pickingProject = true }
+                    Button("All projects…", systemImage: "folder") { router.pickProject() }
                 }
             }
         }

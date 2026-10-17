@@ -6,6 +6,7 @@ import SwiftUI
 struct NewThreadView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var environmentId: String?
     @State private var projectId: String?
@@ -135,6 +136,8 @@ struct NewThreadView: View {
         .onChange(of: draft.draftFiles) { saveDraft() }
         .onDisappear(perform: leave)
         .onChange(of: router.newThreadSeed) { takeSeed() }
+        // A project picked in the palette (⌘N, or a tap on the question on iPad) while this is open.
+        .onChange(of: router.newThreadTarget) { takeTarget() }
         // Opened from a quick action or share on a cold start: the Mac connects after this appears.
         .onChange(of: isReady) {
             // The draft's project may be gone from the Mac by now.
@@ -156,7 +159,8 @@ struct NewThreadView: View {
     private var header: some View {
         VStack(spacing: 14) {
             Button {
-                showProjects = true
+                // On iPad the palette's project list, the one ⌘N opens; the phone keeps its sheet.
+                if sizeClass == .regular { router.pickProject() } else { showProjects = true }
             } label: {
                 VStack(spacing: 6) {
                     Text(isScratch ? "What are we doing" : "What are we doing in")
@@ -168,6 +172,11 @@ struct NewThreadView: View {
                         Text(projectQuestion)
                             .underline(color: Palette.placeholder)
                             .foregroundStyle(Palette.text)
+                        if sizeClass == .regular {
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Palette.textMuted)
+                        }
                     }
                 }
                 .font(Typography.sans(24, .medium, relativeTo: .title2))

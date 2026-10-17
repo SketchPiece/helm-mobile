@@ -1369,6 +1369,16 @@
         }
       }
     },
+    "Add": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить"
+          }
+        }
+      }
+    },
     "Add a display for this iPad": {
       "localizations": {
         "ru": {
@@ -3854,6 +3864,16 @@
         }
       }
     },
+    "Go to": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перейти"
+          }
+        }
+      }
+    },
     "Goes in %@, with a README and a first commit.": {
       "localizations": {
         "ru": {
@@ -5017,6 +5037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новый тред"
+          }
+        }
+      }
+    },
+    "New thread in": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый тред в"
           }
         }
       }
@@ -8413,6 +8443,16 @@
         }
       }
     },
+    "This thread": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот тред"
+          }
+        }
+      }
+    },
     "This thread opens once the computer is reachable.": {},
     "This week": {},
     "Thought": {
@@ -9172,6 +9212,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Весь экран"
+          }
+        }
+      }
+    },
+    "Within row": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По строке"
           }
         }
       }
