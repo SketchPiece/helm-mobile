@@ -288,6 +288,8 @@ extension PushService: UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification)
         async -> UNNotificationPresentationOptions
     {
+        // The Mac waiting for Face ID: the card over the app already asks.
+        if notification.request.content.userInfo["authRequestId"] != nil { return [] }
         let ref = Self.thread(fromNotification: notification.request.content.userInfo)
         let visible = await MainActor.run { PushService.shared.visibleThread }
         if let ref, ref == visible { return [] }

@@ -265,6 +265,17 @@ struct EnvironmentDetailView: View {
                 }
             }
             Section {
+                NavigationLink {
+                    MacAuthSettingsView(environment: environment)
+                } label: {
+                    SettingsRow(String(localized: "Face ID for the Mac"), symbol: "faceid") {
+                        if environment.macAuth.sudoSetup.approvesHere {
+                            Text("sudo").font(Typography.footnote).foregroundStyle(Palette.textMuted)
+                        }
+                    }
+                }
+            }
+            Section {
                 Button("Reconnect") { environment.reconnectNow(reason: "Reconnect button") }
                 NavigationLink("Connection log") { ConnectionLogView() }
                 Button("Pair again") { router.showPairing = true }

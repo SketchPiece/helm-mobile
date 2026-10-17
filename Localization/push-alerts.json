@@ -22,5 +22,13 @@
   "HELM_ALERT_MANY_DONE": {
     "en": "%@ agents finished",
     "ru": "Агенты закончили: %@"
+  },
+  "HELM_ALERT_MAC_SUDO": {
+    "en": "Waiting for Face ID: %@",
+    "ru": "Ждёт Face ID: %@"
+  },
+  "HELM_ALERT_MAC_UNLOCK": {
+    "en": "%@ wants to unlock. Confirm with Face ID",
+    "ru": "%@ просит разблокировать. Подтверди через Face ID"
   }
 }

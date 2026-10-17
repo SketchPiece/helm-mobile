@@ -46,6 +46,8 @@ final class EnvironmentSession: Identifiable {
     @ObservationIgnored private var shellSave: Task<Void, Never>?
     /// Unsent drafts shared with Helm on this Mac.
     @ObservationIgnored private(set) lazy var draftSync = DraftSync(environment: self)
+    /// Face ID asked for by this Mac: sudo, password prompts on its screen.
+    @ObservationIgnored private(set) lazy var macAuth = MacAuthSync(environment: self)
 
     struct CachedProjection {
         var projection: ThreadProjection
@@ -242,6 +244,7 @@ final class EnvironmentSession: Identifiable {
     private func teardown() {
         desktop = nil
         draftSync.connectionEnded()
+        macAuth.connectionEnded()
         streams.forEach { $0.cancel() }
         streams.removeAll()
         if let connection {
@@ -327,6 +330,7 @@ final class EnvironmentSession: Identifiable {
 
         followDesktop(on: connection)
         followDrafts(on: connection)
+        followMacAuth(on: connection)
 
         for (key, weakThread) in threads {
             if let thread = weakThread.value {
@@ -433,6 +437,18 @@ final class EnvironmentSession: Identifiable {
                 for try await event in events { self?.draftSync.apply(event) }
             } catch {}
             if let self, self.connection === connection { self.draftSync.connectionEnded() }
+        })
+    }
+
+    /// What this Mac wants Face ID for (`helm.auth.subscribe`). Like `followDrafts`, its end
+    /// never takes the socket down.
+    private func followMacAuth(on connection: RPCConnection) {
+        let events = connection.stream("helm.auth.subscribe", [:])
+        streams.append(Task { [weak self] in
+            do {
+                for try await event in events { self?.macAuth.apply(event) }
+            } catch {}
+            if let self, self.connection === connection { self.macAuth.connectionEnded() }
         })
     }
 

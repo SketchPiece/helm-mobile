@@ -53,6 +53,7 @@ extension HelmApp {
             // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
             .tint(Palette.text)
             .perfDiagnostics()
+            .macAuthRequests()
     }
 }
 

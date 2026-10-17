@@ -1090,6 +1090,16 @@
         }
       }
     },
+    "1. Create this phone's key": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1. Создать ключ этого телефона"
+          }
+        }
+      }
+    },
     "100.64.0.1 or my-mac.tailnet.ts.net": {},
     "120 on a ProMotion screen, 60 on others and in Low Power Mode.": {
       "localizations": {
@@ -1104,6 +1114,16 @@
     "15": {
       "shouldTranslate": false
     },
+    "1Password password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароль от 1Password"
+          }
+        }
+      }
+    },
     "1–2 letters": {
       "localizations": {
         "ru": {
@@ -1116,6 +1136,26 @@
     },
     "2": {
       "shouldTranslate": false
+    },
+    "2. Copied. Run it in a terminal on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2. Скопировано. Запусти в терминале на Mac"
+          }
+        }
+      }
+    },
+    "2. Run in a terminal on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2. Запусти в терминале на Mac"
+          }
+        }
+      }
     },
     "24h": {
       "localizations": {
@@ -1193,6 +1233,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новый тред, ещё не отправлен. Что ты скажешь и какие снимки добавишь, попадёт в поле ввода на компьютере, а отправишь уже там."
+          }
+        }
+      }
+    },
+    "A password prompt is open": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыто окно с паролем"
           }
         }
       }
@@ -1782,6 +1832,16 @@
         }
       }
     },
+    "Approve with Face ID": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить через Face ID"
+          }
+        }
+      }
+    },
     "Archive": {
       "localizations": {
         "ru": {
@@ -2192,6 +2252,26 @@
         }
       }
     },
+    "Cancel on the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отменить на Mac"
+          }
+        }
+      }
+    },
+    "Cancelled.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отменено."
+          }
+        }
+      }
+    },
     "Change icon": {
       "localizations": {
         "ru": {
@@ -2528,6 +2608,16 @@
       }
     },
     "Connect to this computer to add a project.": {},
+    "Connect to this computer to set this up.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключись к этому компьютеру, чтобы настроить."
+          }
+        }
+      }
+    },
     "Connected": {
       "localizations": {
         "ru": {
@@ -3593,6 +3683,16 @@
         }
       }
     },
+    "Face ID for the Mac": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face ID для Mac"
+          }
+        }
+      }
+    },
     "Failed": {
       "localizations": {
         "ru": {
@@ -3948,6 +4048,38 @@
         }
       }
     },
+    "HELM_ALERT_MAC_SUDO": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for Face ID: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт Face ID: %@"
+          }
+        }
+      }
+    },
+    "HELM_ALERT_MAC_UNLOCK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ wants to unlock. Confirm with Face ID"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ просит разблокировать. Подтверди через Face ID"
+          }
+        }
+      }
+    },
     "HELM_ALERT_MANY_DONE": {
       "localizations": {
         "en": {
@@ -4051,6 +4183,16 @@
         }
       }
     },
+    "Helm on the Mac needs Accessibility access for this: System Settings → Privacy & Security → Accessibility.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для этого Helm на Mac нужен доступ к универсальному доступу: Системные настройки → Конфиденциальность и безопасность → Универсальный доступ."
+          }
+        }
+      }
+    },
     "Helm on the computer asks you to allow this device, then shows a code to type here.": {
       "localizations": {
         "ru": {
@@ -4094,6 +4236,16 @@
       }
     },
     "Helm on this computer can't arrange threads.": {},
+    "Helm on this computer is too old for this. Update it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helm на этом компьютере слишком старый для этого. Обнови его."
+          }
+        }
+      }
+    },
     "Helm version": {
       "localizations": {
         "ru": {
@@ -4438,6 +4590,16 @@
         }
       }
     },
+    "Kept on this phone behind Face ID. It goes to the Mac only to fill a prompt you approve, sealed for that prompt.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хранится на этом телефоне под Face ID. На Mac уходит только для окна, которое ты подтвердил, и зашифрован под это окно."
+          }
+        }
+      }
+    },
     "Keyboard": {
       "localizations": {
         "ru": {
@@ -4676,6 +4838,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mac заблокирован"
+          }
+        }
+      }
+    },
+    "Mac password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароль от Mac"
           }
         }
       }
@@ -5527,6 +5699,16 @@
         }
       }
     },
+    "Not connected.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет связи."
+          }
+        }
+      }
+    },
     "Not saved on this phone": {
       "localizations": {
         "ru": {
@@ -5605,6 +5787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "НА КОМПЬЮТЕРЕ"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выкл."
           }
         }
       }
@@ -5978,6 +6170,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Код привязки (можно без него)"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароль"
+          }
+        }
+      }
+    },
+    "Passwords for prompts": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пароли для окон"
           }
         }
       }
@@ -6584,6 +6796,16 @@
         }
       }
     },
+    "Replace…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заменить…"
+          }
+        }
+      }
+    },
     "Resets %@": {
       "localizations": {
         "ru": {
@@ -6774,6 +6996,16 @@
         }
       }
     },
+    "Run as root?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выполнить от root?"
+          }
+        }
+      }
+    },
     "Run in": {
       "localizations": {
         "ru": {
@@ -6800,6 +7032,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выполнить команду?"
+          }
+        }
+      }
+    },
+    "Run “%@” as root on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выполнить «%@» от root на %@"
           }
         }
       }
@@ -6864,6 +7106,26 @@
         }
       }
     },
+    "Save %@ in this computer's settings first.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала сохрани %@ в настройках этого компьютера."
+          }
+        }
+      }
+    },
+    "Save %@…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить %@…"
+          }
+        }
+      }
+    },
     "Save changes": {
       "localizations": {
         "ru": {
@@ -6920,6 +7182,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сохранено в %@"
+          }
+        }
+      }
+    },
+    "Save…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить…"
           }
         }
       }
@@ -8402,6 +8674,16 @@
         }
       }
     },
+    "This device has no Secure Enclave.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом устройстве нет Secure Enclave."
+          }
+        }
+      }
+    },
     "This evening": {
       "localizations": {
         "ru": {
@@ -8439,6 +8721,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Этому телефону нельзя управлять компьютером. Подключи его заново."
+          }
+        }
+      }
+    },
+    "This phone isn't set up to approve sudo here yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот телефон ещё не настроен подтверждать sudo на этом компьютере."
+          }
+        }
+      }
+    },
+    "This phone's sudo key is gone. Set it up again in the computer's settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ключ sudo на этом телефоне пропал. Настрой его заново в настройках компьютера."
+          }
+        }
+      }
+    },
+    "This prompt doesn't take a password.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это окно не принимает пароль."
+          }
+        }
+      }
+    },
+    "This prompt only takes Touch ID.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это окно принимает только Touch ID."
           }
         }
       }
@@ -8806,12 +9128,42 @@
         }
       }
     },
+    "Unlock %@ on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать %@ на %@"
+          }
+        }
+      }
+    },
     "Unlock Mac": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Разблокировать Mac"
+          }
+        }
+      }
+    },
+    "Unlock on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировка на %@"
+          }
+        }
+      }
+    },
+    "Unlock with Face ID": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать через Face ID"
           }
         }
       }
@@ -8902,6 +9254,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Упёрлись в лимит"
+          }
+        }
+      }
+    },
+    "Use %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввести %@"
           }
         }
       }
@@ -9162,6 +9524,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Что агенту делать каждый раз?"
+          }
+        }
+      }
+    },
+    "When a Touch ID or password sheet opens on the Mac (1Password unlocking, an app asking for your login password), Helm shows it here and types the password after Face ID.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда на Mac открывается окно Touch ID или пароля (1Password просит разблокировку, приложение спрашивает пароль от входа), Helm показывает его здесь и после Face ID сам вводит пароль."
           }
         }
       }
@@ -9514,6 +9886,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "на %@"
+          }
+        }
+      }
+    },
+    "sudo": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sudo"
+          }
+        }
+      }
+    },
+    "sudo asks this phone": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sudo спрашивает этот телефон"
+          }
+        }
+      }
+    },
+    "sudo in a terminal, or in an agent's shell, waits for Face ID here. Only this phone's Secure Enclave key can approve; if the phone doesn't answer, sudo asks for the password as usual. The setup asks for the Mac's password once.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sudo в терминале или в оболочке агента ждёт Face ID здесь. Разрешить может только ключ из Secure Enclave этого телефона. Если телефон не ответит, sudo, как обычно, спросит пароль. При настройке пароль от Mac понадобится один раз."
+          }
+        }
+      }
+    },
+    "sudo on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sudo на %@"
           }
         }
       }

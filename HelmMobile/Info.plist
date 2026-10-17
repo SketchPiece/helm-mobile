@@ -61,6 +61,8 @@
 	<array>
 		<string>_helm._tcp</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Confirm sudo and password prompts on your Mac.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Helm connects to the Helm app on your Mac over your local network or tailnet, and notices when your Mac is nearby.</string>
 	<key>NSMicrophoneUsageDescription</key>

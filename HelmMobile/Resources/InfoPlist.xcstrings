@@ -33,6 +33,22 @@
         }
       }
     },
+    "NSFaceIDUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm sudo and password prompts on your Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтобы подтверждать sudo и окна с паролем на Mac."
+          }
+        }
+      }
+    },
     "NSLocalNetworkUsageDescription": {
       "localizations": {
         "en": {
