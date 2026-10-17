@@ -1171,43 +1171,50 @@ private struct ScreenMiniMap: View {
     }
 }
 
-/// Keyboard, zoom, a few Mac-only keys and close, in a column or a row; the dock gives it its glass.
+/// Keyboard, zoom, a few Mac-only keys and close, in a column; the dock gives it its glass and
+/// turns it into a row on the top and bottom, the icons turning back to stay upright.
 private struct ScreenToolbar: View {
     let remote: ScreenRemote
     let viewport: ScreenViewport
-    let axis: Axis
+    let turned: Bool
     /// Set while the Mac is locked and its login card is put away; gone once it unlocks.
     let unlock: (() -> Void)?
     let close: () -> Void
 
     var body: some View {
-        // One layout either way, so turning keeps the buttons and menus (and a drag on them).
-        let layout = axis == .vertical ? AnyLayout(VStackLayout(spacing: 4)) : AnyLayout(HStackLayout(spacing: 4))
-        layout {
+        let upright = turned ? Angle.degrees(90) : .zero
+        VStack(spacing: 4) {
             if let unlock {
                 button("lock.fill", label: "Unlock", tint: Palette.accent, action: unlock)
+                    .rotationEffect(upright)
                     .accessibilityHint("Opens a field for the Mac's password")
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
             button("keyboard", label: "Keyboard") { viewport.wantsKeyboard = true }
+                .rotationEffect(upright)
             button(viewport.isZoomedIn ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
                    label: viewport.isZoomedIn ? "Whole screen" : "Zoom in") {
                 withAnimation(.snappy) { viewport.toggleFit() }
             }
+            .rotationEffect(upright)
             if remote.displays.count > 1 || (remote.canAddVirtual && remote.virtualDisplay == nil) {
                 ScreenDisplaysMenu(remote: remote, displays: remote.displays, shown: remote.shown)
                     .equatable()
+                    .rotationEffect(upright)
             }
             if remote.virtualDisplay != nil {
                 ScreenWindowsButton(remote: remote, viewport: viewport)
                     .equatable()
+                    .rotationEffect(upright)
             }
             ScreenKeysMenu(remote: remote)
                 .equatable()
+                .rotationEffect(upright)
             button("xmark", label: "Close") { close() }
+                .rotationEffect(upright)
         }
         .padding(6)
-        .animation(.spring(duration: 0.4, bounce: 0.2), value: axis)
+        .animation(ScreenToolbarDock.turn, value: turned)
     }
 
     private func button(_ symbol: String, label: LocalizedStringKey, tint: Color = .white,
@@ -1279,8 +1286,9 @@ private struct ScreenToolbarDock: View {
     @State private var toolbarSize = CGSize(width: 60, height: 320)
 
     private enum Drag: Equatable {
-        /// The open toolbar, picked up at one point and carried to another.
-        case toolbar(start: CGPoint, location: CGPoint)
+        /// The open toolbar, picked up at one point and carried to another, and whether it's
+        /// turned into a row on the way.
+        case toolbar(start: CGPoint, location: CGPoint, row: Bool)
         /// The tab: how far the toolbar is out (0 put away, 1 open) and how far it moved along
         /// the edge.
         case tab(out: CGFloat, along: CGFloat)
@@ -1294,6 +1302,8 @@ private struct ScreenToolbarDock: View {
     private static let thickness: CGFloat = 60
     private static let margin: CGFloat = 12
     private static let spring = Animation.spring(duration: 0.45, bounce: 0.2)
+    /// A column turning into a row or back.
+    static let turn = Animation.spring(duration: 0.4, bounce: 0.25)
 
     var body: some View {
         // The whole screen, edges included; the toolbar keeps out of the safe area itself.
@@ -1308,32 +1318,45 @@ private struct ScreenToolbarDock: View {
     }
 
     private func content(size: CGSize, insets: EdgeInsets) -> some View {
-        let carried: (start: CGPoint, location: CGPoint)? = if case .toolbar(let start, let location) = drag { (start, location) } else { nil }
+        let carried: (start: CGPoint, location: CGPoint, row: Bool)? =
+            if case .toolbar(let start, let location, let row) = drag { (start, location, row) } else { nil }
         let tabPull: (out: CGFloat, along: CGFloat)? = if case .tab(let out, let along) = drag { (out, along) } else { nil }
         let out = carried != nil ? 1 : tabPull?.out ?? (viewport.toolbarHidden ? 0 : 1)
         let along = position * length(of: edge, in: size) + (tabPull?.along ?? 0)
-        let rest = point(on: edge, along: clampedAlong(along, half: half(on: edge), on: edge, size: size, insets: insets),
+        let rest = point(on: edge, along: clampedAlong(along, half: toolbarSize.height / 2, on: edge, size: size, insets: insets),
                          inward: out * travel(edge, insets) - Self.thickness / 2 - 8, in: size)
-        // Carried, it turns into a row or a column as it nears an edge, the button picked up staying
-        // under the finger.
-        let shape = carried.map { ScreenToolbarEdge.nearest(to: $0.location, in: size) } ?? edge
-        let center = carried.map { $0.location - grab(from: $0.start, rest: rest, turnedTo: shape) } ?? rest
+        // Carried, it turns about the finger into a row or a column as it nears an edge, the
+        // button picked up staying under it.
+        let row = carried?.row ?? !edge.isSide
+        let held = carried.map { grip(from: $0.start, rest: rest) }
+        let center = carried.map { CGPoint(x: $0.location.x - held!.width, y: $0.location.y - held!.height) } ?? rest
+        let anchor = held.map {
+            UnitPoint(x: 0.5 + $0.width / max(toolbarSize.width, 1), y: 0.5 + $0.height / max(toolbarSize.height, 1))
+        } ?? .center
         let tabAlong = clampedAlong(along, half: Self.tabTouch.height / 2, on: edge, size: size, insets: insets)
         return ZStack {
-            ScreenToolbar(remote: remote, viewport: viewport, axis: shape.isSide ? .vertical : .horizontal,
-                          unlock: unlock, close: close)
+            ScreenToolbar(remote: remote, viewport: viewport, turned: row, unlock: unlock, close: close)
                 .glassEffect(.regular, in: .capsule)
                 .onGeometryChange(for: CGSize.self) { $0.size } action: { toolbarSize = $0 }
+                .rotationEffect(row ? .degrees(-90) : .zero, anchor: anchor)
+                .animation(Self.turn, value: row)
                 // Picked up, it lifts off the screen.
                 .scaleEffect(carried != nil ? 1.06 : 1)
                 .shadow(color: .black.opacity(carried != nil ? 0.3 : 0), radius: 18, y: 8)
                 .animation(.spring(duration: 0.3, bounce: 0.3), value: carried != nil)
                 // Simultaneous and only past a short way, so taps still reach the buttons and menus.
                 .simultaneousGesture(DragGesture(minimumDistance: 12, coordinateSpace: .named("dock"))
-                    .updating($drag) { value, drag, _ in drag = .toolbar(start: value.startLocation, location: value.location) }
+                    .updating($drag) { value, drag, _ in
+                        var row = !edge.isSide
+                        if case .toolbar(_, _, let was) = drag { row = was }
+                        drag = .toolbar(start: value.startLocation, location: value.location,
+                                        row: carriedAsRow(at: value.location, was: row, in: size))
+                    }
                     .onEnded { value in
-                        let shape = ScreenToolbarEdge.nearest(to: value.location, in: size)
-                        let end = value.predictedEndLocation - grab(from: value.startLocation, rest: rest, turnedTo: shape)
+                        // Where its middle is headed, turned as it will land.
+                        let grip = turned(grip(from: value.startLocation, rest: rest),
+                                          row: ScreenToolbarEdge.nearest(to: value.location, in: size).isSide == false)
+                        let end = CGPoint(x: value.predictedEndLocation.x - grip.width, y: value.predictedEndLocation.y - grip.height)
                         land(at: end, in: size, insets: insets)
                     })
                 .allowsHitTesting(out > 0.99 || drag != nil)
@@ -1400,13 +1423,24 @@ private struct ScreenToolbarDock: View {
             .accessibilityAction { viewport.toolbarHidden = false }
     }
 
-    /// From the toolbar's middle to where the finger holds it: the same place on its buttons when
-    /// it's turned from a column to a row or back (it's as long either way).
-    private func grab(from start: CGPoint, rest: CGPoint, turnedTo shape: ScreenToolbarEdge) -> CGSize {
+    /// Where the finger holds the toolbar, from its middle as a column (before it's turned).
+    private func grip(from start: CGPoint, rest: CGPoint) -> CGSize {
         let offset = CGSize(width: start.x - rest.x, height: start.y - rest.y)
-        let along = alongPart(of: offset, on: edge)
-        let across = edge.isSide ? offset.width : offset.height
-        return shape.isSide ? CGSize(width: across, height: along) : CGSize(width: along, height: across)
+        // A row is the column turned a quarter anticlockwise; turned back, clockwise.
+        return edge.isSide ? offset : CGSize(width: -offset.height, height: offset.width)
+    }
+
+    /// A place on the column, turned with it into a row.
+    private func turned(_ grip: CGSize, row: Bool) -> CGSize {
+        row ? CGSize(width: grip.height, height: -grip.width) : grip
+    }
+
+    /// Carried, it turns into a row only once a top or bottom edge is clearly nearer than a side,
+    /// and back the same way, so it doesn't flip back and forth on the diagonal.
+    private func carriedAsRow(at point: CGPoint, was row: Bool, in size: CGSize) -> Bool {
+        let side = min(point.x, size.width - point.x)
+        let end = min(point.y, size.height - point.y)
+        return row ? end < side + 32 : end + 32 < side
     }
 
     /// The open toolbar let go, headed for `end`: it lands on the edge nearest there, at that place
@@ -1462,11 +1496,6 @@ private struct ScreenToolbarDock: View {
 
     private func length(of edge: ScreenToolbarEdge, in size: CGSize) -> CGFloat {
         edge.isSide ? size.height : size.width
-    }
-
-    /// Half the toolbar's length along an edge.
-    private func half(on edge: ScreenToolbarEdge) -> CGFloat {
-        (edge.isSide ? toolbarSize.height : toolbarSize.width) / 2
     }
 
     /// A point `along` the edge and `inward` from it.
@@ -1923,4 +1952,5 @@ private struct ShakeEffect: GeometryEffect {
         ProjectionTransform(CGAffineTransform(translationX: 10 * sin(shakes * .pi * 4), y: 0))
     }
 }
+
 
