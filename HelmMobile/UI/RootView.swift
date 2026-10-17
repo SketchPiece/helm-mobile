@@ -280,6 +280,9 @@ private struct SplitRoot: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
     @State private var columns = NavigationSplitViewVisibility.all
+    @State private var isPortrait: Bool?
+    /// In a portrait window the list stays hidden until it's opened there once; that choice is kept.
+    @AppStorage("portraitSidebar") private var portraitSidebar = false
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
@@ -317,6 +320,15 @@ private struct SplitRoot: View {
         .navigationSplitViewStyle(.balanced)
         // The hardware keyboard's bar grows the bottom safe area and would lift both columns.
         .ignoresHardwareKeyboardBar()
+        .onGeometryChange(for: Bool.self) { $0.size.height > $0.size.width } action: { portrait in
+            guard portrait != isPortrait else { return }
+            isPortrait = portrait
+            columns = portrait && !portraitSidebar ? .detailOnly : .all
+        }
+        .onChange(of: columns) { _, columns in
+            // Shown or hidden in portrait, by the toggle or the system's swipe.
+            if isPortrait == true { portraitSidebar = columns != .detailOnly }
+        }
     }
 
     private var sidebarToggle: some View {
