@@ -23,6 +23,9 @@ final class VoiceInput {
     /// 0...1, sampled ~12 times a second while recording.
     private(set) var level: Double = 0
     private(set) var levels: [Double] = []
+    /// Bumped when the recorder stopped itself at `maxDuration`. The composers then end the take
+    /// into the field, unsent, so what was said shows instead of a timer running on over nothing.
+    private(set) var limitReached = 0
 
     @ObservationIgnored private var recorder: AVAudioRecorder?
     /// The microphone opening behind a recording that already shows.
@@ -34,7 +37,7 @@ final class VoiceInput {
     @ObservationIgnored private var meter: Task<Void, Never>?
     @ObservationIgnored private var lastRecording: URL?
     @ObservationIgnored private var lastDuration: TimeInterval = 0
-    static let maxDuration: TimeInterval = 5 * 60
+    static let maxDuration: TimeInterval = 15 * 60
     /// How long the audio session stays up after a recording, so the next one starts warm.
     static let sessionLinger: Duration = .seconds(6)
 
@@ -112,7 +115,15 @@ final class VoiceInput {
     }
 
     private func sample() {
-        guard let recorder, recorder.isRecording else { return }
+        guard let recorder else { return }
+        guard recorder.isRecording else {
+            // Only the cap stops a recorder we still hold.
+            meter?.cancel()
+            meter = nil
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            limitReached += 1
+            return
+        }
         recorder.updateMeters()
         // The measurement mode records without gain, so speech sits low: map -44...-10 dB, lean on
         // the peak (livelier than the average) and lift the quiet end so the bars follow the voice.

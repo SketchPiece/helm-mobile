@@ -61,6 +61,7 @@ struct ThreadComposer: View {
         }
         .onChange(of: draft.draftFiles) { saveDraft() }
         .onDisappear { if voice.isRecording { voice.cancel() } }
+        .onChange(of: voice.limitReached) { finishDictation(send: false) }
     }
 
     /// Opens into the two-row card while there is something to edit; at rest it is one narrow row.

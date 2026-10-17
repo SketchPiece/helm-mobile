@@ -321,6 +321,7 @@ struct NewThreadView: View {
             voice.warmUp()
         }
         .onDisappear { if voice.isRecording { voice.cancel() } }
+        .onChange(of: voice.limitReached) { finishDictation(send: false) }
     }
 
     /// Empty field: the amber microphone (hold to dictate and start, tap for hands-free). With text:
