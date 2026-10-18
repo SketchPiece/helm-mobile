@@ -30,14 +30,14 @@ final class WatchBridge: NSObject {
 
     // MARK: Thread list
 
-    private func followThreadList() {
+    /// Builds the snapshot and asks to hear about the next change. Re-armed only when the debounced
+    /// publish runs, so a busy list is built at most every 600 ms.
+    @discardableResult
+    private func followThreadList() -> WatchSnapshot {
         withObservationTracking {
-            _ = buildSnapshot()
+            buildSnapshot()
         } onChange: { [weak self] in
-            Task { @MainActor in
-                self?.scheduleSnapshot()
-                self?.followThreadList()
-            }
+            Task { @MainActor in self?.scheduleSnapshot() }
         }
     }
 
@@ -51,8 +51,8 @@ final class WatchBridge: NSObject {
     }
 
     private func publishSnapshot(force: Bool = false) {
+        let snapshot = followThreadList()
         guard let session, session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
-        let snapshot = buildSnapshot()
         guard force || snapshot.withoutDate != lastSnapshot?.withoutDate else { return }
         lastSnapshot = snapshot
         let payload = WatchCoding.encode(snapshot)
@@ -225,15 +225,16 @@ final class WatchBridge: NSObject {
         detailSoon[ref] = nil
     }
 
-    private func followDetail(_ ref: ThreadRef) {
-        guard open[ref] != nil else { return }
-        withObservationTracking {
-            _ = detail(for: ref)
+    /// Like `followThreadList`: one build per debounced push, however fast the thread streams.
+    @discardableResult
+    private func followDetail(_ ref: ThreadRef) -> WatchThreadDetail? {
+        guard open[ref] != nil else { return nil }
+        return withObservationTracking {
+            detail(for: ref)
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self, self.open[ref] != nil else { return }
                 self.scheduleDetail(ref)
-                self.followDetail(ref)
             }
         }
     }
@@ -244,7 +245,7 @@ final class WatchBridge: NSObject {
             try? await Task.sleep(for: .milliseconds(400))
             guard let self else { return }
             self.detailSoon[ref] = nil
-            guard let session = self.session, session.isReachable, let detail = self.detail(for: ref) else { return }
+            guard let detail = self.followDetail(ref), let session = self.session, session.isReachable else { return }
             session.sendMessage(WatchCoding.encode(WatchPush.detail(detail)), replyHandler: nil, errorHandler: nil)
         }
     }
