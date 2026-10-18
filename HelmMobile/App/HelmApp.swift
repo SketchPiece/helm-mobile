@@ -47,13 +47,14 @@ extension HelmApp {
     /// What every window shares: the model, the appearance, code settings and the neutral tint.
     private func chrome(_ content: some View) -> some View {
         content
+            // Inside the environment below: the card reads the model and the appearance from it.
+            .macAuthRequests()
             .environment(model)
             .preferredColorScheme(appearance.colorScheme)
             .environment(\.codeAppearance, CodeAppearance(fontSize: codeFontSize, wordWrap: codeWordWrap, diffWordWrap: diffWordWrap))
             // Neutral chrome; amber is reserved for the primary action (send, allow, toggles).
             .tint(Palette.text)
             .perfDiagnostics()
-            .macAuthRequests()
     }
 }
 
