@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.sketchpiece
   deploymentTarget:
     iOS: "26.0"
+    watchOS: "26.0"
   developmentLanguage: en
 settings:
   base:
@@ -26,9 +27,11 @@ targets:
     sources:
       - path: HelmMobile
       - path: Shared
+      - path: WatchShared
     dependencies:
       - target: HelmWidgets
       - target: HelmShare
+      - target: HelmWatch
       # Static library (scripts/build-libtailscale.sh rebuilds it; gitignored, 51 MB).
       - framework: Vendor/libtailscale/Libtailscale.xcframework
         embed: false
@@ -91,6 +94,27 @@ targets:
         INFOPLIST_FILE: HelmShare/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
+  # The Apple Watch remote. It has no connection of its own: everything goes through the phone
+  # (WatchConnectivity, Store/WatchBridge.swift).
+  HelmWatch:
+    type: application
+    platform: watchOS
+    configFiles:
+      Debug: Base.xcconfig
+      Release: Base.xcconfig
+    sources:
+      - path: HelmWatch
+      - path: WatchShared
+      - path: HelmMobile/Resources/Localizable.xcstrings
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).watchkitapp
+        PRODUCT_NAME: HelmWatch
+        TARGETED_DEVICE_FAMILY: "4"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: HelmWatch/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
   HelmMobileTests:
     type: bundle.unit-test
     platform: iOS
@@ -127,3 +151,9 @@ schemes:
       targets:
         - HelmMobileTests
         - HelmMobileUITests
+  HelmWatch:
+    build:
+      targets:
+        HelmWatch: all
+    run:
+      config: Debug

@@ -51,6 +51,7 @@ final class AppModel {
         }
         environments.forEach { $0.start() }
         NearbyMacs.shared.start()
+        WatchBridge.shared.start(model: self)
         // A new network path (Wi-Fi ↔ cellular, Tailscale toggled) is the moment a dropped
         // connection can come back; don't wait for the backoff timer.
         pathMonitor.pathUpdateHandler = { [weak self] path in
