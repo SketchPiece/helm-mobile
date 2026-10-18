@@ -27,6 +27,50 @@ private struct MacAuthOverlay: ViewModifier {
             }
         }
         .animation(.snappy, value: pending?.1.id)
+        .passwordSaveOffer(Binding(
+            get: { model.environments.lazy.compactMap(\.macAuth.saveOffer).first },
+            set: { offer in
+                if offer == nil { model.environments.forEach { $0.macAuth.saveOffer = nil } }
+            }
+        ))
+    }
+}
+
+extension View {
+    /// After a password typed on the phone worked on the Mac: keep it in the Keychain for Face ID?
+    func passwordSaveOffer(_ offer: Binding<PasswordSaveOffer?>) -> some View {
+        modifier(PasswordSaveOfferAlert(offer: offer))
+    }
+}
+
+private struct PasswordSaveOfferAlert: ViewModifier {
+    @Binding var offer: PasswordSaveOffer?
+    @State private var failure: String?
+
+    func body(content: Content) -> some View {
+        content
+            .alert(
+                String(localized: "Save the password?"),
+                isPresented: Binding(get: { offer != nil }, set: { if !$0 { offer = nil } }),
+                presenting: offer
+            ) { offer in
+                Button("Save for Face ID") {
+                    do { try offer.keep() } catch { failure = error.localizedDescription }
+                    self.offer = nil
+                }
+                Button("Don't ask again") {
+                    MacSecret.neverOffer(offer.kind, environmentId: offer.environmentId)
+                    self.offer = nil
+                }
+                Button("Not now", role: .cancel) { self.offer = nil }
+            } message: { offer in
+                Text("Next time \(offer.kind.title) goes in with Face ID instead of typing. It stays in this phone's Keychain.")
+            }
+            .alert(String(localized: "Couldn't save the password"), isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
+                Button("OK", role: .cancel) { failure = nil }
+            } message: {
+                Text(failure ?? "")
+            }
     }
 }
 
@@ -37,7 +81,11 @@ struct MacAuthCard: View {
     @State private var busy: String?
     @State private var error: String?
     @State private var done: String?
-    @State private var showSettings = false
+    /// Typed here when none is saved (or the saved one stopped working); only this view holds it.
+    @State private var password = ""
+    @State private var typing = false
+    @State private var typedKind: MacSecret.Kind?
+    @FocusState private var passwordFocused: Bool
 
     private var sync: MacAuthSync { environment.macAuth }
 
@@ -86,9 +134,6 @@ struct MacAuthCard: View {
         .background(Palette.surfaceRaised, in: .rect(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Palette.border, lineWidth: 1))
         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-        .sheet(isPresented: $showSettings) {
-            NavigationStack { MacAuthSettingsView(environment: environment) }
-        }
     }
 
     private var label: String {
@@ -117,24 +162,16 @@ struct MacAuthCard: View {
                     try await sync.approve(request)
                 }
             } else {
-                let stored = request.secretKinds.filter { MacSecret.has($0, environmentId: environment.id) }
-                if stored.isEmpty {
-                    if request.secretKinds.isEmpty {
-                        Text("This prompt only takes Touch ID.")
-                            .font(Typography.footnote)
-                            .foregroundStyle(Palette.textMuted)
-                    } else {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Text("Save \(request.secretKinds[0].title)…")
-                                .font(Typography.headline)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.glassProminent)
-                        .tint(Palette.accent)
-                        .foregroundStyle(Palette.accentForeground)
-                    }
+                // A saved password the Mac turned down (changed there) is typed afresh.
+                let stored = request.secretKinds.filter {
+                    MacSecret.has($0, environmentId: environment.id) && !MacSecret.isStale($0, environmentId: environment.id)
+                }
+                if request.secretKinds.isEmpty {
+                    Text("This prompt only takes Touch ID.")
+                        .font(Typography.footnote)
+                        .foregroundStyle(Palette.textMuted)
+                } else if stored.isEmpty || typing {
+                    passwordField(for: typedKind ?? request.secretKinds[0])
                 } else {
                     primaryButton(String(localized: "Unlock with Face ID"), id: stored[0].rawValue) {
                         try await sync.approve(request, with: stored[0])
@@ -147,6 +184,13 @@ struct MacAuthCard: View {
                         }
                         .buttonStyle(.glass)
                     }
+                    Button {
+                        typedKind = stored[0]
+                        typing = true
+                    } label: {
+                        Text("Type the password").font(Typography.subheadline.weight(.medium)).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.glass)
                 }
             }
             Button {
@@ -167,6 +211,51 @@ struct MacAuthCard: View {
             .foregroundStyle(Palette.errorText)
         }
         .disabled(busy != nil || done != nil)
+    }
+
+    /// The password typed into the card; once it works, the phone offers to keep it for Face ID.
+    @ViewBuilder
+    private func passwordField(for kind: MacSecret.Kind) -> some View {
+        let kinds = request.secretKinds
+        if kinds.count > 1 {
+            Picker("Password", selection: Binding(get: { typedKind ?? kinds[0] }, set: { typedKind = $0 })) {
+                ForEach(kinds) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+        }
+        HStack(spacing: 8) {
+            SecureField(kind.title, text: $password)
+                .textContentType(.password)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.go)
+                .focused($passwordFocused)
+                .onSubmit { submitTyped(kind) }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+                .background(Palette.code, in: .capsule)
+            Button {
+                submitTyped(kind)
+            } label: {
+                Group {
+                    if busy == "typed" { ProgressView() } else { Text("Unlock") }
+                }
+                .font(Typography.headline)
+                .frame(minWidth: 72, minHeight: 28)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(Palette.accent)
+            .foregroundStyle(Palette.accentForeground)
+            .disabled(password.isEmpty)
+        }
+        .onAppear { passwordFocused = true }
+    }
+
+    private func submitTyped(_ kind: MacSecret.Kind) {
+        guard !password.isEmpty, busy == nil else { return }
+        let typed = password
+        password = ""
+        run("typed") { try await sync.approve(request, with: kind, typed: typed) }
     }
 
     private func primaryButton(_ title: String, id: String, action: @escaping () async throws -> String) -> some View {
@@ -192,7 +281,7 @@ struct MacAuthCard: View {
                 done = try await action()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } catch let failure as MacAuthSync.AnswerError {
-                if case .noPassword = failure { showSettings = true }
+                if case .noPassword = failure { typing = true }
                 error = failure.errorDescription
             } catch {
                 self.error = error.localizedDescription

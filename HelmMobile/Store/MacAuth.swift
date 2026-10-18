@@ -85,6 +85,8 @@ final class MacAuthSync {
     private(set) var promptsAvailable = false
     /// The server knows `helm.auth.subscribe` and the snapshot is in.
     private(set) var available = false
+    /// A password typed into a card that worked, until the person says whether to keep it.
+    var saveOffer: PasswordSaveOffer?
 
     @ObservationIgnored private weak var environment: EnvironmentSession?
 
@@ -136,8 +138,9 @@ final class MacAuthSync {
     }
 
     /// Face ID, then the Mac goes ahead: sudo gets the Secure Enclave signature, a prompt gets the
-    /// password typed. Returns what the Mac said.
-    func approve(_ request: MacAuthRequest, with kind: MacSecret.Kind? = nil) async throws -> String {
+    /// password typed. With `typed`, that password goes instead of a saved one, and once it works the
+    /// phone offers to keep it for Face ID. Returns what the Mac said.
+    func approve(_ request: MacAuthRequest, with kind: MacSecret.Kind? = nil, typed: String? = nil) async throws -> String {
         guard let environment else { throw AnswerError.failed(String(localized: "Not connected.")) }
         var payload: [String: JSON] = ["id": .string(request.id), "action": "approve"]
         switch request.kind {
@@ -150,18 +153,35 @@ final class MacAuthSync {
             guard let kind = kind ?? request.secretKinds.first(where: { MacSecret.has($0, environmentId: environment.id) })
                     ?? request.secretKinds.first
             else { throw AnswerError.failed(String(localized: "This prompt doesn't take a password.")) }
-            guard MacSecret.has(kind, environmentId: environment.id) else { throw AnswerError.noPassword(kind) }
             guard let sealingKey = request.sealingKey else { throw AnswerError.failed("The Mac sent no key.") }
-            let reason = request.app.isEmpty
-                ? String(localized: "Unlock on \(environment.label)")
-                : String(localized: "Unlock \(request.app) on \(environment.label)")
-            guard let password = try await MacSecret.read(kind, environmentId: environment.id, reason: reason) else {
-                throw AnswerError.cancelled
+            let password: String
+            if let typed, !typed.isEmpty {
+                password = typed
+            } else {
+                guard MacSecret.has(kind, environmentId: environment.id) else { throw AnswerError.noPassword(kind) }
+                let reason = request.app.isEmpty
+                    ? String(localized: "Unlock on \(environment.label)")
+                    : String(localized: "Unlock \(request.app) on \(environment.label)")
+                guard let saved = try await MacSecret.read(kind, environmentId: environment.id, reason: reason) else {
+                    throw AnswerError.cancelled
+                }
+                password = saved
             }
             let sealed = try MacSealing.seal(password, to: sealingKey, requestId: request.id)
             payload["secret"] = [
                 "kind": .string(kind.rawValue), "ephemeralKey": .string(sealed.ephemeralKey), "box": .string(sealed.box),
             ]
+            let result = try await environment.call("helm.auth.respond", .object(payload), timeout: .seconds(35))
+            let message = result["message"]?.string ?? ""
+            guard result["ok"]?.bool == true else {
+                // The saved one no longer works (changed on the Mac): the card asks for the new one.
+                if typed == nil, message.contains("Wrong password") { MacSecret.markStale(kind, environmentId: environment.id) }
+                throw AnswerError.failed(message)
+            }
+            if let typed, MacSecret.shouldOffer(kind, environmentId: environment.id) {
+                saveOffer = PasswordSaveOffer(kind: kind, environmentId: environment.id, password: typed)
+            }
+            return message
         }
         let result = try await environment.call("helm.auth.respond", .object(payload), timeout: .seconds(35))
         let message = result["message"]?.string ?? ""
@@ -228,8 +248,36 @@ enum MacSecret {
         return status == errSecSuccess || status == errSecInteractionNotAllowed
     }
 
+    private static func flagKey(_ flag: String, _ kind: Kind, _ environmentId: String) -> String {
+        "macSecret.\(flag).\(account(kind, environmentId: environmentId))"
+    }
+
+    /// After a password typed by hand worked: ask to keep it, unless none is saved yet and the
+    /// person said never, or the saved one still works.
+    static func shouldOffer(_ kind: Kind, environmentId: String) -> Bool {
+        if UserDefaults.standard.bool(forKey: flagKey("stale", kind, environmentId)) { return true }
+        if has(kind, environmentId: environmentId) { return false }
+        return !UserDefaults.standard.bool(forKey: flagKey("never", kind, environmentId))
+    }
+
+    /// The saved password was turned down by the Mac.
+    static func markStale(_ kind: Kind, environmentId: String) {
+        UserDefaults.standard.set(true, forKey: flagKey("stale", kind, environmentId))
+    }
+
+    static func isStale(_ kind: Kind, environmentId: String) -> Bool {
+        UserDefaults.standard.bool(forKey: flagKey("stale", kind, environmentId))
+    }
+
+    /// "Don't ask again" for this password on this computer.
+    static func neverOffer(_ kind: Kind, environmentId: String) {
+        UserDefaults.standard.set(true, forKey: flagKey("never", kind, environmentId))
+    }
+
     static func save(_ password: String, as kind: Kind, environmentId: String) throws {
         remove(kind, environmentId: environmentId)
+        UserDefaults.standard.removeObject(forKey: flagKey("stale", kind, environmentId))
+        UserDefaults.standard.removeObject(forKey: flagKey("never", kind, environmentId))
         var error: Unmanaged<CFError>?
         // A new face in Face ID, or none at all, makes the password unreadable.
         guard let access = SecAccessControlCreateWithFlags(
@@ -275,6 +323,19 @@ enum MacSecret {
             }
             return String(data: data, encoding: .utf8)
         }.value
+    }
+}
+
+/// A password that just worked, typed by hand, offered to keep behind Face ID.
+struct PasswordSaveOffer: Identifiable, Equatable {
+    let kind: MacSecret.Kind
+    let environmentId: String
+    let password: String
+
+    var id: String { "\(kind.rawValue):\(environmentId)" }
+
+    func keep() throws {
+        try MacSecret.save(password, as: kind, environmentId: environmentId)
     }
 }
 

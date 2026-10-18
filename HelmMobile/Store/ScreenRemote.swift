@@ -64,6 +64,18 @@ final class ScreenRemote {
     private(set) var unlockInProgress = false
     private(set) var unlockMessage: String?
     @ObservationIgnored private var unlockTimeout: Task<Void, Never>?
+    /// A password typed for this attempt, held only until the Mac answers: if it unlocks, the
+    /// phone offers to keep it for Face ID (`saveOffer`); otherwise it's dropped.
+    @ObservationIgnored private var typedPassword: String?
+    /// This attempt used the password saved for Face ID.
+    @ObservationIgnored private var usedSaved = false
+    /// A typed password that just unlocked the Mac, until the person says whether to keep it.
+    var saveOffer: PasswordSaveOffer?
+
+    /// A password for this Mac is saved behind Face ID and still worked last time.
+    var canUnlockWithFaceID: Bool {
+        MacSecret.has(.mac, environmentId: environment.id) && !MacSecret.isStale(.mac, environmentId: environment.id)
+    }
 
     /// Bumped when the first picture arrives (the view fades the placeholder out).
     private(set) var framesShown = 0
@@ -220,6 +232,7 @@ final class ScreenRemote {
             unlockEnabled = json["unlockEnabled"]?.bool == true
             lockUser = json["user"]?.string
             if isLocked == false {
+                if unlockInProgress { unlocked() }
                 finishUnlock(message: nil)
             } else if !unlockEnabled, unlockInProgress {
                 finishUnlock(message: String(localized: "Unlocking was turned off on the Mac."))
@@ -227,11 +240,21 @@ final class ScreenRemote {
         case "unlockResult":
             switch json["status"]?.string {
             case "submitted": break // Only a lockState change confirms that macOS accepted the password.
-            case "unlocked", "notLocked": finishUnlock(message: nil)
+            case "unlocked":
+                unlocked()
+                finishUnlock(message: nil)
+            case "notLocked": finishUnlock(message: nil)
             case "disabled": finishUnlock(message: String(localized: "Enable ‘Unlock Mac from your phone’ in Helm on the Mac under Settings → Connections."))
             case "focusPassword": finishUnlock(message: String(localized: "Select your user and click the password field on the Mac screen, then try again."))
             case "accessibility": finishUnlock(message: Self.accessibilityNotice)
-            case "stillLocked": finishUnlock(message: String(localized: "The Mac is still locked. Check your password and try again."))
+            case "stillLocked":
+                if usedSaved {
+                    // Changed on the Mac since: type the new one, and the phone offers to keep it.
+                    MacSecret.markStale(.mac, environmentId: environment.id)
+                    finishUnlock(message: String(localized: "The saved password didn't work. Type the current one."))
+                } else {
+                    finishUnlock(message: String(localized: "The Mac is still locked. Check your password and try again."))
+                }
             case "busy": finishUnlock(message: String(localized: "An unlock attempt is already in progress."))
             default: finishUnlock(message: String(localized: "The Mac couldn't accept the password. Try again."))
             }
@@ -304,8 +327,29 @@ final class ScreenRemote {
 
     // MARK: Unlock
 
-    /// Dedicated ephemeral command: no draft, preferences, clipboard or Keychain storage.
+    /// Dedicated ephemeral command: no draft, preferences or clipboard. The password goes to the
+    /// Keychain only if, after it worked, the person chooses to keep it for Face ID.
     func unlock(password: String) async {
+        await unlock(password: password, saved: false)
+    }
+
+    /// Face ID, then the password saved for this Mac. False when there's none or Face ID was cancelled.
+    @discardableResult
+    func unlockWithFaceID() async -> Bool {
+        guard canUnlockWithFaceID, !unlockInProgress else { return false }
+        let reason = String(localized: "Unlock \(environment.label)")
+        guard let password = try? await MacSecret.read(.mac, environmentId: environment.id, reason: reason) else { return false }
+        await unlock(password: password, saved: true)
+        return true
+    }
+
+    private func unlocked() {
+        defer { typedPassword = nil }
+        guard let typed = typedPassword, MacSecret.shouldOffer(.mac, environmentId: environment.id) else { return }
+        saveOffer = PasswordSaveOffer(kind: .mac, environmentId: environment.id, password: typed)
+    }
+
+    private func unlock(password: String, saved: Bool) async {
         guard isLocked == true, lockStateAvailable, unlockEnabled, !unlockInProgress else { return }
         guard !password.isEmpty, password.utf16.count <= 1024,
               !password.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else {
@@ -318,6 +362,8 @@ final class ScreenRemote {
         }
         unlockInProgress = true
         unlockMessage = nil
+        usedSaved = saved
+        typedPassword = saved ? nil : password
         do {
             let data = try JSON.object(["t": "unlock", "password": .string(password)]).data()
             try await socket.send(.string(String(decoding: data, as: UTF8.self)))
@@ -335,6 +381,7 @@ final class ScreenRemote {
     }
 
     private func finishUnlock(message: String?) {
+        if message != nil { typedPassword = nil }
         unlockTimeout?.cancel()
         unlockTimeout = nil
         unlockInProgress = false
@@ -342,6 +389,7 @@ final class ScreenRemote {
     }
 
     private func resetUnlockState() {
+        typedPassword = nil
         finishUnlock(message: nil)
         isLocked = nil
         lockStateAvailable = false

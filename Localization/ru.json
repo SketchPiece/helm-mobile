@@ -1061,5 +1061,16 @@
   "sudo": "sudo",
   "sudo in a terminal, or in an agent's shell, waits for Face ID here. Only this phone's Secure Enclave key can approve; if the phone doesn't answer, sudo asks for the password as usual. The setup asks for the Mac's password once.": "sudo в терминале или в оболочке агента ждёт Face ID здесь. Разрешить может только ключ из Secure Enclave этого телефона. Если телефон не ответит, sudo, как обычно, спросит пароль. При настройке пароль от Mac понадобится один раз.",
   "When a Touch ID or password sheet opens on the Mac (1Password unlocking, an app asking for your login password), Helm shows it here and types the password after Face ID.": "Когда на Mac открывается окно Touch ID или пароля (1Password просит разблокировку, приложение спрашивает пароль от входа), Helm показывает его здесь и после Face ID сам вводит пароль.",
-  "Helm on the Mac needs Accessibility access for this: System Settings → Privacy & Security → Accessibility.": "Для этого Helm на Mac нужен доступ к универсальному доступу: Системные настройки → Конфиденциальность и безопасность → Универсальный доступ."
+  "Helm on the Mac needs Accessibility access for this: System Settings → Privacy & Security → Accessibility.": "Для этого Helm на Mac нужен доступ к универсальному доступу: Системные настройки → Конфиденциальность и безопасность → Универсальный доступ.",
+  "Type the password": "Ввести пароль",
+  "Save the password?": "Сохранить пароль?",
+  "Save for Face ID": "Сохранить для Face ID",
+  "Don't ask again": "Больше не спрашивать",
+  "Not now": "Не сейчас",
+  "Next time %@ goes in with Face ID instead of typing. It stays in this phone's Keychain.": "В следующий раз %@ подставится по Face ID, вводить не придётся. Он хранится в связке ключей этого телефона.",
+  "Couldn't save the password": "Не удалось сохранить пароль",
+  "The saved password didn't work. Type the current one.": "Сохранённый пароль не подошёл. Введи текущий.",
+  "Unlock %@": "Разблокировать %@",
+  "Or unlock with the password saved for Face ID.": "Или разблокируй сохранённым паролем по Face ID.",
+  "Sent for this attempt only. Once it works, you can keep it for Face ID.": "Отправляется только для этой попытки. Если подойдёт, его можно сохранить для Face ID."
 }

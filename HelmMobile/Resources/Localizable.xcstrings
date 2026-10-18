@@ -2939,6 +2939,16 @@
         }
       }
     },
+    "Couldn't save the password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сохранить пароль"
+          }
+        }
+      }
+    },
     "Couldn't save the plan": {
       "localizations": {
         "ru": {
@@ -3388,6 +3398,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Дисплеи"
+          }
+        }
+      }
+    },
+    "Don't ask again": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Больше не спрашивать"
           }
         }
       }
@@ -5437,6 +5457,16 @@
         }
       }
     },
+    "Next time %@ goes in with Face ID instead of typing. It stays in this phone's Keychain.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В следующий раз %@ подставится по Face ID, вводить не придётся. Он хранится в связке ключей этого телефона."
+          }
+        }
+      }
+    },
     "Next week": {
       "localizations": {
         "ru": {
@@ -5705,6 +5735,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет связи."
+          }
+        }
+      }
+    },
+    "Not now": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не сейчас"
           }
         }
       }
@@ -6080,6 +6120,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Параметры"
+          }
+        }
+      }
+    },
+    "Or unlock with the password saved for Face ID.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Или разблокируй сохранённым паролем по Face ID."
           }
         }
       }
@@ -7116,16 +7166,6 @@
         }
       }
     },
-    "Save %@…": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сохранить %@…"
-          }
-        }
-      }
-    },
     "Save changes": {
       "localizations": {
         "ru": {
@@ -7136,12 +7176,32 @@
         }
       }
     },
+    "Save for Face ID": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить для Face ID"
+          }
+        }
+      }
+    },
     "Save plan to project": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Сохранить план в проект"
+          }
+        }
+      }
+    },
+    "Save the password?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить пароль?"
           }
         }
       }
@@ -7507,12 +7567,12 @@
         }
       }
     },
-    "Sent for this attempt only and never saved.": {
+    "Sent for this attempt only. Once it works, you can keep it for Face ID.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Отправляется только для этой попытки и не сохраняется."
+            "value": "Отправляется только для этой попытки. Если подойдёт, его можно сохранить для Face ID."
           }
         }
       }
@@ -8550,6 +8610,16 @@
         }
       }
     },
+    "The saved password didn't work. Type the current one.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранённый пароль не подошёл. Введи текущий."
+          }
+        }
+      }
+    },
     "The screen covers the phone's; the view follows the cursor.": {
       "localizations": {
         "ru": {
@@ -9048,6 +9118,16 @@
         }
       }
     },
+    "Type the password": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ввести пароль"
+          }
+        }
+      }
+    },
     "URL or owner/name": {
       "localizations": {
         "ru": {
@@ -9124,6 +9204,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Разблокировать"
+          }
+        }
+      }
+    },
+    "Unlock %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разблокировать %@"
           }
         }
       }

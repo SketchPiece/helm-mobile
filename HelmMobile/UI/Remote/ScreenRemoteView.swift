@@ -95,6 +95,7 @@ struct ScreenRemoteView: View {
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.15), value: remote.isLocked)
         .animation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.4, bounce: 0.15), value: showsUnlocked)
         .onChange(of: remote.notice) { showsNotice = true }
+        .passwordSaveOffer(Binding(get: { remote.saveOffer }, set: { remote.saveOffer = $0 }))
         .animation(.easeInOut(duration: 0.2), value: viewport.isZoomedIn)
         .animation(.easeInOut(duration: 0.2), value: toolbarEdge)
         .animation(.easeInOut(duration: 0.2), value: viewport.keyboardShown)
@@ -1782,6 +1783,8 @@ private struct ScreenLoginCard: View {
     /// Bumped on each failed try; the field shakes, as the Mac's does.
     @State private var failures = 0
     @FocusState private var focused: Bool
+    /// Face ID was offered on its own once for this card; after that it's the button.
+    @State private var triedFaceID = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -1808,6 +1811,16 @@ private struct ScreenLoginCard: View {
             if usable {
                 field
                     .modifier(ShakeEffect(shakes: reduceMotion ? 0 : CGFloat(failures)))
+                if remote.canUnlockWithFaceID {
+                    Button(action: unlockWithFaceID) {
+                        Label("Unlock with Face ID", systemImage: "faceid")
+                            .font(Typography.sans(15, .medium, relativeTo: .body))
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.glass)
+                    .disabled(remote.unlockInProgress)
+                }
             }
             status
                 .font(Typography.footnote)
@@ -1836,7 +1849,14 @@ private struct ScreenLoginCard: View {
         .contentShape(.rect)
         .animation(.easeInOut(duration: 0.2), value: remote.unlockInProgress)
         .animation(.easeInOut(duration: 0.2), value: remote.unlockMessage)
-        .onAppear { focused = true }
+        .onAppear {
+            // With a saved password, Face ID right away, as on the Mac's own Touch ID login.
+            if usable, remote.canUnlockWithFaceID, !triedFaceID {
+                unlockWithFaceID()
+            } else {
+                focused = true
+            }
+        }
         .onDisappear { password = "" }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { password = ""; focused = false }
@@ -1925,9 +1945,20 @@ private struct ScreenLoginCard: View {
             VStack(spacing: 4) {
                 Text("The password field must be selected on the Mac.")
                     .foregroundStyle(.white.opacity(0.7))
-                Text("Sent for this attempt only and never saved.")
+                Text(remote.canUnlockWithFaceID
+                     ? String(localized: "Or unlock with the password saved for Face ID.")
+                     : String(localized: "Sent for this attempt only. Once it works, you can keep it for Face ID."))
                     .foregroundStyle(.white.opacity(0.5))
             }
+        }
+    }
+
+    private func unlockWithFaceID() {
+        triedFaceID = true
+        focused = false
+        Task {
+            // Cancelled Face ID, or none saved: back to typing.
+            if await !remote.unlockWithFaceID() { focused = true }
         }
     }
 
