@@ -121,12 +121,17 @@ final class WatchStore: NSObject {
         guard session.isReachable else {
             return .failure(String(localized: "iPhone isn't reachable."))
         }
-        let payload = WatchCoding.encode(message)
+        return await Self.send(WatchCoding.encode(message))
+    }
+
+    /// Off the main actor: WatchConnectivity calls the handlers on its own queue.
+    private nonisolated static func send(_ payload: [String: Any]) async -> WatchReply {
+        let session = WCSession.default
         return await withCheckedContinuation { continuation in
             let once = Once(continuation)
-            session.sendMessage(payload, replyHandler: { reply in
+            session.sendMessage(payload, replyHandler: { @Sendable reply in
                 once.resume(WatchCoding.decode(WatchReply.self, from: reply) ?? .failure(String(localized: "The iPhone sent something unexpected.")))
-            }, errorHandler: { error in
+            }, errorHandler: { @Sendable error in
                 once.resume(.failure(error.localizedDescription))
             })
         }

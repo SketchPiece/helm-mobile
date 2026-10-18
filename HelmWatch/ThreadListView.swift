@@ -10,13 +10,14 @@ struct ThreadListView: View {
             content
                 .navigationTitle("Helm")
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(value: WatchRoute.newThread) {
-                            Image(systemName: "plus")
-                                .foregroundStyle(WatchPalette.accentForeground)
+                    if !store.snapshot.projects.isEmpty {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            NavigationLink(value: WatchRoute.newThread) {
+                                Image(systemName: "plus")
+                                    .foregroundStyle(WatchPalette.accentForeground)
+                            }
+                            .accessibilityLabel(Text("New thread"))
                         }
-                        .accessibilityLabel(Text("New thread"))
-                        .disabled(store.snapshot.projects.isEmpty)
                     }
                 }
                 .navigationDestination(for: WatchRoute.self) { route in
