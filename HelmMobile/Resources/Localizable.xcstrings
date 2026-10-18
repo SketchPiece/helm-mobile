@@ -34,6 +34,16 @@
         }
       }
     },
+    "%@ is offline.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ не в сети."
+          }
+        }
+      }
+    },
     "%@ of cost · %@ tokens": {
       "localizations": {
         "ru": {
@@ -685,6 +695,16 @@
         }
       }
     },
+    "%lld queued": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В очереди: %lld"
+          }
+        }
+      }
+    },
     "%lld searches": {
       "localizations": {
         "en": {
@@ -730,6 +750,58 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld поиска"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld steps": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld step"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld steps"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld шага"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld шагов"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld шаг"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld шага"
                 }
               }
             }
@@ -1631,6 +1703,16 @@
         }
       }
     },
+    "All caught up": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Всё разобрано"
+          }
+        }
+      }
+    },
     "All displays": {
       "localizations": {
         "ru": {
@@ -2232,6 +2314,16 @@
         }
       }
     },
+    "Can't reach %@.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет связи с %@."
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "ru": {
@@ -2659,6 +2751,16 @@
       }
     },
     "Connecting to %@…": {},
+    "Connecting to iPhone…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключение к iPhone…"
+          }
+        }
+      }
+    },
     "Connecting…": {
       "localizations": {
         "ru": {
@@ -3382,16 +3484,6 @@
         }
       }
     },
-    "Display": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Дисплей"
-          }
-        }
-      }
-    },
     "Displays": {
       "localizations": {
         "ru": {
@@ -3603,16 +3695,6 @@
         }
       }
     },
-    "Enter your password here, or click the password field on the Mac first.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Введите пароль здесь или сначала нажмите на поле пароля на Mac."
-          }
-        }
-      }
-    },
     "Escape": {
       "localizations": {
         "ru": {
@@ -3783,16 +3865,7 @@
         }
       }
     },
-    "Finish logging in in the browser. Your computers show up here once you're in.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Закончите вход в браузере. Как только войдёте, ваши компьютеры появятся здесь."
-          }
-        }
-      }
-    },
+    "Finish logging in in the browser. Your computers show up here once you're in.": {},
     "Folder on the Mac": {
       "localizations": {
         "ru": {
@@ -4152,6 +4225,16 @@
         }
       }
     },
+    "Has a question": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Есть вопрос"
+          }
+        }
+      }
+    },
     "Helm": {
       "localizations": {
         "ru": {
@@ -4189,6 +4272,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Штурвал не ответил вовремя."
+          }
+        }
+      }
+    },
+    "Helm isn't ready on the iPhone.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helm на iPhone ещё не готов."
           }
         }
       }
@@ -4408,6 +4501,16 @@
         }
       }
     },
+    "Idle": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ожидает"
+          }
+        }
+      }
+    },
     "Image": {
       "localizations": {
         "ru": {
@@ -4504,6 +4607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "В поле ввода, отправишь сам"
+          }
+        }
+      }
+    },
+    "It may have been archived.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Возможно, он в архиве."
           }
         }
       }
@@ -4782,16 +4895,7 @@
         }
       }
     },
-    "Log in with the computer's Tailscale account to reach it from anywhere, not only on this Wi-Fi. No VPN app needed.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Войдите тем же аккаунтом Tailscale, что и на компьютере, чтобы подключаться к нему откуда угодно, а не только из этой Wi-Fi сети. Приложение VPN не нужно."
-          }
-        }
-      }
-    },
+    "Log in with the computer's Tailscale account to reach it from anywhere, not only on this Wi-Fi. No VPN app needed.": {},
     "Log out": {
       "localizations": {
         "ru": {
@@ -4852,16 +4956,6 @@
         }
       }
     },
-    "Mac is locked": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac заблокирован"
-          }
-        }
-      }
-    },
     "Mac password": {
       "localizations": {
         "ru": {
@@ -4878,6 +4972,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mac разблокирован"
+          }
+        }
+      }
+    },
+    "Macs are offline.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Маки не в сети."
           }
         }
       }
@@ -5487,6 +5591,16 @@
         }
       }
     },
+    "No Mac paired": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет подключённого Мака"
+          }
+        }
+      }
+    },
     "No activity in this period.": {
       "localizations": {
         "ru": {
@@ -5603,6 +5717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Таких проектов нет."
+          }
+        }
+      }
+    },
+    "No model is available on this Mac.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На этом Маке нет доступной модели."
           }
         }
       }
@@ -5735,6 +5859,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет связи."
+          }
+        }
+      }
+    },
+    "Not live: the iPhone is reconnecting.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не в реальном времени: iPhone переподключается."
           }
         }
       }
@@ -5954,6 +6088,16 @@
       }
     },
     "Open Helm on your computer.": {},
+    "Open Helm on your iPhone": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открой Helm на iPhone"
+          }
+        }
+      }
+    },
     "Open Helm to load usage.": {
       "localizations": {
         "ru": {
@@ -6154,6 +6298,16 @@
         }
       }
     },
+    "Other…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другое…"
+          }
+        }
+      }
+    },
     "Out of date": {
       "localizations": {
         "ru": {
@@ -6174,12 +6328,23 @@
         }
       }
     },
+    "Page unavailable": {},
     "Pair": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Привязать"
+          }
+        }
+      }
+    },
+    "Pair a Mac in Helm on your iPhone.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подключи Мак в Helm на iPhone."
           }
         }
       }
@@ -6605,6 +6770,16 @@
         }
       }
     },
+    "Queue a message": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В очередь"
+          }
+        }
+      }
+    },
     "Queue after this turn": {
       "localizations": {
         "ru": {
@@ -6852,6 +7027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Заменить…"
+          }
+        }
+      }
+    },
+    "Reply": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ответить"
           }
         }
       }
@@ -7787,12 +7972,13 @@
         }
       }
     },
-    "Shown": {
+    "Shown": {},
+    "Skip": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На экране"
+            "value": "Пропустить"
           }
         }
       }
@@ -8368,6 +8554,16 @@
         }
       }
     },
+    "The agent can't take an answer anymore.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Агент уже не может принять ответ."
+          }
+        }
+      }
+    },
     "The agent compacts the conversation by itself when the window fills up.": {
       "localizations": {
         "ru": {
@@ -8530,6 +8726,16 @@
         }
       }
     },
+    "The iPhone sent something unexpected.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone ответил что-то непонятное."
+          }
+        }
+      }
+    },
     "The least data and battery.": {
       "localizations": {
         "ru": {
@@ -8640,6 +8846,16 @@
         }
       }
     },
+    "The watch works through Helm on the iPhone.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Часы работают через Helm на iPhone."
+          }
+        }
+      }
+    },
     "The whole screen is a trackpad: a finger moves the cursor, a tap clicks where it is.": {
       "localizations": {
         "ru": {
@@ -8706,6 +8922,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Версия Штурвала на Mac не подходит к этому приложению."
+          }
+        }
+      }
+    },
+    "This Mac is no longer paired.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этот Мак больше не подключён."
           }
         }
       }
@@ -8897,6 +9123,16 @@
         }
       }
     },
+    "Thread not found": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тред не найден"
+          }
+        }
+      }
+    },
     "Thread settings": {
       "localizations": {
         "ru": {
@@ -9044,16 +9280,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Касание"
-          }
-        }
-      }
-    },
-    "Touch to click": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Кликать касанием"
           }
         }
       }
@@ -9338,6 +9564,16 @@
         }
       }
     },
+    "Usage limit": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лимит"
+          }
+        }
+      }
+    },
     "Usage limit reached": {
       "localizations": {
         "ru": {
@@ -9354,16 +9590,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ввести %@"
-          }
-        }
-      }
-    },
-    "Use as a trackpad": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Управлять как трекпадом"
           }
         }
       }
@@ -9528,6 +9754,16 @@
         }
       }
     },
+    "Waiting on subagents": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ждёт субагентов"
+          }
+        }
+      }
+    },
     "Wake": {
       "localizations": {
         "ru": {
@@ -9614,6 +9850,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Что агенту делать каждый раз?"
+          }
+        }
+      }
+    },
+    "What should the agent do?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Что сделать агенту?"
           }
         }
       }
@@ -9729,6 +9975,16 @@
         }
       }
     },
+    "Working…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работает…"
+          }
+        }
+      }
+    },
     "Works in the project folder": {
       "localizations": {
         "ru": {
@@ -9785,6 +10041,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Вчера"
+          }
+        }
+      }
+    },
+    "You": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ты"
+          }
+        }
+      }
+    },
+    "Your answer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Твой ответ"
           }
         }
       }
@@ -9915,6 +10191,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "файл"
+          }
+        }
+      }
+    },
+    "iPhone isn't reachable.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone недоступен."
+          }
+        }
+      }
+    },
+    "iPhone isn't reachable. Showing the last list.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone недоступен. Показан последний список."
           }
         }
       }

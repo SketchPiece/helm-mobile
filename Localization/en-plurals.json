@@ -70,5 +70,9 @@
   "Its %lld threads are deleted for good. The folder on the Mac stays as it is.": {
     "one": "Its %lld thread is deleted for good. The folder on the Mac stays as it is.",
     "other": "Its %lld threads are deleted for good. The folder on the Mac stays as it is."
+  },
+  "%lld steps": {
+    "one": "%lld step",
+    "other": "%lld steps"
   }
 }
