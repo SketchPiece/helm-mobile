@@ -37,6 +37,9 @@ and multiple windows.
 - **Built-in Tailscale.** An embedded tsnet node reaches your Macs over Tailscale without the Tailscale app.
 - **iPad workstation.** Home in a sidebar beside the open thread, a ⌘K command palette, ⌘N project picker,
   menu bar commands, hardware keyboard shortcuts and threads in windows of their own.
+- **Apple Watch remote.** See who needs you, approve or decline, answer questions, dictate replies, start a
+  thread in a project, stop a run or settle a thread from the wrist. The watch has no connection of its own:
+  it goes through Helm on the iPhone (WatchConnectivity), which wakes in the background to carry it out.
 - **Several Macs.** Pair multiple computers and switch between them; each keeps its own session.
 - **Polish.** The "Bakelite and lamp" palette with an amber accent, IBM Plex type, Dynamic Type, light and
   dark themes (plus themes a connected Mac publishes), English and Russian, and a built-in performance HUD.
@@ -119,6 +122,10 @@ TEST_RUNNER_HELM_TEST_URL=http://localhost:13773 TEST_RUNNER_HELM_TEST_TOKEN=<be
 xcodebuild … test -only-testing:HelmMobileUITests    # UI tour; screenshots land in /tmp/hm-ui
 xcodebuild … test -only-testing:HelmMobileUITests/IPadTourTests   # on an iPad simulator; /tmp/hm-ipad
 ```
+
+Watch: `xcodebuild -scheme HelmWatch -destination 'id=<watch simulator>' test` taps through sample data;
+with `TEST_RUNNER_HELM_WATCH_LIVE=1` (watch paired with an iPhone simulator signed in to a scratch dev server
+with a project `watch-scratch`) it starts, answers, stops and settles real threads from the watch.
 
 UI scenarios that drive real agents are opt-in: `HELM_LIVE_TURN=<project>`, `HELM_ANSWER=1` (a thread
 waiting on an approval or question), `HELM_REVIEW=1`, `HELM_QUEUE=1`. `HELM_APPEARANCE=dark` and
