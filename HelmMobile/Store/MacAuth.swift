@@ -5,7 +5,7 @@ import Observation
 import Security
 import UIKit
 
-/// The Mac asks this phone to confirm with Face ID (`helm.auth.*`, contracts/helmAuth.ts on the
+/// The Mac asks this phone to confirm with Face ID (`helm.command` "auth.*", contracts/helmAuth.ts on the
 /// Mac): `sudo` in a terminal or an agent's shell, or a Touch ID / password sheet on its screen
 /// (1Password unlocking, an app asking for the login password).
 struct MacAuthRequest: Identifiable, Equatable {
@@ -83,7 +83,7 @@ final class MacAuthSync {
     private(set) var sudoSetup = MacSudoSetup()
     /// The Mac's screen watcher runs with Accessibility access.
     private(set) var promptsAvailable = false
-    /// The server knows `helm.auth.subscribe` and the snapshot is in.
+    /// The server streams the "auth" topic and the snapshot is in.
     private(set) var available = false
     /// A password typed into a card that worked, until the person says whether to keep it.
     var saveOffer: PasswordSaveOffer?
@@ -171,7 +171,7 @@ final class MacAuthSync {
             payload["secret"] = [
                 "kind": .string(kind.rawValue), "ephemeralKey": .string(sealed.ephemeralKey), "box": .string(sealed.box),
             ]
-            let result = try await environment.call("helm.auth.respond", .object(payload), timeout: .seconds(35))
+            let result = try await environment.helmCommand("auth.respond", .object(payload), timeout: .seconds(35))
             let message = result["message"]?.string ?? ""
             guard result["ok"]?.bool == true else {
                 // The saved one no longer works (changed on the Mac): the card asks for the new one.
@@ -183,7 +183,7 @@ final class MacAuthSync {
             }
             return message
         }
-        let result = try await environment.call("helm.auth.respond", .object(payload), timeout: .seconds(35))
+        let result = try await environment.helmCommand("auth.respond", .object(payload), timeout: .seconds(35))
         let message = result["message"]?.string ?? ""
         guard result["ok"]?.bool == true else { throw AnswerError.failed(message) }
         return message
@@ -192,14 +192,14 @@ final class MacAuthSync {
     /// Sudo: declined. A prompt: Cancel pressed on the Mac.
     func deny(_ request: MacAuthRequest) async throws {
         guard let environment else { return }
-        _ = try await environment.call("helm.auth.respond", ["id": .string(request.id), "action": "deny"], timeout: .seconds(15))
+        _ = try await environment.helmCommand("auth.respond", ["id": .string(request.id), "action": "deny"], timeout: .seconds(15))
     }
 
     /// Hands this phone's sudo key to the Mac; `setupCommand` then installs it.
     func registerSudoKey() async throws {
         guard let environment else { return }
         guard let publicKey = try SudoKey.create() else { throw AnswerError.failed(String(localized: "This device has no Secure Enclave.")) }
-        let result = try await environment.call("helm.auth.registerApprover", [
+        let result = try await environment.helmCommand("auth.registerApprover", [
             "publicKey": .string(publicKey), "deviceName": .string(UIDevice.current.name),
         ])
         sudoSetup = MacSudoSetup(result)

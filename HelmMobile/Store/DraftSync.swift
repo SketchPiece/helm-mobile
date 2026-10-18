@@ -1,6 +1,6 @@
 import Foundation
 
-/// Keeps `Drafts` in step with one Mac (`helm.drafts.set` / `helm.drafts.subscribe`): what is
+/// Keeps `Drafts` in step with one Mac (`helm.command` "drafts.set" / `helm.subscribe` "drafts"): what is
 /// written here goes up shortly after typing pauses, what is written in Helm on the Mac comes
 /// down. The last write wins. Servers without the methods just leave drafts on the phone.
 @MainActor
@@ -59,7 +59,7 @@ final class DraftSync {
         pending.removeAll()
     }
 
-    /// One event of `helm.drafts.subscribe`.
+    /// One event of the "drafts" topic of `helm.subscribe`.
     func apply(_ event: JSON) {
         switch event["type"]?.string {
         case "snapshot":
@@ -124,7 +124,7 @@ final class DraftSync {
             "attachments": .array(draft.files.map(\.json)), "clientId": .string(Self.clientId),
         ]
         do {
-            _ = try await environment.call("helm.drafts.set", payload)
+            _ = try await environment.helmCommand("drafts.set", payload)
             drafts.markSynced(key, sent: draft)
         } catch {
             // Stays edited here; it goes up with the next snapshot after reconnecting.

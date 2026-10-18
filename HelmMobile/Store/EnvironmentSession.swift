@@ -431,22 +431,22 @@ final class EnvironmentSession: Identifiable {
     /// Drafts written in Helm on the Mac, and when to send the phone's. Like `followDesktop`, its
     /// end (an older server without the method) never takes the socket down.
     private func followDrafts(on connection: RPCConnection) {
-        let events = connection.stream("helm.drafts.subscribe", [:])
+        let events = connection.stream("helm.subscribe", ["topic": "drafts"])
         streams.append(Task { [weak self] in
             do {
-                for try await event in events { self?.draftSync.apply(event) }
+                for try await item in events { self?.draftSync.apply(item["event"] ?? .null) }
             } catch {}
             if let self, self.connection === connection { self.draftSync.connectionEnded() }
         })
     }
 
-    /// What this Mac wants Face ID for (`helm.auth.subscribe`). Like `followDrafts`, its end
-    /// never takes the socket down.
+    /// What this Mac wants Face ID for (`helm.subscribe`, topic "auth"). Like `followDrafts`, its
+    /// end never takes the socket down.
     private func followMacAuth(on connection: RPCConnection) {
-        let events = connection.stream("helm.auth.subscribe", [:])
+        let events = connection.stream("helm.subscribe", ["topic": "auth"])
         streams.append(Task { [weak self] in
             do {
-                for try await event in events { self?.macAuth.apply(event) }
+                for try await item in events { self?.macAuth.apply(item["event"] ?? .null) }
             } catch {}
             if let self, self.connection === connection { self.macAuth.connectionEnded() }
         })
@@ -571,6 +571,13 @@ final class EnvironmentSession: Identifiable {
         return try await connection.call(tag, payload, timeout: timeout)
     }
 
+    /// One of Helm's own commands (`helm.command`, contracts/helmRpc.ts on the server): sends
+    /// `{ command, input }` and returns the command's `result`.
+    func helmCommand(_ command: String, _ input: JSON, timeout: Duration = .seconds(30)) async throws -> JSON {
+        let reply = try await call("helm.command", ["command": .string(command), "input": input], timeout: timeout)
+        return reply["result"] ?? .null
+    }
+
     /// Waits for the socket to come (back) up, e.g. right after returning from another app.
     /// Throws `RPCError.disconnected` when it doesn't within `timeout` or pairing was revoked.
     func waitUntilLive(timeout: Duration = .seconds(15)) async throws {
@@ -589,11 +596,11 @@ final class EnvironmentSession: Identifiable {
         return connection.stream(tag, payload)
     }
 
-    /// `helm.remote.send`: a command for Helm's desktop windows on this computer (open a thread,
+    /// `helm.command` "remote.send": a command for Helm's desktop windows on this computer (open a thread,
     /// type into its composer). False when no window took it, or the server has no such method.
     func sendRemoteCommand(_ command: [String: JSON]) async throws -> Bool {
         do {
-            let result = try await call("helm.remote.send", .object(command), timeout: .seconds(10))
+            let result = try await helmCommand("remote.send", .object(command), timeout: .seconds(10))
             return (result["delivered"]?.int ?? 0) > 0
         } catch RPCError.disconnected {
             throw RPCError.disconnected
