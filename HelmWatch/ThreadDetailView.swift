@@ -50,6 +50,8 @@ struct ThreadDetailView: View {
                 }
             }
         }
+        // The bottom bar floats over the end of the thread; leave room to scroll the last button clear.
+        .contentMargins(.bottom, 44, for: .scrollContent)
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
                 bottomBar(thread, detail: detail)

@@ -2,6 +2,9 @@ import Foundation
 import Observation
 import UIKit
 import WatchConnectivity
+import os
+
+private let log = Logger(subsystem: "com.sketchpiece.helm", category: "watch")
 
 /// The Apple Watch app's way to Helm. The watch has no Tailscale and no tokens, so the phone stays the
 /// only client: it sends the watch the thread list and does what the watch asks. A message from the
@@ -414,6 +417,7 @@ extension WatchBridge: WCSessionDelegate {
         }
         Task { @MainActor in
             let reply = await self.handle(request)
+            log.info("watch \(String(describing: request), privacy: .public): ok \(reply.ok) \(reply.error ?? "", privacy: .public)")
             box.reply(WatchCoding.encode(reply))
         }
     }

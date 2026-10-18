@@ -2,6 +2,9 @@ import Foundation
 import Observation
 import WatchConnectivity
 import WatchKit
+import os
+
+private let log = Logger(subsystem: "com.sketchpiece.helm.watch", category: "store")
 
 /// The watch's side of the bridge: the thread list the phone last sent, the threads open on the
 /// watch, and requests to the phone. Everything goes through Helm on the iPhone.
@@ -110,6 +113,7 @@ final class WatchStore: NSObject {
             return .success
         }
         let reply = await request(message)
+        log.info("perform \(String(describing: message), privacy: .public): ok \(reply.ok) \(reply.error ?? "", privacy: .public)")
         WKInterfaceDevice.current().play(reply.ok ? .success : .failure)
         return reply
     }

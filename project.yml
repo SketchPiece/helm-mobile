@@ -115,6 +115,18 @@ targets:
         INFOPLIST_FILE: HelmWatch/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
+  HelmWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources:
+      - path: HelmWatchUITests
+    dependencies:
+      - target: HelmWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sketchpiece.helm.watchuitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: HelmWatch
   HelmMobileTests:
     type: bundle.unit-test
     platform: iOS
@@ -155,5 +167,9 @@ schemes:
     build:
       targets:
         HelmWatch: all
+        HelmWatchUITests: [test]
     run:
       config: Debug
+    test:
+      targets:
+        - HelmWatchUITests
