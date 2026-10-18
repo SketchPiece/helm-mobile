@@ -204,7 +204,7 @@ struct HomeView: View {
             if projectFilter == deletion.project.id { projectFilter = nil }
         }
         .sheet(isPresented: $pickingProject) {
-            ProjectPicker(selectedEnvironment: nil, selectedProject: nil) { environment, project in
+            ProjectPicker(selectedEnvironment: nil, selectedProject: nil, startsFull: true) { environment, project in
                 pickingProject = false
                 router.startNewThread(in: NewThreadTarget(environmentId: environment.id, projectId: project.id))
             }

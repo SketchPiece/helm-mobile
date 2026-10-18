@@ -657,12 +657,25 @@ struct ProjectPicker: View {
     let selectedEnvironment: String?
     let selectedProject: String?
     let onPick: (EnvironmentSession, Project) -> Void
+    /// Half height, or full when it opens to search the whole list (the fan's "All projects…": the
+    /// project wasn't among the recent ones, so it'll be scrolled for).
+    @State private var detent: PresentationDetent
     @State private var query = ""
     @State private var showAdd = false
     @State private var preparingScratch: String?
     @State private var error: String?
     @State private var editing: ProjectEditing?
     @State private var deleting: ProjectDeletion?
+
+    init(
+        selectedEnvironment: String?, selectedProject: String?, startsFull: Bool = false,
+        onPick: @escaping (EnvironmentSession, Project) -> Void
+    ) {
+        self.selectedEnvironment = selectedEnvironment
+        self.selectedProject = selectedProject
+        self.onPick = onPick
+        _detent = State(initialValue: startsFull ? .large : .medium)
+    }
 
     var body: some View {
         NavigationStack {
@@ -742,7 +755,7 @@ struct ProjectPicker: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.medium, .large], selection: $detent)
     }
 
     /// Macs that can run a thread without a project, connected yet or not.
