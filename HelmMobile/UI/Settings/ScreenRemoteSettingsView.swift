@@ -8,6 +8,7 @@ struct ScreenRemoteSettingsView: View {
     @AppStorage(PhonePreferences.screenVirtualSizeKey) private var virtualSize = ScreenVirtualSize.same
     @AppStorage(PhonePreferences.screenKeepDisplayKey) private var keepDisplay = ScreenKeepDisplay.short
     @AppStorage(PhonePreferences.screenVirtualMainKey) private var virtualMain = true
+    @AppStorage(PhonePreferences.screenLockOnLeaveKey) private var lockOnLeave = ScreenLockOnLeave.soon
     @AppStorage(PhonePreferences.screenQualityKey) private var quality = ScreenQuality.standard
     @AppStorage(PhonePreferences.screenFrameRateKey) private var frameRate = ScreenFrameRate.auto
     @AppStorage(PhonePreferences.screenResolutionKey) private var resolution = ScreenResolution.retina
@@ -55,6 +56,16 @@ struct ScreenRemoteSettingsView: View {
                 } header: {
                     Text("Remove the separate display").sectionLabelStyle()
                 }
+            }
+            Section {
+                Picker("Lock the computer", selection: $lockOnLeave) {
+                    ForEach(ScreenLockOnLeave.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+            } footer: {
+                Text("Once the screen closes here. Opening it again shows the computer's login, where Face ID or the password unlocks it.")
+                    .font(Typography.footnote)
             }
             Section {
                 ChoiceRows(options: ScreenOpenZoom.allCases, selection: $openZoom, label: \.title, detail: \.detail)

@@ -19,6 +19,7 @@ enum PhonePreferences {
     static let screenKeepDisplayKey = "screenRemoteKeepDisplay"
     /// On unless turned off: the separate display takes the main one's place while it's here.
     static let screenVirtualMainKey = "screenRemoteVirtualMain"
+    static let screenLockOnLeaveKey = "screenRemoteLockOnLeave"
     static let screenCursorSpeedKey = "screenRemoteCursorSpeed"
     static let screenReverseScrollKey = "screenRemoteReverseScroll"
     static let screenClickFeedbackKey = "screenRemoteClickFeedback"

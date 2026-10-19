@@ -1601,6 +1601,16 @@
         }
       }
     },
+    "After 1 minute": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 1 минуту"
+          }
+        }
+      }
+    },
     "After 10 minutes": {
       "localizations": {
         "ru": {
@@ -1611,12 +1621,32 @@
         }
       }
     },
+    "After 10 seconds": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 10 секунд"
+          }
+        }
+      }
+    },
     "After 2 minutes": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Через 2 минуты"
+          }
+        }
+      }
+    },
+    "After 5 minutes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Через 5 минут"
           }
         }
       }
@@ -4874,6 +4904,16 @@
         }
       }
     },
+    "Lock the computer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Блокировать компьютер"
+          }
+        }
+      }
+    },
     "Locking the iPad or a quick look at another app keeps the windows in place.": {
       "localizations": {
         "ru": {
@@ -5247,6 +5287,16 @@
       }
     },
     "Network": {},
+    "Never": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Никогда"
+          }
+        }
+      }
+    },
     "Never asks": {
       "localizations": {
         "ru": {
@@ -6073,6 +6123,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Когда агент начнёт работу, вы вернётесь к списку тредов."
+          }
+        }
+      }
+    },
+    "Once the screen closes here. Opening it again shows the computer's login, where Face ID or the password unlocks it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда экран здесь закрыт. При следующем открытии появится вход компьютера: разблокировать можно по Face ID или паролем."
           }
         }
       }

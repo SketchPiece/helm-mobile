@@ -481,6 +481,10 @@ WebSocket that streams the Mac's screen (`apps/server/src/helm/screenRemoteRoute
   it's wanted (every display shifts so it sits at the origin): the menu bar, the Dock and new windows go to
   the iPad. The keeper gives the main display back right after putting the windows back. `display: "main"`
   still means the Mac's own main display.
+- `start {…, lockOnLeave: seconds}` locks the Mac that long after the connection ends, unless another
+  connection is open by then: the helper leaves a detached `helm-screen --lock-after <seconds>` behind, and
+  connections hold a shared flock on `$TMPDIR/helm-screen-connections` (touched on each leave, so only the
+  latest waiter acts).
 
 Compatibility rule (`packages/client-runtime/src/connection/compatibility.ts:9-27`): if
 `orchestrationProtocolVersion ?? 1` is not 2, the client refuses (a server newer than the client means the client must

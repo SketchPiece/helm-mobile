@@ -170,6 +170,7 @@ final class ScreenRemote {
                     .flatMap(ScreenKeepDisplay.init(rawValue:)) ?? .short).seconds)),
                 "mainDisplay": .bool(UserDefaults.standard.object(forKey: PhonePreferences.screenVirtualMainKey) as? Bool ?? true),
             ]
+            if let seconds = ScreenLockOnLeave.current.seconds { start["lockOnLeave"] = .number(Double(seconds)) }
             if wanted == .virtual {
                 await waitForViewSize()
                 start["virtual"] = virtualSizeValue()

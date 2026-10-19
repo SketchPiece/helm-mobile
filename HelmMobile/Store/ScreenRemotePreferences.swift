@@ -229,6 +229,36 @@ enum ScreenKeepDisplay: String, CaseIterable, Identifiable {
     }
 }
 
+/// Whether the computer locks once the screen closes here, and how soon. Not at once: a dropped
+/// connection that comes straight back shouldn't need the password.
+enum ScreenLockOnLeave: String, CaseIterable, Identifiable {
+    case never, soon, minute, fiveMinutes
+    var id: String { rawValue }
+
+    static var current: ScreenLockOnLeave {
+        UserDefaults.standard.string(forKey: PhonePreferences.screenLockOnLeaveKey).flatMap(Self.init(rawValue:)) ?? .soon
+    }
+
+    /// Nil: it doesn't lock.
+    var seconds: Int? {
+        switch self {
+        case .never: nil
+        case .soon: 10
+        case .minute: 60
+        case .fiveMinutes: 300
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .never: String(localized: "Never")
+        case .soon: String(localized: "After 10 seconds")
+        case .minute: String(localized: "After 1 minute")
+        case .fiveMinutes: String(localized: "After 5 minutes")
+        }
+    }
+}
+
 /// How far the cursor goes for a finger's or a trackpad's move.
 enum ScreenCursorSpeed: String, CaseIterable, Identifiable {
     case slow, normal, fast
