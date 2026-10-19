@@ -7,6 +7,7 @@ struct ScreenRemoteSettingsView: View {
     @AppStorage(PhonePreferences.screenDisplayKey) private var display = ScreenDisplayChoice.main
     @AppStorage(PhonePreferences.screenVirtualSizeKey) private var virtualSize = ScreenVirtualSize.same
     @AppStorage(PhonePreferences.screenKeepDisplayKey) private var keepDisplay = ScreenKeepDisplay.short
+    @AppStorage(PhonePreferences.screenVirtualMainKey) private var virtualMain = true
     @AppStorage(PhonePreferences.screenQualityKey) private var quality = ScreenQuality.standard
     @AppStorage(PhonePreferences.screenFrameRateKey) private var frameRate = ScreenFrameRate.auto
     @AppStorage(PhonePreferences.screenResolutionKey) private var resolution = ScreenResolution.retina
@@ -41,6 +42,12 @@ struct ScreenRemoteSettingsView: View {
                     Text("Separate display size").sectionLabelStyle()
                 } footer: {
                     Text("It turns with the iPad and follows its window in Split View and Stage Manager.")
+                        .font(Typography.footnote)
+                }
+                Section {
+                    Toggle("New windows open here", isOn: $virtualMain)
+                } footer: {
+                    Text("The separate display becomes the computer's main one: its menu bar, Dock and new windows move to the iPad, and go back when the screen closes.")
                         .font(Typography.footnote)
                 }
                 Section {

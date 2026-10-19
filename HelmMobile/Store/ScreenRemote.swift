@@ -168,6 +168,7 @@ final class ScreenRemote {
                 "clipboard": .bool(sharesClipboard),
                 "keepDisplay": .number(Double((UserDefaults.standard.string(forKey: PhonePreferences.screenKeepDisplayKey)
                     .flatMap(ScreenKeepDisplay.init(rawValue:)) ?? .short).seconds)),
+                "mainDisplay": .bool(UserDefaults.standard.object(forKey: PhonePreferences.screenVirtualMainKey) as? Bool ?? true),
             ]
             if wanted == .virtual {
                 await waitForViewSize()

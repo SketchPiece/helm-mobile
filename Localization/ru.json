@@ -939,6 +939,8 @@
   "Slow": "Медленно",
   "Normal": "Обычно",
   "Remove the separate display": "Убирать отдельный дисплей",
+  "New windows open here": "Новые окна открываются здесь",
+  "The separate display becomes the computer's main one: its menu bar, Dock and new windows move to the iPad, and go back when the screen closes.": "Отдельный дисплей становится основным у компьютера: строка меню, Dock и новые окна переезжают на iPad и возвращаются, когда экран закрыт.",
   "Cursor speed": "Скорость курсора",
   "Reverse scrolling": "Обратная прокрутка",
   "Ring and tap on click": "Кольцо и отклик при клике",

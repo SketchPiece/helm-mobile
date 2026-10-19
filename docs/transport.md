@@ -477,6 +477,10 @@ WebSocket that streams the Mac's screen (`apps/server/src/helm/screenRemoteRoute
   (through Accessibility), answered with `{"t":"windowMoved",id}` or an error with code `moveWindow`. The display's
   keeper remembers where each window was and puts the ones still on it back as soon as the last connection
   closes; a connection that comes back while the display lingers gets them onto it again.
+- `start {…, mainDisplay: true}` with the virtual display makes it the Mac's main display for as long as
+  it's wanted (every display shifts so it sits at the origin): the menu bar, the Dock and new windows go to
+  the iPad. The keeper gives the main display back right after putting the windows back. `display: "main"`
+  still means the Mac's own main display.
 
 Compatibility rule (`packages/client-runtime/src/connection/compatibility.ts:9-27`): if
 `orchestrationProtocolVersion ?? 1` is not 2, the client refuses (a server newer than the client means the client must
