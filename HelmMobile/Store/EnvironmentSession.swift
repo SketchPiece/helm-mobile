@@ -70,6 +70,9 @@ final class EnvironmentSession: Identifiable {
     /// The Mac's address on this network while the socket went there instead of the saved
     /// tailnet address (the built-in Tailscale node was not running yet); nil otherwise.
     @ObservationIgnored private var localBaseURL: URL?
+    /// The last attempt went to the saved tailnet address and failed (say, Tailscale is off on
+    /// the Mac): the next one tries the Mac's address on this network if Bonjour has it.
+    @ObservationIgnored private var tailnetAttemptFailed = false
 
     /// The phone reaches this computer on the network it's on (found nearby, or connected by
     /// its local address) rather than through Tailscale from elsewhere.
@@ -197,6 +200,7 @@ final class EnvironmentSession: Identifiable {
                 let detail = await connection?.closeDetail ?? ""
                 log("attempt \(attempt) failed after \(Self.elapsed(since: started)): \(ConnectionLog.describe(error))"
                     + (detail.isEmpty ? "" : " (\(detail))"))
+                if TailnetRouting.usesNode(saved.baseURL) { tailnetAttemptFailed = localBaseURL == nil }
                 teardown()
                 status = .offline(error.localizedDescription)
             }
@@ -342,12 +346,16 @@ final class EnvironmentSession: Identifiable {
     }
 
     /// The saved address, unless it goes through the built-in Tailscale node and that is still
-    /// coming up (right after launch, which can take a minute): then the Mac's address on this
-    /// network as soon as Bonjour has it, else the saved one once the node runs or after 12 s.
+    /// coming up (right after launch, which can take a minute) or didn't answer last time: then
+    /// the Mac's address on this network as soon as Bonjour has it, else the saved one once the
+    /// node runs or after 12 s.
     private func chooseAddress() async -> URL {
-        guard TailnetRouting.usesNode(saved.baseURL),
-              !(await Task.detached { TailnetNode.shared.isRunning() }.value)
-        else { return saved.baseURL }
+        guard TailnetRouting.usesNode(saved.baseURL) else { return saved.baseURL }
+        if tailnetAttemptFailed, let local = NearbyMacs.shared.address(id) {
+            log("the tailnet address didn't answer last time, going to \(HelmHTTP.logHost(local)) on this network")
+            return local
+        }
+        guard !(await Task.detached { TailnetNode.shared.isRunning() }.value) else { return saved.baseURL }
         if let local = NearbyMacs.shared.address(id) {
             log("Tailscale node not running yet, going to \(HelmHTTP.logHost(local)) on this network")
             return local
