@@ -819,14 +819,6 @@ private struct ThreadContent: View {
             }
             ToolbarSpacer(.fixed, placement: .topBarTrailing)
         }
-        if let usage = projection?.contextUsage {
-            ToolbarItem(placement: .topBarTrailing) {
-                ContextMeter(used: usage.used, max: usage.max,
-                             compactBlockedReason: compactBlockedReason(projection),
-                             compact: canCompact ? { compact() } : nil)
-            }
-            ToolbarSpacer(.fixed, placement: .topBarTrailing)
-        }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 if model.macRemoteTarget()?.ref == ThreadRef(environmentId: environment.id, threadId: session.threadId) {
@@ -847,6 +839,15 @@ private struct ThreadContent: View {
                 Button {
                     showSettings = true
                 } label: { Label("Thread settings", systemImage: "slider.horizontal.3") }
+                if canCompact {
+                    Button { compact() } label: {
+                        Label("Compact context", systemImage: "arrow.down.right.and.arrow.up.left")
+                        if let usage = projection?.contextUsage {
+                            Text("\(Self.contextPercent(usage)) full · \(TokenCount.short(usage.used)) / \(TokenCount.short(usage.max))")
+                        }
+                    }
+                    .disabled(compactBlockedReason(projection) != nil)
+                }
                 Divider()
                 if let summary {
                     if summary.isSettled {
@@ -936,6 +937,11 @@ private struct ThreadContent: View {
         if projection?.isWorking == true { return String(localized: "Wait for the agent to finish its turn.") }
         if projection?.pendingRequests.isEmpty == false { return String(localized: "Answer the agent first.") }
         return nil
+    }
+
+    private static func contextPercent(_ usage: (used: Int, max: Int)) -> String {
+        let value = min(1, max(0, Double(usage.used) / Double(usage.max))) * 100
+        return value < 10 ? value.formatted(.number.precision(.fractionLength(0...1))) + "%" : "\(Int(value.rounded()))%"
     }
 
     /// Compaction is a message of its own, like on the desktop; the draft stays in the composer.

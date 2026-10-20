@@ -2851,12 +2851,12 @@
         }
       }
     },
-    "Context window %@ used": {
+    "%@ full · %@ / %@": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Контекст заполнен на %@"
+            "value": "Заполнен на %1$@ · %2$@ / %3$@"
           }
         }
       }
