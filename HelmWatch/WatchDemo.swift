@@ -23,7 +23,7 @@ enum WatchDemo {
 
     private static let mac = "mac-studio"
     private static let helm = WatchIcon(emoji: "🛞", letters: "HM", color: nil)
-    private static let volna = WatchIcon(emoji: nil, letters: "VO", color: "blue")
+    private static let tidewatch = WatchIcon(emoji: nil, letters: "TW", color: "blue")
     private static let site = WatchIcon(emoji: nil, letters: "SI", color: "green")
 
     private static func thread(_ id: String, _ title: String, _ project: String, _ icon: WatchIcon, _ phase: WatchPhase,
@@ -35,7 +35,7 @@ enum WatchDemo {
 
     static let threads: [WatchThread] = [
         thread("t1", "Apple Watch remote", "helm-mobile", helm, .approval, "Run xcodebuild for the watch target?", minutes: 1),
-        thread("t2", "Push relay retries", "Volna", volna, .input, "Which backoff should the relay use?", minutes: 4),
+        thread("t2", "Push relay retries", "Tidewatch", tidewatch, .input, "Which backoff should the relay use?", minutes: 4),
         thread("t3", "Landing page copy", "site", site, .working, "Rewriting the hero section…", minutes: 0.5),
         thread("t4", "Fix iPad sidebar lag", "helm-mobile", helm, .done, "The sidebar no longer rebuilds on every shell update.", minutes: 22),
         thread("t5", "Release notes", "site", site, .failed, nil, minutes: 50),
@@ -47,7 +47,7 @@ enum WatchDemo {
         threads: threads,
         projects: [
             WatchProject(environmentId: mac, projectId: "p1", title: "helm-mobile", icon: helm, macLabel: "Mac Studio"),
-            WatchProject(environmentId: mac, projectId: "p2", title: "Volna", icon: volna, macLabel: "Mac Studio"),
+            WatchProject(environmentId: mac, projectId: "p2", title: "Tidewatch", icon: tidewatch, macLabel: "Mac Studio"),
             WatchProject(environmentId: mac, projectId: "p3", title: "site", icon: site, macLabel: "Mac Studio"),
         ],
         updatedAt: Date()

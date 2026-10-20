@@ -41,7 +41,7 @@ final class WatchNavigationTests: XCTestCase {
         let plus = app.buttons["New thread"].firstMatch
         XCTAssertTrue(plus.waitForExistence(timeout: 5), "+ button")
         plus.tap()
-        XCTAssertTrue(app.staticTexts[live ? "watch-scratch" : "Volna"].waitForExistence(timeout: 5), "project list")
+        XCTAssertTrue(app.staticTexts[live ? "watch-scratch" : "Tidewatch"].waitForExistence(timeout: 5), "project list")
         shot(app, "new")
     }
 }
